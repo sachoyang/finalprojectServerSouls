@@ -1,0 +1,264 @@
+fileFormatVersion: 2
+guid: 92b523aa3bc6c0547afe252ce5d4e928
+ModelImporter:
+  serializedVersion: 22200
+  internalIDToNameTable: []
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Mat_Clothes
+    second: {fileID: 2100000, guid: 973d72ac11fd4624ebac2bc2df66d325, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Mat_Leather
+    second: {fileID: 2100000, guid: 8d5a0fe3de9289b45afb140a23eec6c7, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Mat_Metal
+    second: {fileID: 2100000, guid: b409ec7966eab604782c2e9870e1c668, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Mat_Metal02
+    second: {fileID: 2100000, guid: 1e4821504289f0d4fbbca1d4dbb68b92, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Mat_Metal03
+    second: {fileID: 2100000, guid: 9e264f4d90138d941822d0203473d401, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Texture_Eyes
+    second: {fileID: 2100000, guid: b72011b363718c246b900a06a8a4f608, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Texture_Skin
+    second: {fileID: 2100000, guid: 6dde3fc47d8762543bbb01b3681725ce, type: 2}
+  materials:
+    materialImportMode: 2
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    removeConstantScaleCurves: 0
+    motionNodeName: 
+    rigImportErrors: 
+    rigImportWarnings: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    importConstraints: 0
+    animationCompression: 3
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations: []
+    isReadable: 0
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    useSRGBMaterialColor: 1
+    sortHierarchyByName: 1
+    importPhysicalCameras: 1
+    importVisibility: 1
+    importBlendShapes: 1
+    importCameras: 1
+    importLights: 1
+    nodeNameCollisionStrategy: 1
+    fileIdsGeneration: 2
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    keepQuads: 0
+    weldVertices: 1
+    bakeAxisConversion: 0
+    preserveHierarchy: 0
+    skinWeightsMode: 0
+    maxBonesPerVertex: 4
+    minBoneWeight: 0.001
+    optimizeBones: 1
+    meshOptimizationFlags: -1
+    indexFormat: 0
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVMarginMethod: 1
+    secondaryUVMinLightmapResolution: 40
+    secondaryUVMinObjectScale: 1
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+    strictVertexDataChecks: 0
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    blendShapeNormalImportMode: 1
+    normalSmoothingSource: 0
+  referencedClips: []
+  importAnimation: 1
+  humanDescription:
+    serializedVersion: 3
+    human: []
+    skeleton:
+    - name: Mesh_Einheri(Clone)
+      parentName: 
+      position: {x: 0, y: 0, z: 0}
+      rotation: {x: 0, y: 0, z: 0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: PauldronR_low
+      parentName: Mesh_Einheri(Clone)
+      position: {x: -0, y: 0.0077674426, z: -0.00012344818}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071068}
+      scale: {x: 1, y: 1, z: 1}
+    - name: VanbraceR_low
+      parentName: Mesh_Einheri(Clone)
+      position: {x: -0, y: 0.006427076, z: -0.00006191407}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071068}
+      scale: {x: 1, y: 1, z: 1}
+    - name: PelvisArmor_low
+      parentName: Mesh_Einheri(Clone)
+      position: {x: -0, y: 0.005929714, z: 0}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071068}
+      scale: {x: 1.05805, y: 1.05805, z: 1.05805}
+    - name: TassetL_low
+      parentName: Mesh_Einheri(Clone)
+      position: {x: -0, y: 0.005600352, z: 0}
+      rotation: {x: -0.7070644, y: 0.007744216, z: -0.007744216, w: 0.7070644}
+      scale: {x: 1, y: 1, z: 1}
+    - name: LeatherTasset_low
+      parentName: Mesh_Einheri(Clone)
+      position: {x: -0, y: 0.0061975303, z: -0.00005003588}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071068}
+      scale: {x: 1.029025, y: 1.029025, z: 1.029025}
+    - name: GreaveR_low
+      parentName: Mesh_Einheri(Clone)
+      position: {x: -0, y: 0.0017652666, z: -0.000010228049}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071068}
+      scale: {x: 1, y: 1, z: 1}
+    - name: PoleynR_low
+      parentName: Mesh_Einheri(Clone)
+      position: {x: -0, y: 0.0031553796, z: 0.00012848922}
+      rotation: {x: -0.7071012, y: -0.0028077813, z: 0.0028077813, w: 0.7071012}
+      scale: {x: 1, y: 1, z: 1}
+    - name: FrontArmor_low
+      parentName: Mesh_Einheri(Clone)
+      position: {x: -0, y: 0.004710331, z: 0.00058774435}
+      rotation: {x: 0.00000008146034, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Clothes_low
+      parentName: Mesh_Einheri(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071068}
+      scale: {x: 1, y: 1, z: 1}
+    - name: PoleynL_low
+      parentName: Mesh_Einheri(Clone)
+      position: {x: -0, y: 0.0031553796, z: 0.00012848922}
+      rotation: {x: -0.7071012, y: -0.0028077813, z: 0.0028077813, w: 0.7071012}
+      scale: {x: 1, y: 1, z: 1}
+    - name: TassetR_low
+      parentName: Mesh_Einheri(Clone)
+      position: {x: -0, y: 0.005600352, z: 0}
+      rotation: {x: -0.7070644, y: 0.0077442448, z: -0.0077442448, w: 0.7070644}
+      scale: {x: 1, y: 1, z: 1}
+    - name: VanbraceL_low
+      parentName: Mesh_Einheri(Clone)
+      position: {x: -0, y: 0.006427076, z: -0.00006191407}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071068}
+      scale: {x: 1, y: 1, z: 1}
+    - name: GreaveL_low
+      parentName: Mesh_Einheri(Clone)
+      position: {x: -0, y: 0.0017652666, z: -0.000010228049}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071068}
+      scale: {x: 1, y: 1, z: 1}
+    - name: PauldronL_low
+      parentName: Mesh_Einheri(Clone)
+      position: {x: -0, y: 0.0077674426, z: -0.00012344818}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071068}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Face_Low
+      parentName: Mesh_Einheri(Clone)
+      position: {x: 0.000000004158984, y: 0.008235569, z: -0.000047587553}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071068}
+      scale: {x: 0.865463, y: 0.865463, z: 0.865463}
+    - name: Eybulbs
+      parentName: Mesh_Einheri(Clone)
+      position: {x: 0.000000004158984, y: 0.008432176, z: 0.00018393055}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071068}
+      scale: {x: 1.359012, y: 1.359012, z: 1.359012}
+    - name: Helmat_low
+      parentName: Mesh_Einheri(Clone)
+      position: {x: -0, y: 0.008693184, z: -0.00012123212}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071068}
+      scale: {x: 2.444973, y: 1.937601, z: 2.148083}
+    - name: HandR_low
+      parentName: Mesh_Einheri(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071068}
+      scale: {x: 1, y: 1, z: 1}
+    - name: HandL_low
+      parentName: Mesh_Einheri(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071068}
+      scale: {x: 1, y: 1, z: 1}
+    - name: BootsL_low
+      parentName: Mesh_Einheri(Clone)
+      position: {x: -0, y: 0, z: 0.00010701322}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071068}
+      scale: {x: 1, y: 1, z: 1}
+    - name: BootsR_low
+      parentName: Mesh_Einheri(Clone)
+      position: {x: -0, y: 0, z: 0.00010701322}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071068}
+      scale: {x: 1, y: 1, z: 1}
+    - name: ChestArmor01_low
+      parentName: Mesh_Einheri(Clone)
+      position: {x: -0, y: 0.0072877523, z: 0.0002576397}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071068}
+      scale: {x: 1.1161, y: 1.1161, z: 1.1161}
+    - name: ChestArmor02_low
+      parentName: Mesh_Einheri(Clone)
+      position: {x: -0, y: 0.0072877523, z: 0.0002576397}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071068}
+      scale: {x: 1.1161, y: 1.1161, z: 1.1161}
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    globalScale: 0.01
+    rootMotionBoneName: 
+    hasTranslationDoF: 0
+    hasExtraRoot: 1
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  autoGenerateAvatarMappingIfUnspecified: 1
+  animationType: 2
+  humanoidOversampling: 1
+  avatarSetup: 1
+  addHumanoidExtraRootOnlyWhenUsingAvatar: 1
+  importBlendShapeDeformPercent: 1
+  remapMaterialsIfMaterialImportModeIsNone: 0
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
