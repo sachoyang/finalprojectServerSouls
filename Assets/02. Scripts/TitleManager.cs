@@ -6,21 +6,10 @@ public class TitleManager : MonoBehaviour
     public GameObject tutorialPopupPanel;
     public GameObject mainTitlePanel;
     public GameObject matchPanel; // 새로 만든 매칭 패널
-<<<<<<< HEAD
     public GameObject CreatePanel;
-=======
-
-    [Header("캐릭터 선택 기능")]
-    public GameObject[] titleModels; // 타이틀 씬에 배치된 3D 모델들 (전사, 마법사 등)
-    private int _currentCharacterIndex = 0;
-
->>>>>>> f0f026ecd792cefd53955e0db754b59dd60c1f65
     void Start()
     {
         CheckTutorialStatus();
-        // 이전에 저장된 캐릭터 번호를 불러옴 (없으면 0번)
-        _currentCharacterIndex = PlayerPrefs.GetInt("SelectedCharacter", 0);
-        UpdateTitleModelDisplay();
     }
 
     private void CheckTutorialStatus()
@@ -73,7 +62,6 @@ public class TitleManager : MonoBehaviour
         matchPanel.SetActive(true);      // 매칭 패널 켜기
     }
 
-<<<<<<< HEAD
     public void OnClickEnterButton()
     {
         matchPanel.SetActive(false); // 매칭 패널 끄기
@@ -86,28 +74,4 @@ public class TitleManager : MonoBehaviour
         CreatePanel.SetActive(false);      // 생성 패널 켜기
     }
 
-=======
-    // UI에서 [<] [>] 같은 Select 버튼을 눌렀을 때 실행될 함수
-    public void OnClickChangeCharacter(int direction)
-    {
-        _currentCharacterIndex += direction;
-        
-        // 인덱스가 범위를 벗어나지 않게 순환
-        if (_currentCharacterIndex < 0) _currentCharacterIndex = titleModels.Length - 1;
-        if (_currentCharacterIndex >= titleModels.Length) _currentCharacterIndex = 0;
-
-        // 선택한 번호를 로컬(컴퓨터)에 저장! (나중에 대기실에서 꺼내 씁니다)
-        PlayerPrefs.SetInt("SelectedCharacter", _currentCharacterIndex);
-        UpdateTitleModelDisplay();
-    }
-
-    private void UpdateTitleModelDisplay()
-    {
-        // 모든 모델을 끄고 선택된 것만 켭니다.
-        for (int i = 0; i < titleModels.Length; i++)
-        {
-            titleModels[i].SetActive(i == _currentCharacterIndex);
-        }
-    }
->>>>>>> f0f026ecd792cefd53955e0db754b59dd60c1f65
 }
