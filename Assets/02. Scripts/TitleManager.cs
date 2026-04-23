@@ -6,6 +6,8 @@ public class TitleManager : MonoBehaviour
     public GameObject tutorialPopupPanel;
     public GameObject mainTitlePanel;
     public GameObject matchPanel; // 새로 만든 매칭 패널
+    public GameObject CreatePanel;
+
 
     [Header("캐릭터 선택 기능")]
     public GameObject[] titleModels; // 타이틀 씬에 배치된 3D 모델들 (전사, 마법사 등)
@@ -65,9 +67,23 @@ public class TitleManager : MonoBehaviour
     // 시작(Play) 버튼을 눌렀을 때 실행될 함수
     public void OnClickPlayButton()
     {
-        mainTitlePanel.SetActive(false); // 메인 타이틀 화면 끄기
+        mainTitlePanel.SetActive(true); // 메인 타이틀 화면 끄기
         matchPanel.SetActive(true);      // 매칭 패널 켜기
     }
+
+    public void OnClickCloseButton()
+    {
+        CreatePanel.SetActive(false); // 생성 패널 끄기
+        matchPanel.SetActive(false);      // 매칭 패널 끄기
+    }
+
+    public void OnClickEnterButten()
+    {
+        CreatePanel.SetActive(true); // 생성 패널 켜기
+    }
+
+
+
 
     // UI에서 [<] [>] 같은 Select 버튼을 눌렀을 때 실행될 함수
     public void OnClickChangeCharacter(int direction)
