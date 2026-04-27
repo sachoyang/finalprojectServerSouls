@@ -97,9 +97,9 @@ MonoBehaviour:
   _stateAuthorityChangeErrorCorrectionDelta: 0
   gravity: -20
   jumpImpulse: 8
-  acceleration: 10
+  acceleration: 15
   braking: 10
-  maxSpeed: 2
+  maxSpeed: 10
   rotationSpeed: 15
 --- !u!114 &-6696167897974779968
 MonoBehaviour:
@@ -115,6 +115,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _prefabBall: {fileID: 7159054010019135406, guid: 75f5637bf8d844b49b66bb27a1284851, type: 3}
   _prefabPhysxBall: {fileID: 174878494860816650, guid: 8a00e6a6ca67de24d8239ed3635ddf5c, type: 3}
+  _spawnedProjectile: 0
+  _material: {fileID: 0}
 --- !u!1 &7350730967684130313
 GameObject:
   m_ObjectHideFlags: 0
