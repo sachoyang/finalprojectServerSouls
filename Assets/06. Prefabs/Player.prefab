@@ -3265,6 +3265,8 @@ GameObject:
   - component: {fileID: 3832991948678707729}
   - component: {fileID: 4658425165258041692}
   - component: {fileID: 1933266387917589360}
+  - component: {fileID: 2252031246122198364}
+  - component: {fileID: 887917814547890475}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -3327,14 +3329,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   animator: {fileID: 1933266387917589360}
-  characterController: {fileID: 3832991948678707729}
   viewCamera: {fileID: 0}
   walkSpeed: 2.6
   runSpeed: 4.8
   rollSpeed: 6.5
   rotationSpeed: 720
-  gravity: -20
   rollDuration: 0.9
+  shiftHoldThreshold: 0.25
+  movementAcceleration: 80
+  movementBraking: 30
+  attackLockDuration: 0.65
+  parryLockDuration: 0.5
 --- !u!95 &1933266387917589360
 Animator:
   serializedVersion: 5
@@ -3356,6 +3361,45 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &2252031246122198364
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7435228771337582382}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 378411a89480da345945c2f888327a2d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _stateAuthorityChangeErrorCorrectionDelta: 0
+  gravity: -20
+  jumpImpulse: 8
+  acceleration: 10
+  braking: 10
+  maxSpeed: 2
+  rotationSpeed: 15
+--- !u!114 &887917814547890475
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7435228771337582382}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  SortKey: 1107333854
+  ObjectInterest: 1
+  Flags: 262145
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 4658425165258041692}
+  - {fileID: 2252031246122198364}
+  ForceRemoteRenderTimeframe: 0
 --- !u!1 &7477488570312417499
 GameObject:
   m_ObjectHideFlags: 0
