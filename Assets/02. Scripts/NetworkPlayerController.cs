@@ -9,10 +9,12 @@ public class NetworkPlayerController : Player
     private static readonly int Attack = Animator.StringToHash("Attack");
     private static readonly int Parry = Animator.StringToHash("Parry");
     private static readonly int Roll = Animator.StringToHash("Roll");
+    private static readonly int Jump = Animator.StringToHash("Jump");
 
     private const byte ActionAttack = 1;
     private const byte ActionParry = 2;
     private const byte ActionRoll = 3;
+    private const byte ActionJump = 4;
 
     [Header("References")]
     [SerializeField] private Animator animator;
@@ -31,6 +33,7 @@ public class NetworkPlayerController : Player
     [Header("Action Locks")]
     [SerializeField] private float attackLockDuration = 0.65f;
     [SerializeField] private float parryLockDuration = 0.5f;
+    [SerializeField] private float jumpImpulse = 8f;
 
     [Networked] private bool IsMovingNetworked { get; set; }
     [Networked] private bool IsRunningNetworked { get; set; }
@@ -135,7 +138,13 @@ public class NetworkPlayerController : Player
 
         if (!isBusy)
         {
-            if (data.buttons.IsSet(NetworkInputData.MOUSEBUTTON0))
+            if (data.buttons.IsSet(NetworkInputData.JUMP) && _networkCharacterController.Grounded)
+            {
+                _networkCharacterController.Jump(false, jumpImpulse);
+                LastAction = ActionJump;
+                ActionSequence++;
+            }
+            else if (data.buttons.IsSet(NetworkInputData.MOUSEBUTTON0))
             {
                 StartAction(ActionAttack, attackLockDuration);
                 isActing = true;
@@ -198,6 +207,7 @@ public class NetworkPlayerController : Player
                 animator.ResetTrigger(Attack);
                 animator.ResetTrigger(Parry);
                 animator.ResetTrigger(Roll);
+                animator.ResetTrigger(Jump);
                 TriggerAction(LastAction);
             }
         }
@@ -268,6 +278,9 @@ public class NetworkPlayerController : Player
                 break;
             case ActionRoll:
                 animator.SetTrigger(Roll);
+                break;
+            case ActionJump:
+                animator.SetTrigger(Jump);
                 break;
         }
     }

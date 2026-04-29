@@ -31,10 +31,12 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
     }
     private bool _mouseButton0;
     private bool _mouseButton1;
+    private bool _jumpPressed;
     private void Update()
     {
         _mouseButton0 = _mouseButton0 | Input.GetMouseButton(0);
         _mouseButton1 = _mouseButton1 || Input.GetMouseButton(1);
+        _jumpPressed = _jumpPressed || Input.GetKeyDown(KeyCode.Space);
     }
 
     public void OnInput(NetworkRunner runner, NetworkInput input)
@@ -60,6 +62,8 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
         data.buttons.Set(
             NetworkInputData.SHIFT,
             Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift));
+        data.buttons.Set(NetworkInputData.JUMP, _jumpPressed);
+        _jumpPressed = false;
 
         input.Set(data);
     }
