@@ -3263,10 +3263,10 @@ GameObject:
   m_Component:
   - component: {fileID: 8311000890193021906}
   - component: {fileID: 3832991948678707729}
-  - component: {fileID: 4658425165258041692}
   - component: {fileID: 1933266387917589360}
   - component: {fileID: 2252031246122198364}
   - component: {fileID: 887917814547890475}
+  - component: {fileID: 8473531464486402951}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -3316,30 +3316,6 @@ CharacterController:
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 0.9, z: 0}
---- !u!114 &4658425165258041692
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7435228771337582382}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4b85b1b5b1904d85aa19c8e94bc8d3f1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  animator: {fileID: 1933266387917589360}
-  viewCamera: {fileID: 0}
-  walkSpeed: 2.6
-  runSpeed: 4.8
-  rollSpeed: 6.5
-  rotationSpeed: 720
-  rollDuration: 0.9
-  shiftHoldThreshold: 0.25
-  movementAcceleration: 80
-  movementBraking: 30
-  attackLockDuration: 0.65
-  parryLockDuration: 0.5
 --- !u!95 &1933266387917589360
 Animator:
   serializedVersion: 5
@@ -3397,9 +3373,37 @@ MonoBehaviour:
   Flags: 262145
   NestedObjects: []
   NetworkedBehaviours:
-  - {fileID: 4658425165258041692}
   - {fileID: 2252031246122198364}
+  - {fileID: 8473531464486402951}
   ForceRemoteRenderTimeframe: 0
+--- !u!114 &8473531464486402951
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7435228771337582382}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: de46e77ae6428ac49b91ec7706372651, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _prefabBall: {fileID: 0}
+  _prefabPhysxBall: {fileID: 0}
+  _spawnedProjectile: 0
+  _material: {fileID: 0}
+  animator: {fileID: 1933266387917589360}
+  viewCamera: {fileID: 0}
+  walkSpeed: 2.6
+  runSpeed: 4.8
+  rollSpeed: 6.5
+  rotationSpeed: 720
+  rollDuration: 0.9
+  shiftHoldThreshold: 0.25
+  movementAcceleration: 80
+  movementBraking: 30
+  attackLockDuration: 0.65
+  parryLockDuration: 0.5
 --- !u!1 &7477488570312417499
 GameObject:
   m_ObjectHideFlags: 0
