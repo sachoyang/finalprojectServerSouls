@@ -180,6 +180,7 @@ GameObject:
   - component: {fileID: 607396903}
   - component: {fileID: 607396902}
   - component: {fileID: 607396901}
+  - component: {fileID: 607396904}
   m_Layer: 0
   m_Name: DragonBoss
   m_TagString: Untagged
@@ -242,6 +243,10 @@ MonoBehaviour:
   runDistance: 15
   _CurrentState: 0
   _AggroTarget: {fileID: 0}
+  _CurrentPattern: 0
+  _PatternStep: 0
+  _ActionCounter: 0
+  _CurrentActionDuration: 0
   visual: {fileID: 607396903}
 --- !u!114 &607396903
 MonoBehaviour:
@@ -257,6 +262,28 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   anim: {fileID: 1019700223}
   fireBreath: {fileID: 0}
+--- !u!64 &607396904
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 607396899}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 4300000, guid: 2f4e6492f506bbb4a8aeba850e3bb52f, type: 3}
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -437,7 +464,7 @@ Transform:
   m_GameObject: {fileID: 963194225}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -10}
+  m_LocalPosition: {x: 0, y: 1, z: -20}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
