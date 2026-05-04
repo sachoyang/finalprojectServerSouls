@@ -221,7 +221,7 @@ public class DragonBoss : NetworkBehaviour
         float closestDistance = float.MaxValue;
         NetworkObject bestTarget = null;
 
-        foreach (var player in FindObjectsOfType<Player>())
+        foreach (var player in FindObjectsOfType<NetworkPlayerController>())
         {
             float dist = Vector3.Distance(transform.position, player.transform.position);
             if (dist < closestDistance)
