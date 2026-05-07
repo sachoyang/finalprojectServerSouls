@@ -43,6 +43,9 @@ public class DragonBoss : NetworkBehaviour
     {
         _changeDetector = GetChangeDetector(ChangeDetector.Source.SimulationState);
 
+        // 자식(보스 모델)에게 이사 간 DragonVisual 스크립트를 자동으로 찾아옵니다.
+        visual = GetComponentInChildren<DragonVisual>();
+
         if (HasStateAuthority)
         {
             ChangeState(DragonState.Idle, 3.0f);

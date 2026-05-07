@@ -7,16 +7,22 @@ public class DragonVisual : MonoBehaviour
     [Header("이펙트")]
     public ParticleSystem fireBreath;
 
-    public void SetSpeed(float speedValue)
+    [Header("히트박스 연결")]
+    public BossHitbox mouthHitbox;
+    public BossHitbox leftClawHitbox;
+    public BossHitbox rightClawHitbox;
+
+    private void Awake()
     {
-        anim.SetFloat("MoveSpeed", speedValue);
+        // 이제 같은 오브젝트에 있으므로 알아서 Animator를 찾아 연결합니다.
+        if (anim == null) 
+        {
+            anim = GetComponent<Animator>();
+        }
     }
 
-    // [추가됨] 애니메이션 재생 배속 조절
-    public void SetAnimSpeed(float multiplier)
-    {
-        anim.speed = multiplier;
-    }
+    public void SetSpeed(float speedValue) { anim.SetFloat("MoveSpeed", speedValue); }
+    public void SetAnimSpeed(float multiplier) { anim.speed = multiplier; }
 
     public void DoBiteAttack() 
     { 
@@ -29,4 +35,21 @@ public class DragonVisual : MonoBehaviour
     public void DoJump() { anim.SetTrigger("DoJump"); }
     public void DoScream() { anim.SetTrigger("DoScream"); }
     public void DoSleep() { anim.SetTrigger("DoSleep"); }
+
+    // ==========================================
+    // [애니메이션 이벤트용 함수]
+    // ==========================================
+    public void EnableMouthHitbox() { if (mouthHitbox != null) mouthHitbox.StartAttack(); }
+    public void DisableMouthHitbox() { if (mouthHitbox != null) mouthHitbox.StopAttack(); }
+
+    public void EnableClawHitbox() 
+    { 
+        if (leftClawHitbox != null) leftClawHitbox.StartAttack(); 
+        if (rightClawHitbox != null) rightClawHitbox.StartAttack(); 
+    }
+    public void DisableClawHitbox() 
+    { 
+        if (leftClawHitbox != null) leftClawHitbox.StopAttack(); 
+        if (rightClawHitbox != null) rightClawHitbox.StopAttack(); 
+    }
 }

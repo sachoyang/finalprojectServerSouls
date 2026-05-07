@@ -8,57 +8,62 @@ public class BossHitbox : MonoBehaviour
     public HitboxType hitboxType;
 
     [Header("피격 (보스가 맞는) 설정")]
-    public bool isHurtbox = true;         // 플레이어의 공격을 허용하는 부위인가?
-    public float damageMultiplier = 1.0f; // 데미지 배율 (기획: 머리 1.2, 몸통 1.0)
+    public bool isHurtbox = true;         
+    public float damageMultiplier = 1.0f; 
 
     [Header("공격 (플레이어를 때리는) 설정")]
-    public bool isAttackHitbox = false;   // 플레이어에게 데미지를 주는 부위인가?
-    public float baseDamage = 10f;        // 닿았을 때 깎을 체력
+    public bool isAttackHitbox = false;   
+    public float baseDamage = 10f;        
 
     private Collider _collider;
+    
+    // [핵심] 콜라이더를 끄는 대신, 이 변수로 데미지 판정 여부를 결정합니다.
+    private bool _isCurrentlyAttacking = false;
 
     private void Awake()
     {
         _collider = GetComponent<Collider>();
-        
-        // [중요] 공격 전용 부위(예: 이빨, 발톱)라면 평소에는 판정을 꺼둡니다.
-        // 나중에 보스가 공격 애니메이션을 할 때만 켤 것입니다.
-        if (isAttackHitbox && !isHurtbox)
-        {
-            _collider.enabled = false;
-        }
+        _collider.isTrigger = true;
+        _collider.enabled = true; // 무조건 켜둠 (언제든 맞을 수 있게)
     }
 
-    // 1. 보스의 공격 부위가 플레이어에게 닿았을 때 (트리거 판정)
+    // ==========================================
+    // 외부(DragonVisual)에서 애니메이션 이벤트로 호출할 함수
+    // ==========================================
+    public void StartAttack() 
+    { 
+        if (isAttackHitbox) _isCurrentlyAttacking = true; 
+    }
+    
+    public void StopAttack() 
+    { 
+        if (isAttackHitbox) _isCurrentlyAttacking = false; 
+    }
+
+    // ==========================================
+    // 1. 플레이어를 때렸을 때
+    // ==========================================
     private void OnTriggerEnter(Collider other)
     {
-        if (!isAttackHitbox) return;
+        // 공격 중이 아니거나 공격 부위가 아니면 무시
+        if (!isAttackHitbox || !_isCurrentlyAttacking) return;
 
-        // 플레이어인지 확인 (Tag가 Player로 설정되어 있어야 합니다)
         if (other.CompareTag("Player"))
         {
             Debug.Log($"[Hit] 보스의 {hitboxType} 공격 적중! 유저 데미지: {baseDamage}");
             
-            // TODO: 다음 단계에서 실제 플레이어 체력을 깎는 코드 연결
-            // other.GetComponent<Player>().TakeDamage(baseDamage);
-            
-            // 다단히트 방지: 한 번 긁히면 콜라이더를 잠시 끕니다. 
-            // (애니메이션이 끝날 때나 다음 공격 시 다시 켜질 예정)
-            _collider.enabled = false; 
+            // 다단히트 방지: 한 대 치면 이번 공격 턴에서는 데미지 판정 오프
+            _isCurrentlyAttacking = false; 
         }
     }
 
-    // 2. 플레이어가 무기로 보스의 이 부위를 때렸을 때 호출할 함수
+    // ==========================================
+    // 2. 보스가 맞았을 때 (무기 스크립트에서 이 함수를 호출할 예정)
+    // ==========================================
     public void OnHitByPlayer(float playerDamage)
     {
         if (!isHurtbox) return;
-
-        // 부위별 배율 적용
         float finalDamage = playerDamage * damageMultiplier;
-        
-        Debug.Log($"[Damaged] 보스 {hitboxType} 피격! (배율:{damageMultiplier}x) / 최종 데미지: {finalDamage}");
-        
-        // TODO: 다음 단계에서 DragonBoss 본체의 체력(HP)을 깎도록 네트워크로 전달
-        // GetComponentInParent<DragonBoss>().TakeBossDamage(finalDamage);
+        Debug.Log($"[Damaged] 보스 {hitboxType} 피격! (배율: {damageMultiplier}x, 최종 데미지: {finalDamage})");
     }
 }

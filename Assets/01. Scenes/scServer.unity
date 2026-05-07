@@ -152,7 +152,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _playerPrefab:
-    RawGuidValue: 115e88d0a2c99c6488d0b27ec6898790
+    RawGuidValue: ebc189906ed8e6c49901d81811c01d8a
 --- !u!4 &21222142
 Transform:
   m_ObjectHideFlags: 0
@@ -181,7 +181,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hitboxType: 2
-  isHurtbox: 0
+  isHurtbox: 1
   damageMultiplier: 1
   isAttackHitbox: 1
   baseDamage: 13
@@ -235,12 +235,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 250351786}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.17390604, y: 0, z: 0, w: 0.98476225}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalRotation: {x: -0.6839883, y: -0.1793324, z: 0.6839883, w: -0.1793324}
+  m_LocalPosition: {x: 45.268158, y: 281.7471, z: 0}
+  m_LocalScale: {x: 58.82352, y: 58.823505, z: 58.82352}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 607396900}
+  m_Father: {fileID: 1019231725}
   m_LocalEulerAnglesHint: {x: -20.03, y: 0, z: 0}
 --- !u!136 &250351788
 CapsuleCollider:
@@ -262,9 +262,9 @@ CapsuleCollider:
   m_Enabled: 1
   serializedVersion: 2
   m_Radius: 1.5
-  m_Height: 6.04
+  m_Height: 0
   m_Direction: 1
-  m_Center: {x: 5.29, y: 1.2, z: 3.05}
+  m_Center: {x: 3.74, y: 2.13, z: 2.33}
 --- !u!136 &250351789
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -285,9 +285,9 @@ CapsuleCollider:
   m_Enabled: 1
   serializedVersion: 2
   m_Radius: 1.5
-  m_Height: 6.04
+  m_Height: 4
   m_Direction: 1
-  m_Center: {x: -5.29, y: 1.2, z: 3.05}
+  m_Center: {x: -3.74, y: 2.13, z: 2.33}
 --- !u!136 &250351790
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -308,9 +308,9 @@ CapsuleCollider:
   m_Enabled: 1
   serializedVersion: 2
   m_Radius: 1.5
-  m_Height: 6.04
+  m_Height: 3
   m_Direction: 1
-  m_Center: {x: -2.51, y: 3.42, z: -3.11}
+  m_Center: {x: -2.51, y: 2.81, z: -3.11}
 --- !u!136 &250351791
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -331,9 +331,9 @@ CapsuleCollider:
   m_Enabled: 1
   serializedVersion: 2
   m_Radius: 1.5
-  m_Height: 6.04
+  m_Height: 3
   m_Direction: 1
-  m_Center: {x: 2.51, y: 3.42, z: -3.11}
+  m_Center: {x: 2.51, y: 2.81, z: -3.11}
 --- !u!136 &250351792
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -353,10 +353,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 3
-  m_Height: 20
+  m_Radius: 2
+  m_Height: 10
   m_Direction: 2
-  m_Center: {x: 0, y: 2.86, z: 0}
+  m_Center: {x: 0, y: 2.43, z: -0.06}
 --- !u!114 &321064788
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -393,10 +393,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 150
-  m_Height: 600
+  m_Radius: 195.5
+  m_Height: 776.19
   m_Direction: 0
-  m_Center: {x: 0, y: -99.4, z: 0}
+  m_Center: {x: 0, y: -43.7, z: 0}
 --- !u!1 &607396899
 GameObject:
   m_ObjectHideFlags: 0
@@ -406,7 +406,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 607396900}
-  - component: {fileID: 607396903}
   - component: {fileID: 607396902}
   - component: {fileID: 607396901}
   m_Layer: 0
@@ -432,7 +431,6 @@ Transform:
   - {fileID: 1019241451}
   - {fileID: 1088986806}
   - {fileID: 1622915263}
-  - {fileID: 250351787}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &607396901
@@ -468,29 +466,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveSpeed: 3
   rotationSpeed: 5
-  attackRange: 8
-  runDistance: 15
+  attackRange: 6
+  runDistance: 12
   _CurrentState: 0
   _AggroTarget: {fileID: 0}
   _CurrentPattern: 0
   _PatternStep: 0
   _ActionCounter: 0
   _CurrentActionDuration: 0
-  visual: {fileID: 607396903}
---- !u!114 &607396903
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 607396899}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c72016f7597228243b1bd7e14bc1b81c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  anim: {fileID: 1012319521}
-  fireBreath: {fileID: 0}
+  visual: {fileID: 0}
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -1031,6 +1015,7 @@ Transform:
   - {fileID: 1019329913}
   - {fileID: 1019285109}
   - {fileID: 1019238751}
+  - {fileID: 250351787}
   m_Father: {fileID: 1019276917}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &1019234419
@@ -1137,7 +1122,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 2, y: 2, z: 2}
+  m_LocalScale: {x: 1.7, y: 1.7, z: 1.7}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1019298731}
@@ -2146,7 +2131,7 @@ GameObject:
   m_Layer: 0
   m_Name: Spine01
   m_TagString: Untagged
-  m_Icon: {fileID: 0}
+  m_Icon: {fileID: 5132851093641282708, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
@@ -2873,7 +2858,7 @@ GameObject:
   m_Layer: 0
   m_Name: Head
   m_TagString: Untagged
-  m_Icon: {fileID: 0}
+  m_Icon: {fileID: 5132851093641282708, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
@@ -3003,7 +2988,7 @@ GameObject:
   m_Layer: 0
   m_Name: R_Hand 1
   m_TagString: Untagged
-  m_Icon: {fileID: 0}
+  m_Icon: {fileID: 5132851093641282708, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
@@ -3145,6 +3130,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1019241451}
   - component: {fileID: 1012319521}
+  - component: {fileID: 1019669134}
   m_Layer: 0
   m_Name: Albino
   m_TagString: Untagged
@@ -3152,6 +3138,23 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &1019669134
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1019669133}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c72016f7597228243b1bd7e14bc1b81c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  anim: {fileID: 1012319521}
+  fireBreath: {fileID: 0}
+  mouthHitbox: {fileID: 1863238326}
+  leftClawHitbox: {fileID: 2071409620}
+  rightClawHitbox: {fileID: 107280063}
 --- !u!1 &1019669753
 GameObject:
   m_ObjectHideFlags: 0
@@ -3166,7 +3169,7 @@ GameObject:
   m_Layer: 0
   m_Name: R_Hand
   m_TagString: Untagged
-  m_Icon: {fileID: 0}
+  m_Icon: {fileID: 5132851093641282708, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
@@ -3239,7 +3242,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   hitboxType: 4
   isHurtbox: 1
-  damageMultiplier: 1
+  damageMultiplier: 0.8
   isAttackHitbox: 1
   baseDamage: 8
 --- !u!1 &1063472760
@@ -3894,8 +3897,8 @@ SphereCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Radius: 110
-  m_Center: {x: -50, y: -50, z: 0}
+  m_Radius: 144.8
+  m_Center: {x: 0, y: -37.9, z: 0}
 --- !u!114 &2071409620
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3909,7 +3912,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hitboxType: 2
-  isHurtbox: 0
+  isHurtbox: 1
   damageMultiplier: 1
   isAttackHitbox: 1
   baseDamage: 13
