@@ -75,6 +75,7 @@ public class NetworkPlayerController : Player
 
     // Fusion 기본 NetworkCharacterController. 실제 이동, 점프, 접지 판정을 담당한다.
     private NetworkCharacterController _networkCharacterController;
+    private PlayerStats _playerStats;
     // 네트워크 상태 변화 감지기. Render에서 ActionSequence 변경 여부를 확인하는 데 사용한다.
     private ChangeDetector _changeDetector;
     // 마지막으로 유효했던 이동 방향. 입력 없이 구르기를 시작할 때 캐릭터가 바라보던 방향으로 구른다.
@@ -85,6 +86,7 @@ public class NetworkPlayerController : Player
         // 인스펙터 연결이 빠져도 가능한 한 자동으로 참조를 채운다.
         animator ??= GetComponent<Animator>();
         _networkCharacterController = GetComponent<NetworkCharacterController>();
+        _playerStats = GetComponent<PlayerStats>();
         viewCamera ??= Camera.main;
 
         // 필수 컴포넌트가 없으면 이후 네트워크 틱에서 NullReference가 반복되므로 스크립트를 비활성화한다.
@@ -145,6 +147,15 @@ public class NetworkPlayerController : Player
 
     public override void FixedUpdateNetwork()
     {
+        if (_playerStats != null && _playerStats.IsDead)
+        {
+            ApplyMovement(Vector3.zero, walkSpeed);
+            UpdateMovementState(false, false);
+            WasShiftHeld = false;
+            ShiftHoldTime = 0f;
+            return;
+        }
+
         // Fusion 입력은 입력 권한 클라이언트가 수집하고, 상태 권한이 있는 쪽에서 시뮬레이션된다.
         // 입력이 없으면 이동 애니메이션과 Shift 탭 상태를 초기화해 끊긴 입력이 남지 않게 한다.
         if (!GetInput(out NetworkInputData data))
@@ -203,9 +214,12 @@ public class NetworkPlayerController : Player
             }
             else if (data.buttons.IsSet(NetworkInputData.MOUSEBUTTON0))
             {
-                StartAction(ActionAttack, attackLockDuration);
-                isActing = true;
-                isBusy = true;
+                if (_playerStats == null || _playerStats.TryUseStamina(_playerStats.AttackStaminaCost))
+                {
+                    StartAction(ActionAttack, attackLockDuration);
+                    isActing = true;
+                    isBusy = true;
+                }
             }
             else if (data.buttons.IsSet(NetworkInputData.MOUSEBUTTON1))
             {
@@ -215,17 +229,23 @@ public class NetworkPlayerController : Player
             }
             else if (shiftReleased && ShiftHoldTime < shiftHoldThreshold)
             {
-                StartRoll(desiredMove);
-                isRolling = true;
-                isBusy = true;
+                if (_playerStats == null || _playerStats.TryUseStamina(_playerStats.RollStaminaCost))
+                {
+                    StartRoll(desiredMove);
+                    isRolling = true;
+                    isBusy = true;
+                }
             }
         }
+
+        float runStaminaCost = _playerStats != null ? _playerStats.RunStaminaPerSecond * Runner.DeltaTime : 0f;
 
         // Shift를 누르고 있는 시간이 임계값을 넘은 뒤, 움직이고 있으며 다른 액션 중이 아닐 때만 달리기로 본다.
         bool shouldRun = desiredMove.sqrMagnitude > 0.001f &&
                          shiftHeld &&
                          ShiftHoldTime >= shiftHoldThreshold &&
-                         !isBusy;
+                         !isBusy &&
+                         (_playerStats == null || _playerStats.HasStamina(runStaminaCost));
 
         float currentSpeed = walkSpeed;
         Vector3 moveDirection = Vector3.zero;
@@ -245,6 +265,11 @@ public class NetworkPlayerController : Player
 
         // 실제 이동과 애니메이션 상태는 매 네트워크 틱에서 계산된 최종값으로 갱신한다.
         ApplyMovement(moveDirection, currentSpeed);
+        if (shouldRun && _playerStats != null)
+        {
+            _playerStats.TryUseStamina(runStaminaCost);
+        }
+
         UpdateMovementState(moveDirection.sqrMagnitude > 0.001f, shouldRun);
         WasShiftHeld = shiftHeld;
 
