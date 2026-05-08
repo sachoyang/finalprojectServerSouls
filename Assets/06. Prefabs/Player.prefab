@@ -3267,6 +3267,7 @@ GameObject:
   - component: {fileID: 2252031246122198364}
   - component: {fileID: 887917814547890475}
   - component: {fileID: 8473531464486402951}
+  - component: {fileID: 6138425169054327812}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -3347,8 +3348,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 378411a89480da345945c2f888327a2d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   _stateAuthorityChangeErrorCorrectionDelta: 0
   gravity: -20
   jumpImpulse: 8
@@ -3375,6 +3376,7 @@ MonoBehaviour:
   NetworkedBehaviours:
   - {fileID: 2252031246122198364}
   - {fileID: 8473531464486402951}
+  - {fileID: 6138425169054327812}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &8473531464486402951
 MonoBehaviour:
@@ -3404,6 +3406,34 @@ MonoBehaviour:
   movementBraking: 30
   attackLockDuration: 0.65
   parryLockDuration: 0.5
+--- !u!114 &6138425169054327812
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7435228771337582382}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d548f7d4bc549d6a9b9f9f95ec2f9c1, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  maxHealth: 10000
+  maxStamina: 1000
+  staminaRegenPerSecond: 100
+  staminaRegenDelay: 0.8
+  hitInvincibleDuration: 0.25
+  defenseRate: 0.5
+  firstAttackDamage: 7000
+  secondAttackDamage: 9000
+  thirdAttackDamage: 11000
+  attackStaminaCost: 0
+  rollStaminaCost: 200
+  runStaminaPerSecond: 40
+  spinSlashStaminaCost: 400
+  jumpSlashStaminaCost: 400
+  powerUpStaminaCost: 500
+  slideSlashStaminaCost: 400
 --- !u!1 &7477488570312417499
 GameObject:
   m_ObjectHideFlags: 0
