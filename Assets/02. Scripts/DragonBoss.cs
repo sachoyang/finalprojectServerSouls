@@ -8,21 +8,29 @@ public enum DragonState
 
 public enum BossPattern
 {
-    None,           
-    Pattern1_Bite,  
-    Pattern2_Claw   
+    None,
+    Pattern1_Bite,
+    Pattern2_Claw
 }
 
 public class DragonBoss : NetworkBehaviour
 {
     [Header("설정")]
-    public float moveSpeed = 3.0f;      
-    public float rotationSpeed = 5.0f;  
+    public float moveSpeed = 2.5f;
+    public float rotationSpeed = 5.0f;
 
     [Header("사거리 설정")]
-    public float attackRange = 5.0f;    
-    public float runDistance = 15.0f;   
+    public float attackRange = 6.0f;
+    public float runDistance = 10.0f;
 
+    // ==========================================
+    // 보스 체력 시스템
+    // ==========================================
+    [Header("체력 설정")]
+    public float maxHP = 100000f;
+    [Networked] public float CurrentHP { get; set; }
+
+    // ==========================================
     [Networked] public DragonState CurrentState { get; set; }
     [Networked] private TickTimer StateTimer { get; set; }
     [Networked] public NetworkObject AggroTarget { get; set; }
@@ -32,7 +40,7 @@ public class DragonBoss : NetworkBehaviour
 
     // [핵심 추가 1] 연속된 같은 상태(Bite->Bite)도 무조건 감지하기 위한 행동 카운터
     [Networked] public byte ActionCounter { get; set; }
-    
+
     // [핵심 추가 2] 현재 상태의 목표 지속 시간을 클라이언트에게 공유
     [Networked] public float CurrentActionDuration { get; set; }
 
@@ -48,6 +56,7 @@ public class DragonBoss : NetworkBehaviour
 
         if (HasStateAuthority)
         {
+            CurrentHP = maxHP; // 호스트가 시작할 때 체력 만땅으로 채워줌
             ChangeState(DragonState.Idle, 3.0f);
         }
     }
@@ -56,12 +65,36 @@ public class DragonBoss : NetworkBehaviour
     {
         if (HasStateAuthority)
         {
+            // 죽었으면 아무것도 안 함
+            if (CurrentHP <= 0) return;
+
             UpdateBossAI();
 
             if (CurrentState == DragonState.Walk && AggroTarget != null)
             {
                 MoveTowardsTarget();
             }
+        }
+    }
+
+    // ==========================================
+    // [핵심] 클라이언트가 "나 보스 때렸어!" 라고 서버(호스트)에게 알리는 함수
+    // ==========================================
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RPC_TakeDamage(float damage)
+    {
+        // 이미 죽었으면 데미지 무시
+        if (CurrentHP <= 0) return;
+
+        CurrentHP -= damage;
+        Debug.Log($"[Server] 보스가 데미지를 입음! 남은 HP: {CurrentHP}");
+
+        // 체력이 0 이하가 되면 죽음 처리 (기획에 있던 Sleep 모션을 죽음으로 임시 활용)
+        if (CurrentHP <= 0)
+        {
+            CurrentHP = 0;
+            Debug.Log("보스 처치 완료!");
+            ChangeState(DragonState.Sleep, 100f); // 쓰러져서 안 일어나게 시간 길게 설정
         }
     }
 
@@ -74,7 +107,7 @@ public class DragonBoss : NetworkBehaviour
             if (CurrentPattern != BossPattern.None)
             {
                 ExecutePatternStep();
-                return; 
+                return;
             }
 
             if (CurrentState == DragonState.Idle)
@@ -84,11 +117,11 @@ public class DragonBoss : NetworkBehaviour
                     float dist = Vector3.Distance(transform.position, AggroTarget.transform.position);
                     if (dist <= attackRange)
                     {
-                        ChooseAttackPattern(); 
+                        ChooseAttackPattern();
                     }
                     else
                     {
-                        ChangeState(DragonState.Walk, 3.0f); 
+                        ChangeState(DragonState.Walk, 3.0f);
                     }
                 }
             }
@@ -117,7 +150,7 @@ public class DragonBoss : NetworkBehaviour
 
             if (dist <= attackRange)
             {
-                ChangeState(DragonState.Idle, 0.1f); 
+                ChangeState(DragonState.Idle, 0.1f);
                 return;
             }
 
@@ -164,7 +197,7 @@ public class DragonBoss : NetworkBehaviour
         {
             if (PatternStep == 0)
             {
-                ChangeState(DragonState.Idle, 0.5f); 
+                ChangeState(DragonState.Idle, 0.5f);
                 PatternStep++;
             }
             else if (PatternStep == 1)
@@ -174,12 +207,12 @@ public class DragonBoss : NetworkBehaviour
             }
             else if (PatternStep == 2)
             {
-                ChangeState(DragonState.BiteAttack, 1.2f); 
+                ChangeState(DragonState.BiteAttack, 1.2f);
                 PatternStep++;
             }
             else
             {
-                EndPattern(); 
+                EndPattern();
             }
         }
         else if (CurrentPattern == BossPattern.Pattern2_Claw)
@@ -187,22 +220,22 @@ public class DragonBoss : NetworkBehaviour
             if (PatternStep == 0)
             {
                 // 알려주신 Claw 원본은 3.333초지만, 기획의 속도감을 위해 1.5초만에 강제 실행 (약 2.2배속 재생됨)
-                ChangeState(DragonState.ClawAttack, 1.5f); 
+                ChangeState(DragonState.ClawAttack, 1.5f);
                 PatternStep++;
             }
             else if (PatternStep == 1)
             {
-                ChangeState(DragonState.ClawAttack, 1.5f); 
+                ChangeState(DragonState.ClawAttack, 1.5f);
                 PatternStep++;
             }
             else if (PatternStep == 2)
             {
-                ChangeState(DragonState.Idle, 0.8f);       
+                ChangeState(DragonState.Idle, 0.8f);
                 PatternStep++;
             }
             else if (PatternStep == 3)
             {
-                ChangeState(DragonState.ClawAttack, 1.5f); 
+                ChangeState(DragonState.ClawAttack, 1.5f);
                 PatternStep++;
             }
             else
@@ -270,7 +303,7 @@ public class DragonBoss : NetworkBehaviour
             animSpeedMultiplier = originalLength / CurrentActionDuration;
         }
 
-        visual.SetAnimSpeed(animSpeedMultiplier); 
+        visual.SetAnimSpeed(animSpeedMultiplier);
 
         switch (state)
         {
@@ -279,6 +312,7 @@ public class DragonBoss : NetworkBehaviour
             case DragonState.Jump: visual.DoJump(); break;
             case DragonState.HornAttack: visual.DoHornAttack(); break;
             case DragonState.Scream: visual.DoScream(); break;
+            case DragonState.Sleep: visual.DoSleep(); break;
         }
     }
 
@@ -297,15 +331,16 @@ public class DragonBoss : NetworkBehaviour
         if (_showDebug)
         {
             GUIStyle style = new GUIStyle();
-            style.fontSize = 35; 
-            style.normal.textColor = Color.yellow; 
+            style.fontSize = 35;
+            style.normal.textColor = Color.yellow;
             style.fontStyle = FontStyle.Bold;
 
             string debugInfo =
                 $"[Dragon Boss Debug]\n" +
                 $"Current State : {CurrentState}\n" +
                 $"Current Pattern : {CurrentPattern}\n" +
-                $"Pattern Step : {PatternStep}";
+                $"Pattern Step : {PatternStep}\n"+
+                $"HP : {CurrentHP} / {maxHP}"; // 체력 정보 표시
 
             GUI.Label(new Rect(30, 30, 500, 300), debugInfo, style);
         }
