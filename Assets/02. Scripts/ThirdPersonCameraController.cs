@@ -22,9 +22,17 @@ public class ThirdPersonCameraController : MonoBehaviour
     [SerializeField] private float positionSmoothTime = 0.08f;
     [SerializeField] private bool lockCursorOnStart = false;
 
+    [Header("Lock On")]
+    [SerializeField] private Vector3 lockOnTargetOffset = new Vector3(0f, 0.2f, 0f);
+    [SerializeField] private float lockOnHeight = 1.2f;
+    [SerializeField] private float lockOnTargetClearance = 2.5f;
+    [SerializeField] private float lockOnMinLookPitch = -35f;
+    [SerializeField] private float lockOnMaxLookPitch = 55f;
+
     private float _yaw;
     private float _pitch = 15f;
     private Vector3 _currentVelocity;
+    private Transform _lockOnTarget;
 
     private void Start()
     {
@@ -44,14 +52,38 @@ public class ThirdPersonCameraController : MonoBehaviour
             return;
         }
 
-        UpdateRotation();
+        if (_lockOnTarget == null)
+        {
+            UpdateRotation();
+        }
+
         UpdateZoom();
-        UpdatePosition();
+        if (_lockOnTarget != null)
+        {
+            UpdateLockOnPosition();
+        }
+        else
+        {
+            UpdatePosition();
+        }
     }
 
     public void SetTarget(Transform newTarget)
     {
         target = newTarget;
+    }
+
+    public void SetLockOnTarget(Transform newTarget)
+    {
+        _lockOnTarget = newTarget;
+    }
+
+    public void ClearLockOnTarget()
+    {
+        _lockOnTarget = null;
+        Vector3 currentEuler = transform.eulerAngles;
+        _yaw = currentEuler.y;
+        _pitch = NormalizeAngle(currentEuler.x);
     }
 
     private void UpdateRotation()
@@ -94,6 +126,75 @@ public class ThirdPersonCameraController : MonoBehaviour
             positionSmoothTime);
 
         transform.rotation = rotation;
+    }
+
+    private void UpdateLockOnPosition()
+    {
+        Vector3 focusPoint = target.position + targetOffset;
+        Vector3 lockPoint = _lockOnTarget.position + lockOnTargetOffset;
+        Vector3 flatToLock = Vector3.ProjectOnPlane(lockPoint - focusPoint, Vector3.up);
+
+        if (flatToLock.sqrMagnitude < 0.0001f)
+        {
+            flatToLock = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
+        }
+
+        if (flatToLock.sqrMagnitude < 0.0001f)
+        {
+            flatToLock = Vector3.forward;
+        }
+
+        flatToLock.Normalize();
+        Vector3 desiredPosition = focusPoint - flatToLock * distance + Vector3.up * lockOnHeight;
+        desiredPosition = KeepClearOfLockOnTarget(desiredPosition, lockPoint, flatToLock);
+
+        transform.position = Vector3.SmoothDamp(
+            transform.position,
+            desiredPosition,
+            ref _currentVelocity,
+            positionSmoothTime);
+
+        Vector3 lookDirection = lockPoint - transform.position;
+        if (lookDirection.sqrMagnitude > 0.0001f)
+        {
+            transform.rotation = GetClampedLockOnRotation(lookDirection);
+            Vector3 currentEuler = transform.eulerAngles;
+            _yaw = currentEuler.y;
+            _pitch = NormalizeAngle(currentEuler.x);
+        }
+    }
+
+    private Vector3 KeepClearOfLockOnTarget(Vector3 desiredPosition, Vector3 lockPoint, Vector3 flatToLock)
+    {
+        if (lockOnTargetClearance <= 0f)
+        {
+            return desiredPosition;
+        }
+
+        Vector3 fromLockPoint = desiredPosition - lockPoint;
+        if (fromLockPoint.sqrMagnitude >= lockOnTargetClearance * lockOnTargetClearance)
+        {
+            return desiredPosition;
+        }
+
+        Vector3 pushDirection = Vector3.ProjectOnPlane(fromLockPoint, Vector3.up);
+        if (pushDirection.sqrMagnitude < 0.0001f)
+        {
+            pushDirection = -flatToLock;
+        }
+
+        pushDirection.Normalize();
+        Vector3 clearedPosition = lockPoint + pushDirection * lockOnTargetClearance;
+        clearedPosition.y = desiredPosition.y;
+        return clearedPosition;
+    }
+
+    private Quaternion GetClampedLockOnRotation(Vector3 lookDirection)
+    {
+        Quaternion rawRotation = Quaternion.LookRotation(lookDirection.normalized, Vector3.up);
+        Vector3 euler = rawRotation.eulerAngles;
+        float pitch = Mathf.Clamp(NormalizeAngle(euler.x), lockOnMinLookPitch, lockOnMaxLookPitch);
+        return Quaternion.Euler(pitch, euler.y, 0f);
     }
 
     private static float NormalizeAngle(float angle)

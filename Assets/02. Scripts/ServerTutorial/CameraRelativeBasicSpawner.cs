@@ -14,6 +14,8 @@ public class CameraRelativeBasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
     private bool _mouseButton0;
     private bool _mouseButton1;
     private bool _jumpPressed;
+    private bool _lockOnPressed;
+    private bool _lockOnCancelPressed;
     private NetworkRunner _runner;
 
     public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
@@ -41,6 +43,8 @@ public class CameraRelativeBasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
         _mouseButton0 = _mouseButton0 | Input.GetMouseButton(0);
         _mouseButton1 = _mouseButton1 || Input.GetMouseButton(1);
         _jumpPressed = _jumpPressed || Input.GetKeyDown(KeyCode.Space);
+        _lockOnPressed = _lockOnPressed || Input.GetKeyDown(KeyCode.Q);
+        _lockOnCancelPressed = _lockOnCancelPressed || Input.GetKeyDown(KeyCode.E);
     }
 
     public void OnInput(NetworkRunner runner, NetworkInput input)
@@ -59,6 +63,10 @@ public class CameraRelativeBasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
             Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift));
         data.buttons.Set(NetworkInputData.JUMP, _jumpPressed);
         _jumpPressed = false;
+        data.buttons.Set(NetworkInputData.LOCKON, _lockOnPressed);
+        _lockOnPressed = false;
+        data.buttons.Set(NetworkInputData.LOCKON_CANCEL, _lockOnCancelPressed);
+        _lockOnCancelPressed = false;
 
         input.Set(data);
     }
