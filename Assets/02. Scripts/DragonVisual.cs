@@ -12,6 +12,11 @@ public class DragonVisual : MonoBehaviour
     public BossHitbox leftClawHitbox;
     public BossHitbox rightClawHitbox;
 
+    // (기존 변수들 아래에 추가)
+    [Header("광역기 이펙트 프리팹")]
+    public GameObject jumpSlamEffectPrefab;
+    public Transform jumpSlamSpawnPoint; // 보스 발밑 위치 (보스 자식으로 빈 오브젝트 하나 만들어서 할당)
+
     private void Awake()
     {
         // 이제 같은 오브젝트에 있으므로 알아서 Animator를 찾아 연결합니다.
@@ -51,5 +56,17 @@ public class DragonVisual : MonoBehaviour
     { 
         if (leftClawHitbox != null) leftClawHitbox.StopAttack(); 
         if (rightClawHitbox != null) rightClawHitbox.StopAttack(); 
+    }
+
+    // ==========================================
+    // [애니메이션 이벤트용 함수 추가]
+    // ==========================================
+    public void SpawnJumpSlamEffect()
+    {
+        if (jumpSlamEffectPrefab != null && jumpSlamSpawnPoint != null)
+        {
+            // 설정해둔 보스 발밑 위치와 회전값 그대로 이펙트 생성
+            Instantiate(jumpSlamEffectPrefab, jumpSlamSpawnPoint.position, jumpSlamSpawnPoint.rotation);
+        }
     }
 }

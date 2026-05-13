@@ -10,7 +10,8 @@ public enum BossPattern
 {
     None,
     Pattern1_Bite,
-    Pattern2_Claw
+    Pattern2_Claw,
+    Pattern3_Jump // [추가됨] 점프 패턴 명시
 }
 
 public class DragonBoss : NetworkBehaviour
@@ -38,10 +39,7 @@ public class DragonBoss : NetworkBehaviour
     [Networked] public BossPattern CurrentPattern { get; set; }
     [Networked] public int PatternStep { get; set; }
 
-    // [핵심 추가 1] 연속된 같은 상태(Bite->Bite)도 무조건 감지하기 위한 행동 카운터
     [Networked] public byte ActionCounter { get; set; }
-
-    // [핵심 추가 2] 현재 상태의 목표 지속 시간을 클라이언트에게 공유
     [Networked] public float CurrentActionDuration { get; set; }
 
     public DragonVisual visual;
@@ -50,13 +48,11 @@ public class DragonBoss : NetworkBehaviour
     public override void Spawned()
     {
         _changeDetector = GetChangeDetector(ChangeDetector.Source.SimulationState);
-
-        // 자식(보스 모델)에게 이사 간 DragonVisual 스크립트를 자동으로 찾아옵니다.
         visual = GetComponentInChildren<DragonVisual>();
 
         if (HasStateAuthority)
         {
-            CurrentHP = maxHP; // 호스트가 시작할 때 체력 만땅으로 채워줌
+            CurrentHP = maxHP; 
             ChangeState(DragonState.Idle, 3.0f);
         }
     }
@@ -65,7 +61,6 @@ public class DragonBoss : NetworkBehaviour
     {
         if (HasStateAuthority)
         {
-            // 죽었으면 아무것도 안 함
             if (CurrentHP <= 0) return;
 
             UpdateBossAI();
@@ -77,24 +72,19 @@ public class DragonBoss : NetworkBehaviour
         }
     }
 
-    // ==========================================
-    // [핵심] 클라이언트가 "나 보스 때렸어!" 라고 서버(호스트)에게 알리는 함수
-    // ==========================================
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
     public void RPC_TakeDamage(float damage)
     {
-        // 이미 죽었으면 데미지 무시
         if (CurrentHP <= 0) return;
 
         CurrentHP -= damage;
         Debug.Log($"[Server] 보스가 데미지를 입음! 남은 HP: {CurrentHP}");
 
-        // 체력이 0 이하가 되면 죽음 처리 (기획에 있던 Sleep 모션을 죽음으로 임시 활용)
         if (CurrentHP <= 0)
         {
             CurrentHP = 0;
             Debug.Log("보스 처치 완료!");
-            ChangeState(DragonState.Sleep, 100f); // 쓰러져서 안 일어나게 시간 길게 설정
+            ChangeState(DragonState.Sleep, 100f); 
         }
     }
 
@@ -163,84 +153,118 @@ public class DragonBoss : NetworkBehaviour
     private void ChangeState(DragonState newState, float duration)
     {
         CurrentState = newState;
-        CurrentActionDuration = duration; // 배속 계산을 위해 시간 저장
-        ActionCounter++;                  // 숫자가 무조건 오르므로 Render에서 100% 감지됨
+        CurrentActionDuration = duration; 
+        ActionCounter++;                  
         StateTimer = TickTimer.CreateFromSeconds(Runner, duration);
     }
 
+    // ==========================================
+    // [핵심 추가] 플레이어가 보스 뒤편에 있는지 판별하는 함수
+    // ==========================================
+    private bool IsAnyPlayerBehind()
+    {
+        foreach (var player in FindObjectsOfType<NetworkPlayerController>())
+        {
+            if (player == null) continue;
+
+            // 보스와 플레이어 간의 수평 거리 및 방향 계산
+            Vector3 toPlayer = (player.transform.position - transform.position);
+            toPlayer.y = 0;
+
+            // 사거리(인식 범위) 내에 있는 플레이어만 판정 (공격 사거리보다 약간 넓게 감지)
+            if (toPlayer.magnitude <= attackRange * 1.5f)
+            {
+                Vector3 bossForward = transform.forward;
+                bossForward.y = 0;
+
+                // 내적(Dot)이 음수면 플레이어가 보스의 기준면 뒤쪽에 위치함을 의미함
+                // -0.1f 이하로 설정하여 경계선이 아닌 확실한 뒤편일 때만 트리거되도록 안전장치 적용
+                if (Vector3.Dot(bossForward.normalized, toPlayer.normalized) < -0.1f)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    // ==========================================
+    // [수정됨] 조건에 따른 패턴 동적 확률 추첨
+    // ==========================================
     private void ChooseAttackPattern()
     {
         float rand = Random.Range(0f, 100f);
+        bool isPlayerBehind = IsAnyPlayerBehind();
 
-        if (rand < 35f)
+        if (isPlayerBehind)
         {
-            CurrentPattern = BossPattern.Pattern1_Bite;
-            PatternStep = 0;
-            ExecutePatternStep();
-        }
-        else if (rand < 70f)
-        {
-            CurrentPattern = BossPattern.Pattern2_Claw;
-            PatternStep = 0;
-            ExecutePatternStep();
+            // [조건 만족] 플레이어가 뒤에 있을 때: 점프 패턴 60%, 물기 20%, 할퀴기 20%
+            if (rand < 60f)
+            {
+                CurrentPattern = BossPattern.Pattern3_Jump;
+            }
+            else if (rand < 80f)
+            {
+                CurrentPattern = BossPattern.Pattern1_Bite;
+            }
+            else
+            {
+                CurrentPattern = BossPattern.Pattern2_Claw;
+            }
+            Debug.Log("[AI] 배후 플레이어 감지! 점프 패턴 확률 대폭 상승.");
         }
         else
         {
-            // 알려주신 Jump 원본 길이 2.0초 적용
-            ChangeState(DragonState.Jump, 2.0f);
+            // [평소 상태] 정면에 있을 때: 물기 40%, 할퀴기 40%, 점프 20%
+            if (rand < 40f)
+            {
+                CurrentPattern = BossPattern.Pattern1_Bite;
+            }
+            else if (rand < 80f)
+            {
+                CurrentPattern = BossPattern.Pattern2_Claw;
+            }
+            else
+            {
+                CurrentPattern = BossPattern.Pattern3_Jump;
+            }
         }
+
+        PatternStep = 0;
+        ExecutePatternStep();
     }
 
     private void ExecutePatternStep()
     {
         if (CurrentPattern == BossPattern.Pattern1_Bite)
         {
-            if (PatternStep == 0)
-            {
-                ChangeState(DragonState.Idle, 0.5f);
-                PatternStep++;
-            }
-            else if (PatternStep == 1)
-            {
-                ChangeState(DragonState.BiteAttack, 1.2f); // 알려주신 원본 길이 1.2초
-                PatternStep++;
-            }
-            else if (PatternStep == 2)
-            {
-                ChangeState(DragonState.BiteAttack, 1.2f);
-                PatternStep++;
-            }
-            else
-            {
-                EndPattern();
-            }
+            if (PatternStep == 0) { ChangeState(DragonState.Idle, 0.5f); PatternStep++; }
+            else if (PatternStep == 1) { ChangeState(DragonState.BiteAttack, 1.2f); PatternStep++; }
+            else if (PatternStep == 2) { ChangeState(DragonState.BiteAttack, 1.2f); PatternStep++; }
+            else { EndPattern(); }
         }
         else if (CurrentPattern == BossPattern.Pattern2_Claw)
         {
-            if (PatternStep == 0)
-            {
-                // 알려주신 Claw 원본은 3.333초지만, 기획의 속도감을 위해 1.5초만에 강제 실행 (약 2.2배속 재생됨)
-                ChangeState(DragonState.ClawAttack, 1.5f);
-                PatternStep++;
+            if (PatternStep == 0) { ChangeState(DragonState.ClawAttack, 1.5f); PatternStep++; }
+            else if (PatternStep == 1) { ChangeState(DragonState.ClawAttack, 1.5f); PatternStep++; }
+            else if (PatternStep == 2) { ChangeState(DragonState.Idle, 0.8f); PatternStep++; }
+            else if (PatternStep == 3) { ChangeState(DragonState.ClawAttack, 1.5f); PatternStep++; }
+            else { EndPattern(); }
+        }
+        // ==========================================
+        // [추가됨] Pattern3_Jump 실행 단계
+        // ==========================================
+        else if (CurrentPattern == BossPattern.Pattern3_Jump)
+        {
+            if (PatternStep == 0) 
+            { 
+                // 원본 길이 2.0초 동안 점프 모션 및 광역기 이펙트 대기
+                ChangeState(DragonState.Jump, 2.0f); 
+                PatternStep++; 
             }
-            else if (PatternStep == 1)
-            {
-                ChangeState(DragonState.ClawAttack, 1.5f);
-                PatternStep++;
-            }
-            else if (PatternStep == 2)
-            {
-                ChangeState(DragonState.Idle, 0.8f);
-                PatternStep++;
-            }
-            else if (PatternStep == 3)
-            {
-                ChangeState(DragonState.ClawAttack, 1.5f);
-                PatternStep++;
-            }
-            else
-            {
-                EndPattern();
+            else 
+            { 
+                EndPattern(); 
             }
         }
     }
@@ -273,7 +297,6 @@ public class DragonBoss : NetworkBehaviour
     {
         foreach (var change in _changeDetector.DetectChanges(this))
         {
-            // [수정됨] CurrentState 대신 ActionCounter가 변할 때마다 무조건 애니메이션 업데이트 실행
             if (change == nameof(ActionCounter))
             {
                 UpdateAnimation(CurrentState);
@@ -285,7 +308,6 @@ public class DragonBoss : NetworkBehaviour
     {
         visual.SetSpeed(state == DragonState.Walk ? 1.0f : 0.0f);
 
-        // 알려주신 원본 애니메이션 길이 세팅
         float originalLength = 1.0f;
         switch (state)
         {
@@ -296,7 +318,6 @@ public class DragonBoss : NetworkBehaviour
             case DragonState.Idle: originalLength = 1.333f; break;
         }
 
-        // [핵심 로직] 원본 길이 / 코드에서 지시한 시간 = 애니메이션 재생 배속
         float animSpeedMultiplier = 1.0f;
         if (CurrentActionDuration > 0)
         {
@@ -339,8 +360,8 @@ public class DragonBoss : NetworkBehaviour
                 $"[Dragon Boss Debug]\n" +
                 $"Current State : {CurrentState}\n" +
                 $"Current Pattern : {CurrentPattern}\n" +
-                $"Pattern Step : {PatternStep}\n"+
-                $"HP : {CurrentHP} / {maxHP}"; // 체력 정보 표시
+                $"Pattern Step : {PatternStep}\n" +
+                $"HP : {CurrentHP} / {maxHP}";
 
             GUI.Label(new Rect(30, 30, 500, 300), debugInfo, style);
         }
