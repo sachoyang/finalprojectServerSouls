@@ -46,8 +46,23 @@ public class PlayerAbilityInventory : MonoBehaviour
 
     private PlayerStats _stats;
 
-    public IReadOnlyList<PlayerAbilityModule> EquippedModules => equippedModules;
-    public IReadOnlyList<PlayerAbilitySlot> ActiveSlots => activeSlots;
+    public IReadOnlyList<PlayerAbilityModule> EquippedModules
+    {
+        get
+        {
+            EnsureRuntimeLists();
+            return equippedModules;
+        }
+    }
+
+    public IReadOnlyList<PlayerAbilitySlot> ActiveSlots
+    {
+        get
+        {
+            EnsureRuntimeLists();
+            return activeSlots;
+        }
+    }
 
     // UI가 보상 선택창을 띄우고 싶을 때 구독할 수 있는 이벤트.
     public event Action<IReadOnlyList<PlayerAbilityModule>> RewardOptionsGenerated;
@@ -60,12 +75,14 @@ public class PlayerAbilityInventory : MonoBehaviour
 
     private void Awake()
     {
+        EnsureRuntimeLists();
         _stats = GetComponent<PlayerStats>();
         LoadSavedActiveKeys();
     }
 
     public List<PlayerAbilityModule> GenerateRewardOptions(int bossStage, int optionCount = 3)
     {
+        EnsureRuntimeLists();
         List<PlayerAbilityModule> candidates = new List<PlayerAbilityModule>();
         foreach (PlayerAbilityModule module in abilityPool)
         {
@@ -96,6 +113,7 @@ public class PlayerAbilityInventory : MonoBehaviour
     // 보상 선택창에서 플레이어가 능력 1개를 고르면 호출한다.
     public bool SelectRewardOption(PlayerAbilityModule module)
     {
+        EnsureRuntimeLists();
         if (module == null || (preventDuplicateModules && HasModule(module)))
         {
             return false;
@@ -127,6 +145,7 @@ public class PlayerAbilityInventory : MonoBehaviour
     // 변경된 키는 PlayerPrefs에 저장되므로 다음 실행 때도 유지된다.
     public bool TryChangeActiveKey(int activeSlotIndex, KeyCode newKey)
     {
+        EnsureRuntimeLists();
         if (activeSlotIndex < 0 || activeSlotIndex >= activeSlots.Count || newKey == KeyCode.None)
         {
             return false;
@@ -142,6 +161,7 @@ public class PlayerAbilityInventory : MonoBehaviour
     // PlayerAbilityController가 슬롯 번호로 실제 슬롯을 찾을 때 사용한다.
     public PlayerAbilitySlot GetActiveSlot(int activeSlotIndex)
     {
+        EnsureRuntimeLists();
         return activeSlotIndex >= 0 && activeSlotIndex < activeSlots.Count ? activeSlots[activeSlotIndex] : null;
     }
 
@@ -155,6 +175,7 @@ public class PlayerAbilityInventory : MonoBehaviour
     // 같은 abilityId를 가진 모듈을 이미 획득했는지 확인한다.
     private bool HasModule(PlayerAbilityModule module)
     {
+        EnsureRuntimeLists();
         string abilityId = module.AbilityId;
         foreach (PlayerAbilityModule equipped in equippedModules)
         {
@@ -184,6 +205,7 @@ public class PlayerAbilityInventory : MonoBehaviour
     // Inspector에서 미리 들어있는 activeSlots가 있을 경우 저장된 키 설정을 반영한다.
     private void LoadSavedActiveKeys()
     {
+        EnsureRuntimeLists();
         for (int i = 0; i < activeSlots.Count; i++)
         {
             activeSlots[i].SetKey(GetSavedOrDefaultKey(i));
@@ -193,6 +215,14 @@ public class PlayerAbilityInventory : MonoBehaviour
     private static string GetPrefsKey(int activeSlotIndex)
     {
         return $"{KeyPrefsPrefix}{activeSlotIndex}";
+    }
+
+    private void EnsureRuntimeLists()
+    {
+        abilityPool ??= new List<PlayerAbilityModule>();
+        equippedModules ??= new List<PlayerAbilityModule>();
+        activeSlots ??= new List<PlayerAbilitySlot>();
+        defaultActiveKeys ??= Array.Empty<KeyCode>();
     }
 
     // 보상 후보를 랜덤 순서로 섞기 위한 Fisher-Yates 셔플.

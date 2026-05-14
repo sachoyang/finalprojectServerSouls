@@ -11,6 +11,10 @@ public class NetworkPlayerController : NetworkBehaviour
     private static readonly int Parry = Animator.StringToHash("Parry");
     private static readonly int Roll = Animator.StringToHash("Roll");
     private static readonly int Jump = Animator.StringToHash("Jump");
+    private static readonly int IsLockOn = Animator.StringToHash("IsLockOn");
+    private static readonly int LockMoveX = Animator.StringToHash("LockMoveX");
+    private static readonly int LockMoveY = Animator.StringToHash("LockMoveY");
+    private static readonly int LockMoveSpeed = Animator.StringToHash("LockMoveSpeed");
 
     private const byte ActionAttack = 1;
     private const byte ActionParry = 2;
@@ -27,13 +31,6 @@ public class NetworkPlayerController : NetworkBehaviour
 
     private const string LockOnHeadTag = "LockOnHead";
     private const string LockOnBodyTag = "LockOnBody";
-    private const string LockForwardState = "Great Sword Walk";
-    private const string LockBackState = "Great Sword Walk2";
-    private const string LockLeftState = "Great Sword Strafe";
-    private const string LockRightState = "Great Sword Strafe2";
-    private const string LockRunLeftState = "Great Sword Strafe3";
-    private const string LockRunRightState = "Great Sword Strafe4";
-
     [Header("References")]
     [SerializeField] private Animator animator;
     [SerializeField] private Camera viewCamera;
@@ -52,6 +49,8 @@ public class NetworkPlayerController : NetworkBehaviour
     [SerializeField] private float attackLockDuration = 0.65f;
     [SerializeField] private float parryLockDuration = 0.5f;
     [SerializeField] private float jumpImpulse = 8f;
+    [SerializeField] private float jumpActionLockDuration = 0.35f;
+    [SerializeField] private float jumpAnimationLockDuration = 0.45f;
 
     [Header("Lock On")]
     [SerializeField] private float lockOnSearchRadius = 80f;
@@ -78,8 +77,9 @@ public class NetworkPlayerController : NetworkBehaviour
     private Transform _lockOnBossRoot;
     private int _lockOnIndex = -1;
     private ThirdPersonCameraController _thirdPersonCamera;
-    private string _lastLockOnAnimation;
     private float _networkControllerRotationSpeed;
+    private float _suppressLockOnAnimatorUntil;
+    private int _predictedActionSequence;
 
     public bool IsLockOnActive => IsLockOnNetworked;
     public Transform CurrentLockOnTarget => _lockOnTarget;
@@ -197,6 +197,10 @@ public class NetworkPlayerController : NetworkBehaviour
                 _networkCharacterController.Jump(false, jumpImpulse);
                 LastAction = ActionJump;
                 ActionSequence++;
+                ActionTimer = TickTimer.CreateFromSeconds(Runner, jumpActionLockDuration);
+                isActing = true;
+                isBusy = true;
+                TriggerPredictedAction(ActionJump);
             }
             else if (data.buttons.IsSet(NetworkInputData.MOUSEBUTTON0))
             {
@@ -274,6 +278,11 @@ public class NetworkPlayerController : NetworkBehaviour
         {
             if (change == nameof(ActionSequence))
             {
+                if (Object.HasInputAuthority && ActionSequence == _predictedActionSequence)
+                {
+                    continue;
+                }
+
                 animator.ResetTrigger(Attack);
                 animator.ResetTrigger(Parry);
                 animator.ResetTrigger(Roll);
@@ -294,18 +303,10 @@ public class NetworkPlayerController : NetworkBehaviour
             }
         }
 
-        bool lockOnMovement = IsLockOnNetworked && !IsInActionAnimation();
+        bool lockOnMovement = IsLockOnNetworked && !IsLockOnAnimatorSuppressed() && !IsInActionAnimation();
         animator.SetBool(IsMoving, lockOnMovement ? false : IsMovingNetworked);
         animator.SetBool(IsRunning, lockOnMovement ? false : IsRunningNetworked);
-
-        if (lockOnMovement)
-        {
-            PlayLockOnAnimation(LockOnMoveNetworked);
-        }
-        else
-        {
-            _lastLockOnAnimation = null;
-        }
+        UpdateLockOnAnimatorParameters(lockOnMovement, LockOnMoveNetworked);
     }
 
     private void ProcessLockOnInput(NetworkInputData data)
@@ -501,32 +502,40 @@ public class NetworkPlayerController : NetworkBehaviour
         return forwardDot >= 0f ? LockMoveForward : LockMoveBack;
     }
 
-    private void PlayLockOnAnimation(byte lockMove)
+    private void UpdateLockOnAnimatorParameters(bool lockOnMovement, byte lockMove)
     {
-        string stateName = lockMove switch
+        Vector2 blend = lockOnMovement ? GetLockOnBlend(lockMove) : Vector2.zero;
+        float speed = lockOnMovement && (lockMove == LockMoveRunLeft || lockMove == LockMoveRunRight) ? 2f : blend.magnitude;
+
+        animator.SetBool(IsLockOn, lockOnMovement);
+        animator.SetFloat(LockMoveX, blend.x);
+        animator.SetFloat(LockMoveY, blend.y);
+        animator.SetFloat(LockMoveSpeed, speed);
+    }
+
+    private static Vector2 GetLockOnBlend(byte lockMove)
+    {
+        return lockMove switch
         {
-            LockMoveForward => LockForwardState,
-            LockMoveBack => LockBackState,
-            LockMoveLeft => LockLeftState,
-            LockMoveRight => LockRightState,
-            LockMoveRunLeft => LockRunLeftState,
-            LockMoveRunRight => LockRunRightState,
-            _ => "idle1"
+            LockMoveForward => new Vector2(0f, 1f),
+            LockMoveBack => new Vector2(0f, -1f),
+            LockMoveLeft => new Vector2(-1f, 0f),
+            LockMoveRight => new Vector2(1f, 0f),
+            LockMoveRunLeft => new Vector2(-2f, 0f),
+            LockMoveRunRight => new Vector2(2f, 0f),
+            _ => Vector2.zero
         };
-
-        if (_lastLockOnAnimation == stateName)
-        {
-            return;
-        }
-
-        animator.CrossFadeInFixedTime(stateName, 0.08f);
-        _lastLockOnAnimation = stateName;
     }
 
     private bool IsInActionAnimation()
     {
         AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
         return stateInfo.IsTag("Action") && stateInfo.normalizedTime < 0.98f;
+    }
+
+    private bool IsLockOnAnimatorSuppressed()
+    {
+        return Time.time < _suppressLockOnAnimatorUntil;
     }
 
     private void StartAction(byte actionType, float lockDuration)
@@ -612,8 +621,25 @@ public class NetworkPlayerController : NetworkBehaviour
                 animator.SetTrigger(Roll);
                 break;
             case ActionJump:
+                _suppressLockOnAnimatorUntil = Time.time + jumpAnimationLockDuration;
+                animator.SetBool(IsLockOn, false);
                 animator.SetTrigger(Jump);
                 break;
         }
+    }
+
+    private void TriggerPredictedAction(byte actionType)
+    {
+        if (!Object.HasInputAuthority || animator == null)
+        {
+            return;
+        }
+
+        _predictedActionSequence = ActionSequence;
+        animator.ResetTrigger(Attack);
+        animator.ResetTrigger(Parry);
+        animator.ResetTrigger(Roll);
+        animator.ResetTrigger(Jump);
+        TriggerAction(actionType);
     }
 }

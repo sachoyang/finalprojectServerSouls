@@ -21,7 +21,7 @@ public class PlayerAbilityController : NetworkBehaviour
     {
         // 내 플레이어가 아니면 로컬 키 입력을 읽지 않는다.
         // 이렇게 해야 다른 플레이어의 액티브 스킬이 내 키 입력으로 실행되지 않는다.
-        if (!Object.HasInputAuthority || _inventory == null || (_stats != null && _stats.IsDead))
+        if (Object == null || !Object.HasInputAuthority || _inventory == null || (_stats != null && _stats.IsDead))
         {
             return;
         }

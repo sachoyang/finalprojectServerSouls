@@ -3,7 +3,7 @@ using UnityEngine;
 public class CharacterRotate : MonoBehaviour
 {
     public float rotateSpeed = 5f;
-    private bool isDragging = false;
+    //private bool isDragging = false;
 
     void OnMouseDrag()
     {

@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cbc39ac0e5f95d14fbd17eac508de1c4, type: 3}
+  m_Name: JumpAttack
+  m_EditorClassIdentifier: 
+  abilityId: jump_attack
+  displayName: Jump Attack
+  description: Leaps into a great sword attack.
+  abilityType: 1
+  minBossStage: 1
+  maxBossStage: 8
+  staminaCost: 400
+  cooldownSeconds: 8
+  healthRestoreAmount: 0
+  staminaRestoreAmount: 0
+  animationClip: {fileID: 7400000, guid: 2e360ce02ed05d04faec51172d19bb6d, type: 3}
+  animationStateName: 
+  animationTrigger: JumpAttack
+  crossFadeDuration: 0.08
+  useStateName: 0
+  effectPrefab: {fileID: 0}
+  effectLocalOffset: {x: 0, y: 0, z: 0}
+  parentEffectToPlayer: 0
+  hitboxPrefab: {fileID: 0}
+  hitboxLocalOffset: {x: 0, y: 0, z: 0}
