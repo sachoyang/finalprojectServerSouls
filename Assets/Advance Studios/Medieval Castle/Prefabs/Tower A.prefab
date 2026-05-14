@@ -116,7 +116,7 @@ GameObject:
   - component: {fileID: 3263981953530383593}
   - component: {fileID: 5886160078214889764}
   - component: {fileID: 6619882345600386557}
-  - component: {fileID: 5288772420026862631}
+  - component: {fileID: 8318299345942677044}
   m_Layer: 0
   m_Name: Tower A
   m_TagString: Untagged
@@ -193,8 +193,8 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &5288772420026862631
-MeshCollider:
+--- !u!65 &8318299345942677044
+BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -211,10 +211,9 @@ MeshCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: -1277366460620338370, guid: d8d157ebfb23cdf4ba94e99d8458f7d2, type: 3}
+  serializedVersion: 3
+  m_Size: {x: 1.064254, y: 5.3, z: 1.0642545}
+  m_Center: {x: -0.0020976071, y: -2.0585122, z: -0.0020940308}
 --- !u!1 &6005981837099929165
 GameObject:
   m_ObjectHideFlags: 0
