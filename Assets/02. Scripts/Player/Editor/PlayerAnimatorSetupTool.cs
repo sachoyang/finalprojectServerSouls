@@ -197,6 +197,9 @@ public static class PlayerAnimatorSetupTool
             {
                 if (condition.parameter == triggerName)
                 {
+                    transition.hasExitTime = false;
+                    transition.duration = 0.05f;
+                    transition.canTransitionToSelf = true;
                     return;
                 }
             }

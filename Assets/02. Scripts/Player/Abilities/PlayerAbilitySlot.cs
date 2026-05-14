@@ -4,7 +4,7 @@ using UnityEngine;
 // 플레이어가 가진 액티브 능력 1칸을 나타낸다.
 // "어떤 모듈이 들어있는지", "어떤 키로 사용하는지", "언제 다시 쓸 수 있는지"를 함께 보관한다.
 [Serializable]
-public class PlayerAbilitySlot
+public class PlayerAbilitySlot : ISerializationCallbackReceiver
 {
     // 이 슬롯에 들어간 액티브 능력 모듈.
     [SerializeField] private PlayerAbilityModule module;
@@ -15,10 +15,12 @@ public class PlayerAbilitySlot
 
     // 다음 사용 가능 시간.
     // Fusion Runner가 있으면 Runner.SimulationTime 기준, 없으면 Time.time 기준으로 비교한다.
-    [SerializeField] private float nextReadyTime;
+    [SerializeField] private float cooldownSeconds;
+    [SerializeField, HideInInspector] private float nextReadyTime;
 
     public PlayerAbilityModule Module => module;
     public KeyCode KeyCode => keyCode;
+    public float CooldownSeconds => module != null ? module.CooldownSeconds : cooldownSeconds;
     public float NextReadyTime => nextReadyTime;
 
     // 액티브 능력을 획득할 때 PlayerAbilityInventory가 슬롯을 생성한다.
@@ -26,6 +28,7 @@ public class PlayerAbilitySlot
     {
         this.module = module;
         this.keyCode = keyCode;
+        RefreshInspectorCooldown();
     }
 
     // 키 변경 UI에서 호출할 수 있는 함수.
@@ -43,6 +46,24 @@ public class PlayerAbilitySlot
     // 능력 사용 후 쿨다운을 시작한다.
     public void StartCooldown(float currentTime)
     {
-        nextReadyTime = currentTime + Mathf.Max(0f, module != null ? module.CooldownSeconds : 0f);
+        RefreshInspectorCooldown();
+        nextReadyTime = currentTime + Mathf.Max(0f, CooldownSeconds);
+    }
+
+    public void OnBeforeSerialize()
+    {
+        RefreshInspectorCooldown();
+    }
+
+    public void OnAfterDeserialize()
+    {
+    }
+
+    private void RefreshInspectorCooldown()
+    {
+        if (module != null)
+        {
+            cooldownSeconds = module.CooldownSeconds;
+        }
     }
 }

@@ -163,6 +163,7 @@ public class PlayerAbilityModule : ScriptableObject
             }
             else if (!string.IsNullOrWhiteSpace(animationTrigger))
             {
+                animator.ResetTrigger(animationTrigger);
                 animator.SetTrigger(animationTrigger);
             }
         }
