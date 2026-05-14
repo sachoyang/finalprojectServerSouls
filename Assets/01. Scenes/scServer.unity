@@ -164,6 +164,7 @@ GameObject:
   m_Component:
   - component: {fileID: 21222142}
   - component: {fileID: 21222141}
+  - component: {fileID: 21222143}
   m_Layer: 0
   m_Name: BasicSpawner
   m_TagString: Untagged
@@ -178,7 +179,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 21222140}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e6aee448ebe70b74f8884eff59f2359b, type: 3}
   m_Name: 
@@ -200,6 +201,20 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &21222143
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 21222140}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9d8d69a8c2b543f4a9c45ff0873d5e91, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _playerPrefab:
+    RawGuidValue: ebc189906ed8e6c49901d81811c01d8a
 --- !u!1 &79745826 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 28369932723086482, guid: 23b5baea9d0423047acddd3bec009cd9, type: 3}
@@ -342,8 +357,8 @@ MonoBehaviour:
   fillColor: {r: 1, g: 0.5, b: 0, a: 0.3}
   showWireframe: 1
   wireColor: {r: 1, g: 0, b: 0, a: 1}
-  offset: {x: 0, y: 3, z: 0}
-  radius: 6
+  offset: {x: 0, y: 0, z: 0}
+  radius: 7
   boxSize: {x: 1, y: 1, z: 1}
   rayLength: 5
 --- !u!1 &163649612 stripped
@@ -896,6 +911,10 @@ PrefabInstance:
     - target: {fileID: 6686511853978325582, guid: 7568aa021d9d5534d8f698c90e5ce641, type: 3}
       propertyPath: bodyRadius
       value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 6686511853978325582, guid: 7568aa021d9d5534d8f698c90e5ce641, type: 3}
+      propertyPath: attackRange
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 6686511853978325582, guid: 7568aa021d9d5534d8f698c90e5ce641, type: 3}
       propertyPath: castHeightOffset

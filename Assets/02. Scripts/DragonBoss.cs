@@ -24,9 +24,9 @@ public class DragonBoss : NetworkBehaviour
 
     [Header("사거리 설정")]
     public float attackRange = 6.0f;
+    public float wakeUpRange = 10.0f;
     
     [Header("공격 쿨타임 설정")]
-    [Tooltip("패턴이 끝난 후 다음 공격까지 대기하는 시간")]
     public float patternCooldown = 2.0f;
 
     [Header("벽 충돌 설정 (가벽 박스 사용)")]
@@ -40,10 +40,7 @@ public class DragonBoss : NetworkBehaviour
 
     [Networked] public DragonState CurrentState { get; set; }
     [Networked] private TickTimer StateTimer { get; set; }
-    
-    // [핵심 추가] 패턴 공격 사이의 쿨타임을 독립적으로 관리하는 타이머
     [Networked] private TickTimer AttackCooldown { get; set; }
-    
     [Networked] public NetworkObject AggroTarget { get; set; }
 
     [Networked] public BossPattern CurrentPattern { get; set; }
@@ -63,8 +60,12 @@ public class DragonBoss : NetworkBehaviour
         if (HasStateAuthority)
         {
             CurrentHP = maxHP; 
-            ChangeState(DragonState.Idle, 1.0f);
+            ChangeState(DragonState.Sleep, 0f);
         }
+
+        // [핵심 추가] 호스트/클라이언트 상관없이 스폰 즉시 현재 네트워크 상태의 애니메이션을 강제 적용
+        // 늦게 접속한 유저도 보스가 누워있는 모습을 정확히 보게 됩니다.
+        UpdateAnimation(CurrentState);
     }
 
     public override void FixedUpdateNetwork()
@@ -73,68 +74,96 @@ public class DragonBoss : NetworkBehaviour
         {
             if (CurrentHP <= 0) return;
 
-            // 타겟 갱신은 상시 실행
-            FindAggroTarget();
+            UpdateBossAI();
 
-            // 1. 현재 실행 중인 패턴이 있다면 패턴 스텝만 처리하고 이동/AI는 스킵
-            if (CurrentPattern != BossPattern.None)
+            if (CurrentState == DragonState.Walk && AggroTarget != null)
             {
-                if (StateTimer.Expired(Runner))
-                {
-                    ExecutePatternStep();
-                }
-                return;
+                MoveTowardsTarget();
             }
-
-            // 2. 패턴을 안 쓰고 있는 평소 상태의 상시 AI 제어
-            UpdateContinuousAI();
         }
     }
 
-    // ==========================================
-    // [수정된 핵심 AI] 딜레이 없는 즉각 반응 로직
-    // ==========================================
+    private void UpdateBossAI()
+    {
+        if (CurrentState == DragonState.Sleep && CurrentHP > 0)
+        {
+            FindAggroTarget(); 
+            if (AggroTarget != null)
+            {
+                float dist = Vector3.Distance(transform.position, AggroTarget.transform.position);
+                if (dist <= wakeUpRange)
+                {
+                    Debug.Log("플레이어 감지! 보스가 잠에서 깨어납니다.");
+                    ChangeState(DragonState.Scream, 2.5f); 
+                }
+            }
+            return; 
+        }
+
+        if (StateTimer.Expired(Runner))
+        {
+            FindAggroTarget();
+
+            if (CurrentPattern != BossPattern.None)
+            {
+                ExecutePatternStep();
+                return;
+            }
+
+            if (CurrentState == DragonState.Idle || CurrentState == DragonState.Scream)
+            {
+                if (AggroTarget != null)
+                {
+                    float dist = Vector3.Distance(transform.position, AggroTarget.transform.position);
+                    if (dist <= attackRange)
+                    {
+                        ChooseAttackPattern();
+                    }
+                    else
+                    {
+                        UpdateContinuousAI();
+                    }
+                }
+            }
+            else
+            {
+                UpdateContinuousAI();
+            }
+        }
+        else
+        {
+            if (CurrentPattern == BossPattern.None)
+            {
+                UpdateContinuousAI();
+            }
+        }
+    }
+
     private void UpdateContinuousAI()
     {
-        if (AggroTarget == null) return;
+        if (AggroTarget == null || CurrentState == DragonState.Sleep) return;
 
         float dist = Vector3.Distance(transform.position, AggroTarget.transform.position);
 
-        // [조건 A] 사거리 내에 들어왔을 때
         if (dist <= attackRange)
         {
-            // 공격 쿨타임이 끝났다면 망설임 없이 즉시 공격!
             if (AttackCooldown.ExpiredOrNotRunning(Runner))
             {
                 ChooseAttackPattern();
             }
             else
             {
-                // 쿨타임 대기 중일 때는 걷기 모션을 끄고 타겟을 노려보며 딜타임 가짐
-                if (CurrentState != DragonState.Idle)
-                {
-                    ChangeState(DragonState.Idle, 0.1f);
-                }
+                if (CurrentState != DragonState.Idle) ChangeState(DragonState.Idle, 0.1f);
                 
-                // 제자리에서 타겟 방향으로 부드럽게 회전만 유지
                 Vector3 dir = (AggroTarget.transform.position - transform.position).normalized;
                 dir.y = 0;
                 if (dir != Vector3.zero)
-                {
                     transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir), rotationSpeed * Runner.DeltaTime);
-                }
             }
         }
-        // [조건 B] 사거리보다 멀 때
         else
         {
-            // 즉시 걷기 상태로 전환하여 타겟 추적
-            if (CurrentState != DragonState.Walk)
-            {
-                // 타이머 길이는 애니메이션 재생용으로만 던져둠 (실제 AI 전환은 상시 거리 체크가 우선함)
-                ChangeState(DragonState.Walk, 1.0f);
-            }
-
+            if (CurrentState != DragonState.Walk) ChangeState(DragonState.Walk, 1.0f);
             MoveTowardsTarget();
         }
     }
@@ -153,7 +182,6 @@ public class DragonBoss : NetworkBehaviour
         }
     }
 
-    // (스피어캐스트 예측형 슬라이딩 로직 그대로 유지)
     private void PerformWallSlideMovement(Vector3 moveDir, float speed)
     {
         Vector3 targetDisplacement = moveDir * speed * Runner.DeltaTime;
@@ -256,7 +284,6 @@ public class DragonBoss : NetworkBehaviour
             else CurrentPattern = BossPattern.Pattern3_Jump;
         }
 
-        // 패턴 시작
         PatternStep = 0;
         ExecutePatternStep();
     }
@@ -297,10 +324,7 @@ public class DragonBoss : NetworkBehaviour
         CurrentPattern = BossPattern.None;
         PatternStep = 0;
         
-        // [핵심] 패턴이 완전히 끝나면 다음 공격까지의 쿨타임 타이머를 돌림
         AttackCooldown = TickTimer.CreateFromSeconds(Runner, patternCooldown);
-        
-        // 대기 상태로 전환 (상시 AI 루프가 즉시 이어받아 거리 체크 후 대기할지 추적할지 결정)
         ChangeState(DragonState.Idle, 0.1f);
     }
 
@@ -336,6 +360,10 @@ public class DragonBoss : NetworkBehaviour
     {
         visual.SetSpeed(state == DragonState.Walk ? 1.0f : 0.0f);
 
+        // [핵심 추가] 현재 상태가 Sleep일 때만 DoSleep을 true로 켜고, 
+        // Scream이나 Idle 등 다른 상태로 바뀌는 즉시 자동으로 false로 해제하여 모션 탈출을 보장합니다.
+        visual.SetSleep(state == DragonState.Sleep);
+
         float originalLength = 1.0f;
         switch (state)
         {
@@ -361,7 +389,6 @@ public class DragonBoss : NetworkBehaviour
             case DragonState.Jump: visual.DoJump(); break;
             case DragonState.HornAttack: visual.DoHornAttack(); break;
             case DragonState.Scream: visual.DoScream(); break;
-            case DragonState.Sleep: visual.DoSleep(); break;
         }
     }
 
