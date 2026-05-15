@@ -3855,13 +3855,13 @@ RectTransform:
   - {fileID: 1564583551}
   - {fileID: 1233261587}
   - {fileID: 264895246}
-  - {fileID: 634254273}
-  - {fileID: 744150883}
   - {fileID: 2058351222}
   - {fileID: 313500427}
   - {fileID: 1572247810}
   - {fileID: 854514598}
   - {fileID: 333946466}
+  - {fileID: 744150883}
+  - {fileID: 634254273}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -3891,7 +3891,7 @@ MonoBehaviour:
   readyColor: {r: 0.4, g: 1, b: 0.4, a: 1}
   fadeManager: {fileID: 469056585}
   titleSceneName: scTitle uicreate Main
-  gameSceneName: scLevel
+  gameSceneName: scServer
   warningMessageDuration: 2
 --- !u!1 &2094365015
 GameObject:
