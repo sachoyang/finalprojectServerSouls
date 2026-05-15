@@ -1,110 +1,105 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class TitleManager : MonoBehaviour
 {
-    public GameObject tutorialPopupPanel;
+    [Header("Panels")]
     public GameObject mainTitlePanel;
-    public GameObject matchPanel; // 새로 만든 매칭 패널
-    public GameObject CreatePanel;
+    public GameObject matchPanel;
+    public GameObject optionPanel;
 
+    [Header("Scene Fade")]
+    public SceneFadeManager fadeManager;
 
-    [Header("캐릭터 선택 기능")]
-    public GameObject[] titleModels; // 타이틀 씬에 배치된 3D 모델들 (전사, 마법사 등)
-    private int _currentCharacterIndex = 0;
+    [Header("Scene Names")]
+    public string lobbySceneName = "scServer";
 
-    void Start()
+    private bool isChangingScene;
+
+    private void Start()
     {
-        CheckTutorialStatus();
-        // 이전에 저장된 캐릭터 번호를 불러옴 (없으면 0번)
-        _currentCharacterIndex = PlayerPrefs.GetInt("SelectedCharacter", 0);
-        UpdateTitleModelDisplay();
+        ShowMainTitlePanel();
     }
 
-    private void CheckTutorialStatus()
+    public void OnClickContinueButton()
     {
-        int isTutorialDone = PlayerPrefs.GetInt("TutorialDone", 0);
+        mainTitlePanel.SetActive(false);
+        matchPanel.SetActive(true);
 
-        if (isTutorialDone == 0)
-        {
-            tutorialPopupPanel.SetActive(true);
-            mainTitlePanel.SetActive(false);
-        }
-        else
-        {
-            tutorialPopupPanel.SetActive(false);
-            mainTitlePanel.SetActive(true);
-        }
+        if (optionPanel != null)
+            optionPanel.SetActive(false);
     }
 
-    // [인스펙터의 TitleManager 컴포넌트를 우클릭하면 나타나는 메뉴]
-    [ContextMenu("Debug/Reset Tutorial Status")]
-    public void ResetTutorialStatus()
-    {
-        PlayerPrefs.DeleteKey("TutorialDone"); // 데이터 삭제
-        PlayerPrefs.Save();
-        Debug.Log("Tutorial Status has been reset!");
-
-        // 초기화 후 즉시 화면 반영 (에디터 재생 중일 때)
-        CheckTutorialStatus();
-    }
-
-    public void OnClickTutorialYes()
-    {
-        PlayerPrefs.SetInt("TutorialDone", 1);
-        PlayerPrefs.Save();
-        SceneManager.LoadScene("TutorialScene");
-    }
-
-    public void OnClickTutorialNo()
-    {
-        PlayerPrefs.SetInt("TutorialDone", 1);
-        PlayerPrefs.Save();
-        tutorialPopupPanel.SetActive(false);
-        mainTitlePanel.SetActive(true);
-    }
-
-    // 시작(Play) 버튼을 눌렀을 때 실행될 함수
+    // 기존 CONTINUE 버튼이 이 함수에 연결되어 있을 수 있어서 유지
     public void OnClickPlayButton()
     {
-        mainTitlePanel.SetActive(true); // 메인 타이틀 화면 끄기
-        matchPanel.SetActive(true);      // 매칭 패널 켜기
+        OnClickContinueButton();
     }
 
-    public void OnClickCloseButton()
+    public void OnClickSystemButton()
     {
-        CreatePanel.SetActive(false); // 생성 패널 끄기
-        matchPanel.SetActive(false);      // 매칭 패널 끄기
+        if (optionPanel != null)
+            optionPanel.SetActive(true);
     }
 
-    public void OnClickEnterButten()
+    public void OnClickCloseOptionButton()
     {
-        CreatePanel.SetActive(true); // 생성 패널 켜기
+        if (optionPanel != null)
+            optionPanel.SetActive(false);
     }
 
-
-
-
-    // UI에서 [<] [>] 같은 Select 버튼을 눌렀을 때 실행될 함수
-    public void OnClickChangeCharacter(int direction)
+    public void OnClickReturnButton()
     {
-        _currentCharacterIndex += direction;
-        
-        // 인덱스가 범위를 벗어나지 않게 순환
-        if (_currentCharacterIndex < 0) _currentCharacterIndex = titleModels.Length - 1;
-        if (_currentCharacterIndex >= titleModels.Length) _currentCharacterIndex = 0;
-
-        // 선택한 번호를 로컬(컴퓨터)에 저장! (나중에 대기실에서 꺼내 씁니다)
-        PlayerPrefs.SetInt("SelectedCharacter", _currentCharacterIndex);
-        UpdateTitleModelDisplay();
+        ShowMainTitlePanel();
     }
 
-    private void UpdateTitleModelDisplay()
+    public void OnClickAloneButton()
     {
-        // 모든 모델을 끄고 선택된 것만 켭니다.
-        for (int i = 0; i < titleModels.Length; i++)
+        ChangeSceneToLobby();
+    }
+
+    public void OnClickUniteButton()
+    {
+        ChangeSceneToLobby();
+    }
+
+    public void OnClickAccessAndInitiateButton()
+    {
+        ChangeSceneToLobby();
+    }
+
+    public void OnClickQuitButton()
+    {
+        Application.Quit();
+
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#endif
+    }
+
+    private void ShowMainTitlePanel()
+    {
+        if (mainTitlePanel != null)
+            mainTitlePanel.SetActive(true);
+
+        if (matchPanel != null)
+            matchPanel.SetActive(false);
+
+        if (optionPanel != null)
+            optionPanel.SetActive(false);
+    }
+
+    private void ChangeSceneToLobby()
+    {
+        if (isChangingScene)
+            return;
+
+        if (fadeManager == null)
         {
-            titleModels[i].SetActive(i == _currentCharacterIndex);
+            Debug.LogError("TitleManager: Fade Manager가 연결되지 않았습니다.");
+            return;
         }
+
+        isChangingScene = true;
+        fadeManager.ChangeScene(lobbySceneName);
     }
 }
