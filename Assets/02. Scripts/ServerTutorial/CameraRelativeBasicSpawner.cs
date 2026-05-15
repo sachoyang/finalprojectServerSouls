@@ -140,6 +140,9 @@ public class CameraRelativeBasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
     public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ArraySegment<byte> data) { }
     public void OnReliableDataProgress(NetworkRunner runner, PlayerRef player, ReliableKey key, float progress) { }
 
+    // [추가] 방 이름을 저장할 변수 (기본값 설정)
+    private string _roomName = "TestRoom";
+
     private async void StartGame(GameMode mode)
     {
         _runner = gameObject.AddComponent<NetworkRunner>();
@@ -152,7 +155,8 @@ public class CameraRelativeBasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
         await _runner.StartGame(new StartGameArgs()
         {
             GameMode = mode,
-            SessionName = "TestRoom",
+            // [수정] 고정된 "TestRoom" 대신 입력받은 _roomName 변수를 사용!
+            SessionName = _roomName, 
             Scene = scene,
             SceneManager = gameObject.AddComponent<NetworkSceneManagerDefault>()
         });
@@ -162,12 +166,17 @@ public class CameraRelativeBasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
     {
         if (_runner == null)
         {
-            if (GUI.Button(new Rect(50, 50, 200, 40), "Host"))
+            // [추가] 방 이름을 입력할 수 있는 텍스트 필드 생성
+            GUI.Label(new Rect(50, 20, 200, 20), "Enter Room Name:");
+            _roomName = GUI.TextField(new Rect(50, 45, 200, 30), _roomName);
+
+            // 버튼 위치를 텍스트 필드 아래로 조금씩 내림
+            if (GUI.Button(new Rect(50, 85, 200, 40), "Host"))
             {
                 StartGame(GameMode.Host);
             }
 
-            if (GUI.Button(new Rect(50, 100, 200, 40), "Join"))
+            if (GUI.Button(new Rect(50, 135, 200, 40), "Join"))
             {
                 StartGame(GameMode.Client);
             }
