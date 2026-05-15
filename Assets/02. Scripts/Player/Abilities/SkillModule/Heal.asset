@@ -19,7 +19,7 @@ MonoBehaviour:
   minBossStage: 1
   maxBossStage: 8
   staminaCost: 0
-  cooldownSeconds: 12
+  cooldownSeconds: 0
   healthRestoreAmount: 1500
   staminaRestoreAmount: 0
   animationClip: {fileID: 7400000, guid: b87c0223bacdbd840967e74c4a41288f, type: 3}
