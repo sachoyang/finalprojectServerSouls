@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Text;
 using Fusion;
 using UnityEngine;
 
@@ -52,6 +53,12 @@ public class NetworkPlayerController : NetworkBehaviour
     [SerializeField] private float jumpActionLockDuration = 0.35f;
     [SerializeField] private float jumpAnimationLockDuration = 0.45f;
 
+    [Header("Combat")]
+    [SerializeField] private float attackHitRadius = 1.4f;
+    [SerializeField] private float attackHitDistance = 1.8f;
+    [SerializeField] private float attackHitHeight = 1.1f;
+    [SerializeField] private LayerMask attackTargetLayers = ~0;
+
     [Header("Lock On")]
     [SerializeField] private float lockOnSearchRadius = 80f;
     [SerializeField] private float lockOnRotationSpeed = 900f;
@@ -71,6 +78,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
     private NetworkCharacterController _networkCharacterController;
     private PlayerStats _playerStats;
+    private PlayerAbilityInventory _abilityInventory;
     private ChangeDetector _changeDetector;
     private Vector3 _lastMoveDirection = Vector3.forward;
     private Transform _lockOnTarget;
@@ -80,15 +88,21 @@ public class NetworkPlayerController : NetworkBehaviour
     private float _networkControllerRotationSpeed;
     private float _suppressLockOnAnimatorUntil;
     private int _predictedActionSequence;
+    private readonly Collider[] _attackHits = new Collider[16];
+    private readonly Dictionary<DragonBoss, BossHitbox> _bestBossHitboxes = new Dictionary<DragonBoss, BossHitbox>();
+    private bool _showPlayerDebug;
 
     public bool IsLockOnActive => IsLockOnNetworked;
     public Transform CurrentLockOnTarget => _lockOnTarget;
+    public float AttackHitRadius => attackHitRadius;
+    public Vector3 AttackHitLocalCenter => Vector3.up * attackHitHeight + Vector3.forward * attackHitDistance;
 
     private void Awake()
     {
         animator ??= GetComponent<Animator>();
         _networkCharacterController = GetComponent<NetworkCharacterController>();
         _playerStats = GetComponent<PlayerStats>();
+        _abilityInventory = GetComponent<PlayerAbilityInventory>();
         viewCamera ??= Camera.main;
         _networkControllerRotationSpeed = _networkCharacterController != null ? _networkCharacterController.rotationSpeed : 0f;
 
@@ -100,6 +114,19 @@ public class NetworkPlayerController : NetworkBehaviour
 
         animator.applyRootMotion = false;
         _lastMoveDirection = transform.forward;
+    }
+
+    private void Update()
+    {
+        if (Object == null || !Object.HasInputAuthority)
+        {
+            return;
+        }
+
+        if (Input.GetKeyDown(KeyCode.Slash))
+        {
+            _showPlayerDebug = !_showPlayerDebug;
+        }
     }
 
     public override void Spawned()
@@ -543,6 +570,61 @@ public class NetworkPlayerController : NetworkBehaviour
         LastAction = actionType;
         ActionSequence++;
         ActionTimer = TickTimer.CreateFromSeconds(Runner, lockDuration);
+
+        if (actionType == ActionAttack && HasStateAuthority)
+        {
+            ApplyAttackDamage();
+        }
+    }
+
+    private void ApplyAttackDamage()
+    {
+        float damage = _playerStats != null ? _playerStats.AttackPower : 0f;
+        if (damage <= 0f)
+        {
+            return;
+        }
+
+        Vector3 hitCenter = transform.TransformPoint(AttackHitLocalCenter);
+        int hitCount = Physics.OverlapSphereNonAlloc(
+            hitCenter,
+            attackHitRadius,
+            _attackHits,
+            attackTargetLayers,
+            QueryTriggerInteraction.Collide);
+
+        _bestBossHitboxes.Clear();
+        for (int i = 0; i < hitCount; i++)
+        {
+            Collider hit = _attackHits[i];
+            if (hit == null)
+            {
+                continue;
+            }
+
+            BossHitbox bossHitbox = hit.GetComponentInParent<BossHitbox>();
+            if (bossHitbox == null)
+            {
+                continue;
+            }
+
+            DragonBoss boss = bossHitbox.GetComponentInParent<DragonBoss>();
+            if (boss == null)
+            {
+                continue;
+            }
+
+            if (!_bestBossHitboxes.TryGetValue(boss, out BossHitbox bestHitbox) ||
+                bossHitbox.damageMultiplier > bestHitbox.damageMultiplier)
+            {
+                _bestBossHitboxes[boss] = bossHitbox;
+            }
+        }
+
+        foreach (BossHitbox bossHitbox in _bestBossHitboxes.Values)
+        {
+            bossHitbox.OnHitByPlayer(damage);
+        }
     }
 
     private void StartRoll(Vector3 desiredMove)
@@ -641,5 +723,105 @@ public class NetworkPlayerController : NetworkBehaviour
         animator.ResetTrigger(Roll);
         animator.ResetTrigger(Jump);
         TriggerAction(actionType);
+    }
+
+    private void OnGUI()
+    {
+        if (!_showPlayerDebug || Object == null || !Object.HasInputAuthority)
+        {
+            return;
+        }
+
+        const float width = 430f;
+        const float margin = 30f;
+        string debugText = BuildPlayerDebugText();
+
+        GUIStyle boxStyle = new GUIStyle(GUI.skin.box)
+        {
+            alignment = TextAnchor.UpperLeft,
+            padding = new RectOffset(16, 16, 14, 14)
+        };
+
+        GUIStyle labelStyle = new GUIStyle(GUI.skin.label)
+        {
+            fontSize = 22,
+            normal = { textColor = Color.white },
+            wordWrap = true
+        };
+
+        float textHeight = labelStyle.CalcHeight(new GUIContent(debugText), width - 32f);
+        float height = Mathf.Min(Screen.height - margin * 2f, Mathf.Max(220f, textHeight + 32f));
+        Rect panelRect = new Rect(Screen.width - width - margin, margin, width, height);
+
+        GUI.Box(panelRect, string.Empty, boxStyle);
+        GUI.Label(new Rect(panelRect.x + 16f, panelRect.y + 12f, panelRect.width - 32f, panelRect.height - 24f), debugText, labelStyle);
+    }
+
+    private string BuildPlayerDebugText()
+    {
+        StringBuilder builder = new StringBuilder();
+        builder.AppendLine("[Player Debug]");
+
+        if (_playerStats == null)
+        {
+            builder.AppendLine("Stats : missing");
+        }
+        else
+        {
+            builder.AppendLine($"HP : {_playerStats.CurrentHealth:0} / {_playerStats.MaxHealth:0}");
+            builder.AppendLine($"Stamina : {_playerStats.CurrentStamina:0} / {_playerStats.MaxStamina:0}");
+            builder.AppendLine($"Defense : {_playerStats.DefenseRate * 100f:0}%");
+        }
+
+        builder.AppendLine();
+        builder.AppendLine("Skills");
+
+        if (_abilityInventory == null || _abilityInventory.EquippedModules.Count == 0)
+        {
+            builder.AppendLine("- None");
+            return builder.ToString();
+        }
+
+        AppendEquippedPassiveSkills(builder);
+        AppendActiveSkillCooldowns(builder);
+        return builder.ToString();
+    }
+
+    private void AppendEquippedPassiveSkills(StringBuilder builder)
+    {
+        bool hasPassive = false;
+        foreach (PlayerAbilityModule module in _abilityInventory.EquippedModules)
+        {
+            if (module == null || module.IsActive)
+            {
+                continue;
+            }
+
+            hasPassive = true;
+            builder.AppendLine($"- {module.DisplayName} : Passive");
+        }
+
+        if (!hasPassive && _abilityInventory.ActiveSlots.Count == 0)
+        {
+            builder.AppendLine("- None");
+        }
+    }
+
+    private void AppendActiveSkillCooldowns(StringBuilder builder)
+    {
+        float currentTime = Runner != null ? Runner.SimulationTime : Time.time;
+        for (int i = 0; i < _abilityInventory.ActiveSlots.Count; i++)
+        {
+            PlayerAbilitySlot slot = _abilityInventory.ActiveSlots[i];
+            PlayerAbilityModule module = slot?.Module;
+            if (module == null)
+            {
+                continue;
+            }
+
+            float remaining = Mathf.Max(0f, slot.NextReadyTime - currentTime);
+            string cooldownText = remaining > 0f ? $"{remaining:0.0}s" : "Ready";
+            builder.AppendLine($"- [{slot.KeyCode}] {module.DisplayName} : {cooldownText}");
+        }
     }
 }

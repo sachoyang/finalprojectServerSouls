@@ -3271,6 +3271,7 @@ GameObject:
   - component: {fileID: -3789471070017338798}
   - component: {fileID: -1636750999124312810}
   - component: {fileID: 7836824281623023267}
+  - component: {fileID: 1392735847959322296}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -3407,6 +3408,14 @@ MonoBehaviour:
   attackLockDuration: 0.65
   parryLockDuration: 0.5
   jumpImpulse: 8
+  jumpActionLockDuration: 0.35
+  jumpAnimationLockDuration: 0.45
+  attackHitRadius: 1.4
+  attackHitDistance: 1.8
+  attackHitHeight: 1.1
+  attackTargetLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
   lockOnSearchRadius: 80
   lockOnRotationSpeed: 900
 --- !u!114 &6138425169054327812
@@ -3469,18 +3478,23 @@ MonoBehaviour:
   activeSlots:
   - module: {fileID: 11400000, guid: c002432ed530d33428e36c5130a47f39, type: 2}
     keyCode: 49
+    cooldownSeconds: 0
     nextReadyTime: 0
   - module: {fileID: 11400000, guid: a547d62876c4a444b8ea15b22748a173, type: 2}
     keyCode: 50
+    cooldownSeconds: 8
     nextReadyTime: 0
   - module: {fileID: 11400000, guid: 1edcbb9f218fba243b34d170b1fa350e, type: 2}
     keyCode: 51
+    cooldownSeconds: 8
     nextReadyTime: 0
   - module: {fileID: 11400000, guid: ff8160d2e4e01444c85ab60c46007c9c, type: 2}
     keyCode: 52
+    cooldownSeconds: 6
     nextReadyTime: 0
   - module: {fileID: 11400000, guid: b82f363d0149d6349bcaeb65bc0bce62, type: 2}
     keyCode: 53
+    cooldownSeconds: 12
     nextReadyTime: 0
 --- !u!114 &-1636750999124312810
 MonoBehaviour:
@@ -3508,6 +3522,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   lastClearedBossStage: 1
   pendingOptions: []
+--- !u!114 &1392735847959322296
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7435228771337582382}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5ae9af84dbfae854682a02cbef189915, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  drawMode: 0
+  fillColor: {r: 0.9632838, g: 1, b: 0, a: 0.25}
+  wireColor: {r: 1, g: 0.1, b: 0, a: 1}
+  showWireframe: 1
+  showInGameOnAttack: 0
+  inGameVisibleSeconds: 0.25
+  inGameLineWidth: 0.035
+  sphereSegments: 48
 --- !u!1 &7477488570312417499
 GameObject:
   m_ObjectHideFlags: 0
