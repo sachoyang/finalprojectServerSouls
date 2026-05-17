@@ -210,6 +210,8 @@ public class NetworkPlayerController : NetworkBehaviour
         bool shiftReleased = WasShiftHeld && !shiftHeld;
         bool isRolling = !RollTimer.ExpiredOrNotRunning(Runner);
         bool isActing = !ActionTimer.ExpiredOrNotRunning(Runner);
+        bool isJumpAction = isActing && LastAction == ActionJump;
+        bool actionBlocksMovement = isActing && !isJumpAction;
         bool isBusy = isRolling || isActing;
 
         if (desiredMove.sqrMagnitude > 0.001f)
@@ -259,7 +261,8 @@ public class NetworkPlayerController : NetworkBehaviour
         bool shouldRun = desiredMove.sqrMagnitude > 0.001f &&
                          shiftHeld &&
                          ShiftHoldTime >= shiftHoldThreshold &&
-                         !isBusy &&
+                         !isRolling &&
+                         !actionBlocksMovement &&
                          (_playerStats == null || _playerStats.HasStamina(runStaminaCost));
 
         float currentSpeed = walkSpeed;
@@ -272,10 +275,15 @@ public class NetworkPlayerController : NetworkBehaviour
             moveDirection = RollDirection;
             facingDirection = Vector3.zero;
         }
-        else if (!isActing && desiredMove.sqrMagnitude > 0.001f)
+        else if (!actionBlocksMovement && desiredMove.sqrMagnitude > 0.001f)
         {
             currentSpeed = shouldRun ? runSpeed : walkSpeed;
             moveDirection = desiredMove.normalized;
+        }
+
+        if (actionBlocksMovement)
+        {
+            StopHorizontalVelocity();
         }
 
         ApplyMovement(moveDirection, currentSpeed, facingDirection);
@@ -665,6 +673,14 @@ public class NetworkPlayerController : NetworkBehaviour
         // NetworkCharacterController also rotates toward moveDirection, but this keeps
         // the local rotation speed setting in this controller authoritative.
         RotateTowards(moveDirection, rotationSpeed);
+    }
+
+    private void StopHorizontalVelocity()
+    {
+        Vector3 velocity = _networkCharacterController.Velocity;
+        velocity.x = 0f;
+        velocity.z = 0f;
+        _networkCharacterController.Velocity = velocity;
     }
 
     private void RotateTowards(Vector3 direction, float rotateSpeed)
