@@ -211,7 +211,7 @@ public class NetworkPlayerController : NetworkBehaviour
         bool isRolling = !RollTimer.ExpiredOrNotRunning(Runner);
         bool isActing = !ActionTimer.ExpiredOrNotRunning(Runner);
         bool isJumpAction = isActing && LastAction == ActionJump;
-        bool actionBlocksMovement = isActing && !isJumpAction;
+        bool actionBlocksMovement = isActing && !isJumpAction && !isRolling;
         bool isBusy = isRolling || isActing;
 
         if (desiredMove.sqrMagnitude > 0.001f)
