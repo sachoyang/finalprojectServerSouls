@@ -39,9 +39,9 @@ public class DragonBoss : NetworkBehaviour
 
     [Header("패턴 실제 시전 시간 (애니 배속 조절)")]
     [Tooltip("수치를 줄이면 공격이 빨라지고(배속 증가), 늘리면 느려집니다.")]
-    public float durationBite = 1.0f;
-    public float durationClaw = 1.0f;
-    public float durationJump = 1.0f;
+    public float durationBite = 2f;
+    public float durationClaw = 2f;
+    public float durationJump = 3f;
 
     [Header("벽 충돌 설정 (가벽 박스 사용)")]
     public LayerMask wallLayerMask;
