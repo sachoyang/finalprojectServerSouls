@@ -51,11 +51,12 @@ TemporaryDependencyNodeTargetIdentifier=netstandard2.1
 /warnaserror+:NU1605
 
 [sourceFiles]
-Assets/02. Scripts/
+Assets/02. Scripts/Boss/
  BossHitbox.cs
  DamageEffect.cs
  DragonBoss.cs
  DragonVisual.cs
+Assets/02. Scripts/
  GizmoVisualizer.cs
  IntroSceneController.cs
  LobbyManager.cs
@@ -77,6 +78,7 @@ Assets/02. Scripts/
   Camera/ThirdPersonCameraController.cs
   Core/
    NetworkPlayerController.cs
+   PlayerAttackRangeGizmo.cs
    PlayerStats.cs
   Testing/
    CharacterRotate.cs

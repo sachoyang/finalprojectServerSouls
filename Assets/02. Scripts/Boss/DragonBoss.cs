@@ -5,7 +5,7 @@ using Random = UnityEngine.Random;
 
 public enum DragonState
 {
-    Idle, Walk, BiteAttack, ClawAttack, HornAttack, Jump, Scream, Sleep
+    Idle, Walk, BiteAttack, ClawAttack, HornAttack, Jump, Scream, Sleep, Die
 }
 
 public enum BossPattern
@@ -231,7 +231,8 @@ public class DragonBoss : NetworkBehaviour
         {
             CurrentHP = 0;
             Debug.Log("보스 처치 완료!");
-            ChangeState(DragonState.Sleep, 100f); 
+            ChangeState(DragonState.Die, 100f); 
+
         }
     }
 
@@ -372,6 +373,7 @@ public class DragonBoss : NetworkBehaviour
             case DragonState.HornAttack: originalLength = 2.167f; break;
             case DragonState.Jump: originalLength = 2.0f; break;
             case DragonState.Idle: originalLength = 1.333f; break;
+            case DragonState.Die: originalLength = 1.9f; break;
         }
 
         float animSpeedMultiplier = 1.0f;
@@ -389,6 +391,8 @@ public class DragonBoss : NetworkBehaviour
             case DragonState.Jump: visual.DoJump(); break;
             case DragonState.HornAttack: visual.DoHornAttack(); break;
             case DragonState.Scream: visual.DoScream(); break;
+
+            case DragonState.Die: visual.DoDie(); break;
         }
     }
 

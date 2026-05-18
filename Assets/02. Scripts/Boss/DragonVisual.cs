@@ -39,6 +39,7 @@ public class DragonVisual : MonoBehaviour
     public void DoHornAttack() { anim.SetTrigger("DoHorn"); }
     public void DoJump() { anim.SetTrigger("DoJump"); }
     public void DoScream() { anim.SetTrigger("DoScream"); }
+    public void DoDie() { anim.SetTrigger("DoDie"); }
     public void SetSleep(bool isSleeping) { anim.SetBool("DoSleep", isSleeping); }
     // ==========================================
     // [애니메이션 이벤트용 함수]
