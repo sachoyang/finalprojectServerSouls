@@ -28,6 +28,20 @@ public class DragonBoss : NetworkBehaviour
     
     [Header("공격 쿨타임 설정")]
     public float patternCooldown = 2.0f;
+    [Header("애니메이션 원본 클립 길이 (배율 계산용)")]
+    [Tooltip("FBX 파일 내 애니메이션의 실제 길이를 입력하세요.")]
+    public float animClipIdle = 1.333f;
+    public float animClipBite = 1.2f;
+    public float animClipClaw = 3.333f;
+    public float animClipHorn = 2.167f;
+    public float animClipJump = 2.0f;
+    public float animClipDie = 1.9f;
+
+    [Header("패턴 실제 시전 시간 (애니 배속 조절)")]
+    [Tooltip("수치를 줄이면 공격이 빨라지고(배속 증가), 늘리면 느려집니다.")]
+    public float durationBite = 1.0f;
+    public float durationClaw = 1.0f;
+    public float durationJump = 1.0f;
 
     [Header("벽 충돌 설정 (가벽 박스 사용)")]
     public LayerMask wallLayerMask;
@@ -231,7 +245,7 @@ public class DragonBoss : NetworkBehaviour
         {
             CurrentHP = 0;
             Debug.Log("보스 처치 완료!");
-            ChangeState(DragonState.Die, 100f); 
+            ChangeState(DragonState.Die, 2); 
 
         }
     }
@@ -294,23 +308,23 @@ public class DragonBoss : NetworkBehaviour
         if (CurrentPattern == BossPattern.Pattern1_Bite)
         {
             if (PatternStep == 0) { ChangeState(DragonState.Idle, 0.3f); PatternStep++; }
-            else if (PatternStep == 1) { ChangeState(DragonState.BiteAttack, 1.2f); PatternStep++; }
-            else if (PatternStep == 2) { ChangeState(DragonState.BiteAttack, 1.2f); PatternStep++; }
+            else if (PatternStep == 1) { ChangeState(DragonState.BiteAttack, durationBite); PatternStep++; }
+            else if (PatternStep == 2) { ChangeState(DragonState.BiteAttack, durationBite); PatternStep++; }
             else { EndPattern(); }
         }
         else if (CurrentPattern == BossPattern.Pattern2_Claw)
         {
-            if (PatternStep == 0) { ChangeState(DragonState.ClawAttack, 1.5f); PatternStep++; }
-            else if (PatternStep == 1) { ChangeState(DragonState.ClawAttack, 1.5f); PatternStep++; }
+            if (PatternStep == 0) { ChangeState(DragonState.ClawAttack, durationClaw); PatternStep++; }
+            else if (PatternStep == 1) { ChangeState(DragonState.ClawAttack, durationClaw); PatternStep++; }
             else if (PatternStep == 2) { ChangeState(DragonState.Idle, 0.5f); PatternStep++; }
-            else if (PatternStep == 3) { ChangeState(DragonState.ClawAttack, 1.5f); PatternStep++; }
+            else if (PatternStep == 3) { ChangeState(DragonState.ClawAttack, durationClaw); PatternStep++; }
             else { EndPattern(); }
         }
         else if (CurrentPattern == BossPattern.Pattern3_Jump)
         {
             if (PatternStep == 0) 
             { 
-                ChangeState(DragonState.Jump, 2.0f); 
+                ChangeState(DragonState.Jump, durationJump); 
                 PatternStep++; 
             }
             else 
@@ -326,7 +340,7 @@ public class DragonBoss : NetworkBehaviour
         PatternStep = 0;
         
         AttackCooldown = TickTimer.CreateFromSeconds(Runner, patternCooldown);
-        ChangeState(DragonState.Idle, 0.1f);
+        ChangeState(DragonState.Idle, 1f);
     }
 
     private void FindAggroTarget()

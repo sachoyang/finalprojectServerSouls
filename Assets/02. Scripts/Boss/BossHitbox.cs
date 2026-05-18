@@ -18,7 +18,7 @@ public class BossHitbox : MonoBehaviour
     private Collider _collider;
     
     // [핵심] 콜라이더를 끄는 대신, 이 변수로 데미지 판정 여부를 결정합니다.
-    private bool _isCurrentlyAttacking = false;
+    public bool _isCurrentlyAttacking = false;
 
     // 데미지를 전달할 최상위 보스 스크립트
     private DragonBoss _bossScript;
