@@ -6,6 +6,7 @@ using UnityEngine;
 [RequireComponent(typeof(NetworkCharacterController))]
 public class NetworkPlayerController : NetworkBehaviour
 {
+    // Animator 파라미터 이름은 매 프레임 문자열로 찾지 않도록 해시로 캐싱한다.
     private static readonly int IsMoving = Animator.StringToHash("IsMoving");
     private static readonly int IsRunning = Animator.StringToHash("IsRunning");
     private static readonly int Attack = Animator.StringToHash("Attack");
@@ -39,11 +40,14 @@ public class NetworkPlayerController : NetworkBehaviour
 
     private const string LockOnHeadTag = "LockOnHead";
     private const string LockOnBodyTag = "LockOnBody";
+
     [Header("References")]
+    // 플레이어 모델 애니메이터와 로컬 플레이어가 바라볼 카메라.
     [SerializeField] private Animator animator;
     [SerializeField] private Camera viewCamera;
 
     [Header("Movement")]
+    // 일반 이동, 달리기, 구르기, 다운 후 기어가기 속도.
     [SerializeField] private float walkSpeed = 2.6f;
     [SerializeField] private float runSpeed = 4.8f;
     [SerializeField] private float rollSpeed = 6.5f;
@@ -55,6 +59,7 @@ public class NetworkPlayerController : NetworkBehaviour
     [SerializeField] private float movementBraking = 30f;
 
     [Header("Action Locks")]
+    // 액션 중 다른 입력을 잠깐 막는 시간과 점프 애니메이션 보정값.
     [SerializeField] private float attackLockDuration = 0.65f;
     [SerializeField] private float parryLockDuration = 0.5f;
     [SerializeField] private float jumpImpulse = 8f;
@@ -62,15 +67,18 @@ public class NetworkPlayerController : NetworkBehaviour
     [SerializeField] private float jumpAnimationLockDuration = 0.45f;
 
     [Header("Combat")]
+    // 기본 공격 판정 구체의 위치와 크기. Gizmo도 이 값을 사용한다.
     [SerializeField] private float attackHitRadius = 1.4f;
     [SerializeField] private float attackHitDistance = 1.8f;
     [SerializeField] private float attackHitHeight = 1.1f;
     [SerializeField] private LayerMask attackTargetLayers = ~0;
 
     [Header("Lock On")]
+    // 락온 가능한 보스 포인트 탐색 범위와 락온 중 회전 속도.
     [SerializeField] private float lockOnSearchRadius = 80f;
     [SerializeField] private float lockOnRotationSpeed = 900f;
 
+    // 네트워크로 동기화되는 이동/액션 상태. Render에서 애니메이션으로 변환된다.
     [Networked] private bool IsMovingNetworked { get; set; }
     [Networked] private bool IsRunningNetworked { get; set; }
     [Networked] private bool IsLockOnNetworked { get; set; }
@@ -107,6 +115,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
     private void Awake()
     {
+        // 같은 오브젝트에 붙은 필수 컴포넌트를 잡고, 없으면 컨트롤러를 비활성화한다.
         animator ??= GetComponent<Animator>();
         _networkCharacterController = GetComponent<NetworkCharacterController>();
         _playerStats = GetComponent<PlayerStats>();
@@ -126,6 +135,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
     private void Update()
     {
+        // 로컬 플레이어만 디버그 UI 토글 입력을 읽는다.
         if (Object == null || !Object.HasInputAuthority)
         {
             return;
@@ -141,6 +151,7 @@ public class NetworkPlayerController : NetworkBehaviour
     {
         _changeDetector = GetChangeDetector(ChangeDetector.Source.SimulationState);
 
+        // 카메라는 각 클라이언트의 내 플레이어만 따라가야 한다.
         if (!Object.HasInputAuthority)
         {
             return;
@@ -178,6 +189,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
     public override void FixedUpdateNetwork()
     {
+        // HP가 0이 되면 전투 입력은 막고 느린 크롤링 이동만 허용한다.
         if (_playerStats != null && _playerStats.IsDead)
         {
             HandleCrawlingMovement();
@@ -186,6 +198,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
         if (!GetInput(out NetworkInputData data))
         {
+            // 입력을 못 받는 틱에는 이동 상태를 정리해 보간 잔상을 줄인다.
             ApplyMovement(Vector3.zero, walkSpeed, GetLockOnFacingDirection());
             UpdateMovementState(false, false, LockMoveIdle);
             WasShiftHeld = false;
@@ -195,6 +208,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
         ProcessLockOnInput(data);
 
+        // 입력 방향은 대각선 이동이 더 빨라지지 않도록 정규화한다.
         Vector3 desiredMove = data.direction;
         if (desiredMove.sqrMagnitude > 1f)
         {
@@ -215,6 +229,7 @@ public class NetworkPlayerController : NetworkBehaviour
         bool isRolling = !RollTimer.ExpiredOrNotRunning(Runner);
         bool isActing = !ActionTimer.ExpiredOrNotRunning(Runner);
         bool isJumpAction = isActing && LastAction == ActionJump;
+        // 공격/패링은 제자리 고정, 점프/구르기는 자체 이동을 허용한다.
         bool actionBlocksMovement = isActing && !isJumpAction && !isRolling;
         bool isBusy = isRolling || isActing;
 
@@ -225,6 +240,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
         if (!isBusy)
         {
+            // 점프는 로컬 체감을 위해 네트워크 상태 갱신과 동시에 예측 애니메이션을 재생한다.
             if (data.buttons.IsSet(NetworkInputData.JUMP) && _networkCharacterController.Grounded)
             {
                 _networkCharacterController.Jump(false, jumpImpulse);
@@ -237,6 +253,7 @@ public class NetworkPlayerController : NetworkBehaviour
             }
             else if (data.buttons.IsSet(NetworkInputData.MOUSEBUTTON0))
             {
+                // 기본 공격은 StateAuthority에서 최종 스태미나와 피격 판정을 처리한다.
                 if (_playerStats == null || _playerStats.TryUseStamina(_playerStats.AttackStaminaCost))
                 {
                     StartAction(ActionAttack, attackLockDuration);
@@ -246,12 +263,14 @@ public class NetworkPlayerController : NetworkBehaviour
             }
             else if (data.buttons.IsSet(NetworkInputData.MOUSEBUTTON1))
             {
+                // 패링 중 피격되면 PlayerStats가 Impact2 액션을 요청한다.
                 StartAction(ActionParry, parryLockDuration);
                 isActing = true;
                 isBusy = true;
             }
             else if (shiftReleased && ShiftHoldTime < shiftHoldThreshold)
             {
+                // Shift를 짧게 뗐을 때 구르기, 오래 누르면 달리기로 처리한다.
                 if (_playerStats == null || _playerStats.TryUseStamina(_playerStats.RollStaminaCost))
                 {
                     StartRoll(desiredMove);
@@ -273,6 +292,7 @@ public class NetworkPlayerController : NetworkBehaviour
         Vector3 moveDirection = Vector3.zero;
         Vector3 facingDirection = IsLockOnNetworked ? GetLockOnFacingDirection() : Vector3.zero;
 
+        // 구르기는 입력 방향이 아니라 시작 순간 저장한 방향으로 끝까지 민다.
         if (isRolling)
         {
             currentSpeed = rollSpeed;
@@ -287,6 +307,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
         if (actionBlocksMovement)
         {
+            // 제자리 액션 중에는 이전 틱의 수평 속도가 남아 미끄러지지 않게 지운다.
             StopHorizontalVelocity();
         }
 
@@ -308,6 +329,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
     public override void Render()
     {
+        // 네트워크 상태 변화는 Render에서 Animator 트리거로 변환한다.
         if (animator == null)
         {
             return;
@@ -317,6 +339,7 @@ public class NetworkPlayerController : NetworkBehaviour
         {
             if (change == nameof(ActionSequence))
             {
+                // 로컬 예측으로 이미 재생한 점프는 중복 트리거를 생략한다.
                 if (Object.HasInputAuthority && ActionSequence == _predictedActionSequence)
                 {
                     continue;
@@ -335,6 +358,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
         if (Object.HasInputAuthority && _thirdPersonCamera != null)
         {
+            // 락온 카메라 타겟도 로컬 플레이어의 카메라에만 반영한다.
             if (IsLockOnNetworked && _lockOnTarget != null)
             {
                 _thirdPersonCamera.SetLockOnTarget(_lockOnTarget);
@@ -346,6 +370,7 @@ public class NetworkPlayerController : NetworkBehaviour
         }
 
         bool lockOnMovement = IsLockOnNetworked && !IsLockOnAnimatorSuppressed() && !IsInActionAnimation();
+        // 락온 이동 블렌드 트리와 일반 이동 파라미터가 서로 섞이지 않게 분리한다.
         animator.SetBool(IsCrawling, _playerStats != null && _playerStats.IsDead);
         animator.SetBool(IsMoving, lockOnMovement ? false : IsMovingNetworked);
         animator.SetBool(IsRunning, lockOnMovement ? false : IsRunningNetworked);
@@ -354,6 +379,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
     private void HandleCrawlingMovement()
     {
+        // 사망 후에는 락온을 해제하고 일반 입력 방향으로만 천천히 기어간다.
         ClearLockOn();
 
         Vector3 desiredMove = Vector3.zero;
@@ -375,6 +401,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
     private void ProcessLockOnInput(NetworkInputData data)
     {
+        // 락온 취소는 다른 락온 처리보다 우선한다.
         if (data.buttons.IsSet(NetworkInputData.LOCKON_CANCEL))
         {
             ClearLockOn();
@@ -405,6 +432,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
     private void CycleNearestBossLockOnPoint()
     {
+        // 가장 가까운 보스의 락온 포인트들을 순환 선택한다.
         List<Transform> points = GetNearestBossLockOnPoints();
         if (points.Count == 0)
         {
@@ -441,6 +469,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
     private List<Transform> GetNearestBossLockOnPoints()
     {
+        // Head/Body 태그를 모아 같은 보스 루트에 속한 포인트만 후보로 유지한다.
         GameObject[] heads = GameObject.FindGameObjectsWithTag(LockOnHeadTag);
         GameObject[] bodies = GameObject.FindGameObjectsWithTag(LockOnBodyTag);
         var nearestPoints = new List<Transform>();
@@ -568,6 +597,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
     private void UpdateLockOnAnimatorParameters(bool lockOnMovement, byte lockMove)
     {
+        // 락온 이동 코드를 2D 블렌드 트리 좌표로 넘긴다.
         Vector2 blend = lockOnMovement ? GetLockOnBlend(lockMove) : Vector2.zero;
         float speed = lockOnMovement && (lockMove == LockMoveRunLeft || lockMove == LockMoveRunRight) ? 2f : blend.magnitude;
 
@@ -593,6 +623,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
     private bool IsInActionAnimation()
     {
+        // Action 태그가 붙은 상태는 락온 블렌드 트리가 덮어쓰지 않게 보호한다.
         AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
         return stateInfo.IsTag("Action") && stateInfo.normalizedTime < 0.98f;
     }
@@ -604,6 +635,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
     private void StartAction(byte actionType, float lockDuration)
     {
+        // 액션 번호를 올리면 모든 클라이언트의 Render에서 같은 애니메이션 트리거를 받는다.
         LastAction = actionType;
         ActionSequence++;
         ActionTimer = TickTimer.CreateFromSeconds(Runner, lockDuration);
@@ -616,6 +648,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
     public void NotifyDamageReaction(bool becameDead)
     {
+        // PlayerStats가 데미지를 확정한 뒤 호출한다. 패링 중이면 Impact2, 사망이면 Death를 우선한다.
         if (!HasStateAuthority)
         {
             return;
@@ -636,6 +669,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
     private void ApplyAttackDamage()
     {
+        // 기본 공격 판정은 범위 안의 보스 히트박스 중 배율이 가장 높은 부위 하나만 적용한다.
         float damage = _playerStats != null ? _playerStats.AttackPower : 0f;
         if (damage <= 0f)
         {
@@ -686,6 +720,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
     private void StartRoll(Vector3 desiredMove)
     {
+        // 입력이 없으면 마지막 이동 방향, 그것도 없으면 현재 바라보는 방향으로 구른다.
         Vector3 rollDirection = desiredMove.sqrMagnitude > 0.001f ? desiredMove.normalized : _lastMoveDirection;
         if (rollDirection.sqrMagnitude < 0.001f)
         {
@@ -704,6 +739,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
     private void ApplyMovement(Vector3 moveDirection, float moveSpeed, Vector3 facingDirection)
     {
+        // NetworkCharacterController의 속도 값을 액션별로 바꾼 뒤 이동을 적용한다.
         _networkCharacterController.maxSpeed = moveSpeed;
         _networkCharacterController.acceleration = movementAcceleration;
         _networkCharacterController.braking = movementBraking;
@@ -734,6 +770,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
     private void RotateTowards(Vector3 direction, float rotateSpeed)
     {
+        // 이동 또는 락온 방향으로 부드럽게 회전한다.
         if (direction.sqrMagnitude <= 0.001f)
         {
             return;
@@ -756,6 +793,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
     private void TriggerAction(byte actionType)
     {
+        // 네트워크 액션 코드를 실제 Animator 트리거로 변환한다.
         switch (actionType)
         {
             case ActionAttack:
@@ -787,6 +825,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
     private void TriggerPredictedAction(byte actionType)
     {
+        // 입력권한 클라이언트에서 즉시 보여줘야 하는 액션은 예측 재생한다.
         if (!Object.HasInputAuthority || animator == null)
         {
             return;
@@ -805,6 +844,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
     private void OnGUI()
     {
+        // 슬래시(/) 키로 켜는 간단한 로컬 플레이어 디버그 패널.
         if (!_showPlayerDebug || Object == null || !Object.HasInputAuthority)
         {
             return;
