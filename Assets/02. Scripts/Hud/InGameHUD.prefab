@@ -420,7 +420,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerHUDView: {fileID: 4547624000249449456}
+  bossHUDView: {fileID: 3819531464502324987}
   playerStats: {fileID: 0}
+  dragonBoss: {fileID: 0}
 --- !u!1 &1341615496493888900
 GameObject:
   m_ObjectHideFlags: 0
@@ -1598,6 +1600,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5417269342127733008}
+  - component: {fileID: 3819531464502324987}
   m_Layer: 0
   m_Name: Boss
   m_TagString: Untagged
@@ -1631,6 +1634,19 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: -82}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &3819531464502324987
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3021828299374361435}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1da4d97ea44766245808ebfb35920320, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bossHpFillImage: {fileID: 4199709483082799628}
 --- !u!1 &3047953457851802038
 GameObject:
   m_ObjectHideFlags: 0
@@ -5596,7 +5612,7 @@ GameObject:
   - component: {fileID: 3115001386710108660}
   - component: {fileID: 4199709483082799628}
   m_Layer: 5
-  m_Name: BossHPMain
+  m_Name: Boss_HP Fill
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5650,10 +5666,10 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_Sprite: {fileID: 21300000, guid: cdeb2180660b48e41bb975cb3d74951a, type: 3}
-  m_Type: 0
+  m_Type: 3
   m_PreserveAspect: 0
   m_FillCenter: 1
-  m_FillMethod: 4
+  m_FillMethod: 0
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
