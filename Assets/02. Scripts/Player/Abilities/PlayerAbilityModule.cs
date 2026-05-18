@@ -24,6 +24,9 @@ public class PlayerAbilityModule : ScriptableObject
     [TextArea]
     [SerializeField] private string description;
 
+    // HUD나 보상 UI에서 표시할 능력 아이콘.
+    [SerializeField] private Sprite icon;
+
     // 패시브인지 액티브인지 결정한다. 액티브만 키 슬롯에 등록된다.
     [SerializeField] private AbilityType abilityType = AbilityType.Passive;
 
@@ -82,6 +85,7 @@ public class PlayerAbilityModule : ScriptableObject
     public string AbilityId => string.IsNullOrWhiteSpace(abilityId) ? name : abilityId;
     public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? name : displayName;
     public string Description => description;
+    public Sprite Icon => icon;
     public AbilityType AbilityType => abilityType;
     public bool IsActive => abilityType == AbilityType.Active;
     public float StaminaCost => staminaCost;
