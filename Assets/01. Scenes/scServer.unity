@@ -806,6 +806,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: DragonBoss
       objectReference: {fileID: 0}
+    - target: {fileID: 7809366816093122203, guid: 7568aa021d9d5534d8f698c90e5ce641, type: 3}
+      propertyPath: baseDamage
+      value: 2000
+      objectReference: {fileID: 0}
+    - target: {fileID: 7843523846323655771, guid: 7568aa021d9d5534d8f698c90e5ce641, type: 3}
+      propertyPath: baseDamage
+      value: 2000
+      objectReference: {fileID: 0}
+    - target: {fileID: 8621442443537035572, guid: 7568aa021d9d5534d8f698c90e5ce641, type: 3}
+      propertyPath: baseDamage
+      value: 2000
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
