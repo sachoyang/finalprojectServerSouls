@@ -12,6 +12,10 @@ public class NetworkPlayerController : NetworkBehaviour
     private static readonly int Parry = Animator.StringToHash("Parry");
     private static readonly int Roll = Animator.StringToHash("Roll");
     private static readonly int Jump = Animator.StringToHash("Jump");
+    private static readonly int Impact = Animator.StringToHash("Impact");
+    private static readonly int Impact2 = Animator.StringToHash("Impact2");
+    private static readonly int Death = Animator.StringToHash("Death");
+    private static readonly int IsCrawling = Animator.StringToHash("IsCrawling");
     private static readonly int IsLockOn = Animator.StringToHash("IsLockOn");
     private static readonly int LockMoveX = Animator.StringToHash("LockMoveX");
     private static readonly int LockMoveY = Animator.StringToHash("LockMoveY");
@@ -21,6 +25,9 @@ public class NetworkPlayerController : NetworkBehaviour
     private const byte ActionParry = 2;
     private const byte ActionRoll = 3;
     private const byte ActionJump = 4;
+    private const byte ActionImpact = 5;
+    private const byte ActionParryImpact = 6;
+    private const byte ActionDeath = 7;
 
     private const byte LockMoveIdle = 0;
     private const byte LockMoveForward = 1;
@@ -42,6 +49,7 @@ public class NetworkPlayerController : NetworkBehaviour
     [SerializeField] private float rollSpeed = 6.5f;
     [SerializeField] private float rotationSpeed = 720f;
     [SerializeField] private float rollDuration = 0.9f;
+    [SerializeField] private float crawlSpeed = 0.9f;
     [SerializeField] private float shiftHoldThreshold = 0.25f;
     [SerializeField] private float movementAcceleration = 80f;
     [SerializeField] private float movementBraking = 30f;
@@ -172,11 +180,7 @@ public class NetworkPlayerController : NetworkBehaviour
     {
         if (_playerStats != null && _playerStats.IsDead)
         {
-            ClearLockOn();
-            ApplyMovement(Vector3.zero, walkSpeed, Vector3.zero);
-            UpdateMovementState(false, false, LockMoveIdle);
-            WasShiftHeld = false;
-            ShiftHoldTime = 0f;
+            HandleCrawlingMovement();
             return;
         }
 
@@ -322,6 +326,9 @@ public class NetworkPlayerController : NetworkBehaviour
                 animator.ResetTrigger(Parry);
                 animator.ResetTrigger(Roll);
                 animator.ResetTrigger(Jump);
+                animator.ResetTrigger(Impact);
+                animator.ResetTrigger(Impact2);
+                animator.ResetTrigger(Death);
                 TriggerAction(LastAction);
             }
         }
@@ -339,9 +346,31 @@ public class NetworkPlayerController : NetworkBehaviour
         }
 
         bool lockOnMovement = IsLockOnNetworked && !IsLockOnAnimatorSuppressed() && !IsInActionAnimation();
+        animator.SetBool(IsCrawling, _playerStats != null && _playerStats.IsDead);
         animator.SetBool(IsMoving, lockOnMovement ? false : IsMovingNetworked);
         animator.SetBool(IsRunning, lockOnMovement ? false : IsRunningNetworked);
         UpdateLockOnAnimatorParameters(lockOnMovement, LockOnMoveNetworked);
+    }
+
+    private void HandleCrawlingMovement()
+    {
+        ClearLockOn();
+
+        Vector3 desiredMove = Vector3.zero;
+        if (GetInput(out NetworkInputData data))
+        {
+            desiredMove = data.direction;
+            if (desiredMove.sqrMagnitude > 1f)
+            {
+                desiredMove.Normalize();
+            }
+        }
+
+        Vector3 moveDirection = desiredMove.sqrMagnitude > 0.001f ? desiredMove.normalized : Vector3.zero;
+        ApplyMovement(moveDirection, crawlSpeed, Vector3.zero);
+        UpdateMovementState(moveDirection.sqrMagnitude > 0.001f, false, LockMoveIdle);
+        WasShiftHeld = false;
+        ShiftHoldTime = 0f;
     }
 
     private void ProcessLockOnInput(NetworkInputData data)
@@ -585,6 +614,26 @@ public class NetworkPlayerController : NetworkBehaviour
         }
     }
 
+    public void NotifyDamageReaction(bool becameDead)
+    {
+        if (!HasStateAuthority)
+        {
+            return;
+        }
+
+        LastAction = becameDead
+            ? ActionDeath
+            : IsParryActive()
+                ? ActionParryImpact
+                : ActionImpact;
+        ActionSequence++;
+    }
+
+    private bool IsParryActive()
+    {
+        return LastAction == ActionParry && !ActionTimer.ExpiredOrNotRunning(Runner);
+    }
+
     private void ApplyAttackDamage()
     {
         float damage = _playerStats != null ? _playerStats.AttackPower : 0f;
@@ -723,6 +772,16 @@ public class NetworkPlayerController : NetworkBehaviour
                 animator.SetBool(IsLockOn, false);
                 animator.SetTrigger(Jump);
                 break;
+            case ActionImpact:
+                animator.SetTrigger(Impact);
+                break;
+            case ActionParryImpact:
+                animator.SetTrigger(Impact2);
+                break;
+            case ActionDeath:
+                animator.SetBool(IsCrawling, true);
+                animator.SetTrigger(Death);
+                break;
         }
     }
 
@@ -738,6 +797,9 @@ public class NetworkPlayerController : NetworkBehaviour
         animator.ResetTrigger(Parry);
         animator.ResetTrigger(Roll);
         animator.ResetTrigger(Jump);
+        animator.ResetTrigger(Impact);
+        animator.ResetTrigger(Impact2);
+        animator.ResetTrigger(Death);
         TriggerAction(actionType);
     }
 

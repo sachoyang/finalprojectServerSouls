@@ -4,12 +4,16 @@ using UnityEngine;
 
 public static class PlayerAnimatorSetupTool
 {
-    private const string ControllerPath = "Assets/01. Scenes/PlayerCtrl.controller";
+    private const string ControllerPath = "Assets/07. Animations/PlayerCtrl.controller";
 
     private const string IsLockOn = "IsLockOn";
     private const string LockMoveX = "LockMoveX";
     private const string LockMoveY = "LockMoveY";
     private const string LockMoveSpeed = "LockMoveSpeed";
+    private const string Impact = "Impact";
+    private const string Impact2 = "Impact2";
+    private const string Death = "Death";
+    private const string IsCrawling = "IsCrawling";
 
     private const string LockOnMachineName = "LockOn Movement";
     private const string LockOnBlendStateName = "LockOn Blend Tree";
@@ -29,6 +33,10 @@ public static class PlayerAnimatorSetupTool
         AddParameter(controller, LockMoveX, AnimatorControllerParameterType.Float);
         AddParameter(controller, LockMoveY, AnimatorControllerParameterType.Float);
         AddParameter(controller, LockMoveSpeed, AnimatorControllerParameterType.Float);
+        AddParameter(controller, Impact, AnimatorControllerParameterType.Trigger);
+        AddParameter(controller, Impact2, AnimatorControllerParameterType.Trigger);
+        AddParameter(controller, Death, AnimatorControllerParameterType.Trigger);
+        AddParameter(controller, IsCrawling, AnimatorControllerParameterType.Bool);
 
         AnimatorStateMachine root = controller.layers[0].stateMachine;
         AnimatorStateMachine lockOnMachine = FindStateMachine(root, LockOnMachineName)
@@ -53,6 +61,7 @@ public static class PlayerAnimatorSetupTool
 
         EnsureAnyStateTransition(root, lockOnState);
         EnsureExitTransition(lockOnState, FindState(root, "idle1"));
+        SetupDamageAndDownStates(root);
         SetupBuiltInActionStates(root);
         RemoveOldLockOnStates(root);
         SetupSkillActions(controller, root);
@@ -106,6 +115,35 @@ public static class PlayerAnimatorSetupTool
             EnsureAnyStateTriggerTransition(root, state, skill.TriggerName);
             EnsureTimedExitTransition(state, idleState);
         }
+    }
+
+    private static void SetupDamageAndDownStates(AnimatorStateMachine root)
+    {
+        AnimatorState idleState = FindState(root, "idle1");
+        AnimatorState impactState = EnsureState(root, Impact, "Assets/04. Images/Animation/Great Sword Impact.fbx", new Vector3(80f, 420f, 0f), "Action");
+        AnimatorState parryImpactState = EnsureState(root, Impact2, "Assets/04. Images/Animation/Great Sword Impact2.fbx", new Vector3(300f, 420f, 0f), "Action");
+        AnimatorState deathState = EnsureState(root, Death, "Assets/04. Images/Animation/Great Sword Death.fbx", new Vector3(520f, 420f, 0f), "Action");
+        AnimatorState crawlingState = EnsureState(root, "Crawling", "Assets/04. Images/Animation/Crawling.fbx", new Vector3(740f, 420f, 0f), string.Empty);
+
+        EnsureAnyStateTriggerTransition(root, impactState, Impact);
+        EnsureAnyStateTriggerTransition(root, parryImpactState, Impact2);
+        EnsureAnyStateTriggerTransition(root, deathState, Death);
+        EnsureTimedExitTransition(impactState, idleState);
+        EnsureTimedExitTransition(parryImpactState, idleState);
+        EnsureTimedExitTransition(deathState, crawlingState);
+    }
+
+    private static AnimatorState EnsureState(AnimatorStateMachine root, string stateName, string clipPath, Vector3 position, string tag)
+    {
+        AnimatorState state = FindState(root, stateName);
+        if (state == null)
+        {
+            state = root.AddState(stateName, position);
+        }
+
+        state.motion = AssetDatabase.LoadAssetAtPath<AnimationClip>(clipPath);
+        state.tag = tag;
+        return state;
     }
 
     private static AnimatorStateMachine FindStateMachine(AnimatorStateMachine root, string name)

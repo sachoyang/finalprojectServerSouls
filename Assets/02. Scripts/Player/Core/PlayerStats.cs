@@ -200,14 +200,17 @@ public class PlayerStats : NetworkBehaviour
         float finalDamage = damage * (1f - Mathf.Clamp01(defenseRate));
         CurrentHealth = Mathf.Max(0f, CurrentHealth - finalDamage);
         HitInvincibleTimer = TickTimer.CreateFromSeconds(Runner, hitInvincibleDuration);
+        bool becameDead = CurrentHealth <= 0f;
 
         Debug.Log($"[Player Damaged] damage: {finalDamage}, hp: {CurrentHealth}/{maxHealth}");
 
-        if (CurrentHealth <= 0f)
+        if (becameDead)
         {
             // 사망 상태는 NetworkPlayerController에서 입력/이동 제한에 사용된다.
             IsDead = true;
             Debug.Log("[Player Dead]");
         }
+
+        GetComponent<NetworkPlayerController>()?.NotifyDamageReaction(becameDead);
     }
 }
