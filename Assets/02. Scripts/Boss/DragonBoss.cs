@@ -262,26 +262,34 @@ public class DragonBoss : NetworkBehaviour
     {
         if (AggroTarget == null || CurrentState == DragonState.Sleep) return;
 
+        // 1. 공격 쿨타임이 아직 안 끝났다면? (대기 턴)
+        if (!AttackCooldown.ExpiredOrNotRunning(Runner))
+        {
+            // 걷기를 멈추고 제자리에 대기 (비비적거림 100% 차단)
+            if (CurrentState != DragonState.Idle) ChangeState(DragonState.Idle, 0.1f);
+            
+            // 플레이어가 도망가도 쫓아가지 않고 고개만 돌리며 다음 턴을 노려봄
+            Vector3 dir = (AggroTarget.transform.position - transform.position).normalized;
+            dir.y = 0;
+            if (dir != Vector3.zero)
+                transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir), rotationSpeed * Runner.DeltaTime);
+                
+            return; // 아래의 이동 로직을 아예 스킵!
+        }
+
+        // -----------------------------------------------------
+        // 2. 여기서부터는 '쿨타임이 끝났을 때(내 공격 턴)'만 실행됩니다.
+        // -----------------------------------------------------
         float dist = Vector3.Distance(transform.position, AggroTarget.transform.position);
 
         if (dist <= attackRange)
         {
-            if (AttackCooldown.ExpiredOrNotRunning(Runner))
-            {
-                ChooseAttackPattern();
-            }
-            else
-            {
-                if (CurrentState != DragonState.Idle) ChangeState(DragonState.Idle, 0.1f);
-                
-                Vector3 dir = (AggroTarget.transform.position - transform.position).normalized;
-                dir.y = 0;
-                if (dir != Vector3.zero)
-                    transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir), rotationSpeed * Runner.DeltaTime);
-            }
+            // 사거리 내에 있다면 망설임이나 걷기 없이 [즉시] 패턴 발동
+            ChooseAttackPattern();
         }
         else
         {
+            // 사거리 밖이라면, 때리기 위해 확실하게 걸어서 추적
             if (CurrentState != DragonState.Walk) ChangeState(DragonState.Walk, 1.0f);
             MoveTowardsTarget();
         }

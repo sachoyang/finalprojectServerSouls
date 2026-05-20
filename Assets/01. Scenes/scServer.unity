@@ -849,6 +849,22 @@ PrefabInstance:
       propertyPath: m_Radius
       value: 95
       objectReference: {fileID: 0}
+    - target: {fileID: 6422719429561175322, guid: 7568aa021d9d5534d8f698c90e5ce641, type: 3}
+      propertyPath: m_Height
+      value: 11
+      objectReference: {fileID: 0}
+    - target: {fileID: 6422719429561175322, guid: 7568aa021d9d5534d8f698c90e5ce641, type: 3}
+      propertyPath: m_Radius
+      value: 2.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 6422719429561175322, guid: 7568aa021d9d5534d8f698c90e5ce641, type: 3}
+      propertyPath: m_Center.y
+      value: 2.7
+      objectReference: {fileID: 0}
+    - target: {fileID: 6686511853978325582, guid: 7568aa021d9d5534d8f698c90e5ce641, type: 3}
+      propertyPath: durationJump
+      value: 4
+      objectReference: {fileID: 0}
     - target: {fileID: 6914082606777652867, guid: 7568aa021d9d5534d8f698c90e5ce641, type: 3}
       propertyPath: m_Name
       value: DragonBoss
