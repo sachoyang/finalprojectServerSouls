@@ -3272,7 +3272,7 @@ GameObject:
   - component: {fileID: -1636750999124312810}
   - component: {fileID: 7836824281623023267}
   - component: {fileID: 1392735847959322296}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Player
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -3450,6 +3450,7 @@ MonoBehaviour:
   _CurrentHealth: 0
   _CurrentStamina: 0
   _IsDead: 0
+  _IsAnimationInvincible: 0
 --- !u!114 &-3789471070017338798
 MonoBehaviour:
   m_ObjectHideFlags: 0

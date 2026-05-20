@@ -46,7 +46,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1b7c120c70c2962438563997558e193d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  deadTime: 2
+  deadTime: 1.5
 --- !u!114 &4127493575190379536
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -64,7 +64,7 @@ MonoBehaviour:
   activeDuration: 1.5
   targetLayer:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 256
   isMultiHit: 0
   hitInterval: 0.5
 --- !u!1 &100002

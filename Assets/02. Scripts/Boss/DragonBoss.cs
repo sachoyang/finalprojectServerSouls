@@ -142,11 +142,25 @@ public class DragonBoss : NetworkBehaviour
                 return;
             }
 
-            if (CurrentState == DragonState.Idle || CurrentState == DragonState.Scream)
+            // 1. 포효(Scream)가 방금 막 끝났을 때의 처리
+            if (CurrentState == DragonState.Scream)
+            {
+                // 포효 끝나자마자 급발진하지 않도록 '첫 공격 쿨타임'을 장전합니다.
+                AttackCooldown = TickTimer.CreateFromSeconds(Runner, patternCooldown); 
+                
+                // 0.5초 정도 짧게 대기(Idle) 상태로 전환하여 애니메이션이 자연스럽게 이어지게 둡니다.
+                ChangeState(DragonState.Idle, 0.5f);
+                return;
+            }
+
+            // 2. 평상시 대기(Idle) 중일 때의 처리
+            if (CurrentState == DragonState.Idle)
             {
                 if (AggroTarget != null)
                 {
                     float dist = Vector3.Distance(transform.position, AggroTarget.transform.position);
+                    
+                    // 사거리 안에 있고 쿨타임도 끝났으면 공격, 아니면 추적/대기
                     if (dist <= attackRange) ChooseAttackPattern();
                     else UpdateContinuousAI();
                 }
