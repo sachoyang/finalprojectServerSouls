@@ -1,3 +1,4 @@
+using Fusion;
 using UnityEngine;
 
 public class BossHitbox : MonoBehaviour
@@ -72,7 +73,7 @@ public class BossHitbox : MonoBehaviour
     // ==========================================
     // 2. 보스가 맞았을 때 (무기 스크립트에서 이 함수를 호출할 예정)
     // ==========================================
-    public void OnHitByPlayer(float playerDamage)
+    public void OnHitByPlayer(float playerDamage, NetworkObject attacker)
     {
         if (!isHurtbox) return;
         float finalDamage = playerDamage * damageMultiplier;
@@ -81,6 +82,11 @@ public class BossHitbox : MonoBehaviour
         // 부모(DragonBoss)에게 네트워크로 체력을 깎으라고 명령합니다!
         if (_bossScript != null)
         {
+            if (attacker != null)
+            {
+                _bossScript.AggroTarget = attacker;
+            }
+
             _bossScript.RPC_TakeDamage(finalDamage);
         }
     }
