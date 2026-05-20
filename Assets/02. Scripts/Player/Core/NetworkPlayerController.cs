@@ -40,6 +40,8 @@ public class NetworkPlayerController : NetworkBehaviour
 
     private const string LockOnHeadTag = "LockOnHead";
     private const string LockOnBodyTag = "LockOnBody";
+    private const string AlivePlayerTag = "Player";
+    private const string DeadPlayerTag = "DeadPlayer";
 
     [Header("References")]
     // 플레이어 모델 애니메이터와 로컬 플레이어가 바라볼 카메라.
@@ -150,6 +152,7 @@ public class NetworkPlayerController : NetworkBehaviour
     public override void Spawned()
     {
         _changeDetector = GetChangeDetector(ChangeDetector.Source.SimulationState);
+        UpdatePlayerTag();
 
         // 카메라는 각 클라이언트의 내 플레이어만 따라가야 한다.
         if (!Object.HasInputAuthority)
@@ -329,6 +332,8 @@ public class NetworkPlayerController : NetworkBehaviour
 
     public override void Render()
     {
+        UpdatePlayerTag();
+
         // 네트워크 상태 변화는 Render에서 Animator 트리거로 변환한다.
         if (animator == null)
         {
@@ -726,7 +731,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
         foreach (BossHitbox bossHitbox in _bestBossHitboxes.Values)
         {
-            bossHitbox.OnHitByPlayer(damage);
+            bossHitbox.OnHitByPlayer(damage, Object);
         }
     }
 
@@ -852,6 +857,18 @@ public class NetworkPlayerController : NetworkBehaviour
         animator.ResetTrigger(Impact2);
         animator.ResetTrigger(Death);
         TriggerAction(actionType);
+    }
+
+    private void UpdatePlayerTag()
+    {
+        // 사망 후 기어가는 상태에서는 보스가 Player 태그 대상으로 보지 않도록 태그를 바꾼다.
+        bool isDead = _playerStats != null && _playerStats.IsDead;
+        string targetTag = isDead ? DeadPlayerTag : AlivePlayerTag;
+
+        if (!gameObject.CompareTag(targetTag))
+        {
+            gameObject.tag = targetTag;
+        }
     }
 
     private void OnGUI()
