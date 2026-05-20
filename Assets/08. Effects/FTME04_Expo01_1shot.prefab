@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 400000}
   - component: {fileID: 11400000}
+  - component: {fileID: 4127493575190379536}
   m_Layer: 0
   m_Name: FTME04_Expo01_1shot
   m_TagString: Untagged
@@ -46,6 +47,26 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   deadTime: 2
+--- !u!114 &4127493575190379536
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb5004c947ac2e8489099c10a3c3f9fa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  damage: 2000
+  radius: 7
+  activeDuration: 1.5
+  targetLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  isMultiHit: 0
+  hitInterval: 0.5
 --- !u!1 &100002
 GameObject:
   m_ObjectHideFlags: 0
@@ -333,7 +354,7 @@ ParticleSystem:
     startSize:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 4
+      scalar: 6
       minScalar: 1
       maxCurve:
         serializedVersion: 2
@@ -5236,7 +5257,7 @@ ParticleSystem:
     startSize:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 2
+      scalar: 5
       minScalar: 1
       maxCurve:
         serializedVersion: 2
@@ -10136,7 +10157,7 @@ ParticleSystem:
     startSize:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 3.6
+      scalar: 5
       minScalar: 1
       maxCurve:
         serializedVersion: 2

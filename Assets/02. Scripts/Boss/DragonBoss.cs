@@ -1,6 +1,7 @@
 using System;
 using Fusion;
 using UnityEngine;
+using System.Collections.Generic;
 using Random = UnityEngine.Random;
 
 public enum DragonState
@@ -22,14 +23,16 @@ public class DragonBoss : NetworkBehaviour
     public float moveSpeed = 2.5f;
     public float rotationSpeed = 5.0f;
 
-    [Header("사거리 설정")]
+    [Header("사거리 및 어그로 설정")]
     public float attackRange = 6.0f;
     public float wakeUpRange = 10.0f;
+    [Tooltip("어그로 대상을 재탐색하는 주기 (초)")]
+    public float aggroRefreshTime = 10.0f; 
     
     [Header("공격 쿨타임 설정")]
     public float patternCooldown = 2.0f;
-    [Header("애니메이션 원본 클립 길이 (배율 계산용)")]
-    [Tooltip("FBX 파일 내 애니메이션의 실제 길이를 입력하세요.")]
+    
+    [Header("애니메이션 원본 클립 길이")]
     public float animClipIdle = 1.333f;
     public float animClipBite = 1.2f;
     public float animClipClaw = 3.333f;
@@ -37,13 +40,12 @@ public class DragonBoss : NetworkBehaviour
     public float animClipJump = 2.0f;
     public float animClipDie = 1.9f;
 
-    [Header("패턴 실제 시전 시간 (애니 배속 조절)")]
-    [Tooltip("수치를 줄이면 공격이 빨라지고(배속 증가), 늘리면 느려집니다.")]
+    [Header("패턴 실제 시전 시간")]
     public float durationBite = 2f;
     public float durationClaw = 2f;
     public float durationJump = 3f;
 
-    [Header("벽 충돌 설정 (가벽 박스 사용)")]
+    [Header("벽 충돌 설정")]
     public LayerMask wallLayerMask;
     public float bodyRadius = 2.0f;
     public float castHeightOffset = 2.0f;
@@ -56,10 +58,13 @@ public class DragonBoss : NetworkBehaviour
     [Networked] private TickTimer StateTimer { get; set; }
     [Networked] private TickTimer AttackCooldown { get; set; }
     [Networked] public NetworkObject AggroTarget { get; set; }
+    
+    // [핵심 추가] 10초 타이머와 누적 딜량 기록 장부
+    [Networked] private TickTimer AggroTimer { get; set; }
+    private Dictionary<NetworkObject, float> _damageTracker = new Dictionary<NetworkObject, float>();
 
     [Networked] public BossPattern CurrentPattern { get; set; }
     [Networked] public int PatternStep { get; set; }
-
     [Networked] public byte ActionCounter { get; set; }
     [Networked] public float CurrentActionDuration { get; set; }
 
@@ -76,9 +81,6 @@ public class DragonBoss : NetworkBehaviour
             CurrentHP = maxHP; 
             ChangeState(DragonState.Sleep, 0f);
         }
-
-        // [핵심 추가] 호스트/클라이언트 상관없이 스폰 즉시 현재 네트워크 상태의 애니메이션을 강제 적용
-        // 늦게 접속한 유저도 보스가 누워있는 모습을 정확히 보게 됩니다.
         UpdateAnimation(CurrentState);
     }
 
@@ -87,6 +89,15 @@ public class DragonBoss : NetworkBehaviour
         if (HasStateAuthority)
         {
             if (CurrentHP <= 0) return;
+
+            // [핵심] 자고 있지 않을 때 10초마다 어그로 대상을 재정산합니다.
+            if (CurrentState != DragonState.Sleep)
+            {
+                if (AggroTimer.Expired(Runner))
+                {
+                    UpdateAggroByDamage();
+                }
+            }
 
             UpdateBossAI();
 
@@ -101,7 +112,7 @@ public class DragonBoss : NetworkBehaviour
     {
         if (CurrentState == DragonState.Sleep && CurrentHP > 0)
         {
-            FindAggroTarget(); 
+            FindClosestTarget(); 
             if (AggroTarget != null)
             {
                 float dist = Vector3.Distance(transform.position, AggroTarget.transform.position);
@@ -109,15 +120,22 @@ public class DragonBoss : NetworkBehaviour
                 {
                     Debug.Log("플레이어 감지! 보스가 잠에서 깨어납니다.");
                     ChangeState(DragonState.Scream, 2.5f); 
+                    
+                    // 깨어나는 순간 첫 10초 타이머 시작
+                    AggroTimer = TickTimer.CreateFromSeconds(Runner, aggroRefreshTime);
                 }
             }
             return; 
         }
 
+        // 도중에 타겟이 죽거나 나가서 사라지면 가장 가까운 타겟으로 땜빵
+        if (AggroTarget == null && CurrentState != DragonState.Sleep)
+        {
+            FindClosestTarget();
+        }
+
         if (StateTimer.Expired(Runner))
         {
-            FindAggroTarget();
-
             if (CurrentPattern != BossPattern.None)
             {
                 ExecutePatternStep();
@@ -129,14 +147,8 @@ public class DragonBoss : NetworkBehaviour
                 if (AggroTarget != null)
                 {
                     float dist = Vector3.Distance(transform.position, AggroTarget.transform.position);
-                    if (dist <= attackRange)
-                    {
-                        ChooseAttackPattern();
-                    }
-                    else
-                    {
-                        UpdateContinuousAI();
-                    }
+                    if (dist <= attackRange) ChooseAttackPattern();
+                    else UpdateContinuousAI();
                 }
             }
             else
@@ -151,6 +163,99 @@ public class DragonBoss : NetworkBehaviour
                 UpdateContinuousAI();
             }
         }
+    }
+
+    // ==========================================
+    // [핵심 추가] 10초마다 호출되는 딜미터기 정산 로직
+    // ==========================================
+    private void UpdateAggroByDamage()
+    {
+        NetworkObject topDPSPlayer = null;
+        float maxDamage = 0f;
+
+        // 1. 장부를 훑어서 가장 딜을 많이 넣은 사람을 찾음
+        foreach (var kvp in _damageTracker)
+        {
+            if (kvp.Key != null && kvp.Value > maxDamage)
+            {
+                maxDamage = kvp.Value;
+                topDPSPlayer = kvp.Key;
+            }
+        }
+
+        // 2. 딜을 넣은 사람이 있으면 그 사람으로 타겟 변경
+        if (topDPSPlayer != null && maxDamage > 0)
+        {
+            AggroTarget = topDPSPlayer;
+            Debug.Log($"[Aggro] 어그로 변경! 대상: {topDPSPlayer.Id} (10초 누적 딜: {maxDamage})");
+        }
+        else
+        {
+            // 지난 10초간 아무도 때리지 않았다면 제일 가까운 사람으로 타겟 갱신
+            FindClosestTarget();
+            Debug.Log("[Aggro] 누적 딜량 없음. 가장 가까운 대상으로 갱신.");
+        }
+
+        // 3. 다음 10초를 위해 장부 초기화 및 타이머 재시작
+        _damageTracker.Clear();
+        AggroTimer = TickTimer.CreateFromSeconds(Runner, aggroRefreshTime);
+    }
+
+    // ==========================================
+    // [수정됨] 데미지와 함께 "누가 때렸는지(attacker)" 기록
+    // ==========================================
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RPC_TakeDamage(float damage, NetworkObject attacker = null)
+    {
+        if (CurrentHP <= 0) return;
+
+        CurrentHP -= damage;
+        Debug.Log($"[Server] 보스가 데미지를 입음! 남은 HP: {CurrentHP}");
+
+        // 장부에 딜량 누적
+        if (attacker != null)
+        {
+            if (_damageTracker.ContainsKey(attacker))
+                _damageTracker[attacker] += damage;
+            else
+                _damageTracker[attacker] = damage;
+        }
+
+        if (CurrentHP <= 0)
+        {
+            CurrentHP = 0;
+            Debug.Log("보스 처치 완료!");
+            ChangeState(DragonState.Die, 2); 
+        }
+    }
+
+    // 컴포넌트 탐색 대신 유니티 태그("Player") 기반 탐색
+    private void FindClosestTarget()
+    {
+        float closestDistance = float.MaxValue;
+        NetworkObject bestTarget = null;
+
+        // 1. 씬에 있는 태그가 "Player"인 모든 게임 오브젝트를 싹 긁어옵니다.
+        GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+
+        foreach (var playerObj in players)
+        {
+            if (playerObj == null) continue;
+
+            // 2. 퓨전 네트워크 동기화를 위해 오브젝트에 붙은 NetworkObject 컴포넌트를 가져옵니다.
+            NetworkObject nObj = playerObj.GetComponent<NetworkObject>();
+            if (nObj == null) continue;
+
+            // 3. 거리를 계산해서 가장 가까운 대상을 선별합니다.
+            float dist = Vector3.Distance(transform.position, playerObj.transform.transform.position);
+            if (dist < closestDistance)
+            {
+                closestDistance = dist;
+                bestTarget = nObj; // 최종 어그로 대상 타겟팅
+            }
+        }
+
+        AggroTarget = bestTarget;
     }
 
     private void UpdateContinuousAI()
@@ -230,23 +335,6 @@ public class DragonBoss : NetworkBehaviour
         else
         {
             transform.position += targetDisplacement;
-        }
-    }
-
-    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    public void RPC_TakeDamage(float damage)
-    {
-        if (CurrentHP <= 0) return;
-
-        CurrentHP -= damage;
-        Debug.Log($"[Server] 보스가 데미지를 입음! 남은 HP: {CurrentHP}");
-
-        if (CurrentHP <= 0)
-        {
-            CurrentHP = 0;
-            Debug.Log("보스 처치 완료!");
-            ChangeState(DragonState.Die, 2); 
-
         }
     }
 
@@ -343,23 +431,6 @@ public class DragonBoss : NetworkBehaviour
         ChangeState(DragonState.Idle, 1f);
     }
 
-    private void FindAggroTarget()
-    {
-        float closestDistance = float.MaxValue;
-        NetworkObject bestTarget = null;
-
-        foreach (var player in FindObjectsOfType<NetworkPlayerController>())
-        {
-            float dist = Vector3.Distance(transform.position, player.transform.position);
-            if (dist < closestDistance)
-            {
-                closestDistance = dist;
-                bestTarget = player.Object;
-            }
-        }
-        AggroTarget = bestTarget;
-    }
-
     public override void Render()
     {
         foreach (var change in _changeDetector.DetectChanges(this))
@@ -374,20 +445,17 @@ public class DragonBoss : NetworkBehaviour
     private void UpdateAnimation(DragonState state)
     {
         visual.SetSpeed(state == DragonState.Walk ? 1.0f : 0.0f);
-
-        // [핵심 추가] 현재 상태가 Sleep일 때만 DoSleep을 true로 켜고, 
-        // Scream이나 Idle 등 다른 상태로 바뀌는 즉시 자동으로 false로 해제하여 모션 탈출을 보장합니다.
         visual.SetSleep(state == DragonState.Sleep);
 
         float originalLength = 1.0f;
         switch (state)
         {
-            case DragonState.BiteAttack: originalLength = 1.2f; break;
-            case DragonState.ClawAttack: originalLength = 3.333f; break;
-            case DragonState.HornAttack: originalLength = 2.167f; break;
-            case DragonState.Jump: originalLength = 2.0f; break;
-            case DragonState.Idle: originalLength = 1.333f; break;
-            case DragonState.Die: originalLength = 1.9f; break;
+            case DragonState.BiteAttack: originalLength = animClipBite; break;
+            case DragonState.ClawAttack: originalLength = animClipClaw; break;
+            case DragonState.HornAttack: originalLength = animClipHorn; break;
+            case DragonState.Jump: originalLength = animClipJump; break;
+            case DragonState.Idle: originalLength = animClipIdle; break;
+            case DragonState.Die: originalLength = animClipDie; break;
         }
 
         float animSpeedMultiplier = 1.0f;
@@ -405,7 +473,6 @@ public class DragonBoss : NetworkBehaviour
             case DragonState.Jump: visual.DoJump(); break;
             case DragonState.HornAttack: visual.DoHornAttack(); break;
             case DragonState.Scream: visual.DoScream(); break;
-
             case DragonState.Die: visual.DoDie(); break;
         }
     }
@@ -435,9 +502,10 @@ public class DragonBoss : NetworkBehaviour
                 $"Current Pattern : {CurrentPattern}\n" +
                 $"Pattern Step : {PatternStep}\n" +
                 $"Cooldown : {(AttackCooldown.IsRunning ? Math.Round(AttackCooldown.RemainingTime(Runner).Value, 1) : 0)}s\n" +
+                $"Aggro Refresh in : {(AggroTimer.IsRunning ? Math.Round(AggroTimer.RemainingTime(Runner).Value, 1) : 0)}s\n" +
                 $"HP : {CurrentHP} / {maxHP}";
 
-            GUI.Label(new Rect(30, 30, 500, 300), debugInfo, style);
+            GUI.Label(new Rect(30, 30, 500, 350), debugInfo, style);
         }
     }
 }
