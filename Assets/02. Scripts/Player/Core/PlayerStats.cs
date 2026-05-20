@@ -48,6 +48,8 @@ public class PlayerStats : NetworkBehaviour
     [Networked] public float CurrentStamina { get; private set; }
     // 사망 여부. 컨트롤러는 이 값을 보고 입력과 이동을 막는다.
     [Networked] public bool IsDead { get; private set; }
+    // 구르기/패링 애니메이션 이벤트가 켜는 수동 무적 상태.
+    [Networked] public bool IsAnimationInvincible { get; private set; }
     // 기력 사용 직후 회복 시작까지의 대기 시간을 네트워크 틱 기준으로 관리한다.
     [Networked] private TickTimer StaminaRegenDelayTimer { get; set; }
     // 보스 공격 히트박스가 한 번 스쳐도 여러 Collider에서 중복 피해가 들어가는 것을 줄인다.
@@ -81,6 +83,7 @@ public class PlayerStats : NetworkBehaviour
         CurrentHealth = maxHealth;
         CurrentStamina = maxStamina;
         IsDead = false;
+        IsAnimationInvincible = false;
     }
 
     public override void FixedUpdateNetwork()
@@ -159,6 +162,20 @@ public class PlayerStats : NetworkBehaviour
         TakeDamage(damage);
     }
 
+    public void SetAnimationInvincible(bool isInvincible)
+    {
+        // 애니메이션 이벤트는 입력권한 클라이언트에서 먼저 들어올 수 있으므로
+        // 실제 판정 권한을 가진 StateAuthority로 전달한다.
+        if (HasStateAuthority)
+        {
+            ApplyAnimationInvincible(isInvincible);
+        }
+        else
+        {
+            RPC_SetAnimationInvincible(isInvincible);
+        }
+    }
+
     public void Heal(float amount)
     {
         // 회복은 상태 권한에서만 처리한다. 죽은 상태에서는 임의로 체력을 되살리지 않는다.
@@ -188,11 +205,18 @@ public class PlayerStats : NetworkBehaviour
         ApplyDamage(damage);
     }
 
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    private void RPC_SetAnimationInvincible(bool isInvincible)
+    {
+        ApplyAnimationInvincible(isInvincible);
+    }
+
     private void ApplyDamage(float damage)
     {
         // 이미 죽었거나 짧은 피격 무적 중이면 데미지를 무시한다.
-        if (IsDead || !HitInvincibleTimer.ExpiredOrNotRunning(Runner))
+        if (IsDead || IsAnimationInvincible || !HitInvincibleTimer.ExpiredOrNotRunning(Runner))
         {
+            Debug.Log($"[Player Damage Ignored] dead:{IsDead}, animationInvincible:{IsAnimationInvincible}, hitInvincible:{!HitInvincibleTimer.ExpiredOrNotRunning(Runner)}");
             return;
         }
 
@@ -208,9 +232,15 @@ public class PlayerStats : NetworkBehaviour
         {
             // 사망 상태는 NetworkPlayerController에서 입력/이동 제한에 사용된다.
             IsDead = true;
+            IsAnimationInvincible = false;
             Debug.Log("[Player Dead]");
         }
 
         GetComponent<NetworkPlayerController>()?.NotifyDamageReaction(becameDead);
+    }
+
+    private void ApplyAnimationInvincible(bool isInvincible)
+    {
+        IsAnimationInvincible = !IsDead && isInvincible;
     }
 }

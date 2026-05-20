@@ -662,6 +662,18 @@ public class NetworkPlayerController : NetworkBehaviour
         ActionSequence++;
     }
 
+    public void IsInvincible()
+    {
+        // 애니메이션 이벤트에서 호출한다. 이 프레임부터 플레이어가 보스 데미지를 무시한다.
+        _playerStats?.SetAnimationInvincible(true);
+    }
+
+    public void EndInvincible()
+    {
+        // 애니메이션 이벤트에서 호출한다. 이 프레임부터 다시 데미지를 받을 수 있다.
+        _playerStats?.SetAnimationInvincible(false);
+    }
+
     private bool IsParryActive()
     {
         return LastAction == ActionParry && !ActionTimer.ExpiredOrNotRunning(Runner);
