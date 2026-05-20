@@ -70,6 +70,8 @@ public class DragonBoss : NetworkBehaviour
 
     public DragonVisual visual;
     private ChangeDetector _changeDetector;
+    // HUD가 Networked 값을 읽어도 되는 시점인지 확인하기 위한 플래그입니다.
+    public bool IsSpawnedReady { get; private set; }
 
     public override void Spawned()
     {
@@ -82,6 +84,7 @@ public class DragonBoss : NetworkBehaviour
             ChangeState(DragonState.Sleep, 0f);
         }
         UpdateAnimation(CurrentState);
+        IsSpawnedReady = true;
     }
 
     public override void FixedUpdateNetwork()

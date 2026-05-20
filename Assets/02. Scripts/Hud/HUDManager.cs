@@ -20,6 +20,12 @@ public class HUDManager : MonoBehaviour
 
     private NetworkPlayerController localPlayerController;
 
+    private void Awake()
+    {
+        // HUD 프리팹을 씬에 올려놓기만 해도 자식 View들을 자동으로 연결합니다.
+        FindHUDViews();
+    }
+
     private void Start()
     {
         FindRuntimeReferences();
@@ -34,6 +40,8 @@ public class HUDManager : MonoBehaviour
 
     private void FindRuntimeReferences()
     {
+        FindHUDViews();
+
         if (localPlayerController == null)
             localPlayerController = FindLocalPlayerController();
 
@@ -48,6 +56,19 @@ public class HUDManager : MonoBehaviour
 
         if (dragonBoss == null)
             dragonBoss = FindObjectOfType<DragonBoss>();
+    }
+
+    private void FindHUDViews()
+    {
+        // 인스펙터에 직접 연결되어 있으면 그 값을 유지하고, 비어 있을 때만 자식에서 찾습니다.
+        if (playerHUDView == null)
+            playerHUDView = GetComponentInChildren<PlayerHUDView>(true);
+
+        if (bossHUDView == null)
+            bossHUDView = GetComponentInChildren<BossHUDView>(true);
+
+        if (skillSlotViews == null || skillSlotViews.Length == 0)
+            skillSlotViews = GetComponentsInChildren<SkillSlotHUDView>(true);
     }
 
     private void UpdateHUD()
@@ -68,7 +89,8 @@ public class HUDManager : MonoBehaviour
 
     private void UpdateBossHUD()
     {
-        if (bossHUDView == null || dragonBoss == null)
+        // DragonBoss가 Fusion Spawn을 끝내기 전에는 Networked HP를 읽으면 예외가 발생합니다.
+        if (bossHUDView == null || dragonBoss == null || !dragonBoss.IsSpawnedReady)
             return;
 
         bossHUDView.SetHp(dragonBoss.CurrentHP, dragonBoss.maxHP);
@@ -115,6 +137,9 @@ public class HUDManager : MonoBehaviour
 
     private void ClearSkillSlots()
     {
+        if (skillSlotViews == null)
+            return;
+
         for (int i = 0; i < skillSlotViews.Length; i++)
         {
             if (skillSlotViews[i] != null)
