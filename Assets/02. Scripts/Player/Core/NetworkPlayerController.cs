@@ -749,6 +749,8 @@ public class NetworkPlayerController : NetworkBehaviour
 
     public void BeginActionAnimation(PlayerActionLockType lockType)
     {
+        // None은 락을 소유하지 않는 상태다.
+        // 잘못 붙은 Behaviour 때문에 락이 켜진 뒤 풀리지 않는 상황을 막기 위해 무시한다.
         if (lockType == PlayerActionLockType.None)
         {
             return;
@@ -770,6 +772,8 @@ public class NetworkPlayerController : NetworkBehaviour
 
     public void EndActionAnimation(PlayerActionLockType lockType)
     {
+        // 나가는 State가 현재 락을 소유한 타입일 때만 해제한다.
+        // 예: 공격 중 피격되면 현재 타입은 Impact가 되므로, 늦게 호출된 Attack Exit는 락을 풀 수 없다.
         if (lockType == PlayerActionLockType.None || GetCurrentActionLockType() != lockType)
         {
             return;
@@ -796,12 +800,16 @@ public class NetworkPlayerController : NetworkBehaviour
 
     private PlayerActionLockType GetCurrentActionLockType()
     {
+        // 로컬 예측 중에는 네트워크 값보다 로컬 락 타입이 먼저 갱신될 수 있다.
+        // 입력 권한 클라이언트의 즉각적인 조작 차단을 위해 로컬 락을 우선해서 본다.
         byte lockType = _localActionAnimationLocked ? _localActionLockType : ActionLockType;
         return (PlayerActionLockType)lockType;
     }
 
     private void SetActionAnimationLocked(bool isLocked, PlayerActionLockType lockType = PlayerActionLockType.None)
     {
+        // StateAuthority는 네트워크 값까지 갱신하고, 입력 권한 클라이언트는 로컬 값으로 즉시 반응한다.
+        // 이렇게 해야 애니메이션/입력 지연 때문에 공격, 패링, 스킬이 늦게 끼어드는 상황을 줄일 수 있다.
         _localActionAnimationLocked = isLocked;
         _localActionLockType = isLocked ? (byte)lockType : (byte)PlayerActionLockType.None;
 
@@ -835,6 +843,8 @@ public class NetworkPlayerController : NetworkBehaviour
     private void StartAction(byte actionType)
     {
         // 액션 번호를 올리면 모든 클라이언트의 Render에서 같은 애니메이션 트리거를 받는다.
+        // 액션 번호를 올리면 모든 클라이언트의 Render에서 같은 애니메이션 트리거를 받는다.
+        // 동시에 액션 타입별 락을 걸어 다음 입력 틱에서 다른 액션이 끼어들지 못하게 한다.
         LastAction = actionType;
         ActionSequence++;
         SetActionAnimationLocked(true, GetActionLockType(actionType));
@@ -854,6 +864,8 @@ public class NetworkPlayerController : NetworkBehaviour
     public void NotifyDamageReaction(bool becameDead)
     {
         // PlayerStats가 데미지를 확정한 뒤 호출한다. 패링 중이면 Impact2, 사망이면 Death를 우선한다.
+        // PlayerStats가 실제 피해 적용 후 호출한다.
+        // 피격은 StartAction을 거치지 않으므로 여기서 즉시 Impact 타입 락을 걸어 패링/공격 입력이 끼어들지 못하게 한다.
         if (!HasStateAuthority)
         {
             return;
@@ -889,6 +901,8 @@ public class NetworkPlayerController : NetworkBehaviour
 
     private static PlayerActionLockType GetActionLockType(byte actionType)
     {
+        // 네트워크로 동기화되는 byte 액션 값을 Animator StateBehaviour에서 사용하는 락 타입으로 변환한다.
+        // Death는 별도 조작 복귀가 없는 상태라 None으로 두고, 피격류는 Impact 타입으로 묶는다.
         return actionType switch
         {
             ActionAttack => PlayerActionLockType.Attack,

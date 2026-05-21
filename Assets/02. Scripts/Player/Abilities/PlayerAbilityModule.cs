@@ -40,6 +40,10 @@ public class PlayerAbilityModule : ScriptableObject
     [SerializeField, Range(1, 8)] private int minBossStage = 1;
     [SerializeField, Range(1, 8)] private int maxBossStage = 8;
 
+    // Player reward pool 동기화 도구가 이 값을 보고 Player.prefab의 abilityPool에 포함할지 결정한다.
+    // 테스트용 또는 미완성 모듈은 체크를 끄면 보스 보상 후보에서 제외된다.
+    [SerializeField] private bool includeInRewardPool = true;
+
     [Header("Active Settings")]
     // 액티브 능력을 사용할 때 소모하는 스태미나. 0이면 무료다.
     [SerializeField] private float staminaCost;
@@ -92,6 +96,7 @@ public class PlayerAbilityModule : ScriptableObject
     public bool IsActive => abilityType == AbilityType.Active;
     public float StaminaCost => staminaCost;
     public float CooldownSeconds => cooldownSeconds;
+    public bool IncludeInRewardPool => includeInRewardPool;
     public AnimationClip AnimationClip => animationClip;
     public string AnimationStateName => animationStateName;
     public string AnimationTrigger => animationTrigger;

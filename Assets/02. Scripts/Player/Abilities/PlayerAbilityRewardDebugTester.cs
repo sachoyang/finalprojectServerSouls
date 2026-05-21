@@ -6,8 +6,14 @@ using UnityEngine;
 [RequireComponent(typeof(PlayerAbilityRewardController))]
 public class PlayerAbilityRewardDebugTester : MonoBehaviour
 {
+    // 보스 처치 보상 시스템을 실제 보스 처치 없이 빠르게 확인하기 위한 디버그 컴포넌트.
+    // '/'로 여는 플레이어 디버그 패널과 함께 쓰면 현재 보상 후보 이름을 화면에서 확인할 수 있다.
     [SerializeField, Range(1, 8)] private int debugBossStage = 1;
+
+    // F5: 지정한 보스 단계 기준으로 보상 후보를 생성한다.
     [SerializeField] private KeyCode offerRewardKey = KeyCode.F5;
+
+    // F6~F8: 현재 생성된 보상 후보 1~3번을 선택한다.
     [SerializeField] private KeyCode selectFirstOptionKey = KeyCode.F6;
     [SerializeField] private KeyCode selectSecondOptionKey = KeyCode.F7;
     [SerializeField] private KeyCode selectThirdOptionKey = KeyCode.F8;
@@ -23,6 +29,7 @@ public class PlayerAbilityRewardDebugTester : MonoBehaviour
 
     private void Update()
     {
+        // 네트워크 플레이어가 여러 명이어도 자신의 InputAuthority를 가진 클라이언트에서만 디버그 입력을 처리한다.
         if (_networkObject != null && !_networkObject.HasInputAuthority)
         {
             return;
@@ -50,6 +57,7 @@ public class PlayerAbilityRewardDebugTester : MonoBehaviour
 
     private void SelectOption(int optionIndex)
     {
+        // 선택 실패도 로그로 남겨 pool 조건, 중복 방지, 후보 개수 문제를 빠르게 확인할 수 있게 한다.
         IReadOnlyList<PlayerAbilityModule> options = _rewardController.PendingOptions;
         string optionName = optionIndex >= 0 && optionIndex < options.Count && options[optionIndex] != null
             ? options[optionIndex].DisplayName
