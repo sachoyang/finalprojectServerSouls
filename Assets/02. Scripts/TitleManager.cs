@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 public class TitleManager : MonoBehaviour
 {
@@ -11,7 +12,11 @@ public class TitleManager : MonoBehaviour
     public SceneFadeManager fadeManager;
 
     [Header("Scene Names")]
-    public string lobbySceneName = "scServer";
+    public string lobbySceneName = "scServer_peace";
+
+    // [추가] 유저가 코드를 입력할 인풋필드 연결 슬롯
+    [Header("Network UI")]
+    public InputField roomCodeInput;
 
     private bool isChangingScene;
 
@@ -52,20 +57,33 @@ public class TitleManager : MonoBehaviour
         ShowMainTitlePanel();
     }
 
+    // ========================================================
+    // [수정됨] 여기서부터 로컬 씬 이동 대신 NetworkManager를 호출합니다.
+    // ========================================================
     public void OnClickAloneButton()
     {
-        ChangeSceneToLobby();
+        if (NetworkManager.Instance != null)
+            NetworkManager.Instance.StartAlone();
     }
 
     public void OnClickUniteButton()
     {
-        ChangeSceneToLobby();
+        if (NetworkManager.Instance != null)
+            NetworkManager.Instance.StartAutoMatch();
     }
 
     public void OnClickAccessAndInitiateButton()
     {
-        ChangeSceneToLobby();
+        string code = "";
+        if (roomCodeInput != null)
+        {
+            code = roomCodeInput.text; // 인풋창에 적힌 텍스트를 가져옴
+        }
+        
+        if (NetworkManager.Instance != null)
+            NetworkManager.Instance.StartWithCode(code);
     }
+    // ========================================================
 
     public void OnClickQuitButton()
     {

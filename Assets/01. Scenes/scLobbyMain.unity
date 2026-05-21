@@ -667,8 +667,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 2060979122}
-        m_TargetAssemblyTypeName: LobbyManager, Assembly-CSharp
+      - m_Target: {fileID: 2060979123}
+        m_TargetAssemblyTypeName: LobbyServerManager, Assembly-CSharp
         m_MethodName: OnClickPlayer1ReadyButton
         m_Mode: 1
         m_Arguments:
@@ -1123,8 +1123,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 2060979122}
-        m_TargetAssemblyTypeName: LobbyManager, Assembly-CSharp
+      - m_Target: {fileID: 2060979123}
+        m_TargetAssemblyTypeName: LobbyServerManager, Assembly-CSharp
         m_MethodName: OnClickBattleButton
         m_Mode: 1
         m_Arguments:
@@ -2439,8 +2439,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 2060979122}
-        m_TargetAssemblyTypeName: LobbyManager, Assembly-CSharp
+      - m_Target: {fileID: 2060979123}
+        m_TargetAssemblyTypeName: LobbyServerManager, Assembly-CSharp
         m_MethodName: OnClickBackButton
         m_Mode: 1
         m_Arguments:
@@ -3770,6 +3770,8 @@ GameObject:
   - component: {fileID: 2060979119}
   - component: {fileID: 2060979118}
   - component: {fileID: 2060979122}
+  - component: {fileID: 2060979123}
+  - component: {fileID: 2060979124}
   m_Layer: 5
   m_Name: LobbyCanvas
   m_TagString: Untagged
@@ -3876,7 +3878,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2060979117}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1595a32d1f33fe248bb05f4786995d52, type: 3}
   m_Name: 
@@ -3893,6 +3895,50 @@ MonoBehaviour:
   titleSceneName: scTitle uicreate Main
   gameSceneName: scServer
   warningMessageDuration: 2
+--- !u!114 &2060979123
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2060979117}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f86a06b224021804585a04103cf0eaf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  lobbyCharacters:
+  - {fileID: 0}
+  player1ReadyButton: {fileID: 333946467}
+  player1ReadyButtonText: {fileID: 1092929624}
+  battleButton: {fileID: 509319067}
+  warningMessageText: {fileID: 744150884}
+  notReadyColor: {r: 1, g: 1, b: 1, a: 1}
+  readyColor: {r: 0.4, g: 1, b: 0.4, a: 1}
+  fadeManager: {fileID: 469056585}
+  titleSceneName: scTitle uicreate Main
+  gameSceneName: scServer_peace
+  warningMessageDuration: 2
+  _ReadyCount: 0
+--- !u!114 &2060979124
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2060979117}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  SortKey: 2936956488
+  ObjectInterest: 1
+  Flags: 262145
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 2060979123}
+  ForceRemoteRenderTimeframe: 0
 --- !u!1 &2094365015
 GameObject:
   m_ObjectHideFlags: 0
