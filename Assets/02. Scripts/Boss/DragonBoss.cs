@@ -27,11 +27,11 @@ public class DragonBoss : NetworkBehaviour
     public float attackRange = 6.0f;
     public float wakeUpRange = 10.0f;
     [Tooltip("어그로 대상을 재탐색하는 주기 (초)")]
-    public float aggroRefreshTime = 10.0f; 
-    
+    public float aggroRefreshTime = 10.0f;
+
     [Header("공격 쿨타임 설정")]
     public float patternCooldown = 2.0f;
-    
+
     [Header("애니메이션 원본 클립 길이")]
     public float animClipIdle = 1.333f;
     public float animClipBite = 1.2f;
@@ -58,7 +58,7 @@ public class DragonBoss : NetworkBehaviour
     [Networked] private TickTimer StateTimer { get; set; }
     [Networked] private TickTimer AttackCooldown { get; set; }
     [Networked] public NetworkObject AggroTarget { get; set; }
-    
+
     // [핵심 추가] 10초 타이머와 누적 딜량 기록 장부
     [Networked] private TickTimer AggroTimer { get; set; }
     private Dictionary<NetworkObject, float> _damageTracker = new Dictionary<NetworkObject, float>();
@@ -69,21 +69,27 @@ public class DragonBoss : NetworkBehaviour
     [Networked] public float CurrentActionDuration { get; set; }
 
     public DragonVisual visual;
-    private ChangeDetector _changeDetector;
+    //private ChangeDetector _changeDetector;
+    // 클라이언트 화면에서 이전 액션 번호를 기억할 로컬 변수
+    private int _lastActionCounter = -1;
+
     // HUD가 Networked 값을 읽어도 되는 시점인지 확인하기 위한 플래그입니다.
     public bool IsSpawnedReady { get; private set; }
 
     public override void Spawned()
     {
-        _changeDetector = GetChangeDetector(ChangeDetector.Source.SimulationState);
+        //_changeDetector = GetChangeDetector(ChangeDetector.Source.SimulationState);
         visual = GetComponentInChildren<DragonVisual>();
 
         if (HasStateAuthority)
         {
-            CurrentHP = maxHP; 
+            CurrentHP = maxHP;
             ChangeState(DragonState.Sleep, 0f);
         }
+
+        // 스폰 시점의 초기 상태 강제 동기화 (중간 난입 유저용)
         UpdateAnimation(CurrentState);
+
         IsSpawnedReady = true;
     }
 
@@ -115,20 +121,20 @@ public class DragonBoss : NetworkBehaviour
     {
         if (CurrentState == DragonState.Sleep && CurrentHP > 0)
         {
-            FindClosestTarget(); 
+            FindClosestTarget();
             if (AggroTarget != null)
             {
                 float dist = Vector3.Distance(transform.position, AggroTarget.transform.position);
                 if (dist <= wakeUpRange)
                 {
                     Debug.Log("플레이어 감지! 보스가 잠에서 깨어납니다.");
-                    ChangeState(DragonState.Scream, 2.8f); 
-                    
+                    ChangeState(DragonState.Scream, 2.8f);
+
                     // 깨어나는 순간 첫 10초 타이머 시작
                     AggroTimer = TickTimer.CreateFromSeconds(Runner, aggroRefreshTime);
                 }
             }
-            return; 
+            return;
         }
 
         // 도중에 타겟이 죽거나 나가서 사라지면 가장 가까운 타겟으로 땜빵
@@ -228,7 +234,7 @@ public class DragonBoss : NetworkBehaviour
         {
             CurrentHP = 0;
             Debug.Log("보스 처치 완료!");
-            ChangeState(DragonState.Die, 2); 
+            ChangeState(DragonState.Die, 2);
         }
     }
 
@@ -270,13 +276,13 @@ public class DragonBoss : NetworkBehaviour
         {
             // 걷기를 멈추고 제자리에 대기 (비비적거림 100% 차단)
             if (CurrentState != DragonState.Idle) ChangeState(DragonState.Idle, 0.1f);
-            
+
             // 플레이어가 도망가도 쫓아가지 않고 고개만 돌리며 다음 턴을 노려봄
             Vector3 dir = (AggroTarget.transform.position - transform.position).normalized;
             dir.y = 0;
             if (dir != Vector3.zero)
                 transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir), rotationSpeed * Runner.DeltaTime);
-                
+
             return; // 아래의 이동 로직을 아예 스킵!
         }
 
@@ -307,7 +313,7 @@ public class DragonBoss : NetworkBehaviour
         {
             Quaternion targetRotation = Quaternion.LookRotation(direction);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Runner.DeltaTime);
-            
+
             PerformWallSlideMovement(transform.forward, moveSpeed);
         }
     }
@@ -352,8 +358,8 @@ public class DragonBoss : NetworkBehaviour
     private void ChangeState(DragonState newState, float duration)
     {
         CurrentState = newState;
-        CurrentActionDuration = duration; 
-        ActionCounter++;                  
+        CurrentActionDuration = duration;
+        ActionCounter++;
         StateTimer = TickTimer.CreateFromSeconds(Runner, duration);
     }
 
@@ -421,14 +427,14 @@ public class DragonBoss : NetworkBehaviour
         }
         else if (CurrentPattern == BossPattern.Pattern3_Jump)
         {
-            if (PatternStep == 0) 
-            { 
-                ChangeState(DragonState.Jump, durationJump); 
-                PatternStep++; 
+            if (PatternStep == 0)
+            {
+                ChangeState(DragonState.Jump, durationJump);
+                PatternStep++;
             }
-            else 
-            { 
-                EndPattern(); 
+            else
+            {
+                EndPattern();
             }
         }
     }
@@ -437,45 +443,70 @@ public class DragonBoss : NetworkBehaviour
     {
         CurrentPattern = BossPattern.None;
         PatternStep = 0;
-        
+
         AttackCooldown = TickTimer.CreateFromSeconds(Runner, patternCooldown);
         ChangeState(DragonState.Idle, 1f);
     }
 
+    // public override void Render()
+    // {
+    //     foreach (var change in _changeDetector.DetectChanges(this))
+    //     {
+    //         if (change == nameof(ActionCounter))
+    //         {
+    //             UpdateAnimation(CurrentState);
+    //         }
+    //     }
+    // }
+
     public override void Render()
     {
-        foreach (var change in _changeDetector.DetectChanges(this))
+        if (visual == null) return;
+
+        // 1. 단발성 트리거(공격, 포효 등) 처리: 카운터가 변했을 때 딱 한 번만 실행
+        if (_lastActionCounter != ActionCounter)
         {
-            if (change == nameof(ActionCounter))
-            {
-                UpdateAnimation(CurrentState);
-            }
+            UpdateAnimation(CurrentState);
+            _lastActionCounter = ActionCounter;
         }
+
+        // 2. 지속 상태(이동, 수면) 처리: 트리거와 무관하게 매 프레임 강제 동기화
+        // (통신 렉으로 인해 걷는 모션이 풀리는 현상을 원천 차단합니다)
+        visual.SetSpeed(CurrentState == DragonState.Walk ? 1.0f : 0.0f);
+        visual.SetSleep(CurrentState == DragonState.Sleep);
     }
 
-    private void UpdateAnimation(DragonState state)
+private void UpdateAnimation(DragonState state)
     {
         visual.SetSpeed(state == DragonState.Walk ? 1.0f : 0.0f);
         visual.SetSleep(state == DragonState.Sleep);
 
         float originalLength = 1.0f;
+        bool applySpeedMultiplier = true; // 배속을 적용할 액션인지 체크하는 플래그
+
         switch (state)
         {
             case DragonState.BiteAttack: originalLength = animClipBite; break;
             case DragonState.ClawAttack: originalLength = animClipClaw; break;
             case DragonState.HornAttack: originalLength = animClipHorn; break;
             case DragonState.Jump: originalLength = animClipJump; break;
-            case DragonState.Idle: originalLength = animClipIdle; break;
+            case DragonState.Scream: originalLength = 2.8f; break; 
             case DragonState.Die: originalLength = animClipDie; break;
+            
+            // [핵심] Idle, Walk, Sleep 등은 배속 연산에서 제외합니다!
+            default: applySpeedMultiplier = false; break; 
         }
 
-        float animSpeedMultiplier = 1.0f;
-        if (CurrentActionDuration > 0)
+        // 공격 및 단발성 액션일 때만 목표 duration에 맞춰 애니메이션 속도를 조절합니다.
+        if (applySpeedMultiplier && CurrentActionDuration > 0)
         {
-            animSpeedMultiplier = originalLength / CurrentActionDuration;
+            visual.SetAnimSpeed(originalLength / CurrentActionDuration);
         }
-
-        visual.SetAnimSpeed(animSpeedMultiplier);
+        else
+        {
+            // 그 외의 지속 상태(Idle, Walk)는 무조건 기본 속도(1.0)로 원상 복구!
+            visual.SetAnimSpeed(1.0f);
+        }
 
         switch (state)
         {
@@ -485,6 +516,10 @@ public class DragonBoss : NetworkBehaviour
             case DragonState.HornAttack: visual.DoHornAttack(); break;
             case DragonState.Scream: visual.DoScream(); break;
             case DragonState.Die: visual.DoDie(); break;
+            case DragonState.Idle:
+            case DragonState.Walk:
+                visual.DoLocomotion();
+                break;
         }
     }
 

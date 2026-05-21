@@ -12,18 +12,15 @@ public class DragonVisual : MonoBehaviour
     public BossHitbox leftClawHitbox;
     public BossHitbox rightClawHitbox;
 
-    // (기존 변수들 아래에 추가)
     [Header("광역기 이펙트 프리팹")]
     public GameObject jumpSlamEffectPrefab;
-    public Transform jumpSlamSpawnPoint; // 보스 발밑 위치 (보스 자식으로 빈 오브젝트 하나 만들어서 할당)
+    public Transform jumpSlamSpawnPoint; 
 
-    // (기존 변수들 아래에 추가)
     [Header("경고 장판 (Telegraph)")]
     public GameObject jumpWarningPrefab;
 
     private void Awake()
     {
-        // 이제 같은 오브젝트에 있으므로 알아서 Animator를 찾아 연결합니다.
         if (anim == null)
         {
             anim = GetComponent<Animator>();
@@ -33,18 +30,29 @@ public class DragonVisual : MonoBehaviour
     public void SetSpeed(float speedValue) { anim.SetFloat("MoveSpeed", speedValue); }
     public void SetAnimSpeed(float multiplier) { anim.speed = multiplier; }
 
+    // ==========================================
+    // [수정됨] SetTrigger 대신 CrossFade를 사용하여 멀티플레이 애니메이션 씹힘 방지!
+    // ==========================================
     public void DoBiteAttack()
     {
-        anim.SetTrigger("DoBite");
+        anim.CrossFade("Basic Attack", 0.1f);
         if (fireBreath != null) fireBreath.Play();
     }
 
-    public void DoClawAttack() { anim.SetTrigger("DoClaw"); }
-    public void DoHornAttack() { anim.SetTrigger("DoHorn"); }
-    public void DoJump() { anim.SetTrigger("DoJump"); }
-    public void DoScream() { anim.SetTrigger("DoScream"); }
-    public void DoDie() { anim.SetTrigger("DoDie"); }
+    public void DoClawAttack() { anim.CrossFade("Claw Attack", 0.1f); }
+    public void DoHornAttack() { anim.CrossFade("Horn Attack", 0.1f); }
+    public void DoJump()       { anim.CrossFade("Jump", 0.1f); }
+    public void DoScream()     { anim.CrossFade("Scream", 0.1f); }
+    public void DoDie()        { anim.CrossFade("die", 0.1f); }
+    
+    // ==========================================
+    // [추가됨] 어딘가에 갇혀있을 때 강제로 걷기/대기로 끌고 오는 함수
+    // ==========================================
+    public void DoLocomotion() { anim.CrossFade("Locomotion", 0.1f); }
+
+    // 수면 상태는 Bool로 유지
     public void SetSleep(bool isSleeping) { anim.SetBool("DoSleep", isSleeping); }
+
     // ==========================================
     // [애니메이션 이벤트용 함수]
     // ==========================================
@@ -62,25 +70,18 @@ public class DragonVisual : MonoBehaviour
         if (rightClawHitbox != null) rightClawHitbox.StopAttack();
     }
 
-    // [애니메이션 이벤트용 함수 추가]
     public void SpawnJumpWarning()
     {
         if (jumpWarningPrefab != null && jumpSlamSpawnPoint != null)
         {
-            // 보스가 기울어져 있어도 장판은 바닥에 평평하게 깔리도록 회전값을 무시하고 생성합니다.
-            // (프리팹 자체의 기본 회전값을 따름)
             Instantiate(jumpWarningPrefab, jumpSlamSpawnPoint.position, jumpWarningPrefab.transform.rotation);
         }
     }
 
-    // ==========================================
-    // [애니메이션 이벤트용 함수 추가]
-    // ==========================================
     public void SpawnJumpSlamEffect()
     {
         if (jumpSlamEffectPrefab != null && jumpSlamSpawnPoint != null)
         {
-            // 설정해둔 보스 발밑 위치와 회전값 그대로 이펙트 생성
             Instantiate(jumpSlamEffectPrefab, jumpSlamSpawnPoint.position, jumpSlamSpawnPoint.rotation);
         }
     }

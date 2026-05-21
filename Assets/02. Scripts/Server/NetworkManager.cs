@@ -78,7 +78,7 @@ public class NetworkManager : MonoBehaviour
             if (_runner.IsServer)
             {
                 // [오류 해결] 씬 이름을 문자열로 직접 던지면 깔끔하게 넘어갑니다!
-                _runner.LoadScene(lobbySceneName, LoadSceneMode.Single);
+                await _runner.LoadScene(lobbySceneName, LoadSceneMode.Single);
             }
         }
     }
