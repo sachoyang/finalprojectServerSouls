@@ -60,6 +60,20 @@ public class PlayerAbilityModule : ScriptableObject
 
     [SerializeField] private PlayerAbilitySpecialEffect specialEffect;
 
+    [Header("Passive Stat Bonuses")]
+    // 패시브 모듈 획득 시 최대 체력에 더할 값. 실제 적용 로직은 PlayerStats의 스탯 보너스 처리에서 사용한다.
+    [SerializeField] private float maxHealthBonus;
+
+    // 패시브 모듈 획득 시 최대 스태미나에 더할 값.
+    [SerializeField] private float maxStaminaBonus;
+
+    // 패시브 모듈 획득 시 방어율에 더할 값. 0.1이면 최종 피해를 10% 더 줄이는 용도로 사용한다.
+    [SerializeField, Range(-1f, 1f)] private float defenseRateBonus;
+
+
+    // 패시브 모듈 획득 시 기본 공격 데미지에 곱할 증가율. 20을 입력하면 계산에서는 0.2 배율로 사용한다.
+    [SerializeField] private float attackDamageBonusPercent;
+
     [Header("Presentation")]
     // 이 능력에 대응되는 애니메이션 클립. 실제 재생은 Animator Trigger를 권장하고, 이 필드는 에셋에서 어떤 모션을 쓰는지 확인하는 용도다.
     [SerializeField] private AnimationClip animationClip;
@@ -97,6 +111,10 @@ public class PlayerAbilityModule : ScriptableObject
     public float StaminaCost => staminaCost;
     public float CooldownSeconds => cooldownSeconds;
     public bool IncludeInRewardPool => includeInRewardPool;
+    public float MaxHealthBonus => maxHealthBonus;
+    public float MaxStaminaBonus => maxStaminaBonus;
+    public float DefenseRateBonus => defenseRateBonus;
+    public float AttackDamageBonusRate => attackDamageBonusPercent * 0.01f;
     public AnimationClip AnimationClip => animationClip;
     public string AnimationStateName => animationStateName;
     public string AnimationTrigger => animationTrigger;
