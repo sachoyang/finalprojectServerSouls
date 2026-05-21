@@ -10,18 +10,24 @@ public class PlayerAbilityController : NetworkBehaviour
 {
     private PlayerAbilityInventory _inventory;
     private PlayerStats _stats;
+    private NetworkPlayerController _playerController;
 
     private void Awake()
     {
         _inventory = GetComponent<PlayerAbilityInventory>();
         _stats = GetComponent<PlayerStats>();
+        _playerController = GetComponent<NetworkPlayerController>();
     }
 
     private void Update()
     {
         // 내 플레이어가 아니면 로컬 키 입력을 읽지 않는다.
         // 이렇게 해야 다른 플레이어의 액티브 스킬이 내 키 입력으로 실행되지 않는다.
-        if (Object == null || !Object.HasInputAuthority || _inventory == null || (_stats != null && _stats.IsDead))
+        if (Object == null ||
+            !Object.HasInputAuthority ||
+            _inventory == null ||
+            (_stats != null && _stats.IsDead) ||
+            (_playerController != null && _playerController.IsActionAnimationLocked))
         {
             return;
         }
@@ -47,7 +53,7 @@ public class PlayerAbilityController : NetworkBehaviour
     // 테스트나 AI용으로 직접 호출할 수도 있지만, 네트워크 플레이에서는 RPC를 통해 호출되는 흐름이 기본이다.
     public bool TryActivateAbility(int activeSlotIndex)
     {
-        if (_inventory == null)
+        if (_inventory == null || (_playerController != null && _playerController.IsActionAnimationLocked))
         {
             return false;
         }
