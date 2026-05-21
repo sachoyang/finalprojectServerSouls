@@ -10,6 +10,12 @@ public enum AbilityType
     Active
 }
 
+public enum PlayerAbilitySpecialEffect
+{
+    None,
+    UnlockBasicAttackCombo
+}
+
 [CreateAssetMenu(menuName = "ServerSouls/Player Modules/Player Ability")]
 public class PlayerAbilityModule : ScriptableObject
 {
@@ -47,6 +53,8 @@ public class PlayerAbilityModule : ScriptableObject
 
     // 사용 또는 장착 시 회복할 스태미나량. 0이면 스태미나 회복 효과가 없다.
     [SerializeField] private float staminaRestoreAmount;
+
+    [SerializeField] private PlayerAbilitySpecialEffect specialEffect;
 
     [Header("Presentation")]
     // 이 능력에 대응되는 애니메이션 클립. 실제 재생은 Animator Trigger를 권장하고, 이 필드는 에셋에서 어떤 모션을 쓰는지 확인하는 용도다.
@@ -141,6 +149,11 @@ public class PlayerAbilityModule : ScriptableObject
         if (staminaRestoreAmount > 0f)
         {
             context.Stats?.RestoreStamina(staminaRestoreAmount);
+        }
+
+        if (specialEffect == PlayerAbilitySpecialEffect.UnlockBasicAttackCombo)
+        {
+            context.Owner?.GetComponent<NetworkPlayerController>()?.UnlockBasicAttackCombo();
         }
     }
 

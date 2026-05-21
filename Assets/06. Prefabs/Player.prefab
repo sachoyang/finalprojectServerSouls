@@ -3271,6 +3271,7 @@ GameObject:
   - component: {fileID: -3789471070017338798}
   - component: {fileID: -1636750999124312810}
   - component: {fileID: 7836824281623023267}
+  - component: {fileID: -4973818394262357711}
   - component: {fileID: 1392735847959322296}
   m_Layer: 8
   m_Name: Player
@@ -3469,6 +3470,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: a547d62876c4a444b8ea15b22748a173, type: 2}
   - {fileID: 11400000, guid: c002432ed530d33428e36c5130a47f39, type: 2}
   - {fileID: 11400000, guid: b82f363d0149d6349bcaeb65bc0bce62, type: 2}
+  - {fileID: 11400000, guid: 7e62c57d3bea462aadf9a20835858ad7, type: 2}
   preventDuplicateModules: 1
   defaultActiveKeys: 3100000032000000330000003400000035000000360000003700000038000000
   equippedModules:
@@ -3524,6 +3526,23 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   lastClearedBossStage: 1
   pendingOptions: []
+--- !u!114 &-4973818394262357711
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7435228771337582382}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8dbef57a70044702933c40d2132aa99e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  debugBossStage: 1
+  offerRewardKey: 286
+  selectFirstOptionKey: 287
+  selectSecondOptionKey: 288
+  selectThirdOptionKey: 289
 --- !u!114 &1392735847959322296
 MonoBehaviour:
   m_ObjectHideFlags: 0

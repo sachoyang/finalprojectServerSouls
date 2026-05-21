@@ -15,6 +15,7 @@ MonoBehaviour:
   abilityId: stamina_up
   displayName: Stamina Up
   description: Restores stamina with a power-up animation.
+  icon: {fileID: 0}
   abilityType: 1
   minBossStage: 1
   maxBossStage: 8

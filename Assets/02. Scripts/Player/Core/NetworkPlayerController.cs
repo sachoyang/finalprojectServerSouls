@@ -10,6 +10,9 @@ public class NetworkPlayerController : NetworkBehaviour
     private static readonly int IsMoving = Animator.StringToHash("IsMoving");
     private static readonly int IsRunning = Animator.StringToHash("IsRunning");
     private static readonly int Attack = Animator.StringToHash("Attack");
+    private static readonly int Attack2 = Animator.StringToHash("Attack2");
+    private static readonly int Attack3 = Animator.StringToHash("Attack3");
+    private static readonly int Attack4 = Animator.StringToHash("Attack4");
     private static readonly int Parry = Animator.StringToHash("Parry");
     private static readonly int Roll = Animator.StringToHash("Roll");
     private static readonly int Jump = Animator.StringToHash("Jump");
@@ -37,11 +40,19 @@ public class NetworkPlayerController : NetworkBehaviour
     private const byte LockMoveRight = 4;
     private const byte LockMoveRunLeft = 5;
     private const byte LockMoveRunRight = 6;
+    private const byte BasicAttackComboLastIndex = 2;
 
     private const string LockOnHeadTag = "LockOnHead";
     private const string LockOnBodyTag = "LockOnBody";
     private const string AlivePlayerTag = "Player";
     private const string DeadPlayerTag = "DeadPlayer";
+
+    private static readonly int[] BasicAttackComboTriggers =
+    {
+        Attack2,
+        Attack3,
+        Attack4
+    };
 
     [Header("References")]
     // 플레이어 모델 애니메이터와 로컬 플레이어가 바라볼 카메라.
@@ -68,6 +79,10 @@ public class NetworkPlayerController : NetworkBehaviour
     [SerializeField] private float jumpActionLockDuration = 0.35f;
     [SerializeField] private float jumpAnimationLockDuration = 0.45f;
 
+    [Header("Basic Attack Combo")]
+    [SerializeField, Range(0f, 1f)] private float comboInputOpenRatio = 0.5f;
+    [SerializeField] private float comboGraceSeconds = 0.5f;
+
     [Header("Combat")]
     // 기본 공격 판정 구체의 위치와 크기. Gizmo도 이 값을 사용한다.
     [SerializeField] private float attackHitRadius = 1.4f;
@@ -93,10 +108,16 @@ public class NetworkPlayerController : NetworkBehaviour
     [Networked] private Vector3 RollDirection { get; set; }
     [Networked] private byte LastAction { get; set; }
     [Networked] private int ActionSequence { get; set; }
+    [Networked] private NetworkBool BasicAttackComboUnlocked { get; set; }
+    [Networked] private byte BasicAttackComboIndex { get; set; }
+    [Networked] private float BasicAttackStartedAt { get; set; }
+    [Networked] private float BasicAttackDuration { get; set; }
+    [Networked] private float BasicAttackComboExpiresAt { get; set; }
 
     private NetworkCharacterController _networkCharacterController;
     private PlayerStats _playerStats;
     private PlayerAbilityInventory _abilityInventory;
+    private PlayerAbilityRewardController _abilityRewardController;
     private ChangeDetector _changeDetector;
     private Vector3 _lastMoveDirection = Vector3.forward;
     private Transform _lockOnTarget;
@@ -108,12 +129,15 @@ public class NetworkPlayerController : NetworkBehaviour
     private int _predictedActionSequence;
     private readonly Collider[] _attackHits = new Collider[16];
     private readonly Dictionary<DragonBoss, BossHitbox> _bestBossHitboxes = new Dictionary<DragonBoss, BossHitbox>();
+    private bool _localBasicAttackComboUnlocked;
+    private bool _queuedComboAttack;
     private bool _showPlayerDebug;
 
     public bool IsLockOnActive => IsLockOnNetworked;
     public Transform CurrentLockOnTarget => _lockOnTarget;
     public float AttackHitRadius => attackHitRadius;
     public Vector3 AttackHitLocalCenter => Vector3.up * attackHitHeight + Vector3.forward * attackHitDistance;
+    public bool IsBasicAttackComboUnlocked => BasicAttackComboUnlocked || _localBasicAttackComboUnlocked;
 
     private void Awake()
     {
@@ -122,6 +146,7 @@ public class NetworkPlayerController : NetworkBehaviour
         _networkCharacterController = GetComponent<NetworkCharacterController>();
         _playerStats = GetComponent<PlayerStats>();
         _abilityInventory = GetComponent<PlayerAbilityInventory>();
+        _abilityRewardController = GetComponent<PlayerAbilityRewardController>();
         viewCamera ??= Camera.main;
         _networkControllerRotationSpeed = _networkCharacterController != null ? _networkCharacterController.rotationSpeed : 0f;
 
@@ -231,6 +256,19 @@ public class NetworkPlayerController : NetworkBehaviour
         bool shiftReleased = WasShiftHeld && !shiftHeld;
         bool isRolling = !RollTimer.ExpiredOrNotRunning(Runner);
         bool isActing = !ActionTimer.ExpiredOrNotRunning(Runner);
+        bool attackPressed = data.buttons.IsSet(NetworkInputData.MOUSEBUTTON0);
+
+        if (CanStartQueuedComboAttack(isActing))
+        {
+            StartBasicAttack(GetNextBasicAttackComboIndex());
+            isActing = true;
+            _queuedComboAttack = false;
+        }
+        else if (attackPressed && CanQueueBasicAttackCombo(isActing))
+        {
+            _queuedComboAttack = true;
+        }
+
         bool isJumpAction = isActing && LastAction == ActionJump;
         // 공격/패링은 제자리 고정, 점프/구르기는 자체 이동을 허용한다.
         bool actionBlocksMovement = isActing && !isJumpAction && !isRolling;
@@ -254,12 +292,12 @@ public class NetworkPlayerController : NetworkBehaviour
                 isBusy = true;
                 TriggerPredictedAction(ActionJump);
             }
-            else if (data.buttons.IsSet(NetworkInputData.MOUSEBUTTON0))
+            else if (attackPressed)
             {
                 // 기본 공격은 StateAuthority에서 최종 스태미나와 피격 판정을 처리한다.
-                if (_playerStats == null || _playerStats.TryUseStamina(_playerStats.AttackStaminaCost))
+                if (TrySpendBasicAttackStamina())
                 {
-                    StartAction(ActionAttack, attackLockDuration);
+                    StartBasicAttack(GetOpeningBasicAttackComboIndex());
                     isActing = true;
                     isBusy = true;
                 }
@@ -351,6 +389,9 @@ public class NetworkPlayerController : NetworkBehaviour
                 }
 
                 animator.ResetTrigger(Attack);
+                animator.ResetTrigger(Attack2);
+                animator.ResetTrigger(Attack3);
+                animator.ResetTrigger(Attack4);
                 animator.ResetTrigger(Parry);
                 animator.ResetTrigger(Roll);
                 animator.ResetTrigger(Jump);
@@ -638,12 +679,109 @@ public class NetworkPlayerController : NetworkBehaviour
         return Time.time < _suppressLockOnAnimatorUntil;
     }
 
+    public void UnlockBasicAttackCombo()
+    {
+        _localBasicAttackComboUnlocked = true;
+
+        if (Object == null)
+        {
+            return;
+        }
+
+        if (HasStateAuthority)
+        {
+            BasicAttackComboUnlocked = true;
+            return;
+        }
+
+        if (Object.HasInputAuthority)
+        {
+            RPC_UnlockBasicAttackCombo();
+        }
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    private void RPC_UnlockBasicAttackCombo()
+    {
+        BasicAttackComboUnlocked = true;
+    }
+
+    private bool CanQueueBasicAttackCombo(bool isActing)
+    {
+        return IsBasicAttackComboUnlocked &&
+               isActing &&
+               LastAction == ActionAttack &&
+               BasicAttackComboIndex < BasicAttackComboLastIndex &&
+               !_queuedComboAttack &&
+               GetBasicAttackElapsedRatio() >= comboInputOpenRatio &&
+               TrySpendBasicAttackStamina();
+    }
+
+    private bool CanStartQueuedComboAttack(bool isActing)
+    {
+        return IsBasicAttackComboUnlocked &&
+               !isActing &&
+               _queuedComboAttack &&
+               LastAction == ActionAttack &&
+               Runner.SimulationTime <= BasicAttackComboExpiresAt;
+    }
+
+    private float GetBasicAttackElapsedRatio()
+    {
+        if (BasicAttackDuration <= 0f)
+        {
+            return 1f;
+        }
+
+        return Mathf.Clamp01((Runner.SimulationTime - BasicAttackStartedAt) / BasicAttackDuration);
+    }
+
+    private byte GetOpeningBasicAttackComboIndex()
+    {
+        if (!IsBasicAttackComboUnlocked ||
+            LastAction != ActionAttack ||
+            BasicAttackComboIndex >= BasicAttackComboLastIndex ||
+            Runner.SimulationTime > BasicAttackComboExpiresAt)
+        {
+            return 0;
+        }
+
+        return GetNextBasicAttackComboIndex();
+    }
+
+    private byte GetNextBasicAttackComboIndex()
+    {
+        return (byte)Mathf.Min(BasicAttackComboIndex + 1, BasicAttackComboLastIndex);
+    }
+
+    private bool TrySpendBasicAttackStamina()
+    {
+        return _playerStats == null || _playerStats.TryUseStamina(_playerStats.AttackStaminaCost);
+    }
+
+    private void StartBasicAttack(byte comboIndex)
+    {
+        _queuedComboAttack = false;
+        BasicAttackComboIndex = IsBasicAttackComboUnlocked
+            ? (byte)Mathf.Clamp(comboIndex, 0, BasicAttackComboLastIndex)
+            : (byte)0;
+        BasicAttackStartedAt = Runner.SimulationTime;
+        BasicAttackDuration = attackLockDuration;
+        BasicAttackComboExpiresAt = BasicAttackStartedAt + attackLockDuration + Mathf.Max(0f, comboGraceSeconds);
+        StartAction(ActionAttack, attackLockDuration);
+    }
+
     private void StartAction(byte actionType, float lockDuration)
     {
         // 액션 번호를 올리면 모든 클라이언트의 Render에서 같은 애니메이션 트리거를 받는다.
         LastAction = actionType;
         ActionSequence++;
         ActionTimer = TickTimer.CreateFromSeconds(Runner, lockDuration);
+
+        if (actionType != ActionAttack)
+        {
+            _queuedComboAttack = false;
+        }
 
         if (actionType == ActionAttack && HasStateAuthority)
         {
@@ -687,7 +825,7 @@ public class NetworkPlayerController : NetworkBehaviour
     private void ApplyAttackDamage()
     {
         // 기본 공격 판정은 범위 안의 보스 히트박스 중 배율이 가장 높은 부위 하나만 적용한다.
-        float damage = _playerStats != null ? _playerStats.AttackPower : 0f;
+        float damage = GetBasicAttackDamage();
         if (damage <= 0f)
         {
             return;
@@ -733,6 +871,26 @@ public class NetworkPlayerController : NetworkBehaviour
         {
             bossHitbox.OnHitByPlayer(damage, Object);
         }
+    }
+
+    private float GetBasicAttackDamage()
+    {
+        if (_playerStats == null)
+        {
+            return 0f;
+        }
+
+        if (!IsBasicAttackComboUnlocked)
+        {
+            return _playerStats.AttackPower;
+        }
+
+        return BasicAttackComboIndex switch
+        {
+            1 => _playerStats.SecondAttackDamage,
+            2 => _playerStats.ThirdAttackDamage,
+            _ => _playerStats.FirstAttackDamage
+        };
     }
 
     private void StartRoll(Vector3 desiredMove)
@@ -814,7 +972,7 @@ public class NetworkPlayerController : NetworkBehaviour
         switch (actionType)
         {
             case ActionAttack:
-                animator.SetTrigger(Attack);
+                animator.SetTrigger(GetBasicAttackTrigger());
                 break;
             case ActionParry:
                 animator.SetTrigger(Parry);
@@ -850,6 +1008,9 @@ public class NetworkPlayerController : NetworkBehaviour
 
         _predictedActionSequence = ActionSequence;
         animator.ResetTrigger(Attack);
+        animator.ResetTrigger(Attack2);
+        animator.ResetTrigger(Attack3);
+        animator.ResetTrigger(Attack4);
         animator.ResetTrigger(Parry);
         animator.ResetTrigger(Roll);
         animator.ResetTrigger(Jump);
@@ -857,6 +1018,16 @@ public class NetworkPlayerController : NetworkBehaviour
         animator.ResetTrigger(Impact2);
         animator.ResetTrigger(Death);
         TriggerAction(actionType);
+    }
+
+    private int GetBasicAttackTrigger()
+    {
+        if (!IsBasicAttackComboUnlocked)
+        {
+            return Attack2;
+        }
+
+        return BasicAttackComboTriggers[Mathf.Clamp(BasicAttackComboIndex, 0, BasicAttackComboLastIndex)];
     }
 
     private void UpdatePlayerTag()
@@ -922,6 +1093,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
         builder.AppendLine();
         builder.AppendLine("Skills");
+        AppendRewardOptions(builder);
 
         if (_abilityInventory == null || _abilityInventory.EquippedModules.Count == 0)
         {
@@ -932,6 +1104,25 @@ public class NetworkPlayerController : NetworkBehaviour
         AppendEquippedPassiveSkills(builder);
         AppendActiveSkillCooldowns(builder);
         return builder.ToString();
+    }
+
+    private void AppendRewardOptions(StringBuilder builder)
+    {
+        if (_abilityRewardController == null ||
+            _abilityRewardController.PendingOptions == null ||
+            _abilityRewardController.PendingOptions.Count == 0)
+        {
+            return;
+        }
+
+        builder.AppendLine();
+        builder.AppendLine($"Reward Options / Boss Stage {_abilityRewardController.LastClearedBossStage}");
+        for (int i = 0; i < _abilityRewardController.PendingOptions.Count; i++)
+        {
+            PlayerAbilityModule module = _abilityRewardController.PendingOptions[i];
+            string optionName = module != null ? module.DisplayName : "Empty";
+            builder.AppendLine($"- [F{6 + i}] {optionName}");
+        }
     }
 
     private void AppendEquippedPassiveSkills(StringBuilder builder)

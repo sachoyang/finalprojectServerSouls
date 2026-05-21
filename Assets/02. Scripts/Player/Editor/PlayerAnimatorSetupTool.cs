@@ -14,6 +14,9 @@ public static class PlayerAnimatorSetupTool
     private const string Impact2 = "Impact2";
     private const string Death = "Death";
     private const string IsCrawling = "IsCrawling";
+    private const string Attack2 = "Attack2";
+    private const string Attack3 = "Attack3";
+    private const string Attack4 = "Attack4";
 
     private const string LockOnMachineName = "LockOn Movement";
     private const string LockOnBlendStateName = "LockOn Blend Tree";
@@ -37,6 +40,9 @@ public static class PlayerAnimatorSetupTool
         AddParameter(controller, Impact2, AnimatorControllerParameterType.Trigger);
         AddParameter(controller, Death, AnimatorControllerParameterType.Trigger);
         AddParameter(controller, IsCrawling, AnimatorControllerParameterType.Bool);
+        AddParameter(controller, Attack2, AnimatorControllerParameterType.Trigger);
+        AddParameter(controller, Attack3, AnimatorControllerParameterType.Trigger);
+        AddParameter(controller, Attack4, AnimatorControllerParameterType.Trigger);
 
         AnimatorStateMachine root = controller.layers[0].stateMachine;
         AnimatorStateMachine lockOnMachine = FindStateMachine(root, LockOnMachineName)
@@ -273,8 +279,18 @@ public static class PlayerAnimatorSetupTool
 
     private static void SetupBuiltInActionStates(AnimatorStateMachine root)
     {
+        AnimatorState idleState = FindState(root, "idle1");
+        AnimatorState slash2 = EnsureState(root, "slash2", "Assets/04. Images/Animation/Great Sword Slash2.fbx", new Vector3(280f, 20f, 0f), "Action");
+        AnimatorState slash3 = EnsureState(root, "slash3", "Assets/04. Images/Animation/Great Sword Slash3.fbx", new Vector3(500f, 20f, 0f), "Action");
+        AnimatorState slash4 = EnsureState(root, "slash4", "Assets/04. Images/Animation/Great Sword Slash4.fbx", new Vector3(720f, 20f, 0f), "Action");
+
+        EnsureAnyStateTriggerTransition(root, slash2, Attack2);
+        EnsureAnyStateTriggerTransition(root, slash3, Attack3);
+        EnsureAnyStateTriggerTransition(root, slash4, Attack4);
+        EnsureTimedExitTransition(slash2, idleState);
+        EnsureTimedExitTransition(slash3, idleState);
+        EnsureTimedExitTransition(slash4, idleState);
         SetActionTag(root, "Jump");
-        SetActionTag(root, "slash1");
         SetActionTag(root, "blocking1");
         SetActionTag(root, "Sprinting Forward Roll");
     }
