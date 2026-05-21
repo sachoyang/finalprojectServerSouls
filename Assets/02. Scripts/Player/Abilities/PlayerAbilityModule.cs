@@ -60,18 +60,12 @@ public class PlayerAbilityModule : ScriptableObject
     // 이 능력에 대응되는 애니메이션 클립. 실제 재생은 Animator Trigger를 권장하고, 이 필드는 에셋에서 어떤 모션을 쓰는지 확인하는 용도다.
     [SerializeField] private AnimationClip animationClip;
 
-    // Animator 상태 이름으로 직접 재생할 때 사용하는 상태명. animationClip이 비어있거나 상태 이름을 따로 쓰고 싶을 때 사용한다.
+    // Setup Tool에서 Animator State를 만들 때 사용할 상태 이름. 비워두면 animationClip 이름을 쓸 수 있다.
     // 예: "Great Sword Slide Attack"
     [SerializeField] private string animationStateName;
 
     // Animator Trigger 파라미터로 재생할 때 사용하는 트리거 이름.
     [SerializeField] private string animationTrigger;
-
-    // 상태 이름으로 재생할 때 CrossFade에 사용할 전환 시간.
-    [SerializeField] private float crossFadeDuration = 0.08f;
-
-    // true면 상태 이름으로 직접 전환하고, false면 animationTrigger를 Animator에 전달한다.
-    [SerializeField] private bool useStateName = true;
 
     [Header("VFX")]
     // 능력 사용 시 생성할 파티클/이펙트 프리팹.
@@ -98,6 +92,9 @@ public class PlayerAbilityModule : ScriptableObject
     public bool IsActive => abilityType == AbilityType.Active;
     public float StaminaCost => staminaCost;
     public float CooldownSeconds => cooldownSeconds;
+    public AnimationClip AnimationClip => animationClip;
+    public string AnimationStateName => animationStateName;
+    public string AnimationTrigger => animationTrigger;
 
     public bool CanAppearAtStage(int bossStage)
     {
@@ -168,17 +165,7 @@ public class PlayerAbilityModule : ScriptableObject
         Animator animator = context.Owner.GetComponentInChildren<Animator>();
         if (animator != null)
         {
-            string stateName = !string.IsNullOrWhiteSpace(animationStateName)
-                ? animationStateName
-                : animationClip != null
-                    ? animationClip.name
-                    : string.Empty;
-
-            if (useStateName && !string.IsNullOrWhiteSpace(stateName))
-            {
-                animator.CrossFadeInFixedTime(stateName, Mathf.Max(0f, crossFadeDuration));
-            }
-            else if (!string.IsNullOrWhiteSpace(animationTrigger))
+            if (!string.IsNullOrWhiteSpace(animationTrigger))
             {
                 animator.ResetTrigger(animationTrigger);
                 animator.SetTrigger(animationTrigger);

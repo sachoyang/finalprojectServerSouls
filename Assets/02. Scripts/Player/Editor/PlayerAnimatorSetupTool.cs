@@ -14,6 +14,9 @@ public static class PlayerAnimatorSetupTool
     private const string Impact2 = "Impact2";
     private const string Death = "Death";
     private const string IsCrawling = "IsCrawling";
+    private const string Parry = "Parry";
+    private const string Roll = "Roll";
+    private const string Jump = "Jump";
     private const string Attack2 = "Attack2";
     private const string Attack3 = "Attack3";
     private const string Attack4 = "Attack4";
@@ -21,29 +24,17 @@ public static class PlayerAnimatorSetupTool
     private const string LockOnMachineName = "LockOn Movement";
     private const string LockOnBlendStateName = "LockOn Blend Tree";
     private const string SkillMachineName = "Skill Actions";
+    private const string SkillModuleFolder = "Assets/02. Scripts/Player/Abilities/SkillModule";
 
-    [MenuItem("Tools/ServerSouls/Setup Player LockOn Blend Tree")]
-    public static void SetupLockOnBlendTree()
+    [MenuItem("Tools/ServerSouls/Setup Player Base Animator")]
+    public static void SetupPlayerBaseAnimator()
     {
-        AnimatorController controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath);
-        if (controller == null)
+        if (!TryLoadController(out AnimatorController controller))
         {
-            Debug.LogError($"Animator Controller not found: {ControllerPath}");
             return;
         }
 
-        AddParameter(controller, IsLockOn, AnimatorControllerParameterType.Bool);
-        AddParameter(controller, LockMoveX, AnimatorControllerParameterType.Float);
-        AddParameter(controller, LockMoveY, AnimatorControllerParameterType.Float);
-        AddParameter(controller, LockMoveSpeed, AnimatorControllerParameterType.Float);
-        AddParameter(controller, Impact, AnimatorControllerParameterType.Trigger);
-        AddParameter(controller, Impact2, AnimatorControllerParameterType.Trigger);
-        AddParameter(controller, Death, AnimatorControllerParameterType.Trigger);
-        AddParameter(controller, IsCrawling, AnimatorControllerParameterType.Bool);
-        AddParameter(controller, Attack2, AnimatorControllerParameterType.Trigger);
-        AddParameter(controller, Attack3, AnimatorControllerParameterType.Trigger);
-        AddParameter(controller, Attack4, AnimatorControllerParameterType.Trigger);
-
+        AddBaseParameters(controller);
         AnimatorStateMachine root = controller.layers[0].stateMachine;
         AnimatorStateMachine lockOnMachine = FindStateMachine(root, LockOnMachineName)
             ?? root.AddStateMachine(LockOnMachineName, new Vector3(640f, 40f, 0f));
@@ -70,11 +61,60 @@ public static class PlayerAnimatorSetupTool
         SetupDamageAndDownStates(root);
         SetupBuiltInActionStates(root);
         RemoveOldLockOnStates(root);
-        SetupSkillActions(controller, root);
 
+        SaveController(controller);
+        Debug.Log("Player base animator setup complete.");
+    }
+
+    [MenuItem("Tools/ServerSouls/Sync Ability Modules To Animator")]
+    public static void SyncAbilityModulesToAnimator()
+    {
+        if (!TryLoadController(out AnimatorController controller))
+        {
+            return;
+        }
+
+        AnimatorStateMachine root = controller.layers[0].stateMachine;
+        SetupSkillActionsFromModules(controller, root);
+
+        SaveController(controller);
+        Debug.Log("Active ability modules synced to player animator.");
+    }
+
+    private static bool TryLoadController(out AnimatorController controller)
+    {
+        controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath);
+        if (controller != null)
+        {
+            return true;
+        }
+
+        Debug.LogError($"Animator Controller not found: {ControllerPath}");
+        return false;
+    }
+
+    private static void SaveController(AnimatorController controller)
+    {
         EditorUtility.SetDirty(controller);
         AssetDatabase.SaveAssets();
-        Debug.Log("Player lock-on blend tree setup complete.");
+    }
+
+    private static void AddBaseParameters(AnimatorController controller)
+    {
+        AddParameter(controller, IsLockOn, AnimatorControllerParameterType.Bool);
+        AddParameter(controller, LockMoveX, AnimatorControllerParameterType.Float);
+        AddParameter(controller, LockMoveY, AnimatorControllerParameterType.Float);
+        AddParameter(controller, LockMoveSpeed, AnimatorControllerParameterType.Float);
+        AddParameter(controller, Impact, AnimatorControllerParameterType.Trigger);
+        AddParameter(controller, Impact2, AnimatorControllerParameterType.Trigger);
+        AddParameter(controller, Death, AnimatorControllerParameterType.Trigger);
+        AddParameter(controller, IsCrawling, AnimatorControllerParameterType.Bool);
+        AddParameter(controller, Parry, AnimatorControllerParameterType.Trigger);
+        AddParameter(controller, Roll, AnimatorControllerParameterType.Trigger);
+        AddParameter(controller, Jump, AnimatorControllerParameterType.Trigger);
+        AddParameter(controller, Attack2, AnimatorControllerParameterType.Trigger);
+        AddParameter(controller, Attack3, AnimatorControllerParameterType.Trigger);
+        AddParameter(controller, Attack4, AnimatorControllerParameterType.Trigger);
     }
 
     private static void AddParameter(AnimatorController controller, string name, AnimatorControllerParameterType type)
@@ -90,38 +130,55 @@ public static class PlayerAnimatorSetupTool
         controller.AddParameter(name, type);
     }
 
-    private static void SetupSkillActions(AnimatorController controller, AnimatorStateMachine root)
+    private static void SetupSkillActionsFromModules(AnimatorController controller, AnimatorStateMachine root)
     {
         AnimatorStateMachine skillMachine = FindStateMachine(root, SkillMachineName)
             ?? root.AddStateMachine(SkillMachineName, new Vector3(640f, 280f, 0f));
 
         AnimatorState idleState = FindState(root, "idle1");
-        SkillAnimation[] skills =
-        {
-            new SkillAnimation("SlideAttack", "SlideAttack", "Assets/04. Images/Animation/Great Sword Slide Attack.fbx", new Vector3(260f, 20f, 0f)),
-            new SkillAnimation("HighSpinAttack", "HighSpinAttack", "Assets/04. Images/Animation/Great Sword High Spin Attack.fbx", new Vector3(260f, 90f, 0f)),
-            new SkillAnimation("JumpAttack", "JumpAttack", "Assets/04. Images/Animation/Great Sword Jump Attack.fbx", new Vector3(260f, 160f, 0f)),
-            new SkillAnimation("Heal", "Heal", "Assets/04. Images/Animation/Great Sword Casting.fbx", new Vector3(260f, 230f, 0f)),
-            new SkillAnimation("StaminaUp", "StaminaUp", "Assets/04. Images/Animation/Great Sword Power Up.fbx", new Vector3(260f, 300f, 0f)),
-        };
+        string[] moduleGuids = AssetDatabase.FindAssets("t:PlayerAbilityModule", new[] { SkillModuleFolder });
+        int syncedCount = 0;
 
-        foreach (SkillAnimation skill in skills)
+        foreach (string moduleGuid in moduleGuids)
         {
-            AddParameter(controller, skill.TriggerName, AnimatorControllerParameterType.Trigger);
-
-            AnimatorState state = FindState(skillMachine, skill.StateName);
-            if (state == null)
+            string path = AssetDatabase.GUIDToAssetPath(moduleGuid);
+            PlayerAbilityModule module = AssetDatabase.LoadAssetAtPath<PlayerAbilityModule>(path);
+            if (module == null || !module.IsActive)
             {
-                state = skillMachine.AddState(skill.StateName, skill.Position);
+                continue;
             }
 
-            state.motion = AssetDatabase.LoadAssetAtPath<AnimationClip>(skill.ClipPath);
-            state.tag = "Action";
-            EnsureActionBehaviour(state, false);
+            if (module.AnimationClip == null || string.IsNullOrWhiteSpace(module.AnimationTrigger))
+            {
+                Debug.LogWarning($"Skipped active ability module with missing animation data: {path}");
+                continue;
+            }
 
-            EnsureAnyStateTriggerTransition(root, state, skill.TriggerName);
+            string stateName = !string.IsNullOrWhiteSpace(module.AnimationStateName)
+                ? module.AnimationStateName
+                : module.AnimationClip.name;
+
+            AddParameter(controller, module.AnimationTrigger, AnimatorControllerParameterType.Trigger);
+
+            AnimatorState state = FindState(skillMachine, stateName);
+            if (state == null)
+            {
+                state = skillMachine.AddState(stateName, GetSkillStatePosition(syncedCount));
+            }
+
+            state.motion = module.AnimationClip;
+            state.tag = "Action";
+            EnsureActionBehaviour(state, PlayerActionLockType.Skill, false);
+
+            EnsureAnyStateTriggerTransition(root, state, module.AnimationTrigger);
             EnsureTimedExitTransition(state, idleState);
+            syncedCount++;
         }
+    }
+
+    private static Vector3 GetSkillStatePosition(int index)
+    {
+        return new Vector3(260f, 20f + index * 70f, 0f);
     }
 
     private static void SetupDamageAndDownStates(AnimatorStateMachine root)
@@ -131,8 +188,8 @@ public static class PlayerAnimatorSetupTool
         AnimatorState parryImpactState = EnsureState(root, Impact2, "Assets/04. Images/Animation/Great Sword Impact2.fbx", new Vector3(300f, 420f, 0f), "Action");
         AnimatorState deathState = EnsureState(root, Death, "Assets/04. Images/Animation/Great Sword Death.fbx", new Vector3(520f, 420f, 0f), "Action");
         AnimatorState crawlingState = EnsureState(root, "Crawling", "Assets/04. Images/Animation/Crawling.fbx", new Vector3(740f, 420f, 0f), string.Empty);
-        EnsureActionBehaviour(impactState, false);
-        EnsureActionBehaviour(parryImpactState, false);
+        EnsureActionBehaviour(impactState, PlayerActionLockType.Impact, false);
+        EnsureActionBehaviour(parryImpactState, PlayerActionLockType.Impact, false);
 
         EnsureAnyStateTriggerTransition(root, impactState, Impact);
         EnsureAnyStateTriggerTransition(root, parryImpactState, Impact2);
@@ -290,19 +347,19 @@ public static class PlayerAnimatorSetupTool
         EnsureAnyStateTriggerTransition(root, slash2, Attack2);
         EnsureAnyStateTriggerTransition(root, slash3, Attack3);
         EnsureAnyStateTriggerTransition(root, slash4, Attack4);
-        EnsureActionBehaviour(slash2, true);
-        EnsureActionBehaviour(slash3, true);
-        EnsureActionBehaviour(slash4, false);
+        EnsureActionBehaviour(slash2, PlayerActionLockType.Attack, true);
+        EnsureActionBehaviour(slash3, PlayerActionLockType.Attack, true);
+        EnsureActionBehaviour(slash4, PlayerActionLockType.Attack, false);
         EnsureTimedExitTransition(slash2, idleState);
         EnsureTimedExitTransition(slash3, idleState);
         EnsureTimedExitTransition(slash4, idleState);
         SetActionTag(root, "Jump");
-        EnsureActionBehaviour(FindState(root, "Jump"), false);
-        EnsureActionBehaviour(FindState(root, "blocking1"), false);
-        EnsureActionBehaviour(FindState(root, "Sprinting Forward Roll"), false);
+        EnsureActionBehaviour(FindState(root, "Jump"), PlayerActionLockType.Jump, false);
+        EnsureActionBehaviour(FindState(root, "blocking1"), PlayerActionLockType.Parry, false);
+        EnsureActionBehaviour(FindState(root, "Sprinting Forward Roll"), PlayerActionLockType.Roll, false);
     }
 
-    private static void EnsureActionBehaviour(AnimatorState state, bool opensComboInput)
+    private static void EnsureActionBehaviour(AnimatorState state, PlayerActionLockType lockType, bool opensComboInput)
     {
         if (state == null)
         {
@@ -324,7 +381,7 @@ public static class PlayerAnimatorSetupTool
             behaviour = state.AddStateMachineBehaviour<PlayerActionStateBehaviour>();
         }
 
-        behaviour.Configure(opensComboInput, 0.5f);
+        behaviour.Configure(lockType, opensComboInput, 0.5f);
         EditorUtility.SetDirty(behaviour);
     }
 
@@ -378,21 +435,5 @@ public static class PlayerAnimatorSetupTool
                 root.RemoveState(state);
             }
         }
-    }
-
-    private readonly struct SkillAnimation
-    {
-        public SkillAnimation(string triggerName, string stateName, string clipPath, Vector3 position)
-        {
-            TriggerName = triggerName;
-            StateName = stateName;
-            ClipPath = clipPath;
-            Position = position;
-        }
-
-        public string TriggerName { get; }
-        public string StateName { get; }
-        public string ClipPath { get; }
-        public Vector3 Position { get; }
     }
 }

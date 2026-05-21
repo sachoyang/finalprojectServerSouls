@@ -107,6 +107,7 @@ public class NetworkPlayerController : NetworkBehaviour
     [Networked] private byte BasicAttackComboIndex { get; set; }
     [Networked] private float BasicAttackComboExpiresAt { get; set; }
     [Networked] private NetworkBool ActionAnimationLocked { get; set; }
+    [Networked] private byte ActionLockType { get; set; }
     [Networked] private NetworkBool ComboInputWindowOpen { get; set; }
 
     private NetworkCharacterController _networkCharacterController;
@@ -126,6 +127,7 @@ public class NetworkPlayerController : NetworkBehaviour
     private readonly Dictionary<DragonBoss, BossHitbox> _bestBossHitboxes = new Dictionary<DragonBoss, BossHitbox>();
     private bool _localBasicAttackComboUnlocked;
     private bool _localActionAnimationLocked;
+    private byte _localActionLockType;
     private bool _localComboInputWindowOpen;
     private bool _queuedComboAttack;
     private bool _showPlayerDebug;
@@ -745,9 +747,14 @@ public class NetworkPlayerController : NetworkBehaviour
         return _playerStats == null || _playerStats.TryUseStamina(_playerStats.AttackStaminaCost);
     }
 
-    public void BeginActionAnimation()
+    public void BeginActionAnimation(PlayerActionLockType lockType)
     {
-        SetActionAnimationLocked(true);
+        if (lockType == PlayerActionLockType.None)
+        {
+            return;
+        }
+
+        SetActionAnimationLocked(true, lockType);
         SetComboInputWindowOpen(false);
     }
 
@@ -761,8 +768,13 @@ public class NetworkPlayerController : NetworkBehaviour
         SetComboInputWindowOpen(true);
     }
 
-    public void EndActionAnimation()
+    public void EndActionAnimation(PlayerActionLockType lockType)
     {
+        if (lockType == PlayerActionLockType.None || GetCurrentActionLockType() != lockType)
+        {
+            return;
+        }
+
         SetActionAnimationLocked(false);
         SetComboInputWindowOpen(false);
 
@@ -782,13 +794,21 @@ public class NetworkPlayerController : NetworkBehaviour
         return ComboInputWindowOpen || _localComboInputWindowOpen;
     }
 
-    private void SetActionAnimationLocked(bool isLocked)
+    private PlayerActionLockType GetCurrentActionLockType()
+    {
+        byte lockType = _localActionAnimationLocked ? _localActionLockType : ActionLockType;
+        return (PlayerActionLockType)lockType;
+    }
+
+    private void SetActionAnimationLocked(bool isLocked, PlayerActionLockType lockType = PlayerActionLockType.None)
     {
         _localActionAnimationLocked = isLocked;
+        _localActionLockType = isLocked ? (byte)lockType : (byte)PlayerActionLockType.None;
 
         if (Object != null && HasStateAuthority)
         {
             ActionAnimationLocked = isLocked;
+            ActionLockType = _localActionLockType;
         }
     }
 
@@ -817,7 +837,7 @@ public class NetworkPlayerController : NetworkBehaviour
         // 액션 번호를 올리면 모든 클라이언트의 Render에서 같은 애니메이션 트리거를 받는다.
         LastAction = actionType;
         ActionSequence++;
-        SetActionAnimationLocked(true);
+        SetActionAnimationLocked(true, GetActionLockType(actionType));
         SetComboInputWindowOpen(false);
 
         if (actionType != ActionAttack)
@@ -845,6 +865,9 @@ public class NetworkPlayerController : NetworkBehaviour
                 ? ActionParryImpact
                 : ActionImpact;
         ActionSequence++;
+        SetActionAnimationLocked(true, GetActionLockType(LastAction));
+        SetComboInputWindowOpen(false);
+        _queuedComboAttack = false;
     }
 
     public void IsInvincible()
@@ -862,6 +885,19 @@ public class NetworkPlayerController : NetworkBehaviour
     private bool IsParryActive()
     {
         return LastAction == ActionParry && IsActionAnimationLocked;
+    }
+
+    private static PlayerActionLockType GetActionLockType(byte actionType)
+    {
+        return actionType switch
+        {
+            ActionAttack => PlayerActionLockType.Attack,
+            ActionParry => PlayerActionLockType.Parry,
+            ActionRoll => PlayerActionLockType.Roll,
+            ActionJump => PlayerActionLockType.Jump,
+            ActionImpact or ActionParryImpact => PlayerActionLockType.Impact,
+            _ => PlayerActionLockType.None
+        };
     }
 
     private void ApplyAttackDamage()
