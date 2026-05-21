@@ -4,6 +4,8 @@ using UnityEngine;
 
 public static class PlayerAnimatorSetupTool
 {
+    // 플레이어 Animator Controller를 에디터 메뉴에서 자동 보정하기 위한 도구.
+    // 기본 전투/락온 세팅과 액티브 스킬 모듈 동기화를 분리해, 새 스킬 추가 시 기본 Animator 구성이 불필요하게 덮이지 않도록 한다.
     private const string ControllerPath = "Assets/07. Animations/PlayerCtrl.controller";
 
     private const string IsLockOn = "IsLockOn";
@@ -29,6 +31,8 @@ public static class PlayerAnimatorSetupTool
     [MenuItem("Tools/ServerSouls/Setup Player Base Animator")]
     public static void SetupPlayerBaseAnimator()
     {
+        // 기본 세팅 메뉴는 이동/락온/기본 공격/피격/패링/구르기처럼 플레이어가 항상 가져야 하는 상태만 관리한다.
+        // 액티브 스킬 모듈은 별도 메뉴에서 처리해서 수동으로 다듬은 기본 Animator가 스킬 동기화 때문에 흔들리지 않게 한다.
         if (!TryLoadController(out AnimatorController controller))
         {
             return;
@@ -69,6 +73,8 @@ public static class PlayerAnimatorSetupTool
     [MenuItem("Tools/ServerSouls/Sync Ability Modules To Animator")]
     public static void SyncAbilityModulesToAnimator()
     {
+        // 새 액티브 스킬 모듈을 만들었을 때 사용하는 메뉴.
+        // PlayerAbilityModule의 Animation Clip / State Name / Trigger 값을 읽어서 Skill Actions 하위 State만 추가 또는 갱신한다.
         if (!TryLoadController(out AnimatorController controller))
         {
             return;
@@ -101,6 +107,8 @@ public static class PlayerAnimatorSetupTool
 
     private static void AddBaseParameters(AnimatorController controller)
     {
+        // 코드가 SetTrigger/SetBool/SetFloat로 접근하는 기본 파라미터를 보장한다.
+        // 이미 있는 파라미터는 AddParameter에서 건너뛰므로 여러 번 실행해도 중복 생성되지 않는다.
         AddParameter(controller, IsLockOn, AnimatorControllerParameterType.Bool);
         AddParameter(controller, LockMoveX, AnimatorControllerParameterType.Float);
         AddParameter(controller, LockMoveY, AnimatorControllerParameterType.Float);
@@ -132,6 +140,8 @@ public static class PlayerAnimatorSetupTool
 
     private static void SetupSkillActionsFromModules(AnimatorController controller, AnimatorStateMachine root)
     {
+        // 액티브 모듈만 Animator에 연결한다.
+        // 패시브 모듈은 획득 즉시 효과만 적용하므로 애니메이션 State나 Trigger를 만들 필요가 없다.
         AnimatorStateMachine skillMachine = FindStateMachine(root, SkillMachineName)
             ?? root.AddStateMachine(SkillMachineName, new Vector3(640f, 280f, 0f));
 
@@ -150,10 +160,12 @@ public static class PlayerAnimatorSetupTool
 
             if (module.AnimationClip == null || string.IsNullOrWhiteSpace(module.AnimationTrigger))
             {
+                // 액티브 스킬은 런타임에서 Trigger로 재생하므로 Clip과 Trigger 둘 중 하나라도 없으면 Animator 연결을 만들지 않는다.
                 Debug.LogWarning($"Skipped active ability module with missing animation data: {path}");
                 continue;
             }
 
+            // State Name을 비워둔 모듈은 클립 이름을 그대로 State 이름으로 사용해 빠르게 세팅할 수 있게 한다.
             string stateName = !string.IsNullOrWhiteSpace(module.AnimationStateName)
                 ? module.AnimationStateName
                 : module.AnimationClip.name;
@@ -168,6 +180,7 @@ public static class PlayerAnimatorSetupTool
 
             state.motion = module.AnimationClip;
             state.tag = "Action";
+            // 스킬 모션 중에는 공격/패링/다른 스킬로 캔슬되지 않도록 Skill 타입 액션락 Behaviour를 자동 부착한다.
             EnsureActionBehaviour(state, PlayerActionLockType.Skill, false);
 
             EnsureAnyStateTriggerTransition(root, state, module.AnimationTrigger);
@@ -183,6 +196,8 @@ public static class PlayerAnimatorSetupTool
 
     private static void SetupDamageAndDownStates(AnimatorStateMachine root)
     {
+        // 피격 상태도 액션락 대상이다.
+        // 공격/스킬 중 맞았을 때 이전 State의 Exit가 피격 락을 풀지 못하도록 Impact 타입 Behaviour를 붙인다.
         AnimatorState idleState = FindState(root, "idle1");
         AnimatorState impactState = EnsureState(root, Impact, "Assets/04. Images/Animation/Great Sword Impact.fbx", new Vector3(80f, 420f, 0f), "Action");
         AnimatorState parryImpactState = EnsureState(root, Impact2, "Assets/04. Images/Animation/Great Sword Impact2.fbx", new Vector3(300f, 420f, 0f), "Action");
@@ -339,6 +354,8 @@ public static class PlayerAnimatorSetupTool
 
     private static void SetupBuiltInActionStates(AnimatorStateMachine root)
     {
+        // 기본 공격 콤보는 slash2 -> slash3 -> slash4 순서로 사용한다.
+        // slash2, slash3만 애니메이션 중반 이후 다음 콤보 선입력을 열어준다.
         AnimatorState idleState = FindState(root, "idle1");
         AnimatorState slash2 = EnsureState(root, "slash2", "Assets/04. Images/Animation/Great Sword Slash2.fbx", new Vector3(280f, 20f, 0f), "Action");
         AnimatorState slash3 = EnsureState(root, "slash3", "Assets/04. Images/Animation/Great Sword Slash3.fbx", new Vector3(500f, 20f, 0f), "Action");
@@ -361,6 +378,8 @@ public static class PlayerAnimatorSetupTool
 
     private static void EnsureActionBehaviour(AnimatorState state, PlayerActionLockType lockType, bool opensComboInput)
     {
+        // StateMachineBehaviour는 Animator State에 붙는 스크립트다.
+        // 여기서 타입까지 자동 지정해두면 Inspector에서 문자열 이름을 직접 입력하지 않아도 액션락이 맞물린다.
         if (state == null)
         {
             return;
@@ -417,6 +436,8 @@ public static class PlayerAnimatorSetupTool
 
     private static void RemoveOldLockOnStates(AnimatorStateMachine root)
     {
+        // 예전 방식의 개별 락온 이동 State가 남아 있으면 Blend Tree와 역할이 겹치므로 정리한다.
+        // 이동 애니메이션은 LockOn Blend Tree 하나에서 방향 파라미터로 선택한다.
         string[] oldStateNames =
         {
             "Great Sword Walk",
