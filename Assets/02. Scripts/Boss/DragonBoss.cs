@@ -122,7 +122,7 @@ public class DragonBoss : NetworkBehaviour
                 if (dist <= wakeUpRange)
                 {
                     Debug.Log("플레이어 감지! 보스가 잠에서 깨어납니다.");
-                    ChangeState(DragonState.Scream, 2.5f); 
+                    ChangeState(DragonState.Scream, 2.8f); 
                     
                     // 깨어나는 순간 첫 10초 타이머 시작
                     AggroTimer = TickTimer.CreateFromSeconds(Runner, aggroRefreshTime);
@@ -145,33 +145,19 @@ public class DragonBoss : NetworkBehaviour
                 return;
             }
 
-            // 1. 포효(Scream)가 방금 막 끝났을 때의 처리
+            // 1. 포효(Scream)가 방금 막 끝났을 때
             if (CurrentState == DragonState.Scream)
             {
-                // 포효 끝나자마자 급발진하지 않도록 '첫 공격 쿨타임'을 장전합니다.
-                AttackCooldown = TickTimer.CreateFromSeconds(Runner, patternCooldown); 
-                
-                // 0.5초 정도 짧게 대기(Idle) 상태로 전환하여 애니메이션이 자연스럽게 이어지게 둡니다.
-                ChangeState(DragonState.Idle, 0.5f);
+                // [핵심] 첫 공격 쿨타임을 확실하게 장전하고 짧게 Idle로 넘깁니다.
+                AttackCooldown = TickTimer.CreateFromSeconds(Runner, patternCooldown);
+                ChangeState(DragonState.Idle, 0.1f);
                 return;
             }
 
-            // 2. 평상시 대기(Idle) 중일 때의 처리
-            if (CurrentState == DragonState.Idle)
-            {
-                if (AggroTarget != null)
-                {
-                    float dist = Vector3.Distance(transform.position, AggroTarget.transform.position);
-                    
-                    // 사거리 안에 있고 쿨타임도 끝났으면 공격, 아니면 추적/대기
-                    if (dist <= attackRange) ChooseAttackPattern();
-                    else UpdateContinuousAI();
-                }
-            }
-            else
-            {
-                UpdateContinuousAI();
-            }
+            // 2. 대기(Idle) 등 다른 상태가 끝났을 때
+            // 예전처럼 여기서 강제로 공격하지 않고, 상시 AI에게 통제권을 넘깁니다.
+            // (상시 AI가 알아서 쿨타임 검사를 하고 공격할지 대기할지 결정함)
+            UpdateContinuousAI();
         }
         else
         {

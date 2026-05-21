@@ -17,6 +17,10 @@ public class DragonVisual : MonoBehaviour
     public GameObject jumpSlamEffectPrefab;
     public Transform jumpSlamSpawnPoint; // 보스 발밑 위치 (보스 자식으로 빈 오브젝트 하나 만들어서 할당)
 
+    // (기존 변수들 아래에 추가)
+    [Header("경고 장판 (Telegraph)")]
+    public GameObject jumpWarningPrefab;
+
     private void Awake()
     {
         // 이제 같은 오브젝트에 있으므로 알아서 Animator를 찾아 연결합니다.
@@ -56,6 +60,17 @@ public class DragonVisual : MonoBehaviour
     {
         if (leftClawHitbox != null) leftClawHitbox.StopAttack();
         if (rightClawHitbox != null) rightClawHitbox.StopAttack();
+    }
+
+    // [애니메이션 이벤트용 함수 추가]
+    public void SpawnJumpWarning()
+    {
+        if (jumpWarningPrefab != null && jumpSlamSpawnPoint != null)
+        {
+            // 보스가 기울어져 있어도 장판은 바닥에 평평하게 깔리도록 회전값을 무시하고 생성합니다.
+            // (프리팹 자체의 기본 회전값을 따름)
+            Instantiate(jumpWarningPrefab, jumpSlamSpawnPoint.position, jumpWarningPrefab.transform.rotation);
+        }
     }
 
     // ==========================================

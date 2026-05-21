@@ -55,12 +55,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 264932015058822258}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 5.45, z: 7.35}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalRotation: {x: -0.26997796, y: 0.653538, z: -0.26997796, w: -0.653538}
+  m_LocalPosition: {x: -24.6, y: -70.2, z: 0}
+  m_LocalScale: {x: 58.823524, y: 58.823524, z: 58.823532}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 607109985166594546}
+  m_Father: {fileID: 7649782068898426539}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &404197330762550811
 GameObject:
@@ -136,6 +136,7 @@ MonoBehaviour:
   damageMultiplier: 1
   isAttackHitbox: 1
   baseDamage: 13
+  _isCurrentlyAttacking: 0
 --- !u!1 &522204842211875891
 GameObject:
   m_ObjectHideFlags: 0
@@ -784,6 +785,7 @@ MonoBehaviour:
   rightClawHitbox: {fileID: 7843523846323655771}
   jumpSlamEffectPrefab: {fileID: 100000, guid: fa45173d878d027478169754e02ba58a, type: 3}
   jumpSlamSpawnPoint: {fileID: 607109985166594546}
+  jumpWarningPrefab: {fileID: 0}
 --- !u!1 &2703312729836752367
 GameObject:
   m_ObjectHideFlags: 0
@@ -1018,6 +1020,7 @@ MonoBehaviour:
   damageMultiplier: 0.8
   isAttackHitbox: 1
   baseDamage: 8
+  _isCurrentlyAttacking: 0
 --- !u!1 &3615161679301990296
 GameObject:
   m_ObjectHideFlags: 0
@@ -1439,6 +1442,7 @@ MonoBehaviour:
   damageMultiplier: 1
   isAttackHitbox: 1
   baseDamage: 13
+  _isCurrentlyAttacking: 0
 --- !u!1 &5231139237601353139
 GameObject:
   m_ObjectHideFlags: 0
@@ -2133,8 +2137,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 377207316429180378}
-  - {fileID: 3216130064777231415}
-  - {fileID: 3809209794358930184}
   - {fileID: 8035299733715831513}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -2154,7 +2156,17 @@ MonoBehaviour:
   rotationSpeed: 2
   attackRange: 7
   wakeUpRange: 10
+  aggroRefreshTime: 10
   patternCooldown: 2
+  animClipIdle: 1.333
+  animClipBite: 1.2
+  animClipClaw: 3.333
+  animClipHorn: 2.167
+  animClipJump: 2
+  animClipDie: 1.9
+  durationBite: 2
+  durationClaw: 2
+  durationJump: 3
   wallLayerMask:
     serializedVersion: 2
     m_Bits: 128
@@ -2261,6 +2273,7 @@ Transform:
   - {fileID: 22212837391194822}
   - {fileID: 6413430424534395655}
   - {fileID: 40553781022966590}
+  - {fileID: 3809209794358930184}
   m_Father: {fileID: 695492420836495950}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!135 &6322643896968092887
@@ -2301,6 +2314,7 @@ MonoBehaviour:
   damageMultiplier: 1.2
   isAttackHitbox: 1
   baseDamage: 10
+  _isCurrentlyAttacking: 0
 --- !u!1 &7044144980641931986
 GameObject:
   m_ObjectHideFlags: 0
@@ -2582,6 +2596,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6155168877922480571}
+  - {fileID: 3216130064777231415}
   m_Father: {fileID: 28632641326884838}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!136 &7649555433530633716
@@ -2624,6 +2639,7 @@ MonoBehaviour:
   damageMultiplier: 1
   isAttackHitbox: 0
   baseDamage: 10
+  _isCurrentlyAttacking: 0
 --- !u!1 &7753364982041004899
 GameObject:
   m_ObjectHideFlags: 0
@@ -2679,12 +2695,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7844214484005167830}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 3.58, z: 0.65}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalRotation: {x: 0.08229599, y: -0.7023015, z: 0.08229599, w: 0.7023015}
+  m_LocalPosition: {x: -109.98208, y: -50.07552, z: 0}
+  m_LocalScale: {x: 58.823524, y: 58.823524, z: 58.823524}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 607109985166594546}
+  m_Father: {fileID: 3242593637178239826}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7859019862636660710
 GameObject:
@@ -2949,6 +2965,7 @@ MonoBehaviour:
   damageMultiplier: 1
   isAttackHitbox: 1
   baseDamage: 15
+  _isCurrentlyAttacking: 0
 --- !u!1 &8554178788206800214
 GameObject:
   m_ObjectHideFlags: 0
