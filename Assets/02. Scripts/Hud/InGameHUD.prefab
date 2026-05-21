@@ -475,7 +475,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerHUDView: {fileID: 4547624000249449456}
   bossHUDView: {fileID: 3819531464502324987}
-  skillSlotViews: []
+  skillSlotViews:
+  - {fileID: 4070277484571858365}
+  - {fileID: 4762860499167175937}
+  - {fileID: 3248431414778102727}
+  - {fileID: 8613479483799005384}
   playerStats: {fileID: 0}
   abilityInventory: {fileID: 0}
   dragonBoss: {fileID: 0}
