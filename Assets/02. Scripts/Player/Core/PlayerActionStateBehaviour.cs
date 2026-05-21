@@ -1,14 +1,27 @@
 using UnityEngine;
 
+public enum PlayerActionLockType
+{
+    None,
+    Attack,
+    Parry,
+    Impact,
+    Roll,
+    Jump,
+    Skill
+}
+
 public class PlayerActionStateBehaviour : StateMachineBehaviour
 {
+    [SerializeField] private PlayerActionLockType actionLockType = PlayerActionLockType.None;
     [SerializeField] private bool opensComboInput;
     [SerializeField, Range(0f, 1f)] private float comboInputOpenNormalizedTime = 0.5f;
 
     private bool _comboInputOpened;
 
-    public void Configure(bool shouldOpenComboInput, float openNormalizedTime)
+    public void Configure(PlayerActionLockType lockType, bool shouldOpenComboInput, float openNormalizedTime)
     {
+        actionLockType = lockType;
         opensComboInput = shouldOpenComboInput;
         comboInputOpenNormalizedTime = Mathf.Clamp01(openNormalizedTime);
     }
@@ -16,7 +29,7 @@ public class PlayerActionStateBehaviour : StateMachineBehaviour
     public override void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
         _comboInputOpened = false;
-        GetController(animator)?.BeginActionAnimation();
+        GetController(animator)?.BeginActionAnimation(actionLockType);
     }
 
     public override void OnStateUpdate(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
@@ -38,7 +51,7 @@ public class PlayerActionStateBehaviour : StateMachineBehaviour
     public override void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
         _comboInputOpened = false;
-        GetController(animator)?.EndActionAnimation();
+        GetController(animator)?.EndActionAnimation(actionLockType);
     }
 
     private static NetworkPlayerController GetController(Animator animator)

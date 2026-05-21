@@ -26,8 +26,6 @@ MonoBehaviour:
   animationClip: {fileID: 7400000, guid: b87c0223bacdbd840967e74c4a41288f, type: 3}
   animationStateName: 
   animationTrigger: Heal
-  crossFadeDuration: 0.08
-  useStateName: 0
   effectPrefab: {fileID: 0}
   effectLocalOffset: {x: 0, y: 0, z: 0}
   parentEffectToPlayer: 1

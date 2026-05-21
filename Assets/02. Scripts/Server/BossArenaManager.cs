@@ -51,7 +51,7 @@ public class BossArenaManager : NetworkBehaviour, INetworkRunnerCallbacks
     private void Update()
     {
         _mouseButton0 = _mouseButton0 || Input.GetMouseButton(0);
-        _mouseButton1 = _mouseButton1 || Input.GetMouseButton(1);
+        _mouseButton1 = _mouseButton1 || Input.GetMouseButtonDown(1);
         _jumpPressed = _jumpPressed || Input.GetKeyDown(KeyCode.Space);
         _lockOnPressed = _lockOnPressed || Input.GetKeyDown(KeyCode.Q);
         _lockOnCancelPressed = _lockOnCancelPressed || Input.GetKeyDown(KeyCode.E);
