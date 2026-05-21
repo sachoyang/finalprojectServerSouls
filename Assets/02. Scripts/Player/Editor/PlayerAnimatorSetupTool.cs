@@ -117,6 +117,7 @@ public static class PlayerAnimatorSetupTool
 
             state.motion = AssetDatabase.LoadAssetAtPath<AnimationClip>(skill.ClipPath);
             state.tag = "Action";
+            EnsureActionBehaviour(state, false);
 
             EnsureAnyStateTriggerTransition(root, state, skill.TriggerName);
             EnsureTimedExitTransition(state, idleState);
@@ -130,6 +131,8 @@ public static class PlayerAnimatorSetupTool
         AnimatorState parryImpactState = EnsureState(root, Impact2, "Assets/04. Images/Animation/Great Sword Impact2.fbx", new Vector3(300f, 420f, 0f), "Action");
         AnimatorState deathState = EnsureState(root, Death, "Assets/04. Images/Animation/Great Sword Death.fbx", new Vector3(520f, 420f, 0f), "Action");
         AnimatorState crawlingState = EnsureState(root, "Crawling", "Assets/04. Images/Animation/Crawling.fbx", new Vector3(740f, 420f, 0f), string.Empty);
+        EnsureActionBehaviour(impactState, false);
+        EnsureActionBehaviour(parryImpactState, false);
 
         EnsureAnyStateTriggerTransition(root, impactState, Impact);
         EnsureAnyStateTriggerTransition(root, parryImpactState, Impact2);
@@ -287,12 +290,42 @@ public static class PlayerAnimatorSetupTool
         EnsureAnyStateTriggerTransition(root, slash2, Attack2);
         EnsureAnyStateTriggerTransition(root, slash3, Attack3);
         EnsureAnyStateTriggerTransition(root, slash4, Attack4);
+        EnsureActionBehaviour(slash2, true);
+        EnsureActionBehaviour(slash3, true);
+        EnsureActionBehaviour(slash4, false);
         EnsureTimedExitTransition(slash2, idleState);
         EnsureTimedExitTransition(slash3, idleState);
         EnsureTimedExitTransition(slash4, idleState);
         SetActionTag(root, "Jump");
-        SetActionTag(root, "blocking1");
-        SetActionTag(root, "Sprinting Forward Roll");
+        EnsureActionBehaviour(FindState(root, "Jump"), false);
+        EnsureActionBehaviour(FindState(root, "blocking1"), false);
+        EnsureActionBehaviour(FindState(root, "Sprinting Forward Roll"), false);
+    }
+
+    private static void EnsureActionBehaviour(AnimatorState state, bool opensComboInput)
+    {
+        if (state == null)
+        {
+            return;
+        }
+
+        PlayerActionStateBehaviour behaviour = null;
+        foreach (StateMachineBehaviour existing in state.behaviours)
+        {
+            if (existing is PlayerActionStateBehaviour actionBehaviour)
+            {
+                behaviour = actionBehaviour;
+                break;
+            }
+        }
+
+        if (behaviour == null)
+        {
+            behaviour = state.AddStateMachineBehaviour<PlayerActionStateBehaviour>();
+        }
+
+        behaviour.Configure(opensComboInput, 0.5f);
+        EditorUtility.SetDirty(behaviour);
     }
 
     private static void SetActionTag(AnimatorStateMachine root, string stateName)

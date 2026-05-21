@@ -73,14 +73,10 @@ public class NetworkPlayerController : NetworkBehaviour
 
     [Header("Action Locks")]
     // 액션 중 다른 입력을 잠깐 막는 시간과 점프 애니메이션 보정값.
-    [SerializeField] private float attackLockDuration = 0.65f;
-    [SerializeField] private float parryLockDuration = 0.5f;
     [SerializeField] private float jumpImpulse = 8f;
-    [SerializeField] private float jumpActionLockDuration = 0.35f;
     [SerializeField] private float jumpAnimationLockDuration = 0.45f;
 
     [Header("Basic Attack Combo")]
-    [SerializeField, Range(0f, 1f)] private float comboInputOpenRatio = 0.5f;
     [SerializeField] private float comboGraceSeconds = 0.5f;
 
     [Header("Combat")]
@@ -104,15 +100,14 @@ public class NetworkPlayerController : NetworkBehaviour
     [Networked] private bool WasShiftHeld { get; set; }
     [Networked] private float ShiftHoldTime { get; set; }
     [Networked] private TickTimer RollTimer { get; set; }
-    [Networked] private TickTimer ActionTimer { get; set; }
     [Networked] private Vector3 RollDirection { get; set; }
     [Networked] private byte LastAction { get; set; }
     [Networked] private int ActionSequence { get; set; }
     [Networked] private NetworkBool BasicAttackComboUnlocked { get; set; }
     [Networked] private byte BasicAttackComboIndex { get; set; }
-    [Networked] private float BasicAttackStartedAt { get; set; }
-    [Networked] private float BasicAttackDuration { get; set; }
     [Networked] private float BasicAttackComboExpiresAt { get; set; }
+    [Networked] private NetworkBool ActionAnimationLocked { get; set; }
+    [Networked] private NetworkBool ComboInputWindowOpen { get; set; }
 
     private NetworkCharacterController _networkCharacterController;
     private PlayerStats _playerStats;
@@ -130,6 +125,8 @@ public class NetworkPlayerController : NetworkBehaviour
     private readonly Collider[] _attackHits = new Collider[16];
     private readonly Dictionary<DragonBoss, BossHitbox> _bestBossHitboxes = new Dictionary<DragonBoss, BossHitbox>();
     private bool _localBasicAttackComboUnlocked;
+    private bool _localActionAnimationLocked;
+    private bool _localComboInputWindowOpen;
     private bool _queuedComboAttack;
     private bool _showPlayerDebug;
 
@@ -138,6 +135,7 @@ public class NetworkPlayerController : NetworkBehaviour
     public float AttackHitRadius => attackHitRadius;
     public Vector3 AttackHitLocalCenter => Vector3.up * attackHitHeight + Vector3.forward * attackHitDistance;
     public bool IsBasicAttackComboUnlocked => BasicAttackComboUnlocked || _localBasicAttackComboUnlocked;
+    public bool IsActionAnimationLocked => ActionAnimationLocked || _localActionAnimationLocked;
 
     private void Awake()
     {
@@ -255,7 +253,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
         bool shiftReleased = WasShiftHeld && !shiftHeld;
         bool isRolling = !RollTimer.ExpiredOrNotRunning(Runner);
-        bool isActing = !ActionTimer.ExpiredOrNotRunning(Runner);
+        bool isActing = IsActionAnimationLocked;
         bool attackPressed = data.buttons.IsSet(NetworkInputData.MOUSEBUTTON0);
 
         if (CanStartQueuedComboAttack(isActing))
@@ -285,9 +283,7 @@ public class NetworkPlayerController : NetworkBehaviour
             if (data.buttons.IsSet(NetworkInputData.JUMP) && _networkCharacterController.Grounded)
             {
                 _networkCharacterController.Jump(false, jumpImpulse);
-                LastAction = ActionJump;
-                ActionSequence++;
-                ActionTimer = TickTimer.CreateFromSeconds(Runner, jumpActionLockDuration);
+                StartAction(ActionJump);
                 isActing = true;
                 isBusy = true;
                 TriggerPredictedAction(ActionJump);
@@ -305,7 +301,7 @@ public class NetworkPlayerController : NetworkBehaviour
             else if (data.buttons.IsSet(NetworkInputData.MOUSEBUTTON1))
             {
                 // 패링 중 피격되면 PlayerStats가 Impact2 액션을 요청한다.
-                StartAction(ActionParry, parryLockDuration);
+                StartAction(ActionParry);
                 isActing = true;
                 isBusy = true;
             }
@@ -713,7 +709,7 @@ public class NetworkPlayerController : NetworkBehaviour
                LastAction == ActionAttack &&
                BasicAttackComboIndex < BasicAttackComboLastIndex &&
                !_queuedComboAttack &&
-               GetBasicAttackElapsedRatio() >= comboInputOpenRatio &&
+               IsComboInputWindowOpen() &&
                TrySpendBasicAttackStamina();
     }
 
@@ -724,16 +720,6 @@ public class NetworkPlayerController : NetworkBehaviour
                _queuedComboAttack &&
                LastAction == ActionAttack &&
                Runner.SimulationTime <= BasicAttackComboExpiresAt;
-    }
-
-    private float GetBasicAttackElapsedRatio()
-    {
-        if (BasicAttackDuration <= 0f)
-        {
-            return 1f;
-        }
-
-        return Mathf.Clamp01((Runner.SimulationTime - BasicAttackStartedAt) / BasicAttackDuration);
     }
 
     private byte GetOpeningBasicAttackComboIndex()
@@ -759,24 +745,80 @@ public class NetworkPlayerController : NetworkBehaviour
         return _playerStats == null || _playerStats.TryUseStamina(_playerStats.AttackStaminaCost);
     }
 
+    public void BeginActionAnimation()
+    {
+        SetActionAnimationLocked(true);
+        SetComboInputWindowOpen(false);
+    }
+
+    public void OpenComboInputWindow()
+    {
+        if (LastAction != ActionAttack)
+        {
+            return;
+        }
+
+        SetComboInputWindowOpen(true);
+    }
+
+    public void EndActionAnimation()
+    {
+        SetActionAnimationLocked(false);
+        SetComboInputWindowOpen(false);
+
+        if (LastAction == ActionAttack)
+        {
+            BasicAttackComboExpiresAt = Runner != null
+                ? Runner.SimulationTime + Mathf.Max(0f, comboGraceSeconds)
+                : Time.time + Mathf.Max(0f, comboGraceSeconds);
+            return;
+        }
+
+        _queuedComboAttack = false;
+    }
+
+    private bool IsComboInputWindowOpen()
+    {
+        return ComboInputWindowOpen || _localComboInputWindowOpen;
+    }
+
+    private void SetActionAnimationLocked(bool isLocked)
+    {
+        _localActionAnimationLocked = isLocked;
+
+        if (Object != null && HasStateAuthority)
+        {
+            ActionAnimationLocked = isLocked;
+        }
+    }
+
+    private void SetComboInputWindowOpen(bool isOpen)
+    {
+        _localComboInputWindowOpen = isOpen;
+
+        if (Object != null && HasStateAuthority)
+        {
+            ComboInputWindowOpen = isOpen;
+        }
+    }
+
     private void StartBasicAttack(byte comboIndex)
     {
         _queuedComboAttack = false;
         BasicAttackComboIndex = IsBasicAttackComboUnlocked
             ? (byte)Mathf.Clamp(comboIndex, 0, BasicAttackComboLastIndex)
             : (byte)0;
-        BasicAttackStartedAt = Runner.SimulationTime;
-        BasicAttackDuration = attackLockDuration;
-        BasicAttackComboExpiresAt = BasicAttackStartedAt + attackLockDuration + Mathf.Max(0f, comboGraceSeconds);
-        StartAction(ActionAttack, attackLockDuration);
+        BasicAttackComboExpiresAt = Runner != null ? Runner.SimulationTime : Time.time;
+        StartAction(ActionAttack);
     }
 
-    private void StartAction(byte actionType, float lockDuration)
+    private void StartAction(byte actionType)
     {
         // 액션 번호를 올리면 모든 클라이언트의 Render에서 같은 애니메이션 트리거를 받는다.
         LastAction = actionType;
         ActionSequence++;
-        ActionTimer = TickTimer.CreateFromSeconds(Runner, lockDuration);
+        SetActionAnimationLocked(true);
+        SetComboInputWindowOpen(false);
 
         if (actionType != ActionAttack)
         {
@@ -819,7 +861,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
     private bool IsParryActive()
     {
-        return LastAction == ActionParry && !ActionTimer.ExpiredOrNotRunning(Runner);
+        return LastAction == ActionParry && IsActionAnimationLocked;
     }
 
     private void ApplyAttackDamage()
@@ -908,7 +950,7 @@ public class NetworkPlayerController : NetworkBehaviour
             RollDirection = transform.forward;
         }
 
-        StartAction(ActionRoll, rollDuration);
+        StartAction(ActionRoll);
         RollTimer = TickTimer.CreateFromSeconds(Runner, rollDuration);
     }
 

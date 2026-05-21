@@ -3407,11 +3407,9 @@ MonoBehaviour:
   shiftHoldThreshold: 0.25
   movementAcceleration: 80
   movementBraking: 30
-  attackLockDuration: 0.65
-  parryLockDuration: 0.5
   jumpImpulse: 8
-  jumpActionLockDuration: 0.35
   jumpAnimationLockDuration: 0.45
+  comboGraceSeconds: 0.5
   attackHitRadius: 1.4
   attackHitDistance: 1.8
   attackHitHeight: 1.1
@@ -3473,33 +3471,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 7e62c57d3bea462aadf9a20835858ad7, type: 2}
   preventDuplicateModules: 1
   defaultActiveKeys: 3100000032000000330000003400000035000000360000003700000038000000
-  equippedModules:
-  - {fileID: 11400000, guid: c002432ed530d33428e36c5130a47f39, type: 2}
-  - {fileID: 11400000, guid: a547d62876c4a444b8ea15b22748a173, type: 2}
-  - {fileID: 11400000, guid: 1edcbb9f218fba243b34d170b1fa350e, type: 2}
-  - {fileID: 11400000, guid: ff8160d2e4e01444c85ab60c46007c9c, type: 2}
-  - {fileID: 11400000, guid: b82f363d0149d6349bcaeb65bc0bce62, type: 2}
-  activeSlots:
-  - module: {fileID: 11400000, guid: c002432ed530d33428e36c5130a47f39, type: 2}
-    keyCode: 49
-    cooldownSeconds: 0
-    nextReadyTime: 0
-  - module: {fileID: 11400000, guid: a547d62876c4a444b8ea15b22748a173, type: 2}
-    keyCode: 50
-    cooldownSeconds: 8
-    nextReadyTime: 0
-  - module: {fileID: 11400000, guid: 1edcbb9f218fba243b34d170b1fa350e, type: 2}
-    keyCode: 51
-    cooldownSeconds: 8
-    nextReadyTime: 0
-  - module: {fileID: 11400000, guid: ff8160d2e4e01444c85ab60c46007c9c, type: 2}
-    keyCode: 52
-    cooldownSeconds: 6
-    nextReadyTime: 0
-  - module: {fileID: 11400000, guid: b82f363d0149d6349bcaeb65bc0bce62, type: 2}
-    keyCode: 53
-    cooldownSeconds: 12
-    nextReadyTime: 0
+  equippedModules: []
+  activeSlots: []
 --- !u!114 &-1636750999124312810
 MonoBehaviour:
   m_ObjectHideFlags: 0
