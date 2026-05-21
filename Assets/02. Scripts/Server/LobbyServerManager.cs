@@ -40,9 +40,12 @@ public class LobbyServerManager : NetworkBehaviour
 
     private bool isChangingScene;
     private Coroutine warningMessageCoroutine;
+    
+    // [추가] 실시간 변화 감지기
+    private ChangeDetector _changeDetector;
 
     // ========================================================
-    // [에러 원인 제거 완] SlotOwners 배열 싹 다 지우고 개별 변수로 분리!
+    // [수정] OnChanged 속성 삭제 (에러 원인 제거)
     // ========================================================
     [Networked] public PlayerRef Slot0_Owner { get; set; }
     [Networked] public PlayerRef Slot1_Owner { get; set; }
@@ -61,6 +64,9 @@ public class LobbyServerManager : NetworkBehaviour
     public override void Spawned()
     {
         Debug.Log("[Lobby] 포톤 로비 동기화 오브젝트 생성 완료.");
+        // [추가] 스폰될 때 변화 감지기 초기화 및 첫 화면 갱신
+        _changeDetector = GetChangeDetector(ChangeDetector.Source.SimulationState);
+        RefreshLobbyUI();
     }
 
     public override void FixedUpdateNetwork()
@@ -85,73 +91,113 @@ public class LobbyServerManager : NetworkBehaviour
 
     public override void Render()
     {
-        int totalActivePlayers = Runner.ActivePlayers.Count();
-        int totalReadyPlayers = 0;
+        // [수정] 매 프레임 UI를 전부 다시 그리는 대신, 변화가 감지되었을 때만 강제로 새로고침합니다.
+        // 이렇게 하면 다른 사람이 레디를 누를 때 내 화면도 즉시 실시간으로 바뀝니다!
+        foreach (var change in _changeDetector.DetectChanges(this))
+        {
+            switch (change)
+            {
+                case nameof(Slot0_Ready):
+                case nameof(Slot1_Ready):
+                case nameof(Slot2_Ready):
+                case nameof(Slot0_Owner):
+                case nameof(Slot1_Owner):
+                case nameof(Slot2_Owner):
+                    RefreshLobbyUI();
+                    break;
+            }
+        }
+        
+        // 배틀 버튼 제어 같은 상시 체크 항목만 매 프레임 굴립니다.
+        RefreshBattleButton();
+    }
+
+    // ========================================================
+    // UI 갱신 전용 함수들
+    // ========================================================
+    private void RefreshLobbyUI()
+    {
+        if (Runner == null) return;
 
         // ----------- [1번 슬롯 갱신] -----------
         bool hasP0 = (Slot0_Owner != PlayerRef.None);
-        if (slotPanels[0] != null) slotPanels[0].SetActive(hasP0);
+        if (slotPanels != null && slotPanels.Length > 0 && slotPanels[0] != null) slotPanels[0].SetActive(hasP0);
         if (hasP0)
         {
-            if (Slot0_Ready) totalReadyPlayers++;
-            if (readyTexts[0] != null) readyTexts[0].text = Slot0_Ready ? "Ready!" : "Ready";
-            if (readyButtons[0] != null)
+            if (readyTexts != null && readyTexts.Length > 0 && readyTexts[0] != null) readyTexts[0].text = Slot0_Ready ? "Ready!" : "Ready";
+            if (readyButtons != null && readyButtons.Length > 0 && readyButtons[0] != null)
             {
-                readyButtons[0].colors = UpdateButtonColors(Slot0_Ready);
+                readyButtons[0].colors = GetUpdatedButtonColors(Slot0_Ready);
                 readyButtons[0].interactable = (Slot0_Owner == Runner.LocalPlayer); 
             }
-            if (youIndicators[0] != null) youIndicators[0].SetActive(Slot0_Owner == Runner.LocalPlayer);
+            if (youIndicators != null && youIndicators.Length > 0 && youIndicators[0] != null) youIndicators[0].SetActive(Slot0_Owner == Runner.LocalPlayer);
         }
 
         // ----------- [2번 슬롯 갱신] -----------
         bool hasP1 = (Slot1_Owner != PlayerRef.None);
-        if (slotPanels[1] != null) slotPanels[1].SetActive(hasP1);
+        if (slotPanels != null && slotPanels.Length > 1 && slotPanels[1] != null) slotPanels[1].SetActive(hasP1);
         if (hasP1)
         {
-            if (Slot1_Ready) totalReadyPlayers++;
-            if (readyTexts[1] != null) readyTexts[1].text = Slot1_Ready ? "Ready!" : "Ready";
-            if (readyButtons[1] != null)
+            if (readyTexts != null && readyTexts.Length > 1 && readyTexts[1] != null) readyTexts[1].text = Slot1_Ready ? "Ready!" : "Ready";
+            if (readyButtons != null && readyButtons.Length > 1 && readyButtons[1] != null)
             {
-                readyButtons[1].colors = UpdateButtonColors(Slot1_Ready);
+                readyButtons[1].colors = GetUpdatedButtonColors(Slot1_Ready);
                 readyButtons[1].interactable = (Slot1_Owner == Runner.LocalPlayer);
             }
-            if (youIndicators[1] != null) youIndicators[1].SetActive(Slot1_Owner == Runner.LocalPlayer);
+            if (youIndicators != null && youIndicators.Length > 1 && youIndicators[1] != null) youIndicators[1].SetActive(Slot1_Owner == Runner.LocalPlayer);
         }
 
         // ----------- [3번 슬롯 갱신] -----------
         bool hasP2 = (Slot2_Owner != PlayerRef.None);
-        if (slotPanels[2] != null) slotPanels[2].SetActive(hasP2);
+        if (slotPanels != null && slotPanels.Length > 2 && slotPanels[2] != null) slotPanels[2].SetActive(hasP2);
         if (hasP2)
         {
-            if (Slot2_Ready) totalReadyPlayers++;
-            if (readyTexts[2] != null) readyTexts[2].text = Slot2_Ready ? "Ready!" : "Ready";
-            if (readyButtons[2] != null)
+            if (readyTexts != null && readyTexts.Length > 2 && readyTexts[2] != null) readyTexts[2].text = Slot2_Ready ? "Ready!" : "Ready";
+            if (readyButtons != null && readyButtons.Length > 2 && readyButtons[2] != null)
             {
-                readyButtons[2].colors = UpdateButtonColors(Slot2_Ready);
+                readyButtons[2].colors = GetUpdatedButtonColors(Slot2_Ready);
                 readyButtons[2].interactable = (Slot2_Owner == Runner.LocalPlayer);
             }
-            if (youIndicators[2] != null) youIndicators[2].SetActive(Slot2_Owner == Runner.LocalPlayer);
+            if (youIndicators != null && youIndicators.Length > 2 && youIndicators[2] != null) youIndicators[2].SetActive(Slot2_Owner == Runner.LocalPlayer);
         }
+    }
 
-        // ----------- [방장 전용 배틀 버튼 제어] -----------
-        if (battleButton != null)
+    private void RefreshBattleButton()
+    {
+        if (battleButton != null && Runner != null)
         {
             battleButton.gameObject.SetActive(HasStateAuthority);
             if (HasStateAuthority)
             {
+                int totalActivePlayers = Runner.ActivePlayers.Count();
+                int totalReadyPlayers = 0;
+                
+                if (Slot0_Owner != PlayerRef.None && Slot0_Ready) totalReadyPlayers++;
+                if (Slot1_Owner != PlayerRef.None && Slot1_Ready) totalReadyPlayers++;
+                if (Slot2_Owner != PlayerRef.None && Slot2_Ready) totalReadyPlayers++;
+
                 battleButton.interactable = (totalReadyPlayers >= totalActivePlayers);
             }
         }
     }
 
-    private ColorBlock UpdateButtonColors(bool isReady)
+    private ColorBlock GetUpdatedButtonColors(bool isReady)
     {
-        ColorBlock colors = readyButtons[0].colors; 
+        ColorBlock colors = ColorBlock.defaultColorBlock;
+        if (readyButtons != null && readyButtons.Length > 0 && readyButtons[0] != null)
+        {
+            colors = readyButtons[0].colors; 
+        }
+        
         Color targetColor = isReady ? readyColor : notReadyColor;
         colors.normalColor = targetColor;
         colors.highlightedColor = targetColor;
         colors.pressedColor = targetColor;
         colors.selectedColor = targetColor;
+
+        // ⭐ UX 개선: 비활성화 상태일 때 원래 색상에 투명도를 주어 덮어씌웁니다.
+        // 맨 뒤의 0.4f가 알파(투명도) 값입니다. (0.0f ~ 1.0f 사이에서 원하는 느낌으로 조절하세요!)
+        colors.disabledColor = new Color(targetColor.r, targetColor.g, targetColor.b, 0.4f);
         return colors;
     }
 
