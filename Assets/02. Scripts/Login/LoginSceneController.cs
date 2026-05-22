@@ -3,9 +3,18 @@ using UnityEngine.UI;
 
 public class LoginSceneController : MonoBehaviour
 {
-    [Header("Input")]
-    [SerializeField] private InputField idInput;
-    [SerializeField] private InputField pwInput;
+    [Header("Panels")]
+    [SerializeField] private GameObject loginPanel;
+    [SerializeField] private GameObject registerPanel;
+
+    [Header("Login Input")]
+    [SerializeField] private InputField loginIdInput;
+    [SerializeField] private InputField loginPwInput;
+
+    [Header("Register Input")]
+    [SerializeField] private InputField registerIdInput;
+    [SerializeField] private InputField registerPwInput;
+    [SerializeField] private InputField registerNicknameInput;
 
     [Header("Message")]
     [SerializeField] private Text systemMessageText;
@@ -18,19 +27,23 @@ public class LoginSceneController : MonoBehaviour
 
     private bool isChangingScene;
 
-    private const string AccountPrefix = "Account_";
+    private const string AccountPasswordPrefix = "Account_Password_";
+    private const string AccountNicknamePrefix = "Account_Nickname_";
     private const string CurrentLoginIdKey = "CurrentLoginId";
+    private const string CurrentNicknameKey = "CurrentNickname";
 
     private void Start()
     {
-        if (systemMessageText != null)
-            systemMessageText.gameObject.SetActive(false);
+        ShowLoginPanel();
 
-        if (pwInput != null)
-            pwInput.contentType = InputField.ContentType.Password;
+        if (loginPwInput != null)
+            loginPwInput.contentType = InputField.ContentType.Password;
 
-        if (idInput != null)
-            idInput.Select();
+        if (registerPwInput != null)
+            registerPwInput.contentType = InputField.ContentType.Password;
+
+        if (loginIdInput != null)
+            loginIdInput.Select();
     }
 
     public void OnClickLoginButton()
@@ -38,8 +51,8 @@ public class LoginSceneController : MonoBehaviour
         if (isChangingScene)
             return;
 
-        string id = idInput != null ? idInput.text.Trim() : "";
-        string pw = pwInput != null ? pwInput.text.Trim() : "";
+        string id = loginIdInput != null ? loginIdInput.text.Trim() : "";
+        string pw = loginPwInput != null ? loginPwInput.text.Trim() : "";
 
         if (string.IsNullOrEmpty(id) || string.IsNullOrEmpty(pw))
         {
@@ -47,46 +60,112 @@ public class LoginSceneController : MonoBehaviour
             return;
         }
 
-        bool loginSuccess = TryLoginOrRegister(id, pw);
-
-        if (!loginSuccess)
+        if (!TryLogin(id, pw))
         {
             ShowSystemMessage("아이디 또는 PW를 확인해주세요");
-            Debug.Log("로그인 실패: " + id);
             return;
         }
 
+        string nickname = PlayerPrefs.GetString(AccountNicknamePrefix + id, id);
+
         PlayerPrefs.SetString(CurrentLoginIdKey, id);
+        PlayerPrefs.SetString(CurrentNicknameKey, nickname);
         PlayerPrefs.Save();
 
-        Debug.Log("CurrentLoginId 저장됨: " + PlayerPrefs.GetString(CurrentLoginIdKey));
+        Debug.Log("로그인 성공 ID: " + id + ", Nickname: " + nickname);
 
         ChangeScene(titleSceneName);
     }
 
-    private bool TryLoginOrRegister(string id, string pw)
+    public void OnClickOpenRegisterPanelButton()
     {
-        string accountKey = AccountPrefix + id;
+        ShowRegisterPanel();
+    }
 
-        if (!PlayerPrefs.HasKey(accountKey))
+    public void OnClickRegisterButton()
+    {
+        string id = registerIdInput != null ? registerIdInput.text.Trim() : "";
+        string pw = registerPwInput != null ? registerPwInput.text.Trim() : "";
+        string nickname = registerNicknameInput != null ? registerNicknameInput.text.Trim() : "";
+
+        if (string.IsNullOrEmpty(id) || string.IsNullOrEmpty(pw) || string.IsNullOrEmpty(nickname))
         {
-            PlayerPrefs.SetString(accountKey, pw);
-            PlayerPrefs.Save();
-
-            Debug.Log("새 계정 등록: " + id);
-            return true;
+            ShowSystemMessage("아이디, PW, 닉네임을 모두 입력해주세요");
+            return;
         }
 
-        string savedPw = PlayerPrefs.GetString(accountKey, "");
-
-        if (savedPw == pw)
+        if (PlayerPrefs.HasKey(AccountPasswordPrefix + id))
         {
-            Debug.Log("기존 계정 로그인 성공: " + id);
-            return true;
+            ShowSystemMessage("이미 등록된 아이디입니다");
+            return;
         }
 
-        Debug.Log("비밀번호 불일치: " + id);
-        return false;
+        PlayerPrefs.SetString(AccountPasswordPrefix + id, pw);
+        PlayerPrefs.SetString(AccountNicknamePrefix + id, nickname);
+        PlayerPrefs.Save();
+
+        Debug.Log("회원가입 완료 ID: " + id + ", Nickname: " + nickname);
+
+        ShowSystemMessage("계정이 생성되었습니다");
+
+        if (loginIdInput != null)
+            loginIdInput.text = id;
+
+        if (loginPwInput != null)
+            loginPwInput.text = "";
+
+        ShowLoginPanel();
+    }
+
+    public void OnClickRegisterBackButton()
+    {
+        ShowLoginPanel();
+    }
+
+    private bool TryLogin(string id, string pw)
+    {
+        string passwordKey = AccountPasswordPrefix + id;
+
+        if (!PlayerPrefs.HasKey(passwordKey))
+        {
+            Debug.Log("등록되지 않은 아이디: " + id);
+            return false;
+        }
+
+        string savedPw = PlayerPrefs.GetString(passwordKey, "");
+
+        if (savedPw != pw)
+        {
+            Debug.Log("비밀번호 불일치: " + id);
+            return false;
+        }
+
+        return true;
+    }
+
+    private void ShowLoginPanel()
+    {
+        if (loginPanel != null)
+            loginPanel.SetActive(true);
+
+        if (registerPanel != null)
+            registerPanel.SetActive(false);
+
+        HideSystemMessage();
+    }
+
+    private void ShowRegisterPanel()
+    {
+        if (loginPanel != null)
+            loginPanel.SetActive(false);
+
+        if (registerPanel != null)
+            registerPanel.SetActive(true);
+
+        HideSystemMessage();
+
+        if (registerIdInput != null)
+            registerIdInput.Select();
     }
 
     private void ChangeScene(string sceneName)
@@ -114,5 +193,11 @@ public class LoginSceneController : MonoBehaviour
 
         systemMessageText.gameObject.SetActive(true);
         systemMessageText.text = message;
+    }
+
+    private void HideSystemMessage()
+    {
+        if (systemMessageText != null)
+            systemMessageText.gameObject.SetActive(false);
     }
 }
