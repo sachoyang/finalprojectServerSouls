@@ -7,6 +7,9 @@ public class LobbyManager : MonoBehaviour
     [Header("Character Models")]
     public GameObject[] lobbyCharacters;
 
+    [Header("Player Info")]
+    public Text playerNameText;
+
     [Header("Ready State")]
     public Button player1ReadyButton;
     public Text player1ReadyButtonText;
@@ -22,7 +25,7 @@ public class LobbyManager : MonoBehaviour
 
     [Header("Scene Names")]
     public string titleSceneName = "scTitle uicreate Main";
-    public string gameSceneName = "scLevel";
+    public string gameSceneName = "scServer";
 
     [Header("Message")]
     public float warningMessageDuration = 2f;
@@ -31,11 +34,17 @@ public class LobbyManager : MonoBehaviour
     private bool isChangingScene;
     private Coroutine warningMessageCoroutine;
 
+    private const string CurrentLoginIdKey = "CurrentLoginId";
+
     private void Start()
     {
+        Debug.Log("LobbyManager Start 실행됨");
+
         ShowLobbyCharacters();
         SetPlayer1Ready(false);
         HideWarningMessage();
+
+        StartCoroutine(UpdatePlayerNameAfterSceneReady());
     }
 
     public void OnClickPlayer1ReadyButton()
@@ -57,6 +66,36 @@ public class LobbyManager : MonoBehaviour
     public void OnClickBackButton()
     {
         ChangeScene(titleSceneName);
+    }
+
+    [ContextMenu("Debug/Refresh Player Name")]
+    public void UpdatePlayerName()
+    {
+        if (playerNameText == null)
+        {
+            Debug.LogError("LobbyManager: Player Name Text가 연결되지 않았습니다.");
+            return;
+        }
+
+        bool hasLoginId = PlayerPrefs.HasKey(CurrentLoginIdKey);
+        string loginId = PlayerPrefs.GetString(CurrentLoginIdKey, "Player");
+
+        Debug.Log("LobbyManager: CurrentLoginId 존재 여부 = " + hasLoginId);
+        Debug.Log("LobbyManager: Lobby에서 읽은 CurrentLoginId = " + loginId);
+
+        playerNameText.text = loginId;
+    }
+
+    private IEnumerator UpdatePlayerNameAfterSceneReady()
+    {
+        yield return null;
+        UpdatePlayerName();
+
+        yield return new WaitForSeconds(0.1f);
+        UpdatePlayerName();
+
+        yield return new WaitForSeconds(0.5f);
+        UpdatePlayerName();
     }
 
     private void ShowLobbyCharacters()
