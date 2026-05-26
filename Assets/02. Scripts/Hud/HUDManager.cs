@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class HUDManager : MonoBehaviour
@@ -11,6 +12,10 @@ public class HUDManager : MonoBehaviour
     [Header("Skill HUD")]
     [SerializeField] private SkillSlotHUDView[] skillSlotViews;
 
+    [Header("Party HUD")]
+    [SerializeField] private PartyMemberHUDView[] partyMemberHUDViews;
+    [SerializeField] private float partyRefreshInterval = 0.5f;
+
     [Header("Player Data")]
     [SerializeField] private PlayerStats playerStats;
     [SerializeField] private PlayerAbilityInventory abilityInventory;
@@ -19,29 +24,29 @@ public class HUDManager : MonoBehaviour
     [SerializeField] private DragonBoss dragonBoss;
 
     private NetworkPlayerController localPlayerController;
-
-    private void Awake()
-    {
-        // HUD 프리팹을 씬에 올려놓기만 해도 자식 View들을 자동으로 연결합니다.
-        FindHUDViews();
-    }
+    private float nextPartyRefreshTime;
 
     private void Start()
     {
         FindRuntimeReferences();
         UpdateHUD();
+        RefreshPartyHUD();
     }
 
     private void Update()
     {
         FindRuntimeReferences();
         UpdateHUD();
+
+        if (Time.time >= nextPartyRefreshTime)
+        {
+            nextPartyRefreshTime = Time.time + partyRefreshInterval;
+            RefreshPartyHUD();
+        }
     }
 
     private void FindRuntimeReferences()
     {
-        FindHUDViews();
-
         if (localPlayerController == null)
             localPlayerController = FindLocalPlayerController();
 
@@ -56,19 +61,6 @@ public class HUDManager : MonoBehaviour
 
         if (dragonBoss == null)
             dragonBoss = FindObjectOfType<DragonBoss>();
-    }
-
-    private void FindHUDViews()
-    {
-        // 인스펙터에 직접 연결되어 있으면 그 값을 유지하고, 비어 있을 때만 자식에서 찾습니다.
-        if (playerHUDView == null)
-            playerHUDView = GetComponentInChildren<PlayerHUDView>(true);
-
-        if (bossHUDView == null)
-            bossHUDView = GetComponentInChildren<BossHUDView>(true);
-
-        if (skillSlotViews == null || skillSlotViews.Length == 0)
-            skillSlotViews = GetComponentsInChildren<SkillSlotHUDView>(true);
     }
 
     private void UpdateHUD()
@@ -89,8 +81,7 @@ public class HUDManager : MonoBehaviour
 
     private void UpdateBossHUD()
     {
-        // DragonBoss가 Fusion Spawn을 끝내기 전에는 Networked HP를 읽으면 예외가 발생합니다.
-        if (bossHUDView == null || dragonBoss == null || !dragonBoss.IsSpawnedReady)
+        if (bossHUDView == null || dragonBoss == null)
             return;
 
         bossHUDView.SetHp(dragonBoss.CurrentHP, dragonBoss.maxHP);
@@ -135,11 +126,60 @@ public class HUDManager : MonoBehaviour
         }
     }
 
-    private void ClearSkillSlots()
+    private void RefreshPartyHUD()
     {
-        if (skillSlotViews == null)
+        if (partyMemberHUDViews == null || partyMemberHUDViews.Length == 0)
             return;
 
+        List<PlayerStats> partyStats = FindPartyPlayerStats();
+
+        for (int i = 0; i < partyMemberHUDViews.Length; i++)
+        {
+            if (partyMemberHUDViews[i] == null)
+                continue;
+
+            if (i >= partyStats.Count || partyStats[i] == null)
+            {
+                partyMemberHUDViews[i].SetVisible(false);
+                continue;
+            }
+
+            partyMemberHUDViews[i].SetVisible(true);
+            partyMemberHUDViews[i].SetStats(
+                partyStats[i].CurrentHealth,
+                partyStats[i].MaxHealth,
+                partyStats[i].CurrentStamina,
+                partyStats[i].MaxStamina
+            );
+        }
+    }
+
+    private List<PlayerStats> FindPartyPlayerStats()
+    {
+        List<PlayerStats> partyStats = new List<PlayerStats>();
+        NetworkPlayerController[] players = FindObjectsOfType<NetworkPlayerController>();
+
+        for (int i = 0; i < players.Length; i++)
+        {
+            NetworkPlayerController player = players[i];
+
+            if (player == null || player.Object == null)
+                continue;
+
+            if (player.Object.HasInputAuthority)
+                continue;
+
+            PlayerStats stats = player.GetComponent<PlayerStats>();
+
+            if (stats != null)
+                partyStats.Add(stats);
+        }
+
+        return partyStats;
+    }
+
+    private void ClearSkillSlots()
+    {
         for (int i = 0; i < skillSlotViews.Length; i++)
         {
             if (skillSlotViews[i] != null)

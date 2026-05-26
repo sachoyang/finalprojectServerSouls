@@ -34,7 +34,7 @@ public class LobbyManager : MonoBehaviour
     private bool isChangingScene;
     private Coroutine warningMessageCoroutine;
 
-    private const string CurrentLoginIdKey = "CurrentLoginId";
+    private const string CurrentNicknameKey = "CurrentNickname";
 
     private void Start()
     {
@@ -77,13 +77,13 @@ public class LobbyManager : MonoBehaviour
             return;
         }
 
-        bool hasLoginId = PlayerPrefs.HasKey(CurrentLoginIdKey);
-        string loginId = PlayerPrefs.GetString(CurrentLoginIdKey, "Player");
+        bool hasNickname = PlayerPrefs.HasKey(CurrentNicknameKey);
+        string nickname = PlayerPrefs.GetString(CurrentNicknameKey, "Player");
 
-        Debug.Log("LobbyManager: CurrentLoginId 존재 여부 = " + hasLoginId);
-        Debug.Log("LobbyManager: Lobby에서 읽은 CurrentLoginId = " + loginId);
+        Debug.Log("LobbyManager: CurrentNickname 존재 여부 = " + hasNickname);
+        Debug.Log("LobbyManager: Lobby에서 읽은 CurrentNickname = " + nickname);
 
-        playerNameText.text = loginId;
+        playerNameText.text = nickname;
     }
 
     private IEnumerator UpdatePlayerNameAfterSceneReady()
