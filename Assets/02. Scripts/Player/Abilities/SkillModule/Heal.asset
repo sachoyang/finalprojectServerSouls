@@ -19,10 +19,16 @@ MonoBehaviour:
   abilityType: 1
   minBossStage: 1
   maxBossStage: 8
+  includeInRewardPool: 1
   staminaCost: 0
   cooldownSeconds: 0
   healthRestoreAmount: 1500
   staminaRestoreAmount: 0
+  specialEffect: 0
+  maxHealthBonus: 0
+  maxStaminaBonus: 0
+  defenseRateBonus: 0
+  attackDamageBonusPercent: 0
   animationClip: {fileID: 7400000, guid: b87c0223bacdbd840967e74c4a41288f, type: 3}
   animationStateName: 
   animationTrigger: Heal
