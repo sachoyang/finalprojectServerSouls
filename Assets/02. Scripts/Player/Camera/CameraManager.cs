@@ -4,6 +4,14 @@ using UnityEngine;
 [DefaultExecutionOrder(1000)]
 public class CameraManager : MonoBehaviour
 {
+    public enum CameraMode
+    {
+        PlayerFollow,
+        LockOn,
+        Reward,
+        Cutscene
+    }
+
     public static CameraManager Instance { get; private set; }
 
     [SerializeField] private Camera managedCamera;
@@ -20,6 +28,12 @@ public class CameraManager : MonoBehaviour
     private Vector3 _cutscenePosition;
     private Quaternion _cutsceneRotation;
     private float _cutsceneFieldOfView;
+    private ThirdPersonCameraController _gameplayCameraController;
+    private Transform _gameplayTarget;
+    private Transform _lockOnTarget;
+    private CameraMode _currentMode = CameraMode.PlayerFollow;
+
+    public CameraMode CurrentMode => _currentMode;
 
     private void Awake()
     {
@@ -64,7 +78,64 @@ public class CameraManager : MonoBehaviour
 
     public void BeginRewardCutscene()
     {
+        _currentMode = CameraMode.Reward;
         BeginCutscene(restoreControllersAfterReward);
+    }
+
+    public void RegisterGameplayCamera(Camera camera, Transform target)
+    {
+        if (camera != null)
+        {
+            managedCamera = camera;
+        }
+
+        ResolveCamera();
+        _gameplayTarget = target;
+        _gameplayCameraController = managedCamera != null
+            ? managedCamera.GetComponent<ThirdPersonCameraController>()
+            : null;
+
+        if (_gameplayCameraController != null)
+        {
+            _gameplayCameraController.SetTarget(target);
+        }
+
+        ApplyGameplayMode();
+    }
+
+    public void SetLockOnTarget(Transform target)
+    {
+        _lockOnTarget = target;
+        if (_lockOnTarget == null)
+        {
+            ClearLockOnTarget();
+            return;
+        }
+
+        if (_isCutsceneActive)
+        {
+            return;
+        }
+
+        _currentMode = CameraMode.LockOn;
+        if (_gameplayCameraController != null)
+        {
+            _gameplayCameraController.SetLockOnTarget(_lockOnTarget);
+        }
+    }
+
+    public void ClearLockOnTarget()
+    {
+        _lockOnTarget = null;
+        if (_gameplayCameraController != null)
+        {
+            _gameplayCameraController.ClearLockOnTarget();
+        }
+
+        if (!_isCutsceneActive)
+        {
+            _currentMode = CameraMode.PlayerFollow;
+        }
     }
 
     public IEnumerator ZoomToRewardPoint()
@@ -84,6 +155,11 @@ public class CameraManager : MonoBehaviour
         {
             Debug.LogWarning("[CameraManager] No active camera was found for cutscene.");
             return;
+        }
+
+        if (_currentMode != CameraMode.Reward)
+        {
+            _currentMode = CameraMode.Cutscene;
         }
 
         _restoreControllersOnEnd = restoreControllersOnEnd;
@@ -189,6 +265,8 @@ public class CameraManager : MonoBehaviour
                 _disabledCameraControllers[i].enabled = _cameraControllerWasEnabled[i];
             }
         }
+
+        ApplyGameplayMode();
     }
 
     private bool ResolveCamera()
@@ -229,5 +307,28 @@ public class CameraManager : MonoBehaviour
             managedCamera.transform.SetPositionAndRotation(position, rotation);
             managedCamera.fieldOfView = fieldOfView;
         }
+    }
+
+    private void ApplyGameplayMode()
+    {
+        if (_gameplayCameraController == null)
+        {
+            return;
+        }
+
+        if (_gameplayTarget != null)
+        {
+            _gameplayCameraController.SetTarget(_gameplayTarget);
+        }
+
+        if (_lockOnTarget != null)
+        {
+            _currentMode = CameraMode.LockOn;
+            _gameplayCameraController.SetLockOnTarget(_lockOnTarget);
+            return;
+        }
+
+        _currentMode = CameraMode.PlayerFollow;
+        _gameplayCameraController.ClearLockOnTarget();
     }
 }
