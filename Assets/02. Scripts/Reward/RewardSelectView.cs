@@ -32,6 +32,7 @@ public class RewardSelectView : MonoBehaviour
     private Coroutine messageCoroutine;
     private CursorLockMode previousCursorLockMode;
     private bool previousCursorVisible;
+    private bool previousForceCursorVisible;
     private bool cursorOverrideActive;
 
     private void Awake()
@@ -325,9 +326,11 @@ public class RewardSelectView : MonoBehaviour
         {
             previousCursorLockMode = Cursor.lockState;
             previousCursorVisible = Cursor.visible;
+            previousForceCursorVisible = ThirdPersonCameraController.ForceCursorVisible;
             cursorOverrideActive = true;
         }
 
+        ThirdPersonCameraController.ForceCursorVisible = true;
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
     }
@@ -339,8 +342,9 @@ public class RewardSelectView : MonoBehaviour
             return;
         }
 
-        Cursor.lockState = previousCursorLockMode;
-        Cursor.visible = previousCursorVisible;
+        ThirdPersonCameraController.ForceCursorVisible = previousForceCursorVisible;
+        Cursor.lockState = previousForceCursorVisible ? CursorLockMode.None : previousCursorLockMode;
+        Cursor.visible = previousForceCursorVisible || previousCursorVisible;
         cursorOverrideActive = false;
     }
 

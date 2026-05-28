@@ -1,8 +1,8 @@
 using UnityEngine;
-using UnityEngine.EventSystems;
-
 public class ThirdPersonCameraController : MonoBehaviour
 {
+    public static bool ForceCursorVisible { get; set; }
+
     [Header("Target")]
     [SerializeField] private Transform target;
     [SerializeField] private Vector3 targetOffset = new Vector3(0f, 1.6f, 0f);
@@ -20,7 +20,7 @@ public class ThirdPersonCameraController : MonoBehaviour
 
     [Header("Smoothing")]
     [SerializeField] private float positionSmoothTime = 0.08f;
-    [SerializeField] private bool lockCursorOnStart = false;
+    [SerializeField] private bool lockCursorOnStart = true;
 
     [Header("Lock On")]
     [SerializeField] private Vector3 lockOnTargetOffset = new Vector3(0f, 0.2f, 0f);
@@ -223,21 +223,14 @@ public class ThirdPersonCameraController : MonoBehaviour
 
     private void UpdateCursorState()
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
+        bool altHeld = Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt);
+        if (ForceCursorVisible || altHeld)
         {
             SetCursorLock(false);
             return;
         }
 
-        if (Input.GetMouseButtonDown(0) && Cursor.lockState != CursorLockMode.Locked)
-        {
-            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
-            {
-                return;
-            }
-
-            SetCursorLock(true);
-        }
+        SetCursorLock(true);
     }
 
     private static void SetCursorLock(bool shouldLock)
