@@ -1,25 +1,29 @@
 using UnityEngine;
-using UnityEngine.UI; // 레거시 UI를 위해 반드시 필요합니다
+using UnityEngine.UI;
 using System.Collections.Generic;
 
 public class SettingItemUI : MonoBehaviour
 {
-    // TextMeshProUGUI 대신 Text를 사용합니다
     public Text itemNameText;
     public Text optionText;
     public Button btnPrev;
     public Button btnNext;
 
+    private SettingItem _data;
     private List<string> _options;
     private int _currentIndex;
 
     public void Setup(SettingItem data)
     {
+        _data = data;
         itemNameText.text = data.itemName;
         _options = data.options;
+
         _currentIndex = data.defaultIndex;
 
-        // 버튼 리스너 초기화 및 연결
+        if (GameSettingsManager.Instance != null && data.settingKey != SettingKey.None)
+            _currentIndex = GameSettingsManager.Instance.GetInt(data.settingKey, data.defaultIndex);
+
         btnPrev.onClick.RemoveAllListeners();
         btnPrev.onClick.AddListener(PrevOption);
 
@@ -27,24 +31,50 @@ public class SettingItemUI : MonoBehaviour
         btnNext.onClick.AddListener(NextOption);
 
         UpdateUI();
+        ApplySetting();
     }
 
-    void PrevOption()
+    private void PrevOption()
     {
-        if (_options == null || _options.Count == 0) return;
+        if (_options == null || _options.Count == 0)
+            return;
+
         _currentIndex = (_currentIndex - 1 + _options.Count) % _options.Count;
         UpdateUI();
+        SaveAndApplySetting();
     }
 
-    void NextOption()
+    private void NextOption()
     {
-        if (_options == null || _options.Count == 0) return;
+        if (_options == null || _options.Count == 0)
+            return;
+
         _currentIndex = (_currentIndex + 1) % _options.Count;
         UpdateUI();
+        SaveAndApplySetting();
     }
 
-    void UpdateUI()
+    private void UpdateUI()
     {
+        if (_options == null || _options.Count == 0)
+            return;
+
         optionText.text = _options[_currentIndex];
+    }
+
+    private void SaveAndApplySetting()
+    {
+        if (GameSettingsManager.Instance == null || _data == null || _data.settingKey == SettingKey.None)
+            return;
+
+        GameSettingsManager.Instance.SetInt(_data.settingKey, _currentIndex);
+    }
+
+    private void ApplySetting()
+    {
+        if (GameSettingsManager.Instance == null || _data == null || _data.settingKey == SettingKey.None)
+            return;
+
+        GameSettingsManager.Instance.SetInt(_data.settingKey, _currentIndex);
     }
 }
