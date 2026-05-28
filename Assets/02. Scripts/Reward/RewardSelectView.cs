@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Fusion;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -19,11 +20,15 @@ public class RewardSelectView : MonoBehaviour
     [SerializeField] private float messageDuration = 2f;
     [SerializeField] private Color confirmDisabledColor = Color.gray;
     [SerializeField] private Color confirmEnabledColor = Color.green;
+    [SerializeField] private bool autoBindLocalRewardController = true;
 
     private readonly List<RewardCardView> spawnedCards = new List<RewardCardView>();
-    private Action<PlayerAbilityModule> onConfirmed;
+    private Func<PlayerAbilityModule, bool> onConfirmed;
     private PlayerAbilityModule selectedModule;
     private RewardCardView selectedCard;
+    private PlayerAbilityRewardController rewardController;
+    private InventoryPanelController inventoryPanel;
+    private Coroutine bindCoroutine;
     private Coroutine messageCoroutine;
 
     private void Awake()
@@ -37,10 +42,30 @@ public class RewardSelectView : MonoBehaviour
         Hide();
     }
 
+    private void OnEnable()
+    {
+        if (!autoBindLocalRewardController)
+            return;
+
+        if (bindCoroutine == null)
+            bindCoroutine = StartCoroutine(BindLocalRewardControllerRoutine());
+    }
+
+    private void OnDisable()
+    {
+        if (bindCoroutine != null)
+        {
+            StopCoroutine(bindCoroutine);
+            bindCoroutine = null;
+        }
+
+        UnbindRewardController();
+    }
+
     public void Show(
         IReadOnlyList<PlayerAbilityModule> modules,
         Func<PlayerAbilityModule, int> getLevelFunc,
-        Action<PlayerAbilityModule> confirmCallback)
+        Func<PlayerAbilityModule, bool> confirmCallback)
     {
         ClearCards();
 
@@ -109,14 +134,132 @@ public class RewardSelectView : MonoBehaviour
     {
         if (selectedModule == null)
         {
-            ShowMessage("ī�带 �����ϼ���");
+            ShowMessage("카드를 선택하세요");
             return;
         }
 
-        if (onConfirmed != null)
-            onConfirmed.Invoke(selectedModule);
+        if (onConfirmed != null && !onConfirmed.Invoke(selectedModule))
+            return;
 
         Hide();
+    }
+
+    private IEnumerator BindLocalRewardControllerRoutine()
+    {
+        while (rewardController == null)
+        {
+            BindRewardController(FindLocalRewardController());
+
+            if (rewardController != null)
+            {
+                bindCoroutine = null;
+                yield break;
+            }
+
+            yield return new WaitForSeconds(0.25f);
+        }
+
+        bindCoroutine = null;
+    }
+
+    private void BindRewardController(PlayerAbilityRewardController controller)
+    {
+        if (rewardController == controller)
+            return;
+
+        UnbindRewardController();
+        rewardController = controller;
+
+        if (rewardController == null)
+            return;
+
+        rewardController.BossRewardOffered += OnBossRewardOffered;
+        rewardController.BossRewardSelected += OnBossRewardSelected;
+    }
+
+    private void UnbindRewardController()
+    {
+        if (rewardController == null)
+            return;
+
+        rewardController.BossRewardOffered -= OnBossRewardOffered;
+        rewardController.BossRewardSelected -= OnBossRewardSelected;
+        rewardController = null;
+    }
+
+    private void OnBossRewardOffered(int bossStage, IReadOnlyList<PlayerAbilityModule> modules)
+    {
+        inventoryPanel ??= FindObjectOfType<InventoryPanelController>(true);
+        if (inventoryPanel != null)
+            inventoryPanel.SetRewardSelectOpen(true);
+
+        Show(modules, GetRewardLevel, ConfirmRewardSelection);
+    }
+
+    private void OnBossRewardSelected(PlayerAbilityModule module)
+    {
+        if (inventoryPanel != null)
+            inventoryPanel.SetRewardSelectOpen(false);
+    }
+
+    private int GetRewardLevel(PlayerAbilityModule module)
+    {
+        return 1;
+    }
+
+    private bool ConfirmRewardSelection(PlayerAbilityModule module)
+    {
+        if (rewardController == null)
+        {
+            ShowMessage("보상 컨트롤러를 찾을 수 없습니다");
+            return false;
+        }
+
+        int optionIndex = GetPendingOptionIndex(module);
+        if (optionIndex < 0)
+        {
+            ShowMessage("선택할 수 없는 보상입니다");
+            return false;
+        }
+
+        if (!rewardController.SelectPendingOption(optionIndex))
+        {
+            ShowMessage("보상을 적용할 수 없습니다");
+            return false;
+        }
+
+        if (inventoryPanel != null)
+            inventoryPanel.SetRewardSelectOpen(false);
+
+        return true;
+    }
+
+    private int GetPendingOptionIndex(PlayerAbilityModule module)
+    {
+        if (rewardController == null || rewardController.PendingOptions == null)
+            return -1;
+
+        IReadOnlyList<PlayerAbilityModule> pendingOptions = rewardController.PendingOptions;
+        for (int i = 0; i < pendingOptions.Count; i++)
+        {
+            if (pendingOptions[i] == module)
+                return i;
+        }
+
+        return -1;
+    }
+
+    private static PlayerAbilityRewardController FindLocalRewardController()
+    {
+        PlayerAbilityRewardController[] rewardControllers = FindObjectsOfType<PlayerAbilityRewardController>(true);
+        foreach (PlayerAbilityRewardController controller in rewardControllers)
+        {
+            NetworkObject networkObject = controller.GetComponent<NetworkObject>();
+            if (networkObject == null || networkObject.HasInputAuthority)
+                return controller;
+        }
+
+        return null;
     }
 
     private void SetConfirmButtonState(bool hasSelectedCard)

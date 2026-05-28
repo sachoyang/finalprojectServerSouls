@@ -158,12 +158,6 @@ public class RewardManager : MonoBehaviour
         }
 
         rewardController.OfferBossReward(bossStage);
-
-        InventoryPanelController inventoryPanel = FindObjectOfType<InventoryPanelController>(true);
-        if (inventoryPanel != null)
-        {
-            inventoryPanel.SetRewardSelectOpen(true);
-        }
     }
 
     private static PlayerAbilityRewardController FindLocalRewardController()
