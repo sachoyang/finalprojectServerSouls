@@ -17,7 +17,7 @@ public enum BossPattern
     Pattern3_Jump
 }
 
-public class DragonBoss : NetworkBehaviour
+public class DragonBossOrigin : NetworkBehaviour
 {
     [Header("이동 및 회전 설정")]
     public float moveSpeed = 2.5f;
@@ -68,7 +68,7 @@ public class DragonBoss : NetworkBehaviour
     [Networked] public byte ActionCounter { get; set; }
     [Networked] public float CurrentActionDuration { get; set; }
 
-    public DragonVisual visual;
+    public DragonVisualOrigin visual;
     //private ChangeDetector _changeDetector;
     // 클라이언트 화면에서 이전 액션 번호를 기억할 로컬 변수
     private int _lastActionCounter = -1;
@@ -79,7 +79,7 @@ public class DragonBoss : NetworkBehaviour
     public override void Spawned()
     {
         //_changeDetector = GetChangeDetector(ChangeDetector.Source.SimulationState);
-        visual = GetComponentInChildren<DragonVisual>();
+        visual = GetComponentInChildren<DragonVisualOrigin>();
 
         if (HasStateAuthority)
         {

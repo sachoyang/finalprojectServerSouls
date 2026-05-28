@@ -712,10 +712,34 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2366343777674068038, guid: ffe4f0c4b63e7824699469bd003f4aaf, type: 3}
+      propertyPath: ShapeModule.type
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2366343777674068038, guid: ffe4f0c4b63e7824699469bd003f4aaf, type: 3}
+      propertyPath: ShapeModule.radius.value
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2366343777674068038, guid: ffe4f0c4b63e7824699469bd003f4aaf, type: 3}
+      propertyPath: InitialModule.startColor.maxColor.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2366343777674068038, guid: ffe4f0c4b63e7824699469bd003f4aaf, type: 3}
+      propertyPath: InitialModule.startColor.maxColor.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2366343777674068038, guid: ffe4f0c4b63e7824699469bd003f4aaf, type: 3}
+      propertyPath: InitialModule.startColor.maxColor.r
+      value: 0.16812241
+      objectReference: {fileID: 0}
     - target: {fileID: 2464656758481850245, guid: ffe4f0c4b63e7824699469bd003f4aaf, type: 3}
       propertyPath: m_Name
       value: PathBack
       objectReference: {fileID: 0}
+    - target: {fileID: 2903856241025603388, guid: ffe4f0c4b63e7824699469bd003f4aaf, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: ef0639e82a78d124aa4b99b9d90bbc33, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

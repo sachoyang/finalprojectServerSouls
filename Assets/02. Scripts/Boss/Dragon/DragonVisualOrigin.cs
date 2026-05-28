@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class DragonVisual : MonoBehaviour
+public class DragonVisualOrigin : MonoBehaviour
 {
     public Animator anim;
 

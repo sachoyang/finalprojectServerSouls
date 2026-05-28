@@ -33,12 +33,12 @@ public class RewardManager : MonoBehaviour
             return;
         }
 
-        if (!boss.IsSpawnedReady)
-        {
-            return;
-        }
+        // if (!boss.IsSpawnedReady)
+        // {
+        //     return;
+        // }
 
-        if (boss.CurrentState == DragonState.Die || (boss.CurrentHP <= 0f && boss.CurrentState != DragonState.Sleep))
+        if (boss.CurrentState == BossState.Die || (boss.CurrentHP <= 0f && boss.CurrentState != BossState.Sleep))
         {
             _rewardStarted = true;
             StartCoroutine(PlayRewardSequence());

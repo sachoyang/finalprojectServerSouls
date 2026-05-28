@@ -507,6 +507,14 @@ PrefabInstance:
       propertyPath: m_Material
       value: 
       objectReference: {fileID: 13400000, guid: ec6fc63bc17b1344082f2ee4bf7d7b3e, type: 2}
+    - target: {fileID: 6686511853978325582, guid: 7568aa021d9d5534d8f698c90e5ce641, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6686511853978325582, guid: 7568aa021d9d5534d8f698c90e5ce641, type: 3}
+      propertyPath: _CurrentPattern
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6914082606777652867, guid: 7568aa021d9d5534d8f698c90e5ce641, type: 3}
       propertyPath: m_Name
       value: DragonBoss
