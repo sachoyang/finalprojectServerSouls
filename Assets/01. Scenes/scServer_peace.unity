@@ -215,7 +215,7 @@ MonoBehaviour:
   m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  SortKey: 3849825614
+  SortKey: 1082663625
   ObjectInterest: 1
   Flags: 262145
   NestedObjects: []
@@ -364,7 +364,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &497123788
 Transform:
   m_ObjectHideFlags: 0
@@ -485,7 +485,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3262892183010469501, guid: 7568aa021d9d5534d8f698c90e5ce641, type: 3}
       propertyPath: SortKey
-      value: 1103803114
+      value: 2631608421
       objectReference: {fileID: 0}
     - target: {fileID: 3262892183010469501, guid: 7568aa021d9d5534d8f698c90e5ce641, type: 3}
       propertyPath: NetworkedBehaviours.Array.size
@@ -1067,7 +1067,10 @@ MonoBehaviour:
   chestOpenStateName: BoxOpen
   chestOpenDelay: 0.25
   chestOpenFallbackDuration: 1.5
-  rewardOfferDelay: 1.2
+  distortionAllProperties: {fileID: 497123787}
+  distortionTrigger: {fileID: 0}
+  rewardSelectionTimeout: 60
+  nextSceneName: scPath
 --- !u!4 &1348175104
 Transform:
   m_ObjectHideFlags: 0

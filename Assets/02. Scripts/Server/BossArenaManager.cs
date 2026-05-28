@@ -44,8 +44,40 @@ public class BossArenaManager : NetworkBehaviour, INetworkRunnerCallbacks
         Vector3 spawnPos = _spawnPoints.Length > 0 ? _spawnPoints[playerIndex].position : Vector3.right * (playerIndex * 3);
         Quaternion spawnRot = _spawnPoints.Length > 0 ? _spawnPoints[playerIndex].rotation : Quaternion.identity;
 
-        NetworkObject networkPlayerObject = runner.Spawn(_playerPrefab, spawnPos, spawnRot, player);
+        if (runner.TryGetPlayerObject(player, out NetworkObject networkPlayerObject) &&
+            networkPlayerObject != null &&
+            networkPlayerObject.gameObject.scene == gameObject.scene)
+        {
+            networkPlayerObject.transform.SetPositionAndRotation(spawnPos, spawnRot);
+            RestoreSessionState(networkPlayerObject, player);
+            _spawnedCharacters.Add(player, networkPlayerObject);
+            return;
+        }
+
+        networkPlayerObject = runner.Spawn(_playerPrefab, spawnPos, spawnRot, player);
+        runner.SetPlayerObject(player, networkPlayerObject);
+        RestoreSessionState(networkPlayerObject, player);
         _spawnedCharacters.Add(player, networkPlayerObject);
+    }
+
+    private static void RestoreSessionState(NetworkObject playerObject, PlayerRef player)
+    {
+        if (playerObject == null)
+        {
+            return;
+        }
+
+        PlayerAbilityInventory inventory = playerObject.GetComponent<PlayerAbilityInventory>();
+        if (inventory != null)
+        {
+            inventory.RestoreFromSessionData(player);
+        }
+
+        PlayerStats stats = playerObject.GetComponent<PlayerStats>();
+        if (stats != null && PlayerSessionStore.TryGetStats(player, out PlayerStats.SessionSnapshot snapshot))
+        {
+            stats.RestoreSessionSnapshot(snapshot);
+        }
     }
 
     private void Update()
@@ -115,7 +147,13 @@ public class BossArenaManager : NetworkBehaviour, INetworkRunnerCallbacks
     // INetworkRunnerCallbacks 빈 껍데기들
     // ==========================================
     public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason) { }
-    public void OnPlayerJoined(NetworkRunner runner, PlayerRef player) { }
+    public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
+    {
+        if (HasStateAuthority)
+        {
+            SpawnPlayer(runner, player);
+        }
+    }
     public void OnPlayerLeft(NetworkRunner runner, PlayerRef player) 
     {
         if (HasStateAuthority && _spawnedCharacters.TryGetValue(player, out NetworkObject networkObject))

@@ -16,6 +16,7 @@ public class PlayerAbilityRewardController : MonoBehaviour
     [SerializeField] private List<PlayerAbilityModule> pendingOptions = new List<PlayerAbilityModule>();
 
     private PlayerAbilityInventory _inventory;
+    private NetworkPlayerData _playerData;
 
     public int LastClearedBossStage => lastClearedBossStage;
     public IReadOnlyList<PlayerAbilityModule> PendingOptions => pendingOptions;
@@ -29,6 +30,7 @@ public class PlayerAbilityRewardController : MonoBehaviour
     private void Awake()
     {
         _inventory = GetComponent<PlayerAbilityInventory>();
+        _playerData = GetComponent<NetworkPlayerData>();
     }
 
     public IReadOnlyList<PlayerAbilityModule> OfferBossReward(int bossStage)
@@ -59,6 +61,9 @@ public class PlayerAbilityRewardController : MonoBehaviour
         {
             return false;
         }
+
+        _playerData ??= GetComponent<NetworkPlayerData>();
+        _playerData?.MarkRewardSelected(lastClearedBossStage);
 
         // 하나를 선택했으면 같은 보상 목록에서 중복 선택할 수 없도록 후보를 비운다.
         pendingOptions.Clear();

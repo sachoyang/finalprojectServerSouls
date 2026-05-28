@@ -1,9 +1,12 @@
 using System.Collections;
 using Fusion;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class RewardManager : MonoBehaviour
 {
+    private const string RewardSelectCanvasPrefabId = "RewardSelectCanvas";
+
     [Header("Boss")]
     [SerializeField] private DragonBoss boss;
     [SerializeField, Range(1, 8)] private int bossStage = 1;
@@ -15,16 +18,23 @@ public class RewardManager : MonoBehaviour
     [SerializeField] private string chestOpenStateName = "BoxOpen";
     [SerializeField] private float chestOpenDelay = 0.25f;
     [SerializeField] private float chestOpenFallbackDuration = 1.5f;
-    [SerializeField] private float rewardOfferDelay = 1.2f;
+
+    [Header("Reward Selection Phase")]
+    [SerializeField] private GameObject distortionAllProperties;
+    [SerializeField] private RewardDistortionTrigger distortionTrigger;
+    [SerializeField] private float rewardSelectionTimeout = 60f;
+    [SerializeField] private string nextSceneName = "scPath";
 
     private bool _rewardStarted;
-    private bool _chestOpenEnded;
+    private bool _rewardOptionsOpened;
+    private bool _sceneLoadRequested;
     private GameObject _spawnedChest;
-    private GoldChestAnimationEventReceiver _chestEventReceiver;
 
     private void Awake()
     {
         boss ??= FindObjectOfType<DragonBoss>();
+        chestOpenFallbackDuration = Mathf.Max(1.5f, chestOpenFallbackDuration);
+        SetDistortionActive(false);
     }
 
     private void Update()
@@ -58,9 +68,6 @@ public class RewardManager : MonoBehaviour
 
         if (_spawnedChest != null)
         {
-            _chestOpenEnded = false;
-            _chestEventReceiver = PrepareChestEventReceiver(_spawnedChest);
-
             CameraManager cameraManager = CameraManager.GetOrCreate();
             if (cameraManager != null)
             {
@@ -69,20 +76,19 @@ public class RewardManager : MonoBehaviour
             }
 
             yield return new WaitForSeconds(chestOpenDelay);
+            PrepareDistortionTrigger();
+            SetDistortionActive(true);
             PlayChestOpenAnimation(_spawnedChest);
 
             yield return WaitForChestOpenAnimation(_spawnedChest);
-            yield return new WaitForSeconds(rewardOfferDelay);
 
             if (cameraManager != null)
             {
-                cameraManager.EndCutscene();
+                yield return cameraManager.RestoreGameplayCamera();
             }
-
-            CleanupChestEventReceiver();
         }
 
-        OfferRewardToLocalPlayer();
+        yield return WaitForRewardSelectionPhase();
     }
 
     private GameObject SpawnGoldChest(Transform spawnPoint)
@@ -103,39 +109,6 @@ public class RewardManager : MonoBehaviour
         return chest;
     }
 
-    private GoldChestAnimationEventReceiver PrepareChestEventReceiver(GameObject chest)
-    {
-        Animator chestAnimator = chest.GetComponentInChildren<Animator>();
-        if (chestAnimator == null)
-        {
-            Debug.LogWarning("[RewardManager] Gold Chest does not have an Animator.");
-            return null;
-        }
-
-        GoldChestAnimationEventReceiver receiver = chestAnimator.GetComponent<GoldChestAnimationEventReceiver>();
-        if (receiver == null)
-        {
-            receiver = chestAnimator.gameObject.AddComponent<GoldChestAnimationEventReceiver>();
-        }
-
-        receiver.BoxOpenEnded += OnChestOpenEnded;
-        return receiver;
-    }
-
-    private void CleanupChestEventReceiver()
-    {
-        if (_chestEventReceiver != null)
-        {
-            _chestEventReceiver.BoxOpenEnded -= OnChestOpenEnded;
-            _chestEventReceiver = null;
-        }
-    }
-
-    private void OnChestOpenEnded()
-    {
-        _chestOpenEnded = true;
-    }
-
     private void PlayChestOpenAnimation(GameObject chest)
     {
         Animator chestAnimator = chest.GetComponentInChildren<Animator>();
@@ -152,23 +125,25 @@ public class RewardManager : MonoBehaviour
     private IEnumerator WaitForChestOpenAnimation(GameObject chest)
     {
         Animator chestAnimator = chest != null ? chest.GetComponentInChildren<Animator>() : null;
-        float waitDuration = GetChestOpenAnimationDuration(chestAnimator);
-        float elapsed = 0f;
+        if (chestAnimator == null)
+        {
+            yield return new WaitForSeconds(GetChestOpenAnimationDuration(null));
+            yield break;
+        }
 
-        while (!_chestOpenEnded && elapsed < waitDuration)
+        yield return null;
+
+        AnimatorStateInfo stateInfo = chestAnimator.GetCurrentAnimatorStateInfo(0);
+        float fallbackDuration = GetChestOpenAnimationDuration(chestAnimator, stateInfo);
+        float elapsed = 0f;
+        while (elapsed < fallbackDuration)
         {
             elapsed += Time.deltaTime;
             yield return null;
         }
-
-        if (!_chestOpenEnded)
-        {
-            Debug.LogWarning("[RewardManager] BoxOpenEndEvent was not called. Continuing by animation duration fallback.");
-            _chestOpenEnded = true;
-        }
     }
 
-    private float GetChestOpenAnimationDuration(Animator chestAnimator)
+    private float GetChestOpenAnimationDuration(Animator chestAnimator, AnimatorStateInfo stateInfo = default)
     {
         if (chestAnimator == null || chestAnimator.runtimeAnimatorController == null)
         {
@@ -180,7 +155,13 @@ public class RewardManager : MonoBehaviour
         {
             if (clip != null && clip.name == chestOpenStateName)
             {
-                return Mathf.Max(0.01f, clip.length);
+                float speed = Mathf.Abs(stateInfo.speed);
+                if (speed <= 0.0001f)
+                {
+                    speed = 1f;
+                }
+
+                return Mathf.Max(0.01f, clip.length / speed);
             }
         }
 
@@ -189,6 +170,11 @@ public class RewardManager : MonoBehaviour
 
     private void OfferRewardToLocalPlayer()
     {
+        if (_rewardOptionsOpened)
+        {
+            return;
+        }
+
         PlayerAbilityRewardController rewardController = FindLocalRewardController();
         if (rewardController == null)
         {
@@ -196,7 +182,160 @@ public class RewardManager : MonoBehaviour
             return;
         }
 
+        ShowRewardSelectCanvas();
+
+        _rewardOptionsOpened = true;
         rewardController.OfferBossReward(bossStage);
+        Debug.Log("[RewardManager] Boss reward offered to local player.");
+    }
+
+    private static void ShowRewardSelectCanvas()
+    {
+        if (ScenePrefabManager.Instance != null)
+        {
+            ScenePrefabManager.Instance.ShowPrefab(RewardSelectCanvasPrefabId);
+            return;
+        }
+
+        RewardSelectView rewardSelectView = FindObjectOfType<RewardSelectView>(true);
+        if (rewardSelectView != null)
+        {
+            rewardSelectView.gameObject.SetActive(true);
+        }
+    }
+
+    private IEnumerator WaitForRewardSelectionPhase()
+    {
+        PrepareDistortionTrigger();
+        float elapsed = 0f;
+        float timeout = Mathf.Max(0f, rewardSelectionTimeout);
+
+        while (elapsed < timeout && !HaveAllActivePlayersSelectedReward())
+        {
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        CleanupDistortionTrigger();
+        SetDistortionActive(false);
+        LoadNextScene();
+    }
+
+    private void PrepareDistortionTrigger()
+    {
+        if (distortionTrigger == null && distortionAllProperties != null)
+        {
+            distortionTrigger = distortionAllProperties.GetComponentInChildren<RewardDistortionTrigger>(true);
+            if (distortionTrigger == null)
+            {
+                distortionTrigger = distortionAllProperties.AddComponent<RewardDistortionTrigger>();
+            }
+        }
+
+        if (distortionTrigger != null)
+        {
+            distortionTrigger.Triggered -= OnDistortionTriggered;
+            distortionTrigger.Triggered += OnDistortionTriggered;
+        }
+    }
+
+    private void CleanupDistortionTrigger()
+    {
+        if (distortionTrigger != null)
+        {
+            distortionTrigger.Triggered -= OnDistortionTriggered;
+        }
+    }
+
+    private void OnDistortionTriggered()
+    {
+        OfferRewardToLocalPlayer();
+    }
+
+    private void SetDistortionActive(bool isActive)
+    {
+        if (distortionAllProperties != null)
+        {
+            distortionAllProperties.SetActive(isActive);
+        }
+    }
+
+    private bool HaveAllActivePlayersSelectedReward()
+    {
+        NetworkRunner runner = GetRunner();
+        if (runner == null)
+        {
+            return false;
+        }
+
+        int playerCount = 0;
+        foreach (PlayerRef player in runner.ActivePlayers)
+        {
+            playerCount++;
+            if (!PlayerSessionStore.HasSelectedReward(player, bossStage))
+            {
+                return false;
+            }
+        }
+
+        return playerCount > 0;
+    }
+
+    private void LoadNextScene()
+    {
+        if (_sceneLoadRequested)
+        {
+            return;
+        }
+
+        _sceneLoadRequested = true;
+        NetworkRunner runner = GetRunner();
+        if (runner != null)
+        {
+            if (runner.IsServer)
+            {
+                if (!Application.CanStreamedLevelBeLoaded(nextSceneName))
+                {
+                    Debug.LogError($"[RewardManager] Next scene '{nextSceneName}' is not registered in Build Settings.");
+                    return;
+                }
+
+                SaveActivePlayerStats(runner);
+                runner.LoadScene(nextSceneName, LoadSceneMode.Single);
+            }
+
+            return;
+        }
+
+        if (!Application.CanStreamedLevelBeLoaded(nextSceneName))
+        {
+            Debug.LogError($"[RewardManager] Next scene '{nextSceneName}' is not registered in Build Settings.");
+            return;
+        }
+
+        SceneManager.LoadScene(nextSceneName);
+    }
+
+    private static void SaveActivePlayerStats(NetworkRunner runner)
+    {
+        if (runner == null)
+        {
+            return;
+        }
+
+        foreach (PlayerRef player in runner.ActivePlayers)
+        {
+            if (!runner.TryGetPlayerObject(player, out NetworkObject playerObject) || playerObject == null)
+            {
+                continue;
+            }
+
+            PlayerStats stats = playerObject.GetComponent<PlayerStats>();
+            if (stats != null)
+            {
+                PlayerSessionStore.SaveStats(player, stats.CreateSessionSnapshot());
+            }
+        }
     }
 
     private static PlayerAbilityRewardController FindLocalRewardController()
@@ -212,5 +351,15 @@ public class RewardManager : MonoBehaviour
         }
 
         return null;
+    }
+
+    private static NetworkRunner GetRunner()
+    {
+        if (NetworkManager.Instance != null && NetworkManager.Instance.Runner != null)
+        {
+            return NetworkManager.Instance.Runner;
+        }
+
+        return FindObjectOfType<NetworkRunner>();
     }
 }

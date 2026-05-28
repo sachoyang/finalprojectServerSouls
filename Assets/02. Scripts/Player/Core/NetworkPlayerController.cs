@@ -182,6 +182,7 @@ public class NetworkPlayerController : NetworkBehaviour
     {
         _changeDetector = GetChangeDetector(ChangeDetector.Source.SimulationState);
         UpdatePlayerTag();
+        _abilityInventory?.RestoreFromSessionData(Object.InputAuthority);
 
         // 카메라는 각 클라이언트의 내 플레이어만 따라가야 한다.
         if (!Object.HasInputAuthority)

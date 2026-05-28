@@ -17,6 +17,7 @@ public class CameraManager : MonoBehaviour
     [SerializeField] private Camera managedCamera;
     [SerializeField] private Transform rewardCameraPoint;
     [SerializeField] private float rewardCameraMoveDuration = 1.2f;
+    [SerializeField] private float rewardCameraRestoreDuration = 1.0f;
     [SerializeField] private float rewardZoomFieldOfView = 35f;
     [SerializeField] private bool restoreControllersAfterReward = true;
 
@@ -269,6 +270,43 @@ public class CameraManager : MonoBehaviour
         ApplyGameplayMode();
     }
 
+    public IEnumerator RestoreGameplayCamera()
+    {
+        if (!ResolveCamera())
+        {
+            EndCutscene();
+            yield break;
+        }
+
+        if (!TryGetGameplayCameraPose(out Vector3 targetPosition, out Quaternion targetRotation))
+        {
+            EndCutscene();
+            yield break;
+        }
+
+        Vector3 startPosition = managedCamera.transform.position;
+        Quaternion startRotation = managedCamera.transform.rotation;
+        float startFieldOfView = managedCamera.fieldOfView;
+        float targetFieldOfView = _originalFieldOfView;
+
+        float elapsed = 0f;
+        float safeDuration = Mathf.Max(0.01f, rewardCameraRestoreDuration);
+        while (elapsed < safeDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.SmoothStep(0f, 1f, elapsed / safeDuration);
+            ApplyCutsceneCamera(
+                Vector3.Lerp(startPosition, targetPosition, t),
+                Quaternion.Slerp(startRotation, targetRotation, t),
+                Mathf.Lerp(startFieldOfView, targetFieldOfView, t));
+
+            yield return null;
+        }
+
+        ApplyCutsceneCamera(targetPosition, targetRotation, targetFieldOfView);
+        EndCutscene();
+    }
+
     private bool ResolveCamera()
     {
         if (managedCamera != null && managedCamera.isActiveAndEnabled)
@@ -330,5 +368,47 @@ public class CameraManager : MonoBehaviour
 
         _currentMode = CameraMode.PlayerFollow;
         _gameplayCameraController.ClearLockOnTarget();
+    }
+
+    private bool TryGetGameplayCameraPose(out Vector3 position, out Quaternion rotation)
+    {
+        position = Vector3.zero;
+        rotation = Quaternion.identity;
+
+        if (_gameplayCameraController == null || _gameplayCameraController.Target == null)
+        {
+            return false;
+        }
+
+        Transform target = _gameplayCameraController.Target;
+        Vector3 focusPoint = target.position + _gameplayCameraController.TargetOffset;
+        Transform lockTarget = _gameplayCameraController.LockOnTarget;
+
+        if (lockTarget != null)
+        {
+            Vector3 lockPoint = lockTarget.position + _gameplayCameraController.LockOnTargetOffset;
+            Vector3 flatToLock = Vector3.ProjectOnPlane(lockPoint - focusPoint, Vector3.up);
+            if (flatToLock.sqrMagnitude < 0.0001f)
+            {
+                flatToLock = Vector3.ProjectOnPlane(managedCamera.transform.forward, Vector3.up);
+            }
+
+            if (flatToLock.sqrMagnitude < 0.0001f)
+            {
+                flatToLock = Vector3.forward;
+            }
+
+            flatToLock.Normalize();
+            position = focusPoint - flatToLock * _gameplayCameraController.Distance + Vector3.up * _gameplayCameraController.LockOnHeight;
+            Vector3 lookDirection = lockPoint - position;
+            rotation = lookDirection.sqrMagnitude > 0.0001f
+                ? Quaternion.LookRotation(lookDirection.normalized, Vector3.up)
+                : managedCamera.transform.rotation;
+            return true;
+        }
+
+        rotation = Quaternion.Euler(_gameplayCameraController.Pitch, _gameplayCameraController.Yaw, 0f);
+        position = focusPoint - rotation * Vector3.forward * _gameplayCameraController.Distance;
+        return true;
     }
 }

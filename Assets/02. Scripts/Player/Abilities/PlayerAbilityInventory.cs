@@ -46,6 +46,7 @@ public class PlayerAbilityInventory : MonoBehaviour
 
     private PlayerStats _stats;
     private PlayerAbilityExecutor _executor;
+    private NetworkPlayerData _playerData;
 
     public IReadOnlyList<PlayerAbilityModule> EquippedModules
     {
@@ -79,6 +80,7 @@ public class PlayerAbilityInventory : MonoBehaviour
         EnsureRuntimeLists();
         _stats = GetComponent<PlayerStats>();
         _executor = GetComponent<PlayerAbilityExecutor>();
+        _playerData = GetComponent<NetworkPlayerData>();
         if (_executor == null)
         {
             _executor = gameObject.AddComponent<PlayerAbilityExecutor>();
@@ -119,14 +121,58 @@ public class PlayerAbilityInventory : MonoBehaviour
     // 보상 선택창에서 플레이어가 능력 1개를 고르면 호출한다.
     public bool SelectRewardOption(PlayerAbilityModule module)
     {
-        EnsureRuntimeLists();
-        if (module == null || (preventDuplicateModules && HasModule(module)))
+        if (!EquipModule(module, false))
         {
             return false;
         }
 
+        _playerData ??= GetComponent<NetworkPlayerData>();
+        _playerData?.RecordAbility(module);
+        return true;
+    }
+
+    public void RestoreFromPlayerData()
+    {
+        _playerData ??= GetComponent<NetworkPlayerData>();
+        if (_playerData == null)
+        {
+            return;
+        }
+
+        EnsureRuntimeLists();
+        for (int i = 0; i < _playerData.SavedAbilityCount; i++)
+        {
+            PlayerAbilityModule module = FindModuleById(_playerData.GetAbilityId(i));
+            EquipModule(module, true);
+        }
+    }
+
+    public void RestoreFromSessionData(PlayerRef owner)
+    {
+        EnsureRuntimeLists();
+        IReadOnlyList<string> abilityIds = PlayerSessionStore.GetAbilityIds(owner);
+        for (int i = 0; i < abilityIds.Count; i++)
+        {
+            PlayerAbilityModule module = FindModuleById(abilityIds[i]);
+            EquipModule(module, true);
+        }
+    }
+
+    private bool EquipModule(PlayerAbilityModule module, bool allowAlreadyEquipped)
+    {
+        EnsureRuntimeLists();
+        if (module == null)
+        {
+            return false;
+        }
+
+        if (preventDuplicateModules && HasModule(module))
+        {
+            return allowAlreadyEquipped;
+        }
+
         PlayerAbilityContext context = CreateContext();
-        // 실제 획득 가능 여부는 실행 담당 컴포넌트가 검사한다.
+        // 실제 장착 가능 여부는 Executor가 검사한다.
         if (_executor != null && !_executor.CanEquip(module, context))
         {
             return false;
@@ -134,15 +180,13 @@ public class PlayerAbilityInventory : MonoBehaviour
 
         equippedModules.Add(module);
 
-        // 패시브 능력은 획득 즉시 스탯 보너스와 즉시 효과를 적용한다.
-        // 액티브 능력은 슬롯에 등록해 두고, 실제 실행은 PlayerAbilityController가 담당한다.
+        // 패시브는 장착 즉시 스탯 보너스와 즉시 효과를 적용한다.
+        // 액티브는 슬롯에 등록하고 실제 실행은 PlayerAbilityController가 담당한다.
         if (!module.IsActive)
         {
             _executor?.EquipPassive(module, context);
         }
 
-        // 액티브 능력만 키 슬롯에 들어간다.
-        // 이때 슬롯 번호는 "액티브를 획득한 순서"가 된다.
         if (module.IsActive)
         {
             int slotIndex = activeSlots.Count;
@@ -153,7 +197,7 @@ public class PlayerAbilityInventory : MonoBehaviour
         return true;
     }
 
-    // 특정 액티브 슬롯의 키를 바꾼다.
+    // 특정 액티브 슬롯의 키를 바꿀 때 사용한다.
     // 변경된 키는 PlayerPrefs에 저장되므로 다음 실행 때도 유지된다.
     public bool TryChangeActiveKey(int activeSlotIndex, KeyCode newKey)
     {
@@ -185,6 +229,33 @@ public class PlayerAbilityInventory : MonoBehaviour
     }
 
     // 같은 abilityId를 가진 모듈을 이미 획득했는지 확인한다.
+    private PlayerAbilityModule FindModuleById(string abilityId)
+    {
+        if (string.IsNullOrWhiteSpace(abilityId))
+        {
+            return null;
+        }
+
+        EnsureRuntimeLists();
+        foreach (PlayerAbilityModule module in abilityPool)
+        {
+            if (module != null && module.AbilityId == abilityId)
+            {
+                return module;
+            }
+        }
+
+        foreach (PlayerAbilityModule module in equippedModules)
+        {
+            if (module != null && module.AbilityId == abilityId)
+            {
+                return module;
+            }
+        }
+
+        return null;
+    }
+
     private bool HasModule(PlayerAbilityModule module)
     {
         EnsureRuntimeLists();

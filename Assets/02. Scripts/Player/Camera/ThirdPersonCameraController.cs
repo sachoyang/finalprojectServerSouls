@@ -34,6 +34,15 @@ public class ThirdPersonCameraController : MonoBehaviour
     private Vector3 _currentVelocity;
     private Transform _lockOnTarget;
 
+    public Transform Target => target;
+    public Vector3 TargetOffset => targetOffset;
+    public float Distance => distance;
+    public float Pitch => _pitch;
+    public float Yaw => _yaw;
+    public Transform LockOnTarget => _lockOnTarget;
+    public Vector3 LockOnTargetOffset => lockOnTargetOffset;
+    public float LockOnHeight => lockOnHeight;
+
     private void Start()
     {
         Vector3 currentEuler = transform.eulerAngles;

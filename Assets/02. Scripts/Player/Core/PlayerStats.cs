@@ -4,6 +4,35 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class PlayerStats : NetworkBehaviour
 {
+    public readonly struct SessionSnapshot
+    {
+        public readonly float CurrentHealth;
+        public readonly float CurrentStamina;
+        public readonly bool IsDead;
+        public readonly float BonusMaxHealth;
+        public readonly float BonusMaxStamina;
+        public readonly float BonusDefenseRate;
+        public readonly float BonusAttackDamageRate;
+
+        public SessionSnapshot(
+            float currentHealth,
+            float currentStamina,
+            bool isDead,
+            float bonusMaxHealth,
+            float bonusMaxStamina,
+            float bonusDefenseRate,
+            float bonusAttackDamageRate)
+        {
+            CurrentHealth = currentHealth;
+            CurrentStamina = currentStamina;
+            IsDead = isDead;
+            BonusMaxHealth = bonusMaxHealth;
+            BonusMaxStamina = bonusMaxStamina;
+            BonusDefenseRate = bonusDefenseRate;
+            BonusAttackDamageRate = bonusAttackDamageRate;
+        }
+    }
+
     [Header("Vitals")]
     // 플레이어 최대 체력. Spawned에서 CurrentHealth 초기값으로 사용된다.
     [SerializeField] private float maxHealth = 10000f;
@@ -75,6 +104,38 @@ public class PlayerStats : NetworkBehaviour
     public float JumpSlashStaminaCost => jumpSlashStaminaCost;
     public float PowerUpStaminaCost => powerUpStaminaCost;
     public float SlideSlashStaminaCost => slideSlashStaminaCost;
+
+    public SessionSnapshot CreateSessionSnapshot()
+    {
+        return new SessionSnapshot(
+            CurrentHealth,
+            CurrentStamina,
+            IsDead,
+            BonusMaxHealth,
+            BonusMaxStamina,
+            BonusDefenseRate,
+            BonusAttackDamageRate);
+    }
+
+    public void RestoreSessionSnapshot(SessionSnapshot snapshot)
+    {
+        if (!HasStateAuthority)
+        {
+            return;
+        }
+
+        BonusMaxHealth = snapshot.BonusMaxHealth;
+        BonusMaxStamina = snapshot.BonusMaxStamina;
+        BonusDefenseRate = snapshot.BonusDefenseRate;
+        BonusAttackDamageRate = snapshot.BonusAttackDamageRate;
+
+        CurrentHealth = Mathf.Clamp(snapshot.CurrentHealth, 0f, MaxHealth);
+        CurrentStamina = Mathf.Clamp(snapshot.CurrentStamina, 0f, MaxStamina);
+        IsDead = snapshot.IsDead || CurrentHealth <= 0f;
+        IsAnimationInvincible = false;
+        StaminaRegenDelayTimer = default;
+        HitInvincibleTimer = default;
+    }
 
     public override void Spawned()
     {

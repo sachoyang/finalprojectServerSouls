@@ -30,6 +30,9 @@ public class RewardSelectView : MonoBehaviour
     private InventoryPanelController inventoryPanel;
     private Coroutine bindCoroutine;
     private Coroutine messageCoroutine;
+    private CursorLockMode previousCursorLockMode;
+    private bool previousCursorVisible;
+    private bool cursorOverrideActive;
 
     private void Awake()
     {
@@ -78,6 +81,7 @@ public class RewardSelectView : MonoBehaviour
         else
             gameObject.SetActive(true);
 
+        EnableRewardCursor();
         SetConfirmButtonVisible(true);
         SetConfirmButtonState(false);
         HideMessage();
@@ -110,6 +114,7 @@ public class RewardSelectView : MonoBehaviour
 
         HideMessage();
         SetConfirmButtonVisible(false);
+        RestoreCursor();
 
         if (rootObject != null)
             rootObject.SetActive(false);
@@ -312,6 +317,31 @@ public class RewardSelectView : MonoBehaviour
 
         if (messageText != null)
             messageText.gameObject.SetActive(false);
+    }
+
+    private void EnableRewardCursor()
+    {
+        if (!cursorOverrideActive)
+        {
+            previousCursorLockMode = Cursor.lockState;
+            previousCursorVisible = Cursor.visible;
+            cursorOverrideActive = true;
+        }
+
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+
+    private void RestoreCursor()
+    {
+        if (!cursorOverrideActive)
+        {
+            return;
+        }
+
+        Cursor.lockState = previousCursorLockMode;
+        Cursor.visible = previousCursorVisible;
+        cursorOverrideActive = false;
     }
 
     private void ClearCards()
