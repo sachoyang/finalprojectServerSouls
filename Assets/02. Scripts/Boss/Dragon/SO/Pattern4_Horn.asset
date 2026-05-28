@@ -18,10 +18,11 @@ MonoBehaviour:
   maxRange: 10
   weight: 10
   actions:
-  - animationClip: {fileID: 0}
+  - animationClip: {fileID: 7400000, guid: 19a5a8dd9f6eaba49980048610a6e8e3, type: 3}
     animationStateName: Horn Attack
+    animationHash: 46661459
     duration: 3
-    moveOffset: {x: 0, y: 0, z: 7}
+    moveOffset: {x: 0, y: 0, z: 15}
     moveCurve:
       serializedVersion: 2
       m_Curve:
@@ -35,19 +36,10 @@ MonoBehaviour:
         inWeight: 0
         outWeight: 0
       - serializedVersion: 3
-        time: 0.70566237
-        value: 0.14990324
-        inSlope: 0.4613248
-        outSlope: 0.4613248
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0.33333334
-        outWeight: 0.33333334
-      - serializedVersion: 3
         time: 1
         value: 1
-        inSlope: 2
-        outSlope: 2
+        inSlope: 0
+        outSlope: 0
         tangentMode: 0
         weightedMode: 0
         inWeight: 0

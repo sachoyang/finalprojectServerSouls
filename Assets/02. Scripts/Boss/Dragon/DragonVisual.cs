@@ -33,7 +33,7 @@ public class DragonVisual : MonoBehaviour, IBossVisual
     // ==========================================
     public void PlayAction(int stateHash, float crossFadeTime = 0.1f)
     {
-        anim.CrossFade(stateHash, crossFadeTime);
+        anim.CrossFade(stateHash, crossFadeTime, 0, 0f);
         
         // (참고) 만약 특정 이펙트를 위해 어떤 해시인지 검사해야 한다면?
         // if (stateHash == Animator.StringToHash("Basic Attack")) { fireBreath.Play(); }

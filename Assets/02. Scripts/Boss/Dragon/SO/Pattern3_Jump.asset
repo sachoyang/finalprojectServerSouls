@@ -18,8 +18,9 @@ MonoBehaviour:
   maxRange: 10
   weight: 10
   actions:
-  - animationClip: {fileID: 0}
+  - animationClip: {fileID: 7400000, guid: 11710095629f7e044ad54abf1af7fc13, type: 3}
     animationStateName: Jump
+    animationHash: 125937960
     duration: 2
     moveOffset: {x: 0, y: 0, z: 0}
     moveCurve:

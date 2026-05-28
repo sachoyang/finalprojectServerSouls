@@ -18,9 +18,10 @@ MonoBehaviour:
   maxRange: 10
   weight: 10
   actions:
-  - animationClip: {fileID: 0}
-    animationStateName: Locomotion
-    duration: 0.5
+  - animationClip: {fileID: 7400000, guid: e6a84557d6aca2f4daa1b608739267d9, type: 3}
+    animationStateName: idle01
+    animationHash: 1140807941
+    duration: 1
     moveOffset: {x: 0, y: 0, z: 0}
     moveCurve:
       serializedVersion: 2
@@ -32,7 +33,8 @@ MonoBehaviour:
     hasSuperArmor: 0
   - animationClip: {fileID: 7400000, guid: f882585276163954fbc547e18dea9d6b, type: 3}
     animationStateName: Basic Attack
-    duration: 2
+    animationHash: -1155614474
+    duration: 1.5
     moveOffset: {x: 0, y: 0, z: 0}
     moveCurve:
       serializedVersion: 2
@@ -44,7 +46,8 @@ MonoBehaviour:
     hasSuperArmor: 0
   - animationClip: {fileID: 7400000, guid: f882585276163954fbc547e18dea9d6b, type: 3}
     animationStateName: Basic Attack
-    duration: 2
+    animationHash: -1155614474
+    duration: 1.5
     moveOffset: {x: 0, y: 0, z: 0}
     moveCurve:
       serializedVersion: 2

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 public enum BossState
 {
     Sleep,
+    WakeUp,           // [여기에 새로 추가!] 깨어날 때 포효하는 상태
     Idle,
     Walk,
     ExecutingPattern, // SO 패턴을 실행 중일 때의 상태
@@ -20,6 +21,13 @@ public class NetworkBossCore : NetworkBehaviour
     public float wakeUpRange = 10.0f;
     public float aggroRefreshTime = 10.0f;
     public float patternCooldown = 2.0f;
+
+    [Header("기상(Wake Up) 설정")]
+    [Tooltip("잠에서 깰 때 재생할 애니메이션 이름 (예: Scream)")]
+    public string wakeUpAnimName = "Scream";
+    [Tooltip("포효 애니메이션의 지속 시간 (초)")]
+    public float wakeUpDuration = 2.8f;
+    private int _wakeUpAnimHash; // 최적화용 해시 변수
 
     [Header("체력 설정")]
     public float maxHP = 100000f;
@@ -39,7 +47,7 @@ public class NetworkBossCore : NetworkBehaviour
     // ==========================================
     [Networked] public BossState CurrentState { get; set; }
     [Networked] public NetworkObject AggroTarget { get; set; }
-    
+
     // 패턴 실행용 네트워크 변수
     [Networked] public int CurrentPatternIndex { get; set; } = -1;
     [Networked] public int CurrentStepIndex { get; set; } = -1;
@@ -57,9 +65,13 @@ public class NetworkBossCore : NetworkBehaviour
     private int _lastPatternIndex = -1;
     private int _lastStepIndex = -1;
 
+    // 방금 전 프레임의 상태를 기억하여 중복 실행을 막는 플래그
+    private BossState _lastState = (BossState)(-1);
+
     public override void Spawned()
     {
         _visual = GetComponentInChildren<IBossVisual>();
+        _wakeUpAnimHash = Animator.StringToHash(wakeUpAnimName);
 
         if (HasStateAuthority)
         {
@@ -135,7 +147,10 @@ public class NetworkBossCore : NetworkBehaviour
             FindClosestTarget();
             if (AggroTarget != null && Vector3.Distance(transform.position, AggroTarget.transform.position) <= wakeUpRange)
             {
-                ChangeState(BossState.Idle);
+                ChangeState(BossState.WakeUp);
+
+                StateTimer = TickTimer.CreateFromSeconds(Runner, wakeUpDuration);
+                
                 AggroTimer = TickTimer.CreateFromSeconds(Runner, aggroRefreshTime);
             }
             return;
@@ -144,6 +159,19 @@ public class NetworkBossCore : NetworkBehaviour
         // 2. 타겟 유실 시 재탐색
         if (AggroTarget == null) FindClosestTarget();
         if (AggroTarget == null) return;
+
+        // 1-2. [새로 추가됨] 기상(포효) 중일 때의 처리
+        if (CurrentState == BossState.WakeUp)
+        {
+            if (StateTimer.Expired(Runner))
+            {
+                // 포효 시간이 끝나면, 첫 공격 쿨타임을 장전하고 비로소 Idle로 넘어갑니다.
+                AttackCooldown = TickTimer.CreateFromSeconds(Runner, patternCooldown);
+                ChangeState(BossState.Idle);
+                AggroTimer = TickTimer.CreateFromSeconds(Runner, aggroRefreshTime);
+            }
+            return; // 포효 중에는 밑으로 못 내려가게 막음!
+        }
 
         // 회전 (패턴 중이 아닐 때 혹은 타겟을 쳐다봐야 할 때)
         if (CurrentState != BossState.ExecutingPattern)
@@ -265,38 +293,65 @@ public class NetworkBossCore : NetworkBehaviour
     {
         if (_visual == null) return;
 
-        // 1. 패턴이 변경되거나 스텝이 넘어갔을 때 애니메이션 실행
+        // 1. 패턴 실행 중일 때 (공격 등)
         if (CurrentState == BossState.ExecutingPattern && CurrentPatternIndex >= 0 && CurrentStepIndex >= 0)
         {
             if (_lastPatternIndex != CurrentPatternIndex || _lastStepIndex != CurrentStepIndex)
             {
                 BossActionModule action = availablePatterns[CurrentPatternIndex].GetAction(CurrentStepIndex);
-                
-                // SO에 적힌 State 이름을 비주얼(애니메이터)에게 그대로 넘겨줌
-                _visual.PlayAction(action.animationHash);
-                
-                // 애니메이션 배속 처리 (필요에 따라 action.duration으로 계산 가능)
-                if (action.animationClip != null)
+
+                // 해시값으로 애니메이션 실행
+                // 해시값이 비어있으면 실시간으로 문자열을 찾아 해시로 변환하는 안전장치
+                int targetHash = action.animationHash != 0 ? action.animationHash : Animator.StringToHash(action.animationStateName);
+                _visual.PlayAction(targetHash);
+
+                // [수정됨: 배속 버그 해결] (원본 클립 길이 / 기획자가 설정한 시간)으로 정확한 배속 도출
+                if (action.animationClip != null && action.duration > 0f)
                 {
-                    _visual.SetAnimSpeed(action.animationClip.length / action.duration);
+                    float speedMult = action.animationClip.length / action.duration;
+                    _visual.SetAnimSpeed(speedMult);
+                }
+                else
+                {
+                    _visual.SetAnimSpeed(1.0f); // 클립이 없으면 기본 속도
                 }
 
                 _lastPatternIndex = CurrentPatternIndex;
                 _lastStepIndex = CurrentStepIndex;
+                _lastState = CurrentState; // 상태 갱신
             }
         }
         else
         {
-            // 패턴 중이 아닐 때의 지속 상태 동기화 (초기화)
+            // 2. 패턴 중이 아닐 때 (지속 상태 초기화)
             _lastPatternIndex = -1;
             _lastStepIndex = -1;
-            
+
+            // 걷기 블렌드 트리 속도 및 수면 상태 적용은 매 프레임 유지
             _visual.SetSpeed(CurrentState == BossState.Walk ? 1.0f : 0.0f);
             _visual.SetSleep(CurrentState == BossState.Sleep);
-            
-            if (CurrentState == BossState.Idle || CurrentState == BossState.Walk)
+
+            // 상태가 '방금 딱 바뀌었을 때만' 1회 호출
+            if (_lastState != CurrentState)
             {
-                _visual.DoLocomotion();
+                _visual.SetAnimSpeed(1.0f); // 패턴이 끝났으니 배속을 무조건 1.0(정상)으로 복구
+
+                if (CurrentState == BossState.WakeUp)
+                {
+                    // [새로 추가됨] 기상 상태 진입 시 포효(Scream) 재생!
+                    _visual.PlayAction(_wakeUpAnimHash);
+                }
+                else if (CurrentState == BossState.Idle || CurrentState == BossState.Walk)
+                {
+                    _visual.DoLocomotion(); // 딱 한 번만 CrossFade 발동!
+                }
+                else if (CurrentState == BossState.Die)
+                {
+                    // 죽음 상태 진입 시 사망 애니메이션 재생
+                    _visual.PlayAction(Animator.StringToHash("die"));
+                }
+
+                _lastState = CurrentState;
             }
         }
     }
@@ -360,7 +415,7 @@ public class NetworkBossCore : NetworkBehaviour
             CurrentHP = 0;
             Debug.Log("보스 처치 완료!");
             // [수정됨] DragonState가 아닌 BossState로 통일!
-            ChangeState(BossState.Die); 
+            ChangeState(BossState.Die);
         }
     }
 
@@ -450,6 +505,6 @@ public class NetworkBossCore : NetworkBehaviour
             transform.position += targetDisplacement;
         }
     }
-    
+
     // ... 나머지 기존 기능들
 }

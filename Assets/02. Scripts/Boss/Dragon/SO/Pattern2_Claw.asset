@@ -20,7 +20,8 @@ MonoBehaviour:
   actions:
   - animationClip: {fileID: 7400000, guid: a8d68f882ac2f2f48982204cc9c22f27, type: 3}
     animationStateName: Claw Attack
-    duration: 2
+    animationHash: 1013487520
+    duration: 1.7
     moveOffset: {x: 0, y: 0, z: 0}
     moveCurve:
       serializedVersion: 2
@@ -30,9 +31,10 @@ MonoBehaviour:
       m_RotationOrder: 0
     hitboxIndex: 0
     hasSuperArmor: 0
-  - animationClip: {fileID: 0}
+  - animationClip: {fileID: 7400000, guid: a8d68f882ac2f2f48982204cc9c22f27, type: 3}
     animationStateName: Claw Attack
-    duration: 2
+    animationHash: 1013487520
+    duration: 1.7
     moveOffset: {x: 0, y: 0, z: 0}
     moveCurve:
       serializedVersion: 2
@@ -42,9 +44,10 @@ MonoBehaviour:
       m_RotationOrder: 0
     hitboxIndex: 0
     hasSuperArmor: 0
-  - animationClip: {fileID: 0}
-    animationStateName: Locomotion
-    duration: 0.5
+  - animationClip: {fileID: 7400000, guid: e6a84557d6aca2f4daa1b608739267d9, type: 3}
+    animationStateName: idle01
+    animationHash: 1140807941
+    duration: 1
     moveOffset: {x: 0, y: 0, z: 0}
     moveCurve:
       serializedVersion: 2
@@ -54,8 +57,9 @@ MonoBehaviour:
       m_RotationOrder: 0
     hitboxIndex: 0
     hasSuperArmor: 0
-  - animationClip: {fileID: 0}
+  - animationClip: {fileID: 7400000, guid: a8d68f882ac2f2f48982204cc9c22f27, type: 3}
     animationStateName: Claw Attack
+    animationHash: 1013487520
     duration: 2
     moveOffset: {x: 0, y: 0, z: 0}
     moveCurve:
