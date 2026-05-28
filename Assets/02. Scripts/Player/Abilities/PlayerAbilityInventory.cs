@@ -45,6 +45,7 @@ public class PlayerAbilityInventory : MonoBehaviour
     [SerializeField] private List<PlayerAbilitySlot> activeSlots = new List<PlayerAbilitySlot>();
 
     private PlayerStats _stats;
+    private PlayerAbilityExecutor _executor;
 
     public IReadOnlyList<PlayerAbilityModule> EquippedModules
     {
@@ -77,6 +78,11 @@ public class PlayerAbilityInventory : MonoBehaviour
     {
         EnsureRuntimeLists();
         _stats = GetComponent<PlayerStats>();
+        _executor = GetComponent<PlayerAbilityExecutor>();
+        if (_executor == null)
+        {
+            _executor = gameObject.AddComponent<PlayerAbilityExecutor>();
+        }
         LoadSavedActiveKeys();
     }
 
@@ -120,14 +126,20 @@ public class PlayerAbilityInventory : MonoBehaviour
         }
 
         PlayerAbilityContext context = CreateContext();
-        // 모듈 자체가 장착 조건을 거부하면 획득하지 않는다.
-        if (!module.CanEquip(context))
+        // 실제 획득 가능 여부는 실행 담당 컴포넌트가 검사한다.
+        if (_executor != null && !_executor.CanEquip(module, context))
         {
             return false;
         }
 
         equippedModules.Add(module);
-        module.OnEquipped(context);
+
+        // 패시브 능력은 획득 즉시 스탯 보너스와 즉시 효과를 적용한다.
+        // 액티브 능력은 슬롯에 등록해 두고, 실제 실행은 PlayerAbilityController가 담당한다.
+        if (!module.IsActive)
+        {
+            _executor?.EquipPassive(module, context);
+        }
 
         // 액티브 능력만 키 슬롯에 들어간다.
         // 이때 슬롯 번호는 "액티브를 획득한 순서"가 된다.

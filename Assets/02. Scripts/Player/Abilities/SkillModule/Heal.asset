@@ -25,14 +25,14 @@ MonoBehaviour:
   healthRestoreAmount: 1500
   staminaRestoreAmount: 0
   specialEffect: 0
-  maxHealthBonus: 0
+  maxHealthBonus: 500
   maxStaminaBonus: 0
   defenseRateBonus: 0
   attackDamageBonusPercent: 0
   animationClip: {fileID: 7400000, guid: b87c0223bacdbd840967e74c4a41288f, type: 3}
   animationStateName: 
   animationTrigger: Heal
-  effectPrefab: {fileID: 0}
+  effectPrefab: {fileID: 6117522121999580243, guid: 0d47c36199aafbd4e851dbc6a74ea775, type: 3}
   effectLocalOffset: {x: 0, y: 0, z: 0}
   parentEffectToPlayer: 1
   hitboxPrefab: {fileID: 0}

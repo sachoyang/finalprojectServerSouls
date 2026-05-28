@@ -54,15 +54,20 @@ public class PlayerStats : NetworkBehaviour
     [Networked] private TickTimer StaminaRegenDelayTimer { get; set; }
     // 보스 공격 히트박스가 한 번 스쳐도 여러 Collider에서 중복 피해가 들어가는 것을 줄인다.
     [Networked] private TickTimer HitInvincibleTimer { get; set; }
+    // 패시브 능력으로 얻은 스탯 보너스. 기본 스탯과 분리해 두면 어떤 값이 원래 수치이고 어떤 값이 보상 수치인지 추적하기 쉽다.
+    [Networked] private float BonusMaxHealth { get; set; }
+    [Networked] private float BonusMaxStamina { get; set; }
+    [Networked] private float BonusDefenseRate { get; set; }
+    [Networked] private float BonusAttackDamageRate { get; set; }
 
     // 외부 스크립트가 수치를 읽을 때 인스펙터 값을 직접 수정하지 못하도록 읽기 전용으로 공개한다.
-    public float MaxHealth => maxHealth;
-    public float MaxStamina => maxStamina;
-    public float DefenseRate => defenseRate;
-    public float AttackPower => firstAttackDamage;
-    public float FirstAttackDamage => firstAttackDamage;
-    public float SecondAttackDamage => secondAttackDamage;
-    public float ThirdAttackDamage => thirdAttackDamage;
+    public float MaxHealth => Mathf.Max(1f, maxHealth + BonusMaxHealth);
+    public float MaxStamina => Mathf.Max(0f, maxStamina + BonusMaxStamina);
+    public float DefenseRate => Mathf.Clamp01(defenseRate + BonusDefenseRate);
+    public float AttackPower => FirstAttackDamage;
+    public float FirstAttackDamage => ApplyAttackBonus(firstAttackDamage);
+    public float SecondAttackDamage => ApplyAttackBonus(secondAttackDamage);
+    public float ThirdAttackDamage => ApplyAttackBonus(thirdAttackDamage);
     public float AttackStaminaCost => attackStaminaCost;
     public float RollStaminaCost => rollStaminaCost;
     public float RunStaminaPerSecond => runStaminaPerSecond;
@@ -80,8 +85,12 @@ public class PlayerStats : NetworkBehaviour
             return;
         }
 
-        CurrentHealth = maxHealth;
-        CurrentStamina = maxStamina;
+        BonusMaxHealth = 0f;
+        BonusMaxStamina = 0f;
+        BonusDefenseRate = 0f;
+        BonusAttackDamageRate = 0f;
+        CurrentHealth = MaxHealth;
+        CurrentStamina = MaxStamina;
         IsDead = false;
         IsAnimationInvincible = false;
     }
@@ -101,7 +110,7 @@ public class PlayerStats : NetworkBehaviour
         }
 
         // Fusion 네트워크 틱 시간 기준으로 기력을 회복해 클라이언트 간 결과를 맞춘다.
-        CurrentStamina = Mathf.Min(maxStamina, CurrentStamina + staminaRegenPerSecond * Runner.DeltaTime);
+        CurrentStamina = Mathf.Min(MaxStamina, CurrentStamina + staminaRegenPerSecond * Runner.DeltaTime);
     }
 
     public bool HasStamina(float amount)
@@ -184,7 +193,7 @@ public class PlayerStats : NetworkBehaviour
             return;
         }
 
-        CurrentHealth = Mathf.Min(maxHealth, CurrentHealth + amount);
+        CurrentHealth = Mathf.Min(MaxHealth, CurrentHealth + amount);
     }
 
     public void RestoreStamina(float amount)
@@ -195,7 +204,50 @@ public class PlayerStats : NetworkBehaviour
             return;
         }
 
-        CurrentStamina = Mathf.Min(maxStamina, CurrentStamina + amount);
+        CurrentStamina = Mathf.Min(MaxStamina, CurrentStamina + amount);
+    }
+
+    // 패시브 능력 모듈에 들어있는 스탯 보너스를 누적한다.
+    // 실제 네트워크 스탯 값은 StateAuthority에서만 바꿔야 모든 클라이언트가 같은 결과를 받는다.
+    public void ApplyPassiveStatBonus(PlayerAbilityModule module)
+    {
+        if (module == null || module.IsActive || !HasStateAuthority)
+        {
+            return;
+        }
+
+        BonusMaxHealth += module.MaxHealthBonus;
+        BonusMaxStamina += module.MaxStaminaBonus;
+        BonusDefenseRate += module.DefenseRateBonus;
+        BonusAttackDamageRate += module.AttackDamageBonusRate;
+
+        // 최대치가 늘어나는 보상은 획득 즉시 체감되도록 현재 값도 함께 올린다.
+        if (module.MaxHealthBonus > 0f && !IsDead)
+        {
+            CurrentHealth = Mathf.Min(MaxHealth, CurrentHealth + module.MaxHealthBonus);
+        }
+
+        if (module.MaxStaminaBonus > 0f && !IsDead)
+        {
+            CurrentStamina = Mathf.Min(MaxStamina, CurrentStamina + module.MaxStaminaBonus);
+        }
+    }
+
+    // 장비 해제나 테스트 리셋처럼 패시브 보너스를 되돌릴 일이 생겼을 때 사용할 수 있는 함수다.
+    public void RemovePassiveStatBonus(PlayerAbilityModule module)
+    {
+        if (module == null || module.IsActive || !HasStateAuthority)
+        {
+            return;
+        }
+
+        BonusMaxHealth -= module.MaxHealthBonus;
+        BonusMaxStamina -= module.MaxStaminaBonus;
+        BonusDefenseRate -= module.DefenseRateBonus;
+        BonusAttackDamageRate -= module.AttackDamageBonusRate;
+
+        CurrentHealth = Mathf.Min(CurrentHealth, MaxHealth);
+        CurrentStamina = Mathf.Min(CurrentStamina, MaxStamina);
     }
 
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
@@ -221,12 +273,12 @@ public class PlayerStats : NetworkBehaviour
         }
 
         // 방어율을 적용한 최종 피해만 체력에서 차감한다.
-        float finalDamage = damage * (1f - Mathf.Clamp01(defenseRate));
+        float finalDamage = damage * (1f - DefenseRate);
         CurrentHealth = Mathf.Max(0f, CurrentHealth - finalDamage);
         HitInvincibleTimer = TickTimer.CreateFromSeconds(Runner, hitInvincibleDuration);
         bool becameDead = CurrentHealth <= 0f;
 
-        Debug.Log($"[Player Damaged] damage: {finalDamage}, hp: {CurrentHealth}/{maxHealth}");
+        Debug.Log($"[Player Damaged] damage: {finalDamage}, hp: {CurrentHealth}/{MaxHealth}");
 
         if (becameDead)
         {
@@ -242,5 +294,10 @@ public class PlayerStats : NetworkBehaviour
     private void ApplyAnimationInvincible(bool isInvincible)
     {
         IsAnimationInvincible = !IsDead && isInvincible;
+    }
+
+    private float ApplyAttackBonus(float baseDamage)
+    {
+        return Mathf.Max(0f, baseDamage * (1f + BonusAttackDamageRate));
     }
 }

@@ -1,4 +1,3 @@
-using Fusion;
 using UnityEngine;
 
 public enum AbilityType
@@ -118,110 +117,17 @@ public class PlayerAbilityModule : ScriptableObject
     public AnimationClip AnimationClip => animationClip;
     public string AnimationStateName => animationStateName;
     public string AnimationTrigger => animationTrigger;
+    public float HealthRestoreAmount => healthRestoreAmount;
+    public float StaminaRestoreAmount => staminaRestoreAmount;
+    public PlayerAbilitySpecialEffect SpecialEffect => specialEffect;
+    public GameObject EffectPrefab => effectPrefab;
+    public Vector3 EffectLocalOffset => effectLocalOffset;
+    public bool ParentEffectToPlayer => parentEffectToPlayer;
+    public GameObject HitboxPrefab => hitboxPrefab;
+    public Vector3 HitboxLocalOffset => hitboxLocalOffset;
 
     public bool CanAppearAtStage(int bossStage)
     {
         return bossStage >= minBossStage && bossStage <= maxBossStage;
-    }
-
-    // 보상을 선택했을 때 이 능력을 장착할 수 있는지 검사한다.
-    public virtual bool CanEquip(PlayerAbilityContext context)
-    {
-        return context.Owner != null;
-    }
-
-    // 능력을 획득/장착하는 순간 호출된다. 패시브는 이 시점에 효과를 적용한다.
-    public virtual void OnEquipped(PlayerAbilityContext context)
-    {
-        if (!IsActive)
-        {
-            PlayPresentation(context);
-            ApplyEffect(context);
-        }
-    }
-
-    public virtual void OnUnequipped(PlayerAbilityContext context)
-    {
-    }
-
-    // 액티브 능력을 지금 사용할 수 있는지 검사한다.
-    // 쿨타임과 스태미나 소모는 PlayerAbilityController에서 공통 처리한다.
-    public virtual bool CanActivate(PlayerAbilityContext context)
-    {
-        return IsActive && context.Owner != null && (context.Stats == null || !context.Stats.IsDead);
-    }
-
-    // 액티브 능력을 실제로 사용한다.
-    public virtual void Activate(PlayerAbilityContext context)
-    {
-        PlayPresentation(context);
-        ApplyEffect(context);
-    }
-
-    // 에셋에 설정된 회복 수치를 실제 플레이어 스탯에 적용한다.
-    private void ApplyEffect(PlayerAbilityContext context)
-    {
-        if (healthRestoreAmount > 0f)
-        {
-            context.Stats?.Heal(healthRestoreAmount);
-        }
-
-        if (staminaRestoreAmount > 0f)
-        {
-            context.Stats?.RestoreStamina(staminaRestoreAmount);
-        }
-
-        if (specialEffect == PlayerAbilitySpecialEffect.UnlockBasicAttackCombo)
-        {
-            context.Owner?.GetComponent<NetworkPlayerController>()?.UnlockBasicAttackCombo();
-        }
-    }
-
-    // 애니메이션, 파티클, 히트박스처럼 눈에 보이는 연출/판정을 실행한다.
-    private void PlayPresentation(PlayerAbilityContext context)
-    {
-        if (context.Owner == null)
-        {
-            return;
-        }
-
-        Animator animator = context.Owner.GetComponentInChildren<Animator>();
-        if (animator != null)
-        {
-            if (!string.IsNullOrWhiteSpace(animationTrigger))
-            {
-                animator.ResetTrigger(animationTrigger);
-                animator.SetTrigger(animationTrigger);
-            }
-        }
-
-        SpawnPrefab(context, effectPrefab, effectLocalOffset, parentEffectToPlayer);
-        SpawnPrefab(context, hitboxPrefab, hitboxLocalOffset, false);
-    }
-
-    // 네트워크 프리팹이면 Fusion Runner로 생성하고, 일반 프리팹이면 Unity Instantiate로 생성한다.
-    private static void SpawnPrefab(PlayerAbilityContext context, GameObject prefab, Vector3 localOffset, bool parentToPlayer)
-    {
-        if (prefab == null || context.Transform == null)
-        {
-            return;
-        }
-
-        Vector3 position = context.Transform.TransformPoint(localOffset);
-        Quaternion rotation = context.Transform.rotation;
-
-        NetworkRunner runner = context.Runner;
-        NetworkObject networkPrefab = prefab.GetComponent<NetworkObject>();
-        if (runner != null && networkPrefab != null)
-        {
-            runner.Spawn(networkPrefab, position, rotation, null);
-            return;
-        }
-
-        GameObject instance = Instantiate(prefab, position, rotation);
-        if (parentToPlayer)
-        {
-            instance.transform.SetParent(context.Transform, true);
-        }
     }
 }

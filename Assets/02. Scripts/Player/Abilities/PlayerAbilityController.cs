@@ -11,12 +11,18 @@ public class PlayerAbilityController : NetworkBehaviour
     private PlayerAbilityInventory _inventory;
     private PlayerStats _stats;
     private NetworkPlayerController _playerController;
+    private PlayerAbilityExecutor _executor;
 
     private void Awake()
     {
         _inventory = GetComponent<PlayerAbilityInventory>();
         _stats = GetComponent<PlayerStats>();
         _playerController = GetComponent<NetworkPlayerController>();
+        _executor = GetComponent<PlayerAbilityExecutor>();
+        if (_executor == null)
+        {
+            _executor = gameObject.AddComponent<PlayerAbilityExecutor>();
+        }
     }
 
     private void Update()
@@ -69,7 +75,7 @@ public class PlayerAbilityController : NetworkBehaviour
         PlayerAbilityContext context = _inventory.CreateContext();
 
         // 공통 사용 조건: 쿨다운 완료 + 모듈별 사용 가능 조건.
-        if (!slot.IsReady(currentTime) || !module.CanActivate(context))
+        if (!slot.IsReady(currentTime) || _executor == null || !_executor.CanActivate(module, context))
         {
             return false;
         }
@@ -81,8 +87,8 @@ public class PlayerAbilityController : NetworkBehaviour
             return false;
         }
 
-        // 여기서 각 모듈의 Activate 구현이 실행된다.
-        module.Activate(context);
+        // 실제 애니메이션, 이펙트, 히트박스, 회복 같은 실행은 Executor가 담당한다.
+        _executor.Activate(module, context);
         slot.StartCooldown(currentTime);
         return true;
     }
