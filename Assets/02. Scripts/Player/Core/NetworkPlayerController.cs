@@ -42,8 +42,6 @@ public class NetworkPlayerController : NetworkBehaviour
     private const byte LockMoveRunRight = 6;
     private const byte BasicAttackComboLastIndex = 2;
 
-    private const string LockOnHeadTag = "LockOnHead";
-    private const string LockOnBodyTag = "LockOnBody";
     private const string AlivePlayerTag = "Player";
     private const string DeadPlayerTag = "DeadPlayer";
 
@@ -88,6 +86,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
     [Header("Lock On")]
     // 락온 가능한 보스 포인트 탐색 범위와 락온 중 회전 속도.
+    [SerializeField] private LockOnTargetSelector lockOnTargetSelector;
     [SerializeField] private float lockOnSearchRadius = 80f;
     [SerializeField] private float lockOnRotationSpeed = 900f;
 
@@ -117,9 +116,7 @@ public class NetworkPlayerController : NetworkBehaviour
     private ChangeDetector _changeDetector;
     private Vector3 _lastMoveDirection = Vector3.forward;
     private Transform _lockOnTarget;
-    private Transform _lockOnBossRoot;
-    private int _lockOnIndex = -1;
-    private ThirdPersonCameraController _thirdPersonCamera;
+    private CameraManager _cameraManager;
     private float _networkControllerRotationSpeed;
     private float _suppressLockOnAnimatorUntil;
     private int _predictedActionSequence;
@@ -147,6 +144,13 @@ public class NetworkPlayerController : NetworkBehaviour
         _playerStats = GetComponent<PlayerStats>();
         _abilityInventory = GetComponent<PlayerAbilityInventory>();
         _abilityRewardController = GetComponent<PlayerAbilityRewardController>();
+        lockOnTargetSelector ??= GetComponent<LockOnTargetSelector>();
+        if (lockOnTargetSelector == null)
+        {
+            lockOnTargetSelector = gameObject.AddComponent<LockOnTargetSelector>();
+        }
+
+        lockOnTargetSelector.SetSearchRadius(lockOnSearchRadius);
         viewCamera ??= Camera.main;
         _networkControllerRotationSpeed = _networkCharacterController != null ? _networkCharacterController.rotationSpeed : 0f;
 
@@ -192,10 +196,11 @@ public class NetworkPlayerController : NetworkBehaviour
         }
 
         viewCamera = mainCamera;
-        _thirdPersonCamera = mainCamera.GetComponent<ThirdPersonCameraController>();
-        if (_thirdPersonCamera != null)
+        ThirdPersonCameraController thirdPersonCamera = mainCamera.GetComponent<ThirdPersonCameraController>();
+        if (thirdPersonCamera != null)
         {
-            _thirdPersonCamera.SetTarget(transform);
+            _cameraManager = CameraManager.GetOrCreate();
+            _cameraManager.RegisterGameplayCamera(mainCamera, transform);
         }
         else
         {
@@ -209,7 +214,7 @@ public class NetworkPlayerController : NetworkBehaviour
         }
 
         CameraFollow existingFollow = mainCamera.GetComponent<CameraFollow>();
-        if (existingFollow != null && _thirdPersonCamera != null)
+        if (existingFollow != null && thirdPersonCamera != null)
         {
             existingFollow.enabled = false;
         }
@@ -400,16 +405,16 @@ public class NetworkPlayerController : NetworkBehaviour
             }
         }
 
-        if (Object.HasInputAuthority && _thirdPersonCamera != null)
+        if (Object.HasInputAuthority)
         {
             // 락온 카메라 타겟도 로컬 플레이어의 카메라에만 반영한다.
             if (IsLockOnNetworked && _lockOnTarget != null)
             {
-                _thirdPersonCamera.SetLockOnTarget(_lockOnTarget);
+                GetCameraManager()?.SetLockOnTarget(_lockOnTarget);
             }
             else
             {
-                _thirdPersonCamera.ClearLockOnTarget();
+                GetCameraManager()?.ClearLockOnTarget();
             }
         }
 
@@ -454,7 +459,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
         if (data.buttons.IsSet(NetworkInputData.LOCKON))
         {
-            CycleNearestBossLockOnPoint();
+            SelectNextLockOnTarget();
         }
 
         if (_lockOnTarget == null)
@@ -474,128 +479,59 @@ public class NetworkPlayerController : NetworkBehaviour
         IsLockOnNetworked = true;
     }
 
-    private void CycleNearestBossLockOnPoint()
+    private void SelectNextLockOnTarget()
     {
         // 가장 가까운 보스의 락온 포인트들을 순환 선택한다.
-        List<Transform> points = GetNearestBossLockOnPoints();
-        if (points.Count == 0)
+        if (lockOnTargetSelector == null)
         {
             ClearLockOn();
             return;
         }
 
-        Transform bossRoot = GetBossRoot(points[0]);
-        if (_lockOnBossRoot != bossRoot)
+        // 대상 검색/순환은 선택 전용 컴포넌트가 맡고, 컨트롤러는 전투 상태만 갱신한다.
+        _lockOnTarget = lockOnTargetSelector.SelectNextTarget(transform, _lockOnTarget);
+        if (_lockOnTarget == null)
         {
-            _lockOnIndex = -1;
+            ClearLockOn();
+            return;
         }
 
-        if (_lockOnTarget != null)
-        {
-            int currentIndex = points.IndexOf(_lockOnTarget);
-            if (currentIndex >= 0)
-            {
-                _lockOnIndex = currentIndex;
-            }
-        }
-
-        _lockOnBossRoot = bossRoot;
-        _lockOnIndex = (_lockOnIndex + 1) % points.Count;
-        _lockOnTarget = points[_lockOnIndex];
         LockOnPointPosition = _lockOnTarget.position;
         IsLockOnNetworked = true;
 
-        if (Object.HasInputAuthority && _thirdPersonCamera != null)
+        if (Object.HasInputAuthority)
         {
-            _thirdPersonCamera.SetLockOnTarget(_lockOnTarget);
+            GetCameraManager()?.SetLockOnTarget(_lockOnTarget);
         }
-    }
-
-    private List<Transform> GetNearestBossLockOnPoints()
-    {
-        // Head/Body 태그를 모아 같은 보스 루트에 속한 포인트만 후보로 유지한다.
-        GameObject[] heads = GameObject.FindGameObjectsWithTag(LockOnHeadTag);
-        GameObject[] bodies = GameObject.FindGameObjectsWithTag(LockOnBodyTag);
-        var nearestPoints = new List<Transform>();
-        Transform nearestRoot = null;
-        float nearestDistance = float.MaxValue;
-
-        EvaluateNearestRoot(heads, ref nearestRoot, ref nearestDistance);
-        EvaluateNearestRoot(bodies, ref nearestRoot, ref nearestDistance);
-
-        if (nearestRoot == null || nearestDistance > lockOnSearchRadius * lockOnSearchRadius)
-        {
-            return nearestPoints;
-        }
-
-        AddRootLockOnPoints(heads, nearestRoot, nearestPoints);
-        AddRootLockOnPoints(bodies, nearestRoot, nearestPoints);
-        nearestPoints.Sort(CompareLockOnPoint);
-        return nearestPoints;
-    }
-
-    private void EvaluateNearestRoot(GameObject[] candidates, ref Transform nearestRoot, ref float nearestDistance)
-    {
-        foreach (GameObject candidate in candidates)
-        {
-            if (candidate == null || !candidate.activeInHierarchy)
-            {
-                continue;
-            }
-
-            float sqrDistance = (candidate.transform.position - transform.position).sqrMagnitude;
-            if (sqrDistance >= nearestDistance)
-            {
-                continue;
-            }
-
-            nearestRoot = GetBossRoot(candidate.transform);
-            nearestDistance = sqrDistance;
-        }
-    }
-
-    private void AddRootLockOnPoints(GameObject[] candidates, Transform root, List<Transform> points)
-    {
-        foreach (GameObject candidate in candidates)
-        {
-            if (candidate == null || !candidate.activeInHierarchy)
-            {
-                continue;
-            }
-
-            if (GetBossRoot(candidate.transform) == root)
-            {
-                points.Add(candidate.transform);
-            }
-        }
-    }
-
-    private static Transform GetBossRoot(Transform point)
-    {
-        DragonBoss boss = point.GetComponentInParent<DragonBoss>();
-        return boss != null ? boss.transform : point.root;
-    }
-
-    private static int CompareLockOnPoint(Transform left, Transform right)
-    {
-        int leftPriority = left.CompareTag(LockOnHeadTag) ? 0 : 1;
-        int rightPriority = right.CompareTag(LockOnHeadTag) ? 0 : 1;
-        int priorityCompare = leftPriority.CompareTo(rightPriority);
-        return priorityCompare != 0 ? priorityCompare : string.CompareOrdinal(left.name, right.name);
     }
 
     private void ClearLockOn()
     {
         _lockOnTarget = null;
-        _lockOnBossRoot = null;
-        _lockOnIndex = -1;
+        lockOnTargetSelector?.Clear();
         IsLockOnNetworked = false;
         LockOnMoveNetworked = LockMoveIdle;
 
-        if (Object.HasInputAuthority && _thirdPersonCamera != null)
+        if (Object.HasInputAuthority)
         {
-            _thirdPersonCamera.ClearLockOnTarget();
+            GetCameraManager()?.ClearLockOnTarget();
         }
+    }
+
+    private CameraManager GetCameraManager()
+    {
+        if (_cameraManager != null)
+        {
+            return _cameraManager;
+        }
+
+        _cameraManager = CameraManager.GetOrCreate();
+        if (viewCamera != null)
+        {
+            _cameraManager.RegisterGameplayCamera(viewCamera, transform);
+        }
+
+        return _cameraManager;
     }
 
     private Vector3 GetLockOnFacingDirection()
