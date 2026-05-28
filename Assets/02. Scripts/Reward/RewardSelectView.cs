@@ -78,6 +78,7 @@ public class RewardSelectView : MonoBehaviour
         else
             gameObject.SetActive(true);
 
+        SetConfirmButtonVisible(true);
         SetConfirmButtonState(false);
         HideMessage();
 
@@ -108,6 +109,7 @@ public class RewardSelectView : MonoBehaviour
         onConfirmed = null;
 
         HideMessage();
+        SetConfirmButtonVisible(false);
 
         if (rootObject != null)
             rootObject.SetActive(false);
@@ -271,6 +273,12 @@ public class RewardSelectView : MonoBehaviour
 
         if (buttonImage != null)
             buttonImage.color = hasSelectedCard ? confirmEnabledColor : confirmDisabledColor;
+    }
+
+    private void SetConfirmButtonVisible(bool isVisible)
+    {
+        if (confirmButton != null)
+            confirmButton.gameObject.SetActive(isVisible);
     }
 
     private void ShowMessage(string message)

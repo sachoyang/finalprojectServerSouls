@@ -14,6 +14,7 @@ public class RewardManager : MonoBehaviour
     [SerializeField] private Transform goldChestSpawnPoint;
     [SerializeField] private string chestOpenStateName = "BoxOpen";
     [SerializeField] private float chestOpenDelay = 0.25f;
+    [SerializeField] private float chestOpenFallbackDuration = 1.5f;
     [SerializeField] private float rewardOfferDelay = 1.2f;
 
     private bool _rewardStarted;
@@ -70,7 +71,7 @@ public class RewardManager : MonoBehaviour
             yield return new WaitForSeconds(chestOpenDelay);
             PlayChestOpenAnimation(_spawnedChest);
 
-            yield return new WaitUntil(() => _chestOpenEnded);
+            yield return WaitForChestOpenAnimation(_spawnedChest);
             yield return new WaitForSeconds(rewardOfferDelay);
 
             if (cameraManager != null)
@@ -146,6 +147,44 @@ public class RewardManager : MonoBehaviour
 
         chestAnimator.enabled = true;
         chestAnimator.Play(chestOpenStateName, 0, 0f);
+    }
+
+    private IEnumerator WaitForChestOpenAnimation(GameObject chest)
+    {
+        Animator chestAnimator = chest != null ? chest.GetComponentInChildren<Animator>() : null;
+        float waitDuration = GetChestOpenAnimationDuration(chestAnimator);
+        float elapsed = 0f;
+
+        while (!_chestOpenEnded && elapsed < waitDuration)
+        {
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        if (!_chestOpenEnded)
+        {
+            Debug.LogWarning("[RewardManager] BoxOpenEndEvent was not called. Continuing by animation duration fallback.");
+            _chestOpenEnded = true;
+        }
+    }
+
+    private float GetChestOpenAnimationDuration(Animator chestAnimator)
+    {
+        if (chestAnimator == null || chestAnimator.runtimeAnimatorController == null)
+        {
+            return Mathf.Max(0.01f, chestOpenFallbackDuration);
+        }
+
+        AnimationClip[] clips = chestAnimator.runtimeAnimatorController.animationClips;
+        foreach (AnimationClip clip in clips)
+        {
+            if (clip != null && clip.name == chestOpenStateName)
+            {
+                return Mathf.Max(0.01f, clip.length);
+            }
+        }
+
+        return Mathf.Max(0.01f, chestOpenFallbackDuration);
     }
 
     private void OfferRewardToLocalPlayer()
