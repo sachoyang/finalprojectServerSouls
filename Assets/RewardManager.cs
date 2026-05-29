@@ -8,8 +8,9 @@ public class RewardManager : MonoBehaviour
     private const string RewardSelectCanvasPrefabId = "RewardSelectCanvas";
 
     [Header("Boss")]
-    [SerializeField] private DragonBoss boss;
+    [SerializeField] private NetworkBossCore boss;
     [SerializeField, Range(1, 8)] private int bossStage = 1;
+    [SerializeField] private bool useCurrentProgressionLevel = true;
     [SerializeField] private float bossDeathDelay = 2f;
 
     [Header("Chest")]
@@ -32,28 +33,39 @@ public class RewardManager : MonoBehaviour
 
     private void Awake()
     {
-        boss ??= FindObjectOfType<DragonBoss>();
         chestOpenFallbackDuration = Mathf.Max(1.5f, chestOpenFallbackDuration);
         SetDistortionActive(false);
     }
 
     private void Update()
     {
-        if (_rewardStarted || boss == null)
+        if (_rewardStarted)
         {
             return;
         }
 
-        // if (!boss.IsSpawnedReady)
-        // {
-        //     return;
-        // }
+        boss ??= FindObjectOfType<NetworkBossCore>();
+        if (boss == null)
+        {
+            return;
+        }
 
         if (boss.CurrentState == BossState.Die || (boss.CurrentHP <= 0f && boss.CurrentState != BossState.Sleep))
         {
             _rewardStarted = true;
+            bossStage = GetCurrentBossStage();
             StartCoroutine(PlayRewardSequence());
         }
+    }
+
+    private int GetCurrentBossStage()
+    {
+        if (useCurrentProgressionLevel && GameProgressionManager.Instance != null)
+        {
+            return Mathf.Clamp(GameProgressionManager.Instance.CurrentLevel, 1, 8);
+        }
+
+        return Mathf.Clamp(bossStage, 1, 8);
     }
 
     private IEnumerator PlayRewardSequence()
