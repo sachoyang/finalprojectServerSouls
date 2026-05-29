@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -17,26 +18,31 @@ public class InventoryPanelController : MonoBehaviour
 
     [Header("Player Data")]
     [SerializeField] private PlayerAbilityInventory abilityInventory;
+    [SerializeField] private float referenceSearchInterval = 0.25f;
 
     private readonly List<GameObject> spawnedObjects = new List<GameObject>();
     private NetworkPlayerController localPlayerController;
     private bool isRewardSelectOpen;
     private bool wasVisible;
     private int lastEquippedModuleCount = -1;
+    private Coroutine bindCoroutine;
 
     private void Start()
     {
-        FindRuntimeReferences();
-        RefreshCardList();
         SetInventoryVisible(false);
+        SetEmptyTextVisible(false);
 
         if (tooltipView != null)
             tooltipView.Hide();
+
+        bindCoroutine = StartCoroutine(BindLocalInventoryRoutine());
     }
 
     private void Update()
     {
-        FindRuntimeReferences();
+        if (abilityInventory == null)
+            return;
+
         RefreshIfNeeded();
 
         bool shouldShow = IsInventoryHoldKeyPressed() || isRewardSelectOpen;
@@ -151,6 +157,18 @@ public class InventoryPanelController : MonoBehaviour
 
         if (localPlayerController != null)
             abilityInventory = localPlayerController.GetComponent<PlayerAbilityInventory>();
+    }
+
+    private IEnumerator BindLocalInventoryRoutine()
+    {
+        while (abilityInventory == null)
+        {
+            FindRuntimeReferences();
+            yield return new WaitForSeconds(referenceSearchInterval);
+        }
+
+        RefreshCardList();
+        bindCoroutine = null;
     }
 
     private void SetEmptyTextVisible(bool isVisible)

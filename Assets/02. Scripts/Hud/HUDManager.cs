@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -15,6 +16,7 @@ public class HUDManager : MonoBehaviour
     [Header("Party HUD")]
     [SerializeField] private PartyMemberHUDView[] partyMemberHUDViews;
     [SerializeField] private float partyRefreshInterval = 0.5f;
+    [SerializeField] private float referenceSearchInterval = 0.25f;
 
     [Header("Player Data")]
     [SerializeField] private PlayerStats playerStats;
@@ -25,17 +27,18 @@ public class HUDManager : MonoBehaviour
 
     private NetworkPlayerController localPlayerController;
     private float nextPartyRefreshTime;
+    private float nextReferenceSearchTime;
+    private Coroutine bindCoroutine;
 
     private void Start()
     {
-        FindRuntimeReferences();
-        UpdateHUD();
-        RefreshPartyHUD();
+        ClearHUD();
+        bindCoroutine = StartCoroutine(BindRuntimeReferencesRoutine());
     }
 
     private void Update()
     {
-        FindRuntimeReferences();
+        TryFindRuntimeReferences();
         UpdateHUD();
 
         if (Time.time >= nextPartyRefreshTime)
@@ -47,6 +50,11 @@ public class HUDManager : MonoBehaviour
 
     private void FindRuntimeReferences()
     {
+        if (Time.time < nextReferenceSearchTime)
+            return;
+
+        nextReferenceSearchTime = Time.time + referenceSearchInterval;
+
         if (localPlayerController == null)
             localPlayerController = FindLocalPlayerController();
 
@@ -61,6 +69,27 @@ public class HUDManager : MonoBehaviour
 
         if (boss == null)
             boss = FindObjectOfType<NetworkBossCore>();
+    }
+
+    private void TryFindRuntimeReferences()
+    {
+        if (localPlayerController != null && playerStats != null && abilityInventory != null && boss != null)
+            return;
+
+        FindRuntimeReferences();
+    }
+
+    private IEnumerator BindRuntimeReferencesRoutine()
+    {
+        while (localPlayerController == null || playerStats == null || abilityInventory == null)
+        {
+            FindRuntimeReferences();
+            yield return new WaitForSeconds(referenceSearchInterval);
+        }
+
+        UpdateHUD();
+        RefreshPartyHUD();
+        bindCoroutine = null;
     }
 
     private void UpdateHUD()
@@ -184,6 +213,29 @@ public class HUDManager : MonoBehaviour
         {
             if (skillSlotViews[i] != null)
                 skillSlotViews[i].Clear();
+        }
+    }
+
+    private void ClearHUD()
+    {
+        if (playerHUDView != null)
+        {
+            playerHUDView.SetHp(0f, 1f);
+            playerHUDView.SetSp(0f, 1f);
+        }
+
+        if (bossHUDView != null)
+            bossHUDView.SetHp(0f, 1f);
+
+        ClearSkillSlots();
+
+        if (partyMemberHUDViews == null)
+            return;
+
+        for (int i = 0; i < partyMemberHUDViews.Length; i++)
+        {
+            if (partyMemberHUDViews[i] != null)
+                partyMemberHUDViews[i].SetVisible(false);
         }
     }
 
