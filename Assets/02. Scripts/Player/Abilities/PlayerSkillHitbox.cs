@@ -11,7 +11,7 @@ public class PlayerSkillHitbox : NetworkBehaviour
     [SerializeField] private float defaultDelay;
     [SerializeField] private float defaultLifetime = 0.3f;
 
-    private readonly HashSet<DragonBoss> _hitBosses = new HashSet<DragonBoss>();
+    private readonly HashSet<NetworkBossCore> _hitBosses = new HashSet<NetworkBossCore>();
     private readonly HashSet<BossHitbox> _hitboxesWithoutBoss = new HashSet<BossHitbox>();
 
     private GameObject _owner;
@@ -76,7 +76,7 @@ public class PlayerSkillHitbox : NetworkBehaviour
             return;
         }
 
-        DragonBoss boss = bossHitbox.GetComponentInParent<DragonBoss>();
+        NetworkBossCore boss = bossHitbox.GetComponentInParent<NetworkBossCore>();
         if (boss != null)
         {
             if (!_hitBosses.Add(boss))

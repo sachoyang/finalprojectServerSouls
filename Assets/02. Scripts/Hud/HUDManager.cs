@@ -21,7 +21,7 @@ public class HUDManager : MonoBehaviour
     [SerializeField] private PlayerAbilityInventory abilityInventory;
 
     [Header("Boss Data")]
-    [SerializeField] private DragonBoss dragonBoss;
+    [SerializeField] private NetworkBossCore boss;
 
     private NetworkPlayerController localPlayerController;
     private float nextPartyRefreshTime;
@@ -59,8 +59,8 @@ public class HUDManager : MonoBehaviour
                 abilityInventory = localPlayerController.GetComponent<PlayerAbilityInventory>();
         }
 
-        if (dragonBoss == null)
-            dragonBoss = FindObjectOfType<DragonBoss>();
+        if (boss == null)
+            boss = FindObjectOfType<NetworkBossCore>();
     }
 
     private void UpdateHUD()
@@ -81,10 +81,10 @@ public class HUDManager : MonoBehaviour
 
     private void UpdateBossHUD()
     {
-        if (bossHUDView == null || dragonBoss == null)
+        if (bossHUDView == null || boss == null)
             return;
 
-        bossHUDView.SetHp(dragonBoss.CurrentHP, dragonBoss.maxHP);
+        bossHUDView.SetHp(boss.CurrentHP, boss.maxHP);
     }
 
     private void UpdateSkillHUD()

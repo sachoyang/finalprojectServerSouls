@@ -120,7 +120,7 @@ public class LockOnTargetSelector : MonoBehaviour
 
     private static Transform GetBossRoot(Transform point)
     {
-        DragonBoss boss = point.GetComponentInParent<DragonBoss>();
+        NetworkBossCore boss = point.GetComponentInParent<NetworkBossCore>();
         return boss != null ? boss.transform : point.root;
     }
 

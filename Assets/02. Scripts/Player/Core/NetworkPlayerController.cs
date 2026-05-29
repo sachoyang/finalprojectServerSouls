@@ -121,7 +121,7 @@ public class NetworkPlayerController : NetworkBehaviour
     private float _suppressLockOnAnimatorUntil;
     private int _predictedActionSequence;
     private readonly Collider[] _attackHits = new Collider[16];
-    private readonly Dictionary<DragonBoss, BossHitbox> _bestBossHitboxes = new Dictionary<DragonBoss, BossHitbox>();
+    private readonly Dictionary<NetworkBossCore, BossHitbox> _bestBossHitboxes = new Dictionary<NetworkBossCore, BossHitbox>();
     private bool _localBasicAttackComboUnlocked;
     private bool _localActionAnimationLocked;
     private byte _localActionLockType;
@@ -867,7 +867,7 @@ public class NetworkPlayerController : NetworkBehaviour
                 continue;
             }
 
-            DragonBoss boss = bossHitbox.GetComponentInParent<DragonBoss>();
+            NetworkBossCore boss = bossHitbox.GetComponentInParent<NetworkBossCore>();
             if (boss == null)
             {
                 continue;
