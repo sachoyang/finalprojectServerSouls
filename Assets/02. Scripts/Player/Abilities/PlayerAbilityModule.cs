@@ -101,6 +101,12 @@ public class PlayerAbilityModule : ScriptableObject
     // 플레이어 기준 로컬 좌표로 히트박스를 생성할 위치 오프셋.
     [SerializeField] private Vector3 hitboxLocalOffset;
 
+    [SerializeField] private float hitboxDamage;
+
+    [SerializeField] private float hitboxDelay;
+
+    [SerializeField] private float hitboxLifetime = 0.3f;
+
     public string AbilityId => string.IsNullOrWhiteSpace(abilityId) ? name : abilityId;
     public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? name : displayName;
     public string Description => description;
@@ -125,6 +131,9 @@ public class PlayerAbilityModule : ScriptableObject
     public bool ParentEffectToPlayer => parentEffectToPlayer;
     public GameObject HitboxPrefab => hitboxPrefab;
     public Vector3 HitboxLocalOffset => hitboxLocalOffset;
+    public float HitboxDamage => hitboxDamage;
+    public float HitboxDelay => hitboxDelay;
+    public float HitboxLifetime => hitboxLifetime;
 
     public bool CanAppearAtStage(int bossStage)
     {
