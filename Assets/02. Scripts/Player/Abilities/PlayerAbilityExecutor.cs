@@ -36,8 +36,46 @@ public class PlayerAbilityExecutor : MonoBehaviour
             return;
         }
 
-        PlayPresentation(module, context);
         ApplyEffect(module, context);
+        SpawnHitbox(context, module);
+    }
+
+    public void PlayPresentation(PlayerAbilityModule module, PlayerAbilityContext context)
+    {
+        if (module == null || context.Owner == null)
+        {
+            return;
+        }
+
+        PlayAnimation(module, context);
+        SpawnLocalPrefab(context, module.EffectPrefab, module.EffectLocalOffset, module.ParentEffectToPlayer);
+    }
+
+    private static void PlayAnimation(PlayerAbilityModule module, PlayerAbilityContext context)
+    {
+        Animator animator = context.Owner.GetComponentInChildren<Animator>();
+        if (animator != null && !string.IsNullOrWhiteSpace(module.AnimationTrigger))
+        {
+            animator.ResetTrigger(module.AnimationTrigger);
+            animator.SetTrigger(module.AnimationTrigger);
+        }
+    }
+
+    private static void SpawnLocalPrefab(PlayerAbilityContext context, GameObject prefab, Vector3 localOffset, bool parentToPlayer)
+    {
+        if (prefab == null || context.Transform == null)
+        {
+            return;
+        }
+
+        Vector3 position = context.Transform.TransformPoint(localOffset);
+        Quaternion rotation = context.Transform.rotation;
+
+        GameObject instance = Instantiate(prefab, position, rotation);
+        if (parentToPlayer)
+        {
+            instance.transform.SetParent(context.Transform, true);
+        }
     }
 
     private static void ApplyEffect(PlayerAbilityModule module, PlayerAbilityContext context)
@@ -56,24 +94,6 @@ public class PlayerAbilityExecutor : MonoBehaviour
         {
             context.Owner?.GetComponent<NetworkPlayerController>()?.UnlockBasicAttackCombo();
         }
-    }
-
-    private static void PlayPresentation(PlayerAbilityModule module, PlayerAbilityContext context)
-    {
-        if (context.Owner == null)
-        {
-            return;
-        }
-
-        Animator animator = context.Owner.GetComponentInChildren<Animator>();
-        if (animator != null && !string.IsNullOrWhiteSpace(module.AnimationTrigger))
-        {
-            animator.ResetTrigger(module.AnimationTrigger);
-            animator.SetTrigger(module.AnimationTrigger);
-        }
-
-        SpawnPrefab(context, module.EffectPrefab, module.EffectLocalOffset, module.ParentEffectToPlayer);
-        SpawnHitbox(context, module);
     }
 
     private static void SpawnHitbox(PlayerAbilityContext context, PlayerAbilityModule module)

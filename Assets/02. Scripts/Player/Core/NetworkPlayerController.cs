@@ -247,6 +247,12 @@ public class NetworkPlayerController : NetworkBehaviour
         bool isRolling = !RollTimer.ExpiredOrNotRunning(Runner);
         bool isActing = IsActionAnimationLocked;
         bool attackPressed = data.buttons.IsSet(NetworkInputData.MOUSEBUTTON0);
+        bool jumpPressed = data.buttons.IsSet(NetworkInputData.JUMP);
+
+        if (jumpPressed)
+        {
+            _queuedComboAttack = false;
+        }
 
         if (CanStartQueuedComboAttack(isActing))
         {
@@ -272,7 +278,7 @@ public class NetworkPlayerController : NetworkBehaviour
         if (!isBusy)
         {
             // 점프는 로컬 체감을 위해 네트워크 상태 갱신과 동시에 예측 애니메이션을 재생한다.
-            if (data.buttons.IsSet(NetworkInputData.JUMP) && _networkCharacterController.Grounded)
+            if (jumpPressed && _networkCharacterController.Grounded)
             {
                 _networkCharacterController.Jump(false, jumpImpulse);
                 StartAction(ActionJump);

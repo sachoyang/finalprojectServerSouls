@@ -90,6 +90,7 @@ public class PlayerAbilityController : NetworkBehaviour
         // 실제 애니메이션, 이펙트, 히트박스, 회복 같은 실행은 Executor가 담당한다.
         _executor.Activate(module, context);
         slot.StartCooldown(currentTime);
+        RPC_PlayAbilityPresentation(activeSlotIndex);
         return true;
     }
 
@@ -99,5 +100,28 @@ public class PlayerAbilityController : NetworkBehaviour
     private void RPC_RequestActivateAbility(int activeSlotIndex)
     {
         TryActivateAbility(activeSlotIndex);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_PlayAbilityPresentation(int activeSlotIndex)
+    {
+        if (_inventory == null)
+        {
+            _inventory = GetComponent<PlayerAbilityInventory>();
+        }
+
+        if (_executor == null)
+        {
+            _executor = GetComponent<PlayerAbilityExecutor>();
+        }
+
+        PlayerAbilitySlot slot = _inventory != null ? _inventory.GetActiveSlot(activeSlotIndex) : null;
+        PlayerAbilityModule module = slot?.Module;
+        if (module == null || _executor == null)
+        {
+            return;
+        }
+
+        _executor.PlayPresentation(module, _inventory.CreateContext());
     }
 }

@@ -26,7 +26,7 @@ public class NetworkInputProvider : MonoBehaviour, INetworkRunnerCallbacks
         TryRegisterRunner();
 
         // GetKeyDown 계열 입력은 OnInput보다 먼저 지나갈 수 있어 bool로 누적해 둔다.
-        _mouseButton0 = _mouseButton0 || Input.GetMouseButton(0);
+        _mouseButton0 = _mouseButton0 || Input.GetMouseButtonDown(0);
         _mouseButton1 = _mouseButton1 || Input.GetMouseButtonDown(1);
         _jumpPressed = _jumpPressed || Input.GetKeyDown(KeyCode.Space);
         _lockOnPressed = _lockOnPressed || Input.GetKeyDown(KeyCode.Q);
