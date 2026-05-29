@@ -175,18 +175,7 @@ MonoBehaviour:
   - {fileID: 1907129665}
   - {fileID: 2032897618}
   _bossSpawnPoint: {fileID: 0}
---- !u!114 &21222146
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 21222140}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4f6a3c2d9b7e4f21a8c6d5e0f1239abc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  _NetworkedStageLevel: 0
 --- !u!114 &21222145
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -206,6 +195,18 @@ MonoBehaviour:
   NetworkedBehaviours:
   - {fileID: 21222144}
   ForceRemoteRenderTimeframe: 0
+--- !u!114 &21222146
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 21222140}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f6a3c2d9b7e4f21a8c6d5e0f1239abc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -789,6 +790,46 @@ PrefabInstance:
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: ef0639e82a78d124aa4b99b9d90bbc33, type: 2}
+    - target: {fileID: 6523045050049775438, guid: ffe4f0c4b63e7824699469bd003f4aaf, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.47216725
+      objectReference: {fileID: 0}
+    - target: {fileID: 6523045050049775438, guid: ffe4f0c4b63e7824699469bd003f4aaf, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6523045050049775438, guid: ffe4f0c4b63e7824699469bd003f4aaf, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0.88150895
+      objectReference: {fileID: 0}
+    - target: {fileID: 6523045050049775438, guid: ffe4f0c4b63e7824699469bd003f4aaf, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6523045050049775438, guid: ffe4f0c4b63e7824699469bd003f4aaf, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: -123.65
+      objectReference: {fileID: 0}
+    - target: {fileID: 9149729552760069008, guid: ffe4f0c4b63e7824699469bd003f4aaf, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.624389
+      objectReference: {fileID: 0}
+    - target: {fileID: 9149729552760069008, guid: ffe4f0c4b63e7824699469bd003f4aaf, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 1.887379e-15
+      objectReference: {fileID: 0}
+    - target: {fileID: 9149729552760069008, guid: ffe4f0c4b63e7824699469bd003f4aaf, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.7811136
+      objectReference: {fileID: 0}
+    - target: {fileID: 9149729552760069008, guid: ffe4f0c4b63e7824699469bd003f4aaf, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -1.7763566e-15
+      objectReference: {fileID: 0}
+    - target: {fileID: 9149729552760069008, guid: ffe4f0c4b63e7824699469bd003f4aaf, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 102.725
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -890,6 +931,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bec0b024e43a0e044994769a5cb628c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _ReadyCount: 0
 --- !u!114 &1537553053
 MonoBehaviour:
   m_ObjectHideFlags: 0

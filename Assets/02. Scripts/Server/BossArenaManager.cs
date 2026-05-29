@@ -16,6 +16,9 @@ public class BossArenaManager : NetworkBehaviour, INetworkRunnerCallbacks
     private readonly Dictionary<PlayerRef, NetworkObject> _spawnedCharacters = new Dictionary<PlayerRef, NetworkObject>();
     private NetworkObject _currentBossObject;
 
+    // 방장이 클라이언트들에게 현재 층수를 알려주기 위한 통신 변수
+    [Networked] public int NetworkedStageLevel { get; set; }
+
     public override void Spawned()
     {
         Runner.AddCallbacks(this);
@@ -23,12 +26,25 @@ public class BossArenaManager : NetworkBehaviour, INetworkRunnerCallbacks
         // 스폰과 보스 세팅은 서버 권한에서만 처리한다.
         if (HasStateAuthority)
         {
+            // 방장은 자신의 로컬 층수를 네트워크 변수에 올립니다.
+            if (GameProgressionManager.Instance != null)
+                NetworkedStageLevel = GameProgressionManager.Instance.CurrentLevel;
+
             foreach (PlayerRef player in Runner.ActivePlayers)
             {
                 SpawnPlayer(Runner, player);
             }
 
             SetupAndSpawnBoss();
+        }
+    }
+
+    public override void Render()
+    {
+        // 클라이언트는 방장이 올려둔 층수를 계속 읽어와서 자기 통제실을 업데이트합니다.
+        if (!HasStateAuthority && GameProgressionManager.Instance != null && NetworkedStageLevel > 0)
+        {
+            GameProgressionManager.Instance.SetLevelFromHost(NetworkedStageLevel);
         }
     }
 
@@ -119,7 +135,9 @@ public class BossArenaManager : NetworkBehaviour, INetworkRunnerCallbacks
                 {
                     bossCore.AllowedMaxPhase = maxPhase;
                     bossCore.DamageMultiplier = dmgMult;
-                    bossCore.maxHP *= hpMult;
+
+                    //baseMaxHP를 바탕으로 뻥튀기된 진짜 maxHP를 설정합니다.
+                    bossCore.maxHP = bossCore.baseMaxHP * hpMult;
                 }
             }
         );

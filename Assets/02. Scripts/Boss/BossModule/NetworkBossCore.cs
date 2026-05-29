@@ -31,7 +31,10 @@ public class NetworkBossCore : NetworkBehaviour
     private int _wakeUpAnimHash; // 최적화용 해시 변수
 
     [Header("체력 설정")]
-    public float maxHP = 100000f;
+    [Tooltip("에디터에서 기획자가 설정하는 1층 기준 기본 체력")]
+    public float baseMaxHP = 100000f;
+    
+    [Networked] public float maxHP { get; set; }
     [Networked] public float CurrentHP { get; set; }
 
     [Header("벽 충돌 설정 (미끄러짐)")]

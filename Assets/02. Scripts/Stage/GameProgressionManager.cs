@@ -53,4 +53,11 @@ public class GameProgressionManager : MonoBehaviour
         CurrentLevel++;
         LoadNextRandomLevel(runner);
     }
+
+    // 클라이언트가 방장의 층수를 받아와서 강제로 동기화하는 함수
+    public void SetLevelFromHost(int level)
+    {
+        CurrentLevel = level;
+    }
+
 }

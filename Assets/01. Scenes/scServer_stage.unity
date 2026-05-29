@@ -175,18 +175,7 @@ MonoBehaviour:
   - {fileID: 386023009}
   - {fileID: 386023010}
   _bossSpawnPoint: {fileID: 2049144122}
---- !u!114 &21222146
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 21222140}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4f6a3c2d9b7e4f21a8c6d5e0f1239abc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  _NetworkedStageLevel: 0
 --- !u!114 &21222145
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -206,6 +195,18 @@ MonoBehaviour:
   NetworkedBehaviours:
   - {fileID: 21222144}
   ForceRemoteRenderTimeframe: 0
+--- !u!114 &21222146
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 21222140}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f6a3c2d9b7e4f21a8c6d5e0f1239abc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &270538271
 GameObject:
   m_ObjectHideFlags: 0
@@ -990,6 +991,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   boss: {fileID: 0}
   bossStage: 1
+  useCurrentProgressionLevel: 1
   bossDeathDelay: 2
   goldChestPrefab: {fileID: 1534066118601383972, guid: 36f0b95c8afb6ca49b8e112cc8fba58d, type: 3}
   goldChestSpawnPoint: {fileID: 270538272}
