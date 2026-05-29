@@ -15,13 +15,20 @@ MonoBehaviour:
   abilityId: jump_attack
   displayName: Jump Attack
   description: Leaps into a great sword attack.
+  icon: {fileID: 721787287, guid: 7d4e7f6eb9b67bc4da7d17ee567dd146, type: 3}
   abilityType: 1
   minBossStage: 1
   maxBossStage: 8
+  includeInRewardPool: 1
   staminaCost: 400
   cooldownSeconds: 8
   healthRestoreAmount: 0
   staminaRestoreAmount: 0
+  specialEffect: 0
+  maxHealthBonus: 0
+  maxStaminaBonus: 0
+  defenseRateBonus: 0
+  attackDamageBonusPercent: 0
   animationClip: {fileID: 7400000, guid: 2e360ce02ed05d04faec51172d19bb6d, type: 3}
   animationStateName: 
   animationTrigger: JumpAttack
@@ -30,3 +37,6 @@ MonoBehaviour:
   parentEffectToPlayer: 0
   hitboxPrefab: {fileID: 0}
   hitboxLocalOffset: {x: 0, y: 0, z: 0}
+  hitboxDamage: 0
+  hitboxDelay: 0
+  hitboxLifetime: 0.3

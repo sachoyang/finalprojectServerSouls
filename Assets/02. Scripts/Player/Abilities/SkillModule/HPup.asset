@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cbc39ac0e5f95d14fbd17eac508de1c4, type: 3}
-  m_Name: New Player Ability Module 1
+  m_Name: HPup
   m_EditorClassIdentifier: 
   abilityId: 
   displayName: 
   description: 
-  icon: {fileID: 0}
+  icon: {fileID: -513147929, guid: 7d4e7f6eb9b67bc4da7d17ee567dd146, type: 3}
   abilityType: 0
   minBossStage: 1
   maxBossStage: 8
-  includeInRewardPool: 1
+  includeInRewardPool: 0
   staminaCost: 0
   cooldownSeconds: 0
   healthRestoreAmount: 0
@@ -37,3 +37,6 @@ MonoBehaviour:
   parentEffectToPlayer: 0
   hitboxPrefab: {fileID: 0}
   hitboxLocalOffset: {x: 0, y: 0, z: 0}
+  hitboxDamage: 0
+  hitboxDelay: 0
+  hitboxLifetime: 0.3

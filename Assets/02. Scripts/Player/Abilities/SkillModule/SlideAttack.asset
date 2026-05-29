@@ -15,14 +15,20 @@ MonoBehaviour:
   abilityId: slide_attack
   displayName: Slide Attack
   description: Slides forward with a great sword attack.
-  icon: {fileID: 21300000, guid: 10babdaf00bbee54f88280a66c8bc333, type: 3}
+  icon: {fileID: -684497504, guid: 602013fcc1a5c4a48ad04a33a93cf811, type: 3}
   abilityType: 1
   minBossStage: 1
   maxBossStage: 8
+  includeInRewardPool: 1
   staminaCost: 400
   cooldownSeconds: 6
   healthRestoreAmount: 0
   staminaRestoreAmount: 0
+  specialEffect: 0
+  maxHealthBonus: 0
+  maxStaminaBonus: 0
+  defenseRateBonus: 0
+  attackDamageBonusPercent: 0
   animationClip: {fileID: 7400000, guid: 1a16ca6c2c59c904c8e31ebc395a3e96, type: 3}
   animationStateName: 
   animationTrigger: SlideAttack
@@ -31,3 +37,6 @@ MonoBehaviour:
   parentEffectToPlayer: 0
   hitboxPrefab: {fileID: 0}
   hitboxLocalOffset: {x: 0, y: 0, z: 0}
+  hitboxDamage: 0
+  hitboxDelay: 0
+  hitboxLifetime: 0.3
