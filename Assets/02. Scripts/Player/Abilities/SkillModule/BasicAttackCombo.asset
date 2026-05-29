@@ -13,17 +13,22 @@ MonoBehaviour:
   m_Name: BasicAttackCombo
   m_EditorClassIdentifier: 
   abilityId: basic_attack_combo
-  displayName: Basic Attack Combo
-  description: Unlocks the slash4, slash2, slash3 basic attack combo.
+  displayName: "\uCF64\uBCF4 \uACF5\uACA9 \uCD94\uAC00"
+  description: Unlocks the slash4, slash2, slash3 basic attack combo
   icon: {fileID: 0}
-  abilityType: 0
+  abilityType: 1
   minBossStage: 1
   maxBossStage: 8
+  includeInRewardPool: 1
   staminaCost: 0
   cooldownSeconds: 0
   healthRestoreAmount: 0
   staminaRestoreAmount: 0
   specialEffect: 1
+  maxHealthBonus: 0
+  maxStaminaBonus: 0
+  defenseRateBonus: 0
+  attackDamageBonusPercent: 0
   animationClip: {fileID: 0}
   animationStateName: 
   animationTrigger: 
@@ -32,3 +37,6 @@ MonoBehaviour:
   parentEffectToPlayer: 0
   hitboxPrefab: {fileID: 0}
   hitboxLocalOffset: {x: 0, y: 0, z: 0}
+  hitboxDamage: 0
+  hitboxDelay: 0
+  hitboxLifetime: 0.3
