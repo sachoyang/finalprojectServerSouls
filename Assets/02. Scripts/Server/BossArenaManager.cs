@@ -131,7 +131,7 @@ public class BossArenaManager : NetworkBehaviour, INetworkRunnerCallbacks
         if (bossData == null || bossData.bossPrefab == null || _bossSpawnPoint == null) return;
 
         // 동적 스케일링 연산 (방장이 직접 계산)
-        int maxPhase = level >= 5 ? 2 : 1;
+        int maxPhase = level >= 1 ? 2 : 1;
         float hpMult = 1.0f + ((level - 1) * 0.2f);
         float dmgMult = 1.0f + ((level - 1) * 0.1f);
 
