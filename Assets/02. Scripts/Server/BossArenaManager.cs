@@ -18,6 +18,13 @@ public class BossArenaManager : NetworkBehaviour, INetworkRunnerCallbacks
     private bool _lockOnPressed;
     private bool _lockOnCancelPressed;
 
+    // ==========================================
+    // 보스 스폰 관련 변수 추가
+    // ==========================================
+    [Header("보스 스폰 설정")]
+    [SerializeField] private Transform _bossSpawnPoint; // 보스가 태어날 위치
+    private NetworkObject _currentBossObject; // 현재 스폰된 보스 추적용
+
     public override void Spawned()
     {
         Runner.AddCallbacks(this);
@@ -28,6 +35,9 @@ public class BossArenaManager : NetworkBehaviour, INetworkRunnerCallbacks
             {
                 SpawnPlayer(Runner, player);
             }
+            
+            // [추가됨] 플레이어 스폰 직후, 통제실의 지시를 받아 보스를 맵 한가운데 즉시 소환!
+            SetupAndSpawnBoss();
         }
     }
 
@@ -91,7 +101,7 @@ public class BossArenaManager : NetworkBehaviour, INetworkRunnerCallbacks
 
     public void OnInput(NetworkRunner runner, NetworkInput input)
     {
-        // [수정됨] 누락되었던 이동 벡터(WASD)를 구해서 data.direction에 넣어줍니다!
+        // 누락되었던 이동 벡터(WASD)를 구해서 data.direction에 넣어줍니다!
         var data = new NetworkInputData
         {
             direction = GetCameraRelativeMove(ReadMoveInput())
@@ -108,7 +118,46 @@ public class BossArenaManager : NetworkBehaviour, INetworkRunnerCallbacks
     }
 
     // ==========================================
-    // [복구됨] 방향키(WASD) 입력을 읽어오는 함수
+    // 통제실 데이터를 바탕으로 보스를 스폰하는 함수
+    // ==========================================
+    private void SetupAndSpawnBoss()
+    {
+        if (GameProgressionManager.Instance == null) return;
+
+        // 통제실에서 이번 층수와 봅힌 보스 데이터를 가져옵니다.
+        int level = GameProgressionManager.Instance.CurrentLevel;
+        BossEncounterData bossData = GameProgressionManager.Instance.CurrentBossData;
+
+        if (bossData == null || bossData.bossPrefab == null || _bossSpawnPoint == null) return;
+
+        // 동적 스케일링 연산 (방장이 직접 계산)
+        int maxPhase = level >= 5 ? 2 : 1;
+        float hpMult = 1.0f + ((level - 1) * 0.2f);
+        float dmgMult = 1.0f + ((level - 1) * 0.1f);
+
+        Debug.Log($"[현장 소장] {level}층 세팅 완료! 맵에 {bossData.bossName} 소환! (MaxPhase: {maxPhase}, HP: {hpMult}x)");
+
+        // 보스 스폰 및 스펙 덮어씌우기
+        _currentBossObject = Runner.Spawn(
+            bossData.bossPrefab,
+            _bossSpawnPoint.position,
+            _bossSpawnPoint.rotation,
+            null,
+            (runner, obj) => 
+            {
+                var bossCore = obj.GetComponent<NetworkBossCore>();
+                if (bossCore != null)
+                {
+                    bossCore.AllowedMaxPhase = maxPhase;
+                    bossCore.DamageMultiplier = dmgMult;
+                    bossCore.maxHP *= hpMult; 
+                }
+            }
+        );
+    }
+
+    // ==========================================
+    // 방향키(WASD) 입력을 읽어오는 함수
     // ==========================================
     private static Vector2 ReadMoveInput()
     {
@@ -123,7 +172,7 @@ public class BossArenaManager : NetworkBehaviour, INetworkRunnerCallbacks
     }
 
     // ==========================================
-    // [복구됨] 입력된 방향을 메인 카메라 기준으로 변환하는 함수
+    // 입력된 방향을 메인 카메라 기준으로 변환하는 함수
     // ==========================================
     private static Vector3 GetCameraRelativeMove(Vector2 moveInput)
     {

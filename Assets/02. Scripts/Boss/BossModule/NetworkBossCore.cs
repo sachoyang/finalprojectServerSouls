@@ -7,6 +7,7 @@ public enum BossState
 {
     Sleep,
     WakeUp,           // [여기에 새로 추가!] 깨어날 때 포효하는 상태
+    PhaseTransition,  // [추가됨!] 2페이즈로 넘어가는 포효/무적 연출 상태
     Idle,
     Walk,
     ExecutingPattern, // SO 패턴을 실행 중일 때의 상태
@@ -39,8 +40,23 @@ public class NetworkBossCore : NetworkBehaviour
     public float castHeightOffset = 2.0f;
 
     [Header("패턴 데이터 (ScriptableObject 리스트)")]
-    [Tooltip("이 보스가 사용할 수 있는 패턴 모듈(SO)들을 드래그해서 넣어주세요.")]
-    public List<BossPatternModule> availablePatterns;
+    [Tooltip("1페이즈에서 사용할 패턴 모듈들을 넣어주세요.")]
+    public List<BossPatternModule> phase1Patterns;
+    
+    [Tooltip("2페이즈(광폭화 등)에서 사용할 패턴 모듈들을 넣어주세요.")]
+    public List<BossPatternModule> phase2Patterns;
+
+    // 현재 맵에서 허락된 최대 페이즈 (매니저가 주입해 줄 예정)
+    [Networked] public int AllowedMaxPhase { get; set; } = 1;
+
+    // 스테이지 난이도에 따른 데미지 뻥튀기 계수
+    [Networked] public float DamageMultiplier { get; set; } = 1.0f;
+    
+    // 현재 진행 중인 페이즈 상태
+    [Networked] public int CurrentPhase { get; set; } = 1;
+
+    // 기존의 CurrentAvailablePatterns를 프로퍼티로 변경하여, 현재 페이즈에 맞는 리스트를 자동으로 내뱉게 합니다.
+    protected List<BossPatternModule> CurrentAvailablePatterns => (CurrentPhase == 2) ? phase2Patterns : phase1Patterns;
 
     // ==========================================
     // [네트워크 동기화 변수들]
@@ -110,9 +126,9 @@ public class NetworkBossCore : NetworkBehaviour
     // ==========================================
     private void ProcessPatternMovement()
     {
-        if (CurrentPatternIndex < 0 || CurrentPatternIndex >= availablePatterns.Count) return;
+        if (CurrentPatternIndex < 0 || CurrentPatternIndex >= CurrentAvailablePatterns.Count) return;
 
-        BossPatternModule pattern = availablePatterns[CurrentPatternIndex];
+        BossPatternModule pattern = CurrentAvailablePatterns[CurrentPatternIndex];
         BossActionModule action = pattern.GetAction(CurrentStepIndex);
 
         // 현재 애니메이션이 몇 퍼센트(0~1) 진행되었는지 계산
@@ -173,6 +189,18 @@ public class NetworkBossCore : NetworkBehaviour
             return; // 포효 중에는 밑으로 못 내려가게 막음!
         }
 
+        // 2페이즈 변신 연출 중일 때 대기
+        if (CurrentState == BossState.PhaseTransition)
+        {
+            if (StateTimer.Expired(Runner))
+            {
+                // 연출이 끝나면 새로운 공격 쿨타임을 장전하고 전투 재개
+                AttackCooldown = TickTimer.CreateFromSeconds(Runner, patternCooldown);
+                ChangeState(BossState.Idle);
+            }
+            return; // 변신 중에는 아래 코드(이동, 패턴 등) 무시
+        }
+
         // 회전 (패턴 중이 아닐 때 혹은 타겟을 쳐다봐야 할 때)
         if (CurrentState != BossState.ExecutingPattern)
         {
@@ -187,7 +215,7 @@ public class NetworkBossCore : NetworkBehaviour
         {
             if (StateTimer.Expired(Runner))
             {
-                BossPatternModule pattern = availablePatterns[CurrentPatternIndex];
+                BossPatternModule pattern = CurrentAvailablePatterns[CurrentPatternIndex];
                 CurrentStepIndex++;
 
                 if (CurrentStepIndex < pattern.ActionCount)
@@ -239,9 +267,9 @@ public class NetworkBossCore : NetworkBehaviour
         int totalWeight = 0;
 
         // 1. 현재 사거리에 발동 가능한 패턴만 추려냅니다.
-        for (int i = 0; i < availablePatterns.Count; i++)
+        for (int i = 0; i < CurrentAvailablePatterns.Count; i++)
         {
-            var pattern = availablePatterns[i];
+            var pattern = CurrentAvailablePatterns[i];
             if (currentDistance >= pattern.minRange && currentDistance <= pattern.maxRange)
             {
                 validPatternIndices.Add(i);
@@ -257,7 +285,7 @@ public class NetworkBossCore : NetworkBehaviour
 
         foreach (int idx in validPatternIndices)
         {
-            accumulatedWeight += availablePatterns[idx].weight;
+            accumulatedWeight += CurrentAvailablePatterns[idx].weight;
             if (randomVal <= accumulatedWeight)
                 return idx;
         }
@@ -271,7 +299,7 @@ public class NetworkBossCore : NetworkBehaviour
         CurrentPatternIndex = patternIndex;
         CurrentStepIndex = 0;
 
-        BossPatternModule pattern = availablePatterns[CurrentPatternIndex];
+        BossPatternModule pattern = CurrentAvailablePatterns[CurrentPatternIndex];
         ExecuteCurrentPatternStep(pattern.GetAction(0));
     }
 
@@ -298,7 +326,7 @@ public class NetworkBossCore : NetworkBehaviour
         {
             if (_lastPatternIndex != CurrentPatternIndex || _lastStepIndex != CurrentStepIndex)
             {
-                BossActionModule action = availablePatterns[CurrentPatternIndex].GetAction(CurrentStepIndex);
+                BossActionModule action = CurrentAvailablePatterns[CurrentPatternIndex].GetAction(CurrentStepIndex);
 
                 // 해시값으로 애니메이션 실행
                 // 해시값이 비어있으면 실시간으로 문자열을 찾아 해시로 변환하는 안전장치
@@ -349,6 +377,11 @@ public class NetworkBossCore : NetworkBehaviour
                 {
                     // 죽음 상태 진입 시 사망 애니메이션 재생
                     _visual.PlayAction(Animator.StringToHash("die"));
+                }
+                else if (CurrentState == BossState.WakeUp || CurrentState == BossState.PhaseTransition)
+                {
+                    // 변신할 때도 임시로 기상 포효(Scream) 애니메이션을 재활용합니다!
+                    _visual.PlayAction(_wakeUpAnimHash);
                 }
 
                 _lastState = CurrentState;
@@ -404,6 +437,18 @@ public class NetworkBossCore : NetworkBehaviour
         CurrentHP -= damage;
         Debug.Log($"[Server] 보스가 데미지를 입음! 남은 HP: {CurrentHP}");
 
+        // [🔥 핵심 추가] 체력이 50% 이하인데 아직 1페이즈고, 매니저가 2페이즈를 허락(5층 이상)했다면?!
+        if (CurrentPhase == 1 && AllowedMaxPhase >= 2 && CurrentHP <= (maxHP * 0.5f))
+        {
+            CurrentPhase = 2; // 즉시 2페이즈 패턴 리스트로 교체!
+            ChangeState(BossState.PhaseTransition);
+            
+            // 3초 동안 무적 & 포효 연출 진행 (기믹 매니저에게 신호를 보낼 완벽한 타이밍!)
+            StateTimer = TickTimer.CreateFromSeconds(Runner, 3.0f); 
+            Debug.Log("🔥 [보스] 체력 50% 이하! 2페이즈 광폭화 돌입!");
+            return;
+        }
+        
         if (attacker != null)
         {
             if (_damageTracker.ContainsKey(attacker)) _damageTracker[attacker] += damage;

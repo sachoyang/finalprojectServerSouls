@@ -2136,7 +2136,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 607109985166594546}
-  - component: {fileID: 6686511853978325582}
   - component: {fileID: 3601524931439001545}
   - component: {fileID: 3262892183010469501}
   - component: {fileID: 4410727452468581993}
@@ -2165,47 +2164,6 @@ Transform:
   - {fileID: 8035299733715831513}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &6686511853978325582
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6914082606777652867}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 60e70647fe6851d47a9255c6fc23b87a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  moveSpeed: 3
-  rotationSpeed: 2
-  attackRange: 7
-  wakeUpRange: 10
-  aggroRefreshTime: 10
-  patternCooldown: 2
-  animClipIdle: 1.333
-  animClipBite: 1.2
-  animClipClaw: 3.333
-  animClipHorn: 2.167
-  animClipJump: 2
-  animClipDie: 1.9
-  durationBite: 2
-  durationClaw: 2
-  durationJump: 2
-  wallLayerMask:
-    serializedVersion: 2
-    m_Bits: 128
-  bodyRadius: 6
-  castHeightOffset: 3
-  maxHP: 100000
-  _CurrentHP: 0
-  _CurrentState: 0
-  _AggroTarget: {fileID: 0}
-  _CurrentPattern: 0
-  _PatternStep: 0
-  _ActionCounter: 0
-  _CurrentActionDuration: 0
-  visual: {fileID: 0}
 --- !u!114 &3601524931439001545
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2223,6 +2181,8 @@ MonoBehaviour:
   wakeUpRange: 10
   aggroRefreshTime: 10
   patternCooldown: 2
+  wakeUpAnimName: Scream
+  wakeUpDuration: 2.8
   maxHP: 100000
   _CurrentHP: 0
   wallLayerMask:
@@ -2230,11 +2190,17 @@ MonoBehaviour:
     m_Bits: 128
   bodyRadius: 6
   castHeightOffset: 3
-  availablePatterns:
+  phase1Patterns:
+  - {fileID: 11400000, guid: 11803d2a65fe73941b772b9ffa4f749b, type: 2}
+  - {fileID: 11400000, guid: 5b09769c6923a7f449e4c867f4b4ad05, type: 2}
+  phase2Patterns:
   - {fileID: 11400000, guid: 11803d2a65fe73941b772b9ffa4f749b, type: 2}
   - {fileID: 11400000, guid: 5b09769c6923a7f449e4c867f4b4ad05, type: 2}
   - {fileID: 11400000, guid: 3bac8bcfa74852b449ff45382c72c602, type: 2}
   - {fileID: 11400000, guid: cfc6972769a31d748bfb9b0844b93a59, type: 2}
+  _AllowedMaxPhase: 1
+  _DamageMultiplier: 1
+  _CurrentPhase: 1
   _CurrentState: 0
   _AggroTarget: {fileID: 0}
   _CurrentPatternIndex: -1
@@ -2257,7 +2223,6 @@ MonoBehaviour:
   Flags: 262145
   NestedObjects: []
   NetworkedBehaviours:
-  - {fileID: 6686511853978325582}
   - {fileID: 3601524931439001545}
   - {fileID: 4410727452468581993}
   ForceRemoteRenderTimeframe: 0

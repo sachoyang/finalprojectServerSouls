@@ -33,7 +33,7 @@ public class LobbyServerManager : NetworkBehaviour
 
     [Header("Scene Names")]
     public string titleSceneName = "scTitle uicreate Main";
-    public string gameSceneName = "scLevel"; 
+    //public string gameSceneName = "scLevel"; 이제 필요없음. 랜덤으로 씬 부를 것
 
     [Header("Message")]
     public float warningMessageDuration = 2f;
@@ -222,7 +222,11 @@ public class LobbyServerManager : NetworkBehaviour
         isChangingScene = true;
 
         Debug.Log("모든 인원 준비 완료. 보스전 레벨로 전체 이동합니다.");
-        Runner.LoadScene(gameSceneName, UnityEngine.SceneManagement.LoadSceneMode.Single);
+
+        // 직접 씬 로딩을 하지 않고, 통제실을 호출
+        GameProgressionManager.Instance.StartFirstLevel(Runner);
+        
+        //Runner.LoadScene(gameSceneName, UnityEngine.SceneManagement.LoadSceneMode.Single);
     }
 
     public void OnClickBackButton()
