@@ -6,29 +6,22 @@ using System.Linq;
 public class NextLevelPortal : NetworkBehaviour
 {
     private NetworkObject _localPlayerNetObj;
+    private Collider _enteredCollider; // [핵심] 꼬임 방지를 위해 들어온 콜라이더의 영수증을 보관합니다.
     private bool _isReady = false; 
 
-    // 서버(방장) 전용: 누가 F를 눌렀는지 기억하는 명부
     private HashSet<PlayerRef> _readyPlayers = new HashSet<PlayerRef>();
 
-    // [핵심] 모든 클라이언트 화면에 보여줄 현재 레디 완료 인원수
     [Networked] public int ReadyCount { get; set; }
 
     public override void FixedUpdateNetwork()
     {
-        // 방장(Host)이 매 프레임 인원수를 체크하여 모두 모였는지 확인합니다.
         if (HasStateAuthority && ReadyCount > 0)
         {
-            // 혹시 레디한 사람 중 게임을 튕기거나 나간 사람이 있다면 명부에서 삭제
             _readyPlayers.RemoveWhere(p => !Runner.ActivePlayers.Contains(p));
             ReadyCount = _readyPlayers.Count;
 
             int totalPlayers = Runner.ActivePlayers.Count();
             
-            // 🔥 디버그: 방장이 F를 눌렀을 때 총 인원을 제대로 세고 있는지 콘솔로 확인!
-            Debug.Log($"[Portal] 씬 전환 체크 중... (현재 레디: {ReadyCount} / 총 인원: {totalPlayers})");
-
-            // 전원 레디 완료 시 다음 층으로 발사!
             if (ReadyCount >= totalPlayers && totalPlayers > 0)
             {
                 Debug.Log("[Portal] 전원 레디 완료! 다음 층으로 이동합니다.");
@@ -42,20 +35,25 @@ public class NextLevelPortal : NetworkBehaviour
     private void OnTriggerEnter(Collider other)
     {
         NetworkObject netObj = other.GetComponentInParent<NetworkObject>();
-        if (netObj != null && netObj.HasInputAuthority)
+        
+        // 내 캐릭터이고, 아직 포탈에 안 들어온 상태일 때만 등록 (다중 콜라이더 꼬임 방지)
+        if (netObj != null && netObj.HasInputAuthority && _localPlayerNetObj == null)
         {
             _localPlayerNetObj = netObj;
+            _enteredCollider = other; // 들어온 정확한 부위를 기억함
+            Debug.Log($"[Portal] ✅ 진입 성공: {other.name}");
         }
     }
 
     private void OnTriggerExit(Collider other)
     {
-        NetworkObject netObj = other.GetComponentInParent<NetworkObject>();
-        if (netObj != null && netObj.HasInputAuthority)
+        // 다른 잡다한 콜라이더가 아니라, 아까 들어왔던 '정확히 그 부위'가 나갔을 때만 취소
+        if (_enteredCollider != null && other == _enteredCollider)
         {
+            Debug.Log($"[Portal] 💨 이탈 확인됨: {other.name}. 레디 취소!");
             _localPlayerNetObj = null;
+            _enteredCollider = null;
 
-            // 포탈 밖으로 나가면 레디 취소!
             if (_isReady)
             {
                 _isReady = false;
@@ -66,8 +64,6 @@ public class NextLevelPortal : NetworkBehaviour
 
     private void Update()
     {
-        // 🔥 여기가 핵심! 구버전의 "if (playerObj.HasStateAuthority)" 방장 프리패스 로직을 완전히 삭제했습니다.
-        // 이제 방장이든 클라이언트든 평등하게 RPC 통신만 쏩니다.
         if (_localPlayerNetObj != null && Input.GetKeyDown(KeyCode.F) && !_isReady)
         {
             _isReady = true; 
@@ -78,14 +74,8 @@ public class NextLevelPortal : NetworkBehaviour
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
     private void RPC_SetReady(PlayerRef player, NetworkBool isReady)
     {
-        if (isReady)
-        {
-            _readyPlayers.Add(player);
-        }
-        else
-        {
-            _readyPlayers.Remove(player);
-        }
+        if (isReady) _readyPlayers.Add(player);
+        else _readyPlayers.Remove(player);
         
         ReadyCount = _readyPlayers.Count;
     }
