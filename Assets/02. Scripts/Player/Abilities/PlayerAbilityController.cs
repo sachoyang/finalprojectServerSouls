@@ -90,7 +90,7 @@ public class PlayerAbilityController : NetworkBehaviour
         // 실제 애니메이션, 이펙트, 히트박스, 회복 같은 실행은 Executor가 담당한다.
         _executor.Activate(module, context);
         slot.StartCooldown(currentTime);
-        RPC_PlayAbilityPresentation(activeSlotIndex);
+        RPC_PlayAbilityPresentation(module.AbilityId, slot.NextReadyTime);
         return true;
     }
 
@@ -103,7 +103,7 @@ public class PlayerAbilityController : NetworkBehaviour
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    private void RPC_PlayAbilityPresentation(int activeSlotIndex)
+    private void RPC_PlayAbilityPresentation(string abilityId, float cooldownEndTime)
     {
         if (_inventory == null)
         {
@@ -115,13 +115,32 @@ public class PlayerAbilityController : NetworkBehaviour
             _executor = GetComponent<PlayerAbilityExecutor>();
         }
 
-        PlayerAbilitySlot slot = _inventory != null ? _inventory.GetActiveSlot(activeSlotIndex) : null;
-        PlayerAbilityModule module = slot?.Module;
+        PlayerAbilityModule module = _inventory != null ? _inventory.FindModuleById(abilityId) : null;
         if (module == null || _executor == null)
         {
             return;
         }
 
+        ApplyCooldownToLocalSlot(abilityId, cooldownEndTime);
+
         _executor.PlayPresentation(module, _inventory.CreateContext());
+    }
+
+    private void ApplyCooldownToLocalSlot(string abilityId, float cooldownEndTime)
+    {
+        if (_inventory == null || string.IsNullOrWhiteSpace(abilityId))
+        {
+            return;
+        }
+
+        for (int i = 0; i < _inventory.ActiveSlots.Count; i++)
+        {
+            PlayerAbilitySlot slot = _inventory.ActiveSlots[i];
+            if (slot?.Module != null && slot.Module.AbilityId == abilityId)
+            {
+                slot.SetCooldownEndTime(cooldownEndTime);
+                return;
+            }
+        }
     }
 }

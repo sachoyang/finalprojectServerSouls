@@ -229,7 +229,7 @@ public class PlayerAbilityInventory : MonoBehaviour
     }
 
     // 같은 abilityId를 가진 모듈을 이미 획득했는지 확인한다.
-    private PlayerAbilityModule FindModuleById(string abilityId)
+    public PlayerAbilityModule FindModuleById(string abilityId)
     {
         if (string.IsNullOrWhiteSpace(abilityId))
         {
