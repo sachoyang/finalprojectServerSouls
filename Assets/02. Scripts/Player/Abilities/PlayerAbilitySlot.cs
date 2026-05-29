@@ -50,6 +50,11 @@ public class PlayerAbilitySlot : ISerializationCallbackReceiver
         nextReadyTime = currentTime + Mathf.Max(0f, CooldownSeconds);
     }
 
+    public void SetCooldownEndTime(float readyTime)
+    {
+        nextReadyTime = Mathf.Max(0f, readyTime);
+    }
+
     public void OnBeforeSerialize()
     {
         RefreshInspectorCooldown();

@@ -377,7 +377,7 @@ public class NetworkPlayerController : NetworkBehaviour
             if (change == nameof(ActionSequence))
             {
                 // 로컬 예측으로 이미 재생한 점프는 중복 트리거를 생략한다.
-                if (Object.HasInputAuthority && ActionSequence == _predictedActionSequence)
+                if (Object.HasInputAuthority && ShouldSkipAuthoritativeActionPresentation())
                 {
                     continue;
                 }
@@ -590,6 +590,24 @@ public class NetworkPlayerController : NetworkBehaviour
             LockMoveRunRight => new Vector2(2f, 0f),
             _ => Vector2.zero
         };
+    }
+
+    private bool ShouldSkipAuthoritativeActionPresentation()
+    {
+        if (ActionSequence == _predictedActionSequence)
+        {
+            return true;
+        }
+
+        if (!_localActionAnimationLocked)
+        {
+            return false;
+        }
+
+        PlayerActionLockType localLockType = (PlayerActionLockType)_localActionLockType;
+        PlayerActionLockType incomingLockType = GetActionLockType(LastAction);
+        return localLockType == PlayerActionLockType.Jump &&
+               incomingLockType == PlayerActionLockType.Attack;
     }
 
     private bool IsInActionAnimation()
