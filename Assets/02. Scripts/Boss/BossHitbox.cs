@@ -22,7 +22,7 @@ public class BossHitbox : MonoBehaviour
     public bool _isCurrentlyAttacking = false;
 
     // 데미지를 전달할 최상위 보스 스크립트
-    private DragonBoss _bossScript;
+    private NetworkBossCore _bossScript;
 
     private void Awake()
     {
@@ -30,8 +30,8 @@ public class BossHitbox : MonoBehaviour
         _collider.isTrigger = true;
         _collider.enabled = true; // 무조건 켜둠 (언제든 맞을 수 있게)
 
-        // 시작할 때 부모 오브젝트에 있는 DragonBoss 스크립트를 찾아둡니다.
-        _bossScript = GetComponentInParent<DragonBoss>();
+        // 시작할 때 부모 오브젝트에 있는 공통 보스 코어를 찾아둡니다.
+        _bossScript = GetComponentInParent<NetworkBossCore>();
     }
 
     // ==========================================
@@ -79,7 +79,7 @@ public class BossHitbox : MonoBehaviour
         float finalDamage = playerDamage * damageMultiplier;
         Debug.Log($"[Damaged] 보스 {hitboxType} 피격! (배율: {damageMultiplier}x, 최종 데미지: {finalDamage})");
 
-        // 부모(DragonBoss)에게 네트워크로 체력을 깎으라고 명령합니다!
+        // 부모(NetworkBossCore)에게 네트워크로 체력을 깎으라고 명령합니다.
         if (_bossScript != null)
         {
             if (attacker != null)
