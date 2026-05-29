@@ -122,52 +122,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &21222140
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 21222142}
-  - component: {fileID: 21222141}
-  m_Layer: 0
-  m_Name: CameraRelativeBasicSpawner
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &21222141
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 21222140}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9d8d69a8c2b543f4a9c45ff0873d5e91, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _playerPrefab:
-    RawGuidValue: ebc189906ed8e6c49901d81811c01d8a
---- !u!4 &21222142
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 21222140}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.1787901, y: 4.5860176, z: 18.619232}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &607396899
 GameObject:
   m_ObjectHideFlags: 0
@@ -219,7 +173,7 @@ MonoBehaviour:
   m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  SortKey: 3973513560
+  SortKey: 3453338396
   ObjectInterest: 1
   Flags: 262145
   NestedObjects: []
@@ -241,7 +195,25 @@ MonoBehaviour:
   moveSpeed: 3
   rotationSpeed: 5
   attackRange: 8
-  runDistance: 15
+  wakeUpRange: 10
+  aggroRefreshTime: 10
+  patternCooldown: 2
+  animClipIdle: 1.333
+  animClipBite: 1.2
+  animClipClaw: 3.333
+  animClipHorn: 2.167
+  animClipJump: 2
+  animClipDie: 1.9
+  durationBite: 2
+  durationClaw: 2
+  durationJump: 3
+  wallLayerMask:
+    serializedVersion: 2
+    m_Bits: 0
+  bodyRadius: 2
+  castHeightOffset: 2
+  maxHP: 100000
+  _CurrentHP: 0
   _CurrentState: 0
   _AggroTarget: {fileID: 0}
   _CurrentPattern: 0
@@ -263,6 +235,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   anim: {fileID: 1019700223}
   fireBreath: {fileID: 0}
+  mouthHitbox: {fileID: 0}
+  leftClawHitbox: {fileID: 0}
+  rightClawHitbox: {fileID: 0}
+  jumpSlamEffectPrefab: {fileID: 0}
+  jumpSlamSpawnPoint: {fileID: 0}
+  jumpWarningPrefab: {fileID: 0}
 --- !u!136 &607396904
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -429,6 +407,11 @@ MonoBehaviour:
   maxPitch: 65
   positionSmoothTime: 0.08
   lockCursorOnStart: 0
+  lockOnTargetOffset: {x: 0, y: 0.2, z: 0}
+  lockOnHeight: 1.2
+  lockOnTargetClearance: 2.5
+  lockOnMinLookPitch: -35
+  lockOnMaxLookPitch: 55
 --- !u!1001 &1019700221
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -91769,7 +91752,6 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 963194228}
-  - {fileID: 21222142}
   - {fileID: 1245310858}
   - {fileID: 1234928907}
   - {fileID: 607396900}

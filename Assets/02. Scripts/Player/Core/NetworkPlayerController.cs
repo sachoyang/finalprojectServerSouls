@@ -203,22 +203,6 @@ public class NetworkPlayerController : NetworkBehaviour
             _cameraManager = CameraManager.GetOrCreate();
             _cameraManager.RegisterGameplayCamera(mainCamera, transform);
         }
-        else
-        {
-            CameraFollow follow = mainCamera.GetComponent<CameraFollow>();
-            if (follow == null)
-            {
-                follow = mainCamera.gameObject.AddComponent<CameraFollow>();
-            }
-
-            follow.target = transform;
-        }
-
-        CameraFollow existingFollow = mainCamera.GetComponent<CameraFollow>();
-        if (existingFollow != null && thirdPersonCamera != null)
-        {
-            existingFollow.enabled = false;
-        }
     }
 
     public override void FixedUpdateNetwork()
