@@ -15,14 +15,20 @@ MonoBehaviour:
   abilityId: high_spin_attack
   displayName: High Spin Attack
   description: Performs a wide spinning great sword attack.
-  icon: {fileID: 21300000, guid: 0243c3f2474b4be419b0683770244769, type: 3}
+  icon: {fileID: -1116392742, guid: 602013fcc1a5c4a48ad04a33a93cf811, type: 3}
   abilityType: 1
   minBossStage: 1
   maxBossStage: 8
+  includeInRewardPool: 1
   staminaCost: 400
   cooldownSeconds: 8
   healthRestoreAmount: 0
   staminaRestoreAmount: 0
+  specialEffect: 0
+  maxHealthBonus: 0
+  maxStaminaBonus: 0
+  defenseRateBonus: 0
+  attackDamageBonusPercent: 0
   animationClip: {fileID: 7400000, guid: 6e2e5d6f257b702419afdb91532e3d2e, type: 3}
   animationStateName: 
   animationTrigger: HighSpinAttack
@@ -31,3 +37,6 @@ MonoBehaviour:
   parentEffectToPlayer: 0
   hitboxPrefab: {fileID: 0}
   hitboxLocalOffset: {x: 0, y: 0, z: 0}
+  hitboxDamage: 0
+  hitboxDelay: 0
+  hitboxLifetime: 0.3
