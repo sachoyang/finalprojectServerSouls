@@ -17,6 +17,8 @@ public enum BossState
 public class NetworkBossCore : NetworkBehaviour
 {
     [Header("기본 설정")]
+    [Tooltip("UI 체력바에 표시될 보스의 이름")]
+    public string bossName = "이름 없는 보스";
     public float moveSpeed = 2.5f;
     public float rotationSpeed = 5.0f;
     public float wakeUpRange = 10.0f;
