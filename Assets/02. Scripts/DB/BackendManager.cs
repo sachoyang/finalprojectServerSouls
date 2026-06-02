@@ -26,9 +26,18 @@ public class BackendManager : MonoBehaviour
     // 싱글톤 세팅: 어디서든 NetworkManager.Instance 로 접근 가능!
     public static BackendManager Instance { get; private set; }
 
-    [Header("서버 설정")]
-    [Tooltip("아파치 htdocs 안의 API 폴더 경로 (끝에 반드시 / 를 붙일 것)")]
-    public string BASE_URL = "http://192.168.0.5:8080/soulrush_api/";
+    [Header("서버 IP 자동화 세팅")]
+    [Tooltip("서버 PC의 내부 IP (예: 192.168.0.15)")]
+    public string lanIP = "192.168.0.5"; 
+    
+    [Tooltip("서버 PC의 공인 IP (네이버 '내 아이피' 검색)")]
+    public string publicIP = "1.233.102.137"; 
+
+    // 더 이상 수동으로 적지 않고, 유니티가 알아서 채워넣을 변수
+    public string BASE_URL { get; private set; }
+
+    [HideInInspector]
+    public bool isServerReady = false; // 서버 주소 세팅이 끝났는지 확인하는 플래그
 
     // 로그인한 유저의 정보를 캐싱해둘 변수
     public string CurrentLoginID { get; private set; }
@@ -46,6 +55,39 @@ public class BackendManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
+    }
+
+    private void Start()
+    {
+        // 게임이 켜지면 무조건 서버 환경부터 자동 탐지 시작!
+        StartCoroutine(AutoDetectServerRoutine());
+    }
+
+    private IEnumerator AutoDetectServerRoutine()
+    {
+        // 1. 내부망(LAN)에 접속이 되는지 가볍게 찔러보기 (log_viewer.php 활용)
+        string testLanUrl = $"http://{lanIP}:8080/soulrush_api/log_viewer.php";
+        
+        using (UnityWebRequest ping = UnityWebRequest.Get(testLanUrl))
+        {
+            ping.timeout = 1; // 1초 이상 응답 없으면 바로 포기 (핵심)
+            yield return ping.SendWebRequest();
+
+            if (ping.result == UnityWebRequest.Result.Success)
+            {
+                // 성공하면 같은 공유기(LAN) 환경임!
+                BASE_URL = $"http://{lanIP}:8080/soulrush_api/";
+                Debug.Log("<color=green>[자동화] 🟢 내부망(LAN) 접속 확인! 로컬 IP로 세팅됩니다.</color>");
+            }
+            else
+            {
+                // 실패하면 집 밖(WAN) 환경임!
+                BASE_URL = $"http://{publicIP}:8080/soulrush_api/";
+                Debug.Log("<color=cyan>[자동화] 🔵 외부망(WAN) 접속 확인! 공인 IP로 세팅됩니다.</color>");
+            }
+        }
+        
+        isServerReady = true; // 세팅 완료! 이제 통신 가능
     }
 
     // ==========================================
