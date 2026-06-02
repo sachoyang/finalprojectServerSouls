@@ -27,10 +27,11 @@ public class LoginSceneController : MonoBehaviour
 
     private bool isChangingScene;
 
-    private const string AccountPasswordPrefix = "Account_Password_";
-    private const string AccountNicknamePrefix = "Account_Nickname_";
-    private const string CurrentLoginIdKey = "CurrentLoginId";
-    private const string CurrentNicknameKey = "CurrentNickname";
+    // private const string AccountPasswordPrefix = "Account_Password_";
+    // private const string AccountNicknamePrefix = "Account_Nickname_";
+    // private const string CurrentLoginIdKey = "CurrentLoginId";
+    // private const string CurrentNicknameKey = "CurrentNickname";
+    // PlayerPrefabì´ì œ ì•ˆì”€. dbìš©ìœ¼ë¡œ ë³€ê²½
 
     private void Start()
     {
@@ -56,25 +57,25 @@ public class LoginSceneController : MonoBehaviour
 
         if (string.IsNullOrEmpty(id) || string.IsNullOrEmpty(pw))
         {
-            ShowSystemMessage("¾ÆÀÌµğ ¶Ç´Â PW¸¦ È®ÀÎÇØÁÖ¼¼¿ä");
+            ShowSystemMessage("ì•„ì´ë”” ë˜ëŠ” PWë¥¼ í™•ì¸í•´ì£¼ì„¸ìš”");
             return;
         }
 
-        if (!TryLogin(id, pw))
+        // [ğŸ”¥ DB ì—°ë™ ë¶€ë¶„] ê¸°ì¡´ TryLogin ëŒ€ì‹  BackendManagerë¥¼ í˜¸ì¶œí•©ë‹ˆë‹¤!
+        BackendManager.Instance.LoginUser(id, pw, (isSuccess, message) =>
         {
-            ShowSystemMessage("¾ÆÀÌµğ ¶Ç´Â PW¸¦ È®ÀÎÇØÁÖ¼¼¿ä");
-            return;
-        }
-
-        string nickname = PlayerPrefs.GetString(AccountNicknamePrefix + id, id);
-
-        PlayerPrefs.SetString(CurrentLoginIdKey, id);
-        PlayerPrefs.SetString(CurrentNicknameKey, nickname);
-        PlayerPrefs.Save();
-
-        Debug.Log("·Î±×ÀÎ ¼º°ø ID: " + id + ", Nickname: " + nickname);
-
-        ChangeScene(titleSceneName);
+            if (isSuccess)
+            {
+                // BackendManager ë‚´ë¶€ì— ë‹‰ë„¤ì„ê³¼ ìŠ¤í‚¬ ì •ë³´ê°€ ì €ì¥ë˜ì–´ ìˆìŠµë‹ˆë‹¤.
+                Debug.Log($"DB ë¡œê·¸ì¸ ì„±ê³µ ID: {id}, Nickname: {BackendManager.Instance.CurrentNickname}");
+                ChangeScene(titleSceneName);
+            }
+            else
+            {
+                Debug.Log($"DB ë¡œê·¸ì¸ ì‹¤íŒ¨: {message}");
+                ShowSystemMessage(message); // "ì•„ì´ë”” ë˜ëŠ” ë¹„ë°€ë²ˆí˜¸ê°€ í‹€ë ¸ìŠµë‹ˆë‹¤." ë“± ì¶œë ¥
+            }
+        });
     }
 
     public void OnClickOpenRegisterPanelButton()
@@ -90,31 +91,29 @@ public class LoginSceneController : MonoBehaviour
 
         if (string.IsNullOrEmpty(id) || string.IsNullOrEmpty(pw) || string.IsNullOrEmpty(nickname))
         {
-            ShowSystemMessage("¾ÆÀÌµğ, PW, ´Ğ³×ÀÓÀ» ¸ğµÎ ÀÔ·ÂÇØÁÖ¼¼¿ä");
+            ShowSystemMessage("ì•„ì´ë””, PW, ë‹‰ë„¤ì„ì„ ëª¨ë‘ ì…ë ¥í•´ì£¼ì„¸ìš”");
             return;
         }
 
-        if (PlayerPrefs.HasKey(AccountPasswordPrefix + id))
+        // [ğŸ”¥ DB ì—°ë™ ë¶€ë¶„] PlayerPrefs ëŒ€ì‹  BackendManagerë¡œ ê°€ì… ìš”ì²­!
+        BackendManager.Instance.RegisterUser(id, pw, nickname, (isSuccess, message) =>
         {
-            ShowSystemMessage("ÀÌ¹Ì µî·ÏµÈ ¾ÆÀÌµğÀÔ´Ï´Ù");
-            return;
-        }
+            if (isSuccess)
+            {
+                Debug.Log($"DB íšŒì›ê°€ì… ì™„ë£Œ ID: {id}, Nickname: {nickname}");
+                ShowSystemMessage("ê³„ì •ì´ ìƒì„±ë˜ì—ˆìŠµë‹ˆë‹¤");
 
-        PlayerPrefs.SetString(AccountPasswordPrefix + id, pw);
-        PlayerPrefs.SetString(AccountNicknamePrefix + id, nickname);
-        PlayerPrefs.Save();
+                if (loginIdInput != null) loginIdInput.text = id;
+                if (loginPwInput != null) loginPwInput.text = "";
 
-        Debug.Log("È¸¿ø°¡ÀÔ ¿Ï·á ID: " + id + ", Nickname: " + nickname);
-
-        ShowSystemMessage("°èÁ¤ÀÌ »ı¼ºµÇ¾ú½À´Ï´Ù");
-
-        if (loginIdInput != null)
-            loginIdInput.text = id;
-
-        if (loginPwInput != null)
-            loginPwInput.text = "";
-
-        ShowLoginPanel();
+                ShowLoginPanel();
+            }
+            else
+            {
+                Debug.Log($"DB íšŒì›ê°€ì… ì‹¤íŒ¨: {message}");
+                ShowSystemMessage(message); // "ì´ë¯¸ ì¡´ì¬í•˜ëŠ” ì•„ì´ë””ì…ë‹ˆë‹¤." ë“± ì¶œë ¥
+            }
+        });
     }
 
     public void OnClickRegisterBackButton()
@@ -122,26 +121,26 @@ public class LoginSceneController : MonoBehaviour
         ShowLoginPanel();
     }
 
-    private bool TryLogin(string id, string pw)
-    {
-        string passwordKey = AccountPasswordPrefix + id;
+    // private bool TryLogin(string id, string pw)
+    // {
+    //     string passwordKey = AccountPasswordPrefix + id;
 
-        if (!PlayerPrefs.HasKey(passwordKey))
-        {
-            Debug.Log("µî·ÏµÇÁö ¾ÊÀº ¾ÆÀÌµğ: " + id);
-            return false;
-        }
+    //     if (!PlayerPrefs.HasKey(passwordKey))
+    //     {
+    //         Debug.Log("ï¿½ï¿½Ïµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ìµï¿½: " + id);
+    //         return false;
+    //     }
 
-        string savedPw = PlayerPrefs.GetString(passwordKey, "");
+    //     string savedPw = PlayerPrefs.GetString(passwordKey, "");
 
-        if (savedPw != pw)
-        {
-            Debug.Log("ºñ¹Ğ¹øÈ£ ºÒÀÏÄ¡: " + id);
-            return false;
-        }
+    //     if (savedPw != pw)
+    //     {
+    //         Debug.Log("ï¿½ï¿½Ğ¹ï¿½È£ ï¿½ï¿½ï¿½ï¿½Ä¡: " + id);
+    //         return false;
+    //     }
 
-        return true;
-    }
+    //     return true;
+    // }
 
     private void ShowLoginPanel()
     {
@@ -168,19 +167,14 @@ public class LoginSceneController : MonoBehaviour
             registerIdInput.Select();
     }
 
-    private void ChangeScene(string sceneName)
+   private void ChangeScene(string sceneName)
     {
         if (fadeManager == null)
         {
-            Debug.LogError("LoginSceneController: Fade Manager°¡ ¿¬°áµÇÁö ¾Ê¾Ò½À´Ï´Ù.");
+            Debug.LogError("LoginSceneController: Fade Managerê°€ ì—°ê²°ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤.");
             return;
         }
-
-        if (string.IsNullOrEmpty(sceneName))
-        {
-            Debug.LogError("LoginSceneController: ÀÌµ¿ÇÒ ¾À ÀÌ¸§ÀÌ ºñ¾î ÀÖ½À´Ï´Ù.");
-            return;
-        }
+        if (string.IsNullOrEmpty(sceneName)) return;
 
         isChangingScene = true;
         fadeManager.ChangeScene(sceneName);
