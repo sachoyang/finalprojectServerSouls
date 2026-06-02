@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cbc39ac0e5f95d14fbd17eac508de1c4, type: 3}
-  m_Name: w
+  m_Name: New Player Ability Module 1
   m_EditorClassIdentifier: 
   abilityId: 
   displayName: 
@@ -19,7 +19,7 @@ MonoBehaviour:
   abilityType: 0
   minBossStage: 1
   maxBossStage: 8
-  includeInRewardPool: 0
+  includeInRewardPool: 1
   staminaCost: 0
   cooldownSeconds: 0
   healthRestoreAmount: 0
