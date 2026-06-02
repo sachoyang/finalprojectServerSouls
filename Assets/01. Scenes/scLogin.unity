@@ -3686,7 +3686,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c3ad469790c51da44af29a0a35f9cdbf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  BASE_URL: http://1.233.102.137:8080/soulrush_api/
+  lanIP: 192.168.0.5
+  publicIP: 1.233.102.137
+  isServerReady: 0
 --- !u!4 &2025809514
 Transform:
   m_ObjectHideFlags: 0

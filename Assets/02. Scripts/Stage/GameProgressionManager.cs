@@ -60,4 +60,14 @@ public class GameProgressionManager : MonoBehaviour
         CurrentLevel = level;
     }
 
+    // ▼▼▼ [디버그 전용] 씬 이동 없이 층/보스 데이터만 세팅 (DebugQuickEntry 에서 사용) ▼▼▼
+    // 현재 열려 있는 보스 씬을 그대로 테스트할 때, runner.LoadScene 을 거치지 않고
+    // CurrentBossData 를 직접 채워주기 위한 메서드입니다. 정상 플레이 흐름에는 영향 없음.
+    public void SetupForDebug(int level, BossEncounterData bossData)
+    {
+        CurrentLevel = level;
+        CurrentBossData = bossData;
+        Debug.Log($"[GameProgressionManager] (디버그) Level={level}, Boss={(bossData != null ? bossData.bossName : "없음")} 세팅");
+    }
+    // ▲▲▲ 디버그 전용 끝 ▲▲▲
 }
