@@ -15,10 +15,7 @@ public class CameraManager : MonoBehaviour
     public static CameraManager Instance { get; private set; }
 
     [SerializeField] private Camera managedCamera;
-    [SerializeField] private Transform rewardCameraPoint;
-    [SerializeField] private float rewardCameraMoveDuration = 1.2f;
     [SerializeField] private float rewardCameraRestoreDuration = 1.0f;
-    [SerializeField] private float rewardZoomFieldOfView = 35f;
     [SerializeField] private bool restoreControllersAfterReward = true;
 
     private MonoBehaviour[] _disabledCameraControllers;
@@ -137,17 +134,6 @@ public class CameraManager : MonoBehaviour
         {
             _currentMode = CameraMode.PlayerFollow;
         }
-    }
-
-    public IEnumerator ZoomToRewardPoint()
-    {
-        if (rewardCameraPoint == null)
-        {
-            Debug.LogWarning("[CameraManager] Reward Camera Point is not assigned.");
-            yield break;
-        }
-
-        yield return ZoomToPoint(rewardCameraPoint, rewardCameraMoveDuration, rewardZoomFieldOfView);
     }
 
     public void BeginCutscene(bool restoreControllersOnEnd = true)
