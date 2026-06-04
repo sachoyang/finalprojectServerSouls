@@ -16,21 +16,20 @@ public enum BossState
     Groggy,
 }
 
-public enum BossStatusType
-{
-    None = 0,
-    ArmorBreak = 1, // 받는 데미지 증가 (방깎)
-    Enrage = 2,     // 주는 데미지 증가 (공격력 증가)
-    Slow = 3,       // 행동/이동 속도 감소 (추후 활용)
-    Burn = 4        // 도트 데미지 (추후 활용)
-}
-
 // 퓨전 네트워크에서 리스트로 동기화하기 위한 구조체
 public struct BossStatusData : INetworkStruct
 {
     public int StatusId;      // BossStatusType을 int로 저장
     public float EndTime;     // 언제 끝나는지 (Runner.SimulationTime 기준)
     public float Power;       // 효과 수치 (예: 1.5면 1.5배 데미지)
+}
+
+// UI 파트에서 이 구조체 리스트를 통째로 가져가서 화면에 그릴 겁니다.
+public struct ActiveStatusUIInfo
+{
+    public StatusEffectData Data; // SO 원본 (아이콘, 이름 등)
+    public float RemainingTime;   // 남은 시간
+    public float Power; // 배율 수치(임시)
 }
 
 public class NetworkBossCore : NetworkBehaviour
@@ -43,6 +42,10 @@ public class NetworkBossCore : NetworkBehaviour
     public float wakeUpRange = 10.0f;
     public float aggroRefreshTime = 10.0f;
     public float patternCooldown = 2.0f;
+
+    [Header("상태이상 도감 (SO 리스트)")]
+    [Tooltip("기획자가 만든 StatusEffectData SO들을 여기에 모두 넣어주세요.")]
+    public List<StatusEffectData> statusDatabase;
 
     [Header("기상(Wake Up) 설정")]
     [Tooltip("잠에서 깰 때 재생할 애니메이션 이름 (예: Scream)")]
@@ -672,16 +675,17 @@ public class NetworkBossCore : NetworkBehaviour
     }
 
     // ------------------------------------------
-    // 상태이상 부여 함수 (서버 전용)
+    // 상태이상 부여 함수 (Enum을 버리고 int ID로만 받음!)
     // ------------------------------------------
-    public void ApplyStatus(BossStatusType type, float duration, float power = 1.0f)
+    public void ApplyStatus(int statusId, float duration, float power = 1.0f)
     {
         if (!HasStateAuthority || CurrentState == BossState.Die) return;
+        if (statusId == 0) return; // 0은 빈 칸을 의미하므로 무시
 
         // 이미 같은 상태이상이 있는지 찾아서 덮어씌우기 (시간 연장)
         for (int i = 0; i < ActiveStatuses.Length; i++)
         {
-            if (ActiveStatuses[i].StatusId == (int)type)
+            if (ActiveStatuses[i].StatusId == statusId)
             {
                 BossStatusData existing = ActiveStatuses[i];
                 existing.EndTime = Runner.SimulationTime + duration;
@@ -691,14 +695,14 @@ public class NetworkBossCore : NetworkBehaviour
             }
         }
 
-        // 없다면 빈자리(None)를 찾아서 새로 넣기
+        // 없다면 빈자리(0)를 찾아서 새로 넣기
         for (int i = 0; i < ActiveStatuses.Length; i++)
         {
-            if (ActiveStatuses[i].StatusId == (int)BossStatusType.None)
+            if (ActiveStatuses[i].StatusId == 0) // None 대신 0 사용
             {
                 ActiveStatuses.Set(i, new BossStatusData
                 {
-                    StatusId = (int)type,
+                    StatusId = statusId,
                     EndTime = Runner.SimulationTime + duration,
                     Power = power
                 });
@@ -714,11 +718,11 @@ public class NetworkBossCore : NetworkBehaviour
     {
         for (int i = 0; i < ActiveStatuses.Length; i++)
         {
-            if (ActiveStatuses[i].StatusId != (int)BossStatusType.None)
+            if (ActiveStatuses[i].StatusId != 0) // 0이 아닐 때만 체크
             {
-                // 지속 시간이 끝났다면 배열에서 삭제 (None으로 초기화)
                 if (Runner.SimulationTime >= ActiveStatuses[i].EndTime)
                 {
+                    // 빈 깡통 데이터(ID가 0)를 덮어씌워서 삭제 처리
                     ActiveStatuses.Set(i, new BossStatusData());
                 }
             }
@@ -726,28 +730,75 @@ public class NetworkBossCore : NetworkBehaviour
     }
 
     // ------------------------------------------
-    // 실시간 데미지 배율 계산기 (버프/디버프 중첩 적용)
+    // 실시간 데미지 배율 계산기 (SO 완전 연동)
     // ------------------------------------------
     public float GetIncomingDamageMultiplier()
     {
         float multiplier = 1.0f;
         for (int i = 0; i < ActiveStatuses.Length; i++)
         {
-            if (ActiveStatuses[i].StatusId == (int)BossStatusType.ArmorBreak)
-                multiplier *= ActiveStatuses[i].Power; // 방깎 효과 곱연산
+            if (ActiveStatuses[i].StatusId != 0)
+            {
+                // 1. 도감에서 현재 적용 중인 SO 데이터를 찾는다
+                StatusEffectData data = statusDatabase.Find(x => x.statusId == ActiveStatuses[i].StatusId);
+                
+                // 2. 이 SO가 '받는 피해(IncomingDamage)'에 영향을 주는 놈이면 배율을 곱한다!
+                if (data != null && data.effectTarget == StatusEffectTarget.IncomingDamage)
+                {
+                    multiplier *= ActiveStatuses[i].Power; 
+                }
+            }
         }
         return multiplier;
     }
 
     public float GetOutgoingDamageMultiplier()
     {
-        float multiplier = DamageMultiplier; // 기존 스테이지 난이도 배율
+        float multiplier = DamageMultiplier; // 기존 스테이지 난이도 배율 베이스
         for (int i = 0; i < ActiveStatuses.Length; i++)
         {
-            if (ActiveStatuses[i].StatusId == (int)BossStatusType.Enrage)
-                multiplier *= ActiveStatuses[i].Power; // 광폭화 등 공격력 업 효과
+            if (ActiveStatuses[i].StatusId != 0)
+            {
+                StatusEffectData data = statusDatabase.Find(x => x.statusId == ActiveStatuses[i].StatusId);
+                
+                // '주는 피해(OutgoingDamage)'에 영향을 주는 놈이면 배율을 곱한다!
+                if (data != null && data.effectTarget == StatusEffectTarget.OutgoingDamage)
+                {
+                    multiplier *= ActiveStatuses[i].Power; 
+                }
+            }
         }
         return multiplier;
+    }
+
+    // ==========================================
+    // UI 쪽 스크립트에 전달할 함수
+    // ==========================================
+    public List<ActiveStatusUIInfo> GetActiveStatusesForUI()
+    {
+        List<ActiveStatusUIInfo> activeList = new List<ActiveStatusUIInfo>();
+
+        for (int i = 0; i < ActiveStatuses.Length; i++)
+        {
+            if (ActiveStatuses[i].StatusId != 0)
+            {
+                // 도감에서 현재 걸린 상태이상의 SO 데이터를 찾아옵니다.
+                StatusEffectData so = statusDatabase.Find(x => x.statusId == ActiveStatuses[i].StatusId);
+
+                if (so != null)
+                {
+                    activeList.Add(new ActiveStatusUIInfo
+                    {
+                        Data = so,
+                        // 현재 시간(SimulationTime)을 빼서 순수하게 '남은 시간'만 계산해서 넘겨줍니다.
+                        RemainingTime = Mathf.Max(0, ActiveStatuses[i].EndTime - Runner.SimulationTime),
+                        Power = ActiveStatuses[i].Power
+                    });
+                }
+            }
+        }
+
+        return activeList;
     }
     // ... 나머지 기존 기능들
 }
