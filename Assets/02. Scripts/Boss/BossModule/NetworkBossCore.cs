@@ -131,6 +131,11 @@ public class NetworkBossCore : NetworkBehaviour
     // 방금 전 프레임의 상태를 기억하여 중복 실행을 막는 플래그
     private BossState _lastState = (BossState)(-1);
 
+    // 기믹 설정
+    [Networked] public NetworkBool IsGimmickActive { get; set; }
+    [Tooltip("기믹 중에 들어가는 데미지 배율 (0.1 = 10%만 데미지 들어감)")]
+    public float gimmickDamageReduction = 0.3f;
+
     public override void Spawned()
     {
         _visual = GetComponentInChildren<IBossVisual>();
@@ -496,7 +501,11 @@ public class NetworkBossCore : NetworkBehaviour
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
     public void RPC_TakeDamage(float damage, float groggyDamage = 10f, NetworkObject attacker = null)
     {
-        if (CurrentHP <= 0) return;
+        if (CurrentHP <= 0)
+        {
+            ExecuteDeath();
+            return; // 여기서 끝! 아래 코드(변신 등)는 실행 안 됨
+        }
 
         // 방깎 디버프 등을 계산하여 최종 데미지 산출
         float finalDamage = damage * GetIncomingDamageMultiplier();
@@ -537,12 +546,25 @@ public class NetworkBossCore : NetworkBehaviour
             else _damageTracker[attacker] = damage;
         }
 
-        if (CurrentHP <= 0)
+    }
+
+    // ==========================================
+    // 보스 사망 시 무조건 거쳐가는 공통 함수
+    // ==========================================
+    private void ExecuteDeath()
+    {
+        CurrentHP = 0f;
+        CurrentPatternIndex = -1;
+        CurrentStepIndex = -1;
+        CurrentGroggy = 0f;
+
+        Debug.Log("보스 처치 완료! (공통 사망 로직 실행)");
+        ChangeState(BossState.Die);
+
+        // 사망 시 조명 및 기믹 원상복구
+        if (IsGimmickActive && DragonArenaGimmick.Instance != null)
         {
-            CurrentHP = 0;
-            Debug.Log("보스 처치 완료!");
-            // [수정됨] DragonState가 아닌 BossState로 통일!
-            ChangeState(BossState.Die);
+            DragonArenaGimmick.Instance.ClearGimmick();
         }
     }
 
@@ -555,12 +577,8 @@ public class NetworkBossCore : NetworkBehaviour
             return;
         }
 
-        CurrentHP = 0f;
-        CurrentPatternIndex = -1;
-        CurrentStepIndex = -1;
-        CurrentGroggy = 0f;
-        Debug.Log("[Boss Debug] Boss killed by debug input.");
-        ChangeState(BossState.Die);
+        Debug.Log("[Boss Debug] 디버그 강제 킬 버튼 입력!");
+        ExecuteDeath(); // 공통 사망 함수 호출!
     }
 
     private void FindClosestTarget()
@@ -735,17 +753,24 @@ public class NetworkBossCore : NetworkBehaviour
     public float GetIncomingDamageMultiplier()
     {
         float multiplier = 1.0f;
+
+        // 기믹이 켜져있다면, 기본적으로 약한 데미지만 들어가게 깎아버립니다!
+        if (IsGimmickActive)
+        {
+            multiplier *= gimmickDamageReduction;
+        }
+
         for (int i = 0; i < ActiveStatuses.Length; i++)
         {
             if (ActiveStatuses[i].StatusId != 0)
             {
                 // 1. 도감에서 현재 적용 중인 SO 데이터를 찾는다
                 StatusEffectData data = statusDatabase.Find(x => x.statusId == ActiveStatuses[i].StatusId);
-                
+
                 // 2. 이 SO가 '받는 피해(IncomingDamage)'에 영향을 주는 놈이면 배율을 곱한다!
                 if (data != null && data.effectTarget == StatusEffectTarget.IncomingDamage)
                 {
-                    multiplier *= ActiveStatuses[i].Power; 
+                    multiplier *= ActiveStatuses[i].Power;
                 }
             }
         }
@@ -760,11 +785,11 @@ public class NetworkBossCore : NetworkBehaviour
             if (ActiveStatuses[i].StatusId != 0)
             {
                 StatusEffectData data = statusDatabase.Find(x => x.statusId == ActiveStatuses[i].StatusId);
-                
+
                 // '주는 피해(OutgoingDamage)'에 영향을 주는 놈이면 배율을 곱한다!
                 if (data != null && data.effectTarget == StatusEffectTarget.OutgoingDamage)
                 {
-                    multiplier *= ActiveStatuses[i].Power; 
+                    multiplier *= ActiveStatuses[i].Power;
                 }
             }
         }

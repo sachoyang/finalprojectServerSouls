@@ -885,6 +885,14 @@ public class NetworkPlayerController : NetworkBehaviour
                 continue;
             }
 
+            // 제단 때리기 용 rpc 함수 호출 부문
+            GimmickAltar altar = hit.GetComponentInParent<GimmickAltar>();
+            if (altar != null)
+            {
+                altar.RPC_TakeDamage(damage);
+                continue; // 제단을 때렸으면 보스 부위 검사는 건너뜁니다!
+            }
+
             BossHitbox bossHitbox = hit.GetComponentInParent<BossHitbox>();
             if (bossHitbox == null)
             {

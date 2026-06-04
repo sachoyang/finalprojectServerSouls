@@ -52,4 +52,23 @@ public class DragonBoss : NetworkBossCore
         }
         return false;
     }
+
+    // FixedUpdateNetwork 안에 2페이즈 진입을 감지하는 부분을 하나 추가해줍니다.
+    public override void FixedUpdateNetwork()
+    {
+        base.FixedUpdateNetwork();
+
+        if (!HasStateAuthority) return;
+
+        // 변신(포효) 상태에 들어갔고, 아직 기믹을 안 켰다면 켭니다!
+        if (CurrentState == BossState.PhaseTransition && !IsGimmickActive)
+        {
+            IsGimmickActive = true;
+            
+            if (DragonArenaGimmick.Instance != null)
+            {
+                DragonArenaGimmick.Instance.StartGimmick(this);
+            }
+        }
+    }
 }
