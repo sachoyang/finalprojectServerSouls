@@ -2192,6 +2192,11 @@ MonoBehaviour:
     m_Bits: 128
   bodyRadius: 6
   castHeightOffset: 3
+  groundLayerMask:
+    serializedVersion: 2
+    m_Bits: 512
+  stepHeight: 0.5
+  gravitySpeed: 15
   phase1Patterns:
   - {fileID: 11400000, guid: 11803d2a65fe73941b772b9ffa4f749b, type: 2}
   - {fileID: 11400000, guid: 5b09769c6923a7f449e4c867f4b4ad05, type: 2}

@@ -44,6 +44,14 @@ public class NetworkBossCore : NetworkBehaviour
     public float bodyRadius = 2.0f;
     public float castHeightOffset = 2.0f;
 
+    [Header("지형(Y축) 설정")]
+    [Tooltip("바닥(지형)으로 인식할 레이어 (ground Layer)")]
+    public LayerMask groundLayerMask; 
+    [Tooltip("보스가 타고 올라갈 수 있는 최대 계단/경사로 높이")]
+    public float stepHeight = 0.5f;
+    [Tooltip("보스가 공중에 떴을 때 떨어지는 중력 속도")]
+    public float gravitySpeed = 15.0f;
+
     [Header("패턴 데이터 (ScriptableObject 리스트)")]
     [Tooltip("1페이즈에서 사용할 패턴 모듈들을 넣어주세요.")]
     public List<BossPatternModule> phase1Patterns;
@@ -518,7 +526,7 @@ public class NetworkBossCore : NetworkBehaviour
     }
 
     // ==========================================
-    // [누락 복구] 완벽한 벽 미끄러짐 물리 연산
+    // 벽 미끄러짐 물리 연산 (y축 갱신도 추가함)
     // ==========================================
     private void PerformWallSlideDisplacement(Vector3 targetDisplacement)
     {
@@ -553,6 +561,31 @@ public class NetworkBossCore : NetworkBehaviour
         else
         {
             transform.position += targetDisplacement;
+        }
+
+        StickToGround();
+    }
+
+    // ==========================================
+    // Y축 지형에 보스를 밀착시키는 로직
+    // ==========================================
+    private void StickToGround()
+    {
+        // 1. 레이저를 쏠 시작점: 보스 발바닥에서 계단 높이(stepHeight)만큼 위로 올린 위치
+        Vector3 rayStart = transform.position + (Vector3.up * stepHeight);
+
+        // 2. 바닥을 향해 레이저를 쏩니다. (거리는 stepHeight + 여유분)
+        if (Physics.Raycast(rayStart, Vector3.down, out RaycastHit hit, stepHeight * 2f, groundLayerMask))
+        {
+            // 3. 바닥을 찾았다면? 보스의 Y축 위치를 바닥의 Y축과 정확히 일치시킵니다.
+            Vector3 newPosition = transform.position;
+            newPosition.y = hit.point.y; 
+            transform.position = newPosition;
+        }
+        else
+        {
+            // 4. 바닥이 안 닿는다면? (절벽이거나 공중에 떴을 때) -> 가짜 중력을 적용해 아래로 떨어뜨립니다.
+            transform.position += Vector3.down * gravitySpeed * Runner.DeltaTime;
         }
     }
 

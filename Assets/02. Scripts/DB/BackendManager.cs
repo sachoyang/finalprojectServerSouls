@@ -23,7 +23,7 @@ public class SkillResponse
 
 public class BackendManager : MonoBehaviour
 {
-    // 싱글톤 세팅: 어디서든 NetworkManager.Instance 로 접근 가능!
+    // 싱글톤 세팅: 어디서든 BackendManager.Instance 로 접근 가능!
     public static BackendManager Instance { get; private set; }
 
     [Header("서버 IP 자동화 세팅")]
