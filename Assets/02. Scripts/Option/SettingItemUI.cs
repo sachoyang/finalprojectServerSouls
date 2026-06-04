@@ -16,19 +16,34 @@ public class SettingItemUI : MonoBehaviour
     public void Setup(SettingItem data)
     {
         _data = data;
-        itemNameText.text = data.itemName;
-        _options = data.options;
 
-        _currentIndex = data.defaultIndex;
+        if (_data == null)
+            return;
 
-        if (GameSettingsManager.Instance != null && data.settingKey != SettingKey.None)
-            _currentIndex = GameSettingsManager.Instance.GetInt(data.settingKey, data.defaultIndex);
+        if (itemNameText != null)
+            itemNameText.text = _data.itemName;
 
-        btnPrev.onClick.RemoveAllListeners();
-        btnPrev.onClick.AddListener(PrevOption);
+        _options = _data.options;
 
-        btnNext.onClick.RemoveAllListeners();
-        btnNext.onClick.AddListener(NextOption);
+        _currentIndex = Mathf.Clamp(_data.defaultIndex, 0, GetMaxOptionIndex());
+
+        if (GameSettingsManager.Instance != null && _data.settingKey != SettingKey.None)
+        {
+            int savedIndex = GameSettingsManager.Instance.GetInt(_data.settingKey, _currentIndex);
+            _currentIndex = Mathf.Clamp(savedIndex, 0, GetMaxOptionIndex());
+        }
+
+        if (btnPrev != null)
+        {
+            btnPrev.onClick.RemoveListener(PrevOption);
+            btnPrev.onClick.AddListener(PrevOption);
+        }
+
+        if (btnNext != null)
+        {
+            btnNext.onClick.RemoveListener(NextOption);
+            btnNext.onClick.AddListener(NextOption);
+        }
 
         UpdateUI();
         ApplySetting();
@@ -56,8 +71,14 @@ public class SettingItemUI : MonoBehaviour
 
     private void UpdateUI()
     {
-        if (_options == null || _options.Count == 0)
+        if (optionText == null)
             return;
+
+        if (_options == null || _options.Count == 0)
+        {
+            optionText.text = string.Empty;
+            return;
+        }
 
         optionText.text = _options[_currentIndex];
     }
@@ -76,5 +97,13 @@ public class SettingItemUI : MonoBehaviour
             return;
 
         GameSettingsManager.Instance.SetInt(_data.settingKey, _currentIndex);
+    }
+
+    private int GetMaxOptionIndex()
+    {
+        if (_options == null || _options.Count == 0)
+            return 0;
+
+        return _options.Count - 1;
     }
 }
