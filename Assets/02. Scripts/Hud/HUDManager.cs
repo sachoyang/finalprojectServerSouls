@@ -67,14 +67,20 @@ public class HUDManager : MonoBehaviour
                 abilityInventory = localPlayerController.GetComponent<PlayerAbilityInventory>();
         }
 
-        if (boss == null)
-            boss = FindObjectOfType<NetworkBossCore>();
+        if (boss == null || boss.CurrentState == BossState.Die)
+            boss = FindActiveBoss();
     }
 
     private void TryFindRuntimeReferences()
     {
-        if (localPlayerController != null && playerStats != null && abilityInventory != null && boss != null)
+        if (localPlayerController != null &&
+            playerStats != null &&
+            abilityInventory != null &&
+            boss != null &&
+            boss.CurrentState != BossState.Die)
+        {
             return;
+        }
 
         FindRuntimeReferences();
     }
@@ -110,10 +116,50 @@ public class HUDManager : MonoBehaviour
 
     private void UpdateBossHUD()
     {
-        if (bossHUDView == null || boss == null)
+        if (bossHUDView == null)
             return;
 
-        bossHUDView.SetHp(boss.CurrentHP, boss.maxHP);
+        if (boss == null || boss.CurrentState == BossState.Die)
+            boss = FindActiveBoss();
+
+        if (boss == null)
+        {
+            bossHUDView.SetVisible(false);
+            return;
+        }
+
+        float maxHp = boss.maxHP > 0f ? boss.maxHP : boss.baseMaxHP;
+        float currentHp = boss.CurrentHP;
+
+        if (currentHp <= 0f && boss.CurrentState != BossState.Die)
+            currentHp = maxHp;
+
+        bossHUDView.SetBossName(boss.bossName);
+        bossHUDView.SetHp(currentHp, maxHp);
+        bossHUDView.SetVisible(boss.CurrentState != BossState.Die);
+    }
+
+    private NetworkBossCore FindActiveBoss()
+    {
+        NetworkBossCore[] bosses = FindObjectsOfType<NetworkBossCore>();
+
+        for (int i = 0; i < bosses.Length; i++)
+        {
+            NetworkBossCore targetBoss = bosses[i];
+
+            if (targetBoss == null)
+                continue;
+
+            if (!targetBoss.gameObject.activeInHierarchy)
+                continue;
+
+            if (targetBoss.CurrentState == BossState.Die)
+                continue;
+
+            return targetBoss;
+        }
+
+        return null;
     }
 
     private void UpdateSkillHUD()
@@ -209,6 +255,9 @@ public class HUDManager : MonoBehaviour
 
     private void ClearSkillSlots()
     {
+        if (skillSlotViews == null)
+            return;
+
         for (int i = 0; i < skillSlotViews.Length; i++)
         {
             if (skillSlotViews[i] != null)
@@ -225,7 +274,10 @@ public class HUDManager : MonoBehaviour
         }
 
         if (bossHUDView != null)
-            bossHUDView.SetHp(0f, 1f);
+        {
+            bossHUDView.Clear();
+            bossHUDView.SetVisible(false);
+        }
 
         ClearSkillSlots();
 
