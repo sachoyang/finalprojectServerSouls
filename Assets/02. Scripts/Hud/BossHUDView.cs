@@ -3,22 +3,66 @@ using UnityEngine.UI;
 
 public class BossHUDView : MonoBehaviour
 {
-    [Header("Boss HP")]
-    [SerializeField] private Image bossHpFillImage;
+    [Header("Root")]
+    [SerializeField] private CanvasGroup canvasGroup;
+
+    [Header("Boss Info")]
+    [SerializeField] private Text bossNameText;
+
+    [Header("HP")]
+    [SerializeField] private Image hpFillImage;
+
+    [Header("State")]
+    [SerializeField] private Text stateText;
+
+    private void Awake()
+    {
+        if (canvasGroup == null)
+            canvasGroup = GetComponent<CanvasGroup>();
+
+        if (canvasGroup == null)
+            canvasGroup = gameObject.AddComponent<CanvasGroup>();
+    }
+
+    public void SetVisible(bool isVisible)
+    {
+        if (canvasGroup == null)
+            return;
+
+        canvasGroup.alpha = isVisible ? 1f : 0f;
+        canvasGroup.interactable = isVisible;
+        canvasGroup.blocksRaycasts = isVisible;
+    }
+
+    public void SetBossName(string bossName)
+    {
+        if (bossNameText == null)
+            return;
+
+        bossNameText.text = string.IsNullOrEmpty(bossName) ? string.Empty : bossName;
+    }
 
     public void SetHp(float currentHp, float maxHp)
     {
-        float hpRatio = GetSafeRatio(currentHp, maxHp);
+        if (hpFillImage == null)
+            return;
 
-        if (bossHpFillImage != null)
-            bossHpFillImage.fillAmount = hpRatio;
+        float hpRate = maxHp > 0f ? currentHp / maxHp : 0f;
+        hpFillImage.fillAmount = Mathf.Clamp01(hpRate);
     }
 
-    private float GetSafeRatio(float currentValue, float maxValue)
+    public void SetStateText(string stateName)
     {
-        if (maxValue <= 0f)
-            return 0f;
+        if (stateText == null)
+            return;
 
-        return Mathf.Clamp01(currentValue / maxValue);
+        stateText.text = string.IsNullOrEmpty(stateName) ? string.Empty : stateName;
+    }
+
+    public void Clear()
+    {
+        SetBossName(string.Empty);
+        SetHp(0f, 1f);
+        SetStateText(string.Empty);
     }
 }
