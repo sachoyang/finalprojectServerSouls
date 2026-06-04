@@ -138,6 +138,8 @@ public class BossArenaManager : NetworkBehaviour, INetworkRunnerCallbacks
 
                     //baseMaxHP를 바탕으로 뻥튀기된 진짜 maxHP를 설정합니다.
                     bossCore.maxHP = bossCore.baseMaxHP * hpMult;
+
+                    bossCore.bossName = bossData.bossName;
                 }
             }
         );

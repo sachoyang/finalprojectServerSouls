@@ -2184,6 +2184,10 @@ MonoBehaviour:
   patternCooldown: 2
   wakeUpAnimName: Scream
   wakeUpDuration: 2.8
+  maxGroggy: 40
+  groggyDuration: 3
+  groggyAnimLength: 1.4
+  _CurrentGroggy: 0
   baseMaxHP: 100000
   _maxHP: 0
   _CurrentHP: 0

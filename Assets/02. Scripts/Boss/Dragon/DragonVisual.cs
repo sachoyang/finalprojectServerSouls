@@ -41,7 +41,6 @@ public class DragonVisual : MonoBehaviour, IBossVisual
 
     public void SetSpeed(float speedValue) { anim.SetFloat("MoveSpeed", speedValue); }
     public void SetAnimSpeed(float multiplier) { anim.speed = multiplier; }
-    public void SetSleep(bool isSleeping) { anim.SetBool("DoSleep", isSleeping); }
     public void DoLocomotion() { anim.CrossFade("Locomotion", 0.1f); }
 
     // ==========================================

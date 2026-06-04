@@ -1,6 +1,7 @@
 using Fusion;
 using UnityEngine;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 
 // 보스의 현재 상태를 아주 심플하게 통제하기 위한 열거형
 public enum BossState
@@ -11,7 +12,25 @@ public enum BossState
     Idle,
     Walk,
     ExecutingPattern, // SO 패턴을 실행 중일 때의 상태
-    Die
+    Die,
+    Groggy,
+}
+
+public enum BossStatusType
+{
+    None = 0,
+    ArmorBreak = 1, // 받는 데미지 증가 (방깎)
+    Enrage = 2,     // 주는 데미지 증가 (공격력 증가)
+    Slow = 3,       // 행동/이동 속도 감소 (추후 활용)
+    Burn = 4        // 도트 데미지 (추후 활용)
+}
+
+// 퓨전 네트워크에서 리스트로 동기화하기 위한 구조체
+public struct BossStatusData : INetworkStruct
+{
+    public int StatusId;      // BossStatusType을 int로 저장
+    public float EndTime;     // 언제 끝나는지 (Runner.SimulationTime 기준)
+    public float Power;       // 효과 수치 (예: 1.5면 1.5배 데미지)
 }
 
 public class NetworkBossCore : NetworkBehaviour
@@ -32,10 +51,22 @@ public class NetworkBossCore : NetworkBehaviour
     public float wakeUpDuration = 2.8f;
     private int _wakeUpAnimHash; // 최적화용 해시 변수
 
+    [Header("그로기(Stagger) 설정")]
+    public float maxGroggy = 40f;
+    public float groggyDuration = 3.0f; // 그로기 지속 시간
+    [Tooltip("getHit 애니메이션의 원래 길이 (초 단위)")]
+    public float groggyAnimLength = 1.4f;
+    [Networked] public float CurrentGroggy { get; set; }
+
+
+    // 최대 8개의 상태이상을 동시에 가질 수 있는 네트워크 배열 (UI에서 이걸 읽어가면 됩니다!)
+    [Networked, Capacity(8)]
+    public NetworkArray<BossStatusData> ActiveStatuses { get; }
+
     [Header("체력 설정")]
     [Tooltip("에디터에서 기획자가 설정하는 1층 기준 기본 체력")]
     public float baseMaxHP = 100000f;
-    
+
     [Networked] public float maxHP { get; set; }
     [Networked] public float CurrentHP { get; set; }
 
@@ -46,7 +77,7 @@ public class NetworkBossCore : NetworkBehaviour
 
     [Header("지형(Y축) 설정")]
     [Tooltip("바닥(지형)으로 인식할 레이어 (ground Layer)")]
-    public LayerMask groundLayerMask; 
+    public LayerMask groundLayerMask;
     [Tooltip("보스가 타고 올라갈 수 있는 최대 계단/경사로 높이")]
     public float stepHeight = 0.5f;
     [Tooltip("보스가 공중에 떴을 때 떨어지는 중력 속도")]
@@ -55,7 +86,7 @@ public class NetworkBossCore : NetworkBehaviour
     [Header("패턴 데이터 (ScriptableObject 리스트)")]
     [Tooltip("1페이즈에서 사용할 패턴 모듈들을 넣어주세요.")]
     public List<BossPatternModule> phase1Patterns;
-    
+
     [Tooltip("2페이즈(광폭화 등)에서 사용할 패턴 모듈들을 넣어주세요.")]
     public List<BossPatternModule> phase2Patterns;
 
@@ -64,7 +95,7 @@ public class NetworkBossCore : NetworkBehaviour
 
     // 스테이지 난이도에 따른 데미지 뻥튀기 계수
     [Networked] public float DamageMultiplier { get; set; } = 1.0f;
-    
+
     // 현재 진행 중인 페이즈 상태
     [Networked] public int CurrentPhase { get; set; } = 1;
 
@@ -113,6 +144,21 @@ public class NetworkBossCore : NetworkBehaviour
     {
         if (!HasStateAuthority || CurrentHP <= 0) return;
 
+        // 매 프레임 만료된 버프/디버프 청소
+        ProcessStatuses();
+
+        // 그로기 상태일 때는 타이머만 체크하고 아무것도 안 함!
+        if (CurrentState == BossState.Groggy)
+        {
+            if (StateTimer.Expired(Runner))
+            {
+                CurrentGroggy = 0; // 그로기 수치 초기화
+                AttackCooldown = TickTimer.CreateFromSeconds(Runner, patternCooldown);
+                ChangeState(BossState.Idle);
+            }
+            return;
+        }
+
         // 10초 딜미터기 정산
         if (CurrentState != BossState.Sleep && AggroTimer.Expired(Runner))
         {
@@ -135,7 +181,7 @@ public class NetworkBossCore : NetworkBehaviour
     }
 
     // ==========================================
-    // [그래프 기반 강제 이동 연산] (가장 중요한 부분!)
+    // [그래프 기반 강제 이동 연산]
     // ==========================================
     private void ProcessPatternMovement()
     {
@@ -179,7 +225,7 @@ public class NetworkBossCore : NetworkBehaviour
                 ChangeState(BossState.WakeUp);
 
                 StateTimer = TickTimer.CreateFromSeconds(Runner, wakeUpDuration);
-                
+
                 AggroTimer = TickTimer.CreateFromSeconds(Runner, aggroRefreshTime);
             }
             return;
@@ -370,17 +416,20 @@ public class NetworkBossCore : NetworkBehaviour
 
             // 걷기 블렌드 트리 속도 및 수면 상태 적용은 매 프레임 유지
             _visual.SetSpeed(CurrentState == BossState.Walk ? 1.0f : 0.0f);
-            _visual.SetSleep(CurrentState == BossState.Sleep);
+            //_visual.SetSleep(CurrentState == BossState.Sleep || CurrentState == BossState.Groggy);
 
             // 상태가 '방금 딱 바뀌었을 때만' 1회 호출
             if (_lastState != CurrentState)
             {
                 _visual.SetAnimSpeed(1.0f); // 패턴이 끝났으니 배속을 무조건 1.0(정상)으로 복구
 
-                if (CurrentState == BossState.WakeUp)
+                if (CurrentState == BossState.Groggy)
                 {
-                    // [새로 추가됨] 기상 상태 진입 시 포효(Scream) 재생!
-                    _visual.PlayAction(_wakeUpAnimHash);
+                    // 그로기 진입 시: 1.4초 / 5.0초 = 0.28배속으로 느리게 재생!
+                    float speedMult = groggyAnimLength / groggyDuration;
+                    _visual.SetAnimSpeed(speedMult);
+
+                    _visual.PlayAction(Animator.StringToHash("getHit"));
                 }
                 else if (CurrentState == BossState.Idle || CurrentState == BossState.Walk)
                 {
@@ -402,9 +451,8 @@ public class NetworkBossCore : NetworkBehaviour
         }
     }
 
-    // (기존 UpdateAggroByDamage, FindClosestTarget, RPC_TakeDamage 등은 생략 없이 그대로 유지)
     // ==========================================
-    // [핵심 추가] 10초마다 호출되는 딜미터기 정산 로직
+    // 10초마다 호출되는 딜미터기 정산 로직
     // ==========================================
     private void UpdateAggroByDamage()
     {
@@ -440,28 +488,46 @@ public class NetworkBossCore : NetworkBehaviour
     }
 
     // ==========================================
-    // [수정됨] 데미지와 함께 "누가 때렸는지(attacker)" 기록
+    // 데미지와 함께 "누가 때렸는지(attacker)" 기록
     // ==========================================
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    public void RPC_TakeDamage(float damage, NetworkObject attacker = null)
+    public void RPC_TakeDamage(float damage, float groggyDamage = 10f, NetworkObject attacker = null)
     {
         if (CurrentHP <= 0) return;
 
-        CurrentHP -= damage;
-        Debug.Log($"[Server] 보스가 데미지를 입음! 남은 HP: {CurrentHP}");
+        // 방깎 디버프 등을 계산하여 최종 데미지 산출
+        float finalDamage = damage * GetIncomingDamageMultiplier();
+        CurrentHP -= finalDamage;
 
-        // [🔥 핵심 추가] 체력이 50% 이하인데 아직 1페이즈고, 매니저가 2페이즈를 허락(5층 이상)했다면?!
+        // 그로기 수치 누적 (무적 연출 중이 아닐 때만)
+        if (CurrentState != BossState.PhaseTransition && CurrentState != BossState.Groggy)
+        {
+            CurrentGroggy += groggyDamage;
+            if (CurrentGroggy >= maxGroggy)
+            {
+                Debug.Log("[보스] 그로기(Stagger) 발생!");
+                // 그로기 발동 시 실행 중이던 패턴 강제 취소!
+                CurrentPatternIndex = -1;
+                CurrentStepIndex = -1;
+
+                StateTimer = TickTimer.CreateFromSeconds(Runner, groggyDuration);
+                ChangeState(BossState.Groggy);
+                // (선택) 여기서 _visual.PlayAction()으로 그로기 애니메이션 재생 해시값 호출
+            }
+        }
+
+        // 체력이 50% 이하인데 아직 1페이즈고, 매니저가 2페이즈를 허락(5층 이상)했다면?!
         if (CurrentPhase == 1 && AllowedMaxPhase >= 2 && CurrentHP <= (maxHP * 0.5f))
         {
             CurrentPhase = 2; // 즉시 2페이즈 패턴 리스트로 교체!
             ChangeState(BossState.PhaseTransition);
-            
+
             // 3초 동안 무적 & 포효 연출 진행 (기믹 매니저에게 신호를 보낼 완벽한 타이밍!)
-            StateTimer = TickTimer.CreateFromSeconds(Runner, 3.0f); 
-            Debug.Log("🔥 [보스] 체력 50% 이하! 2페이즈 광폭화 돌입!");
+            StateTimer = TickTimer.CreateFromSeconds(Runner, 3.0f);
+            Debug.Log("[보스] 체력 50% 이하! 2페이즈 광폭화 돌입!");
             return;
         }
-        
+
         if (attacker != null)
         {
             if (_damageTracker.ContainsKey(attacker)) _damageTracker[attacker] += damage;
@@ -579,7 +645,7 @@ public class NetworkBossCore : NetworkBehaviour
         {
             // 3. 바닥을 찾았다면? 보스의 Y축 위치를 바닥의 Y축과 정확히 일치시킵니다.
             Vector3 newPosition = transform.position;
-            newPosition.y = hit.point.y; 
+            newPosition.y = hit.point.y;
             transform.position = newPosition;
         }
         else
@@ -589,5 +655,83 @@ public class NetworkBossCore : NetworkBehaviour
         }
     }
 
+    // ------------------------------------------
+    // 상태이상 부여 함수 (서버 전용)
+    // ------------------------------------------
+    public void ApplyStatus(BossStatusType type, float duration, float power = 1.0f)
+    {
+        if (!HasStateAuthority || CurrentState == BossState.Die) return;
+
+        // 이미 같은 상태이상이 있는지 찾아서 덮어씌우기 (시간 연장)
+        for (int i = 0; i < ActiveStatuses.Length; i++)
+        {
+            if (ActiveStatuses[i].StatusId == (int)type)
+            {
+                BossStatusData existing = ActiveStatuses[i];
+                existing.EndTime = Runner.SimulationTime + duration;
+                existing.Power = power;
+                ActiveStatuses.Set(i, existing);
+                return;
+            }
+        }
+
+        // 없다면 빈자리(None)를 찾아서 새로 넣기
+        for (int i = 0; i < ActiveStatuses.Length; i++)
+        {
+            if (ActiveStatuses[i].StatusId == (int)BossStatusType.None)
+            {
+                ActiveStatuses.Set(i, new BossStatusData
+                {
+                    StatusId = (int)type,
+                    EndTime = Runner.SimulationTime + duration,
+                    Power = power
+                });
+                return;
+            }
+        }
+    }
+
+    // ------------------------------------------
+    // 매 프레임 시간 지난 상태이상 지우기 (FixedUpdateNetwork에 추가 필요)
+    // ------------------------------------------
+    private void ProcessStatuses()
+    {
+        for (int i = 0; i < ActiveStatuses.Length; i++)
+        {
+            if (ActiveStatuses[i].StatusId != (int)BossStatusType.None)
+            {
+                // 지속 시간이 끝났다면 배열에서 삭제 (None으로 초기화)
+                if (Runner.SimulationTime >= ActiveStatuses[i].EndTime)
+                {
+                    ActiveStatuses.Set(i, new BossStatusData());
+                }
+            }
+        }
+    }
+
+    // ------------------------------------------
+    // 실시간 데미지 배율 계산기 (버프/디버프 중첩 적용)
+    // ------------------------------------------
+    public float GetIncomingDamageMultiplier()
+    {
+        float multiplier = 1.0f;
+        for (int i = 0; i < ActiveStatuses.Length; i++)
+        {
+            if (ActiveStatuses[i].StatusId == (int)BossStatusType.ArmorBreak)
+                multiplier *= ActiveStatuses[i].Power; // 방깎 효과 곱연산
+        }
+        return multiplier;
+    }
+
+    public float GetOutgoingDamageMultiplier()
+    {
+        float multiplier = DamageMultiplier; // 기존 스테이지 난이도 배율
+        for (int i = 0; i < ActiveStatuses.Length; i++)
+        {
+            if (ActiveStatuses[i].StatusId == (int)BossStatusType.Enrage)
+                multiplier *= ActiveStatuses[i].Power; // 광폭화 등 공격력 업 효과
+        }
+        return multiplier;
+    }
     // ... 나머지 기존 기능들
 }

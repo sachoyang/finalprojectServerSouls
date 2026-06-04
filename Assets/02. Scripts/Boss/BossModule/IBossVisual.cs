@@ -7,6 +7,5 @@ public interface IBossVisual
     
     void SetSpeed(float speedValue);
     void SetAnimSpeed(float multiplier);
-    void SetSleep(bool isSleeping);
     void DoLocomotion();
 }

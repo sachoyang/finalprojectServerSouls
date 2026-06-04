@@ -52,20 +52,24 @@ public class BossHitbox : MonoBehaviour
     // ==========================================
     private void OnTriggerEnter(Collider other)
     {
-        // 공격 중이 아니거나 공격 부위가 아니면 무시
         if (!isAttackHitbox || !_isCurrentlyAttacking) return;
 
         if (other.CompareTag("Player"))
         {
-            // PlayerStats 스크립트를 가져와서 데미지 함수를 호출합니다!
             PlayerStats playerStats = other.GetComponent<PlayerStats>();
             if (playerStats != null)
             {
-                playerStats.TakeDamage(baseDamage);
-                Debug.Log($"[Hit] 보스의 {hitboxType} 공격 적중! 플레이어에게 {baseDamage} 데미지 줌!");
+                // 🔥 보스의 버프 상태(공업 등)를 읽어와서 최종 데미지 계산!
+                float finalDamage = baseDamage;
+                if (_bossScript != null)
+                {
+                    finalDamage *= _bossScript.GetOutgoingDamageMultiplier();
+                }
+
+                playerStats.TakeDamage(finalDamage);
+                Debug.Log($"[Hit] 보스 공격 적중! 최종 딜: {finalDamage}");
             }
             
-            // 다단히트 방지: 한 대 치면 이번 공격 턴에서는 데미지 판정 오프
             _isCurrentlyAttacking = false; 
         }
     }
