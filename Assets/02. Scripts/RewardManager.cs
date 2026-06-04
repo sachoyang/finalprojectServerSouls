@@ -83,14 +83,14 @@ public class RewardManager : MonoBehaviour
             CameraManager cameraManager = CameraManager.GetOrCreate();
             if (cameraManager != null)
             {
-                CameraPointManager cameraPointManager = CameraPointManager.Instance;
-                if (cameraPointManager != null)
+                CutsceneManager cutsceneManager = CutsceneManager.Instance;
+                if (cutsceneManager != null)
                 {
-                    yield return cameraPointManager.PlayGoldChestCutscene(cameraManager);
+                    yield return cutsceneManager.PlayGoldChestCutscene();
                 }
                 else
                 {
-                    Debug.LogWarning("[RewardManager] CameraPointManager was not found.");
+                    Debug.LogWarning("[RewardManager] CutsceneManager was not found.");
                 }
             }
 

@@ -1,4 +1,3 @@
-using System.Collections;
 using UnityEngine;
 
 public class CameraPointManager : MonoBehaviour
@@ -7,10 +6,16 @@ public class CameraPointManager : MonoBehaviour
 
     [Header("Gold Chest Cutscene")]
     [SerializeField] private Transform goldChestCameraPoint;
-    [SerializeField] private float goldChestCameraMoveDuration = 1.2f;
-    [SerializeField] private float goldChestCameraFieldOfView = 35f;
+
+    [Header("Boss Wake Up Cutscene")]
+    [SerializeField] private Transform bossWakeUpCameraPoint;
+
+    [Header("Gate Kick Cutscene")]
+    [SerializeField] private Transform gateKickCameraPoint;
 
     public Transform GoldChestCameraPoint => goldChestCameraPoint;
+    public Transform BossWakeUpCameraPoint => bossWakeUpCameraPoint;
+    public Transform GateKickCameraPoint => gateKickCameraPoint;
 
     private void Awake()
     {
@@ -29,25 +34,5 @@ public class CameraPointManager : MonoBehaviour
         {
             Instance = null;
         }
-    }
-
-    public IEnumerator PlayGoldChestCutscene(CameraManager cameraManager)
-    {
-        if (cameraManager == null)
-        {
-            yield break;
-        }
-
-        if (goldChestCameraPoint == null)
-        {
-            Debug.LogWarning("[CameraPointManager] Gold Chest Camera Point is not assigned.");
-            yield break;
-        }
-
-        cameraManager.BeginRewardCutscene();
-        yield return cameraManager.ZoomToPoint(
-            goldChestCameraPoint,
-            goldChestCameraMoveDuration,
-            goldChestCameraFieldOfView);
     }
 }
