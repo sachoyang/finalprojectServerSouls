@@ -12,6 +12,7 @@ public class DragonVisual : MonoBehaviour, IBossVisual
     public BossHitbox mouthHitbox;
     public BossHitbox leftClawHitbox;
     public BossHitbox rightClawHitbox;
+    public BossHitbox bodyHitbox;
 
     [Header("광역기 이펙트 프리팹")]
     public GameObject jumpSlamEffectPrefab;
@@ -61,6 +62,15 @@ public class DragonVisual : MonoBehaviour, IBossVisual
         if (rightClawHitbox != null) rightClawHitbox.StopAttack();
     }
 
+    public void EnableBodyHitbox()
+    {
+        if (bodyHitbox != null) bodyHitbox.StartAttack();
+    }
+    public void DisableBodyHitbox()
+    {
+        if (bodyHitbox != null) bodyHitbox.StopAttack();
+    }
+
     public void SpawnJumpWarning()
     {
         if (jumpWarningPrefab != null && jumpSlamSpawnPoint != null)
@@ -75,5 +85,19 @@ public class DragonVisual : MonoBehaviour, IBossVisual
         {
             Instantiate(jumpSlamEffectPrefab, jumpSlamSpawnPoint.position, jumpSlamSpawnPoint.rotation);
         }
+    }
+
+    public void EnableHornAttackHitbox()
+    {
+        EnableClawHitbox();
+        EnableMouthHitbox();
+        EnableBodyHitbox();
+    }
+
+    public void DisableHornAttackHitbox()
+    {
+        DisableClawHitbox();
+        DisableMouthHitbox();
+        DisableBodyHitbox();
     }
 }

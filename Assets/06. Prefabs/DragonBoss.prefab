@@ -807,6 +807,7 @@ MonoBehaviour:
   mouthHitbox: {fileID: 2246489514440141446}
   leftClawHitbox: {fileID: 8621442443537035572}
   rightClawHitbox: {fileID: 7843523846323655771}
+  bodyHitbox: {fileID: 7809366816093122203}
   jumpSlamEffectPrefab: {fileID: 100000, guid: fa45173d878d027478169754e02ba58a, type: 3}
   jumpSlamSpawnPoint: {fileID: 607109985166594546}
   jumpWarningPrefab: {fileID: 6117522121999580243, guid: 0d47c36199aafbd4e851dbc6a74ea775, type: 3}
@@ -2182,6 +2183,7 @@ MonoBehaviour:
   wakeUpRange: 10
   aggroRefreshTime: 10
   patternCooldown: 2
+  statusDatabase: []
   wakeUpAnimName: Scream
   wakeUpDuration: 2.8
   maxGroggy: 40
@@ -2673,7 +2675,7 @@ MonoBehaviour:
   hitboxType: 1
   isHurtbox: 1
   damageMultiplier: 1
-  isAttackHitbox: 0
+  isAttackHitbox: 1
   baseDamage: 2000
   _isCurrentlyAttacking: 0
 --- !u!1 &7753364982041004899
