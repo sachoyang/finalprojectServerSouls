@@ -544,6 +544,22 @@ public class NetworkBossCore : NetworkBehaviour
     }
 
     // 컴포넌트 탐색 대신 유니티 태그("Player") 기반 탐색
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RPC_DebugKillBoss()
+    {
+        if (CurrentState == BossState.Die)
+        {
+            return;
+        }
+
+        CurrentHP = 0f;
+        CurrentPatternIndex = -1;
+        CurrentStepIndex = -1;
+        CurrentGroggy = 0f;
+        Debug.Log("[Boss Debug] Boss killed by debug input.");
+        ChangeState(BossState.Die);
+    }
+
     private void FindClosestTarget()
     {
         float closestDistance = float.MaxValue;

@@ -8,8 +8,6 @@ public class PlayerAbilityRewardDebugTester : MonoBehaviour
 {
     // 보스 처치 보상 시스템을 실제 보스 처치 없이 빠르게 확인하기 위한 디버그 컴포넌트.
     // '/'로 여는 플레이어 디버그 패널과 함께 쓰면 현재 보상 후보 이름을 화면에서 확인할 수 있다.
-    [SerializeField, Range(1, 8)] private int debugBossStage = 1;
-
     // F5: 지정한 보스 단계 기준으로 보상 후보를 생성한다.
     [SerializeField] private KeyCode offerRewardKey = KeyCode.F5;
 
@@ -37,8 +35,7 @@ public class PlayerAbilityRewardDebugTester : MonoBehaviour
 
         if (Input.GetKeyDown(offerRewardKey))
         {
-            IReadOnlyList<PlayerAbilityModule> options = _rewardController.OfferBossReward(debugBossStage);
-            Debug.Log($"[Reward Debug] Offered boss stage {debugBossStage}: {FormatOptions(options)}");
+            KillCurrentBoss();
         }
 
         if (Input.GetKeyDown(selectFirstOptionKey))
@@ -65,6 +62,19 @@ public class PlayerAbilityRewardDebugTester : MonoBehaviour
 
         bool selected = _rewardController.SelectPendingOption(optionIndex);
         Debug.Log($"[Reward Debug] Select {optionIndex + 1}: {optionName} / {(selected ? "Success" : "Failed")}");
+    }
+
+    private static void KillCurrentBoss()
+    {
+        NetworkBossCore boss = FindObjectOfType<NetworkBossCore>();
+        if (boss == null)
+        {
+            Debug.LogWarning("[Reward Debug] NetworkBossCore was not found.");
+            return;
+        }
+
+        boss.RPC_DebugKillBoss();
+        Debug.Log("[Reward Debug] Requested boss debug kill.");
     }
 
     private static string FormatOptions(IReadOnlyList<PlayerAbilityModule> options)

@@ -1,6 +1,8 @@
 using System.Collections;
 using Fusion;
 using UnityEngine;
+using UnityEngine.Animations;
+using UnityEngine.Playables;
 using UnityEngine.SceneManagement;
 
 public class CutsceneManager : MonoBehaviour
@@ -40,14 +42,15 @@ public class CutsceneManager : MonoBehaviour
     [SerializeField] private Transform playerKickPoint;
     [SerializeField] private AnimatorCommandMode playerAnimationMode = AnimatorCommandMode.Trigger;
     [SerializeField] private string playerKickAnimationName = "Kick2";
+    [SerializeField] private AnimationClip playerKickAnimationClip;
     [SerializeField] private float gateKickCameraZoomDuration = 0.7f;
     [SerializeField] private float gateKickCameraFieldOfView = 35f;
     [SerializeField] private float playerKickDuration = 1.2f;
 
     [Header("Gate")]
-    [SerializeField] private Animator gateAnimator;
-    [SerializeField] private AnimatorCommandMode gateAnimationMode = AnimatorCommandMode.Trigger;
-    [SerializeField] private string gateOpenAnimationName = "Open";
+    [SerializeField] private Animation gateAnimation;
+    [SerializeField] private string gateOpenAnimationName = "DoorOpen";
+    [SerializeField] private AnimationClip gateOpenAnimationClip;
     [SerializeField] private float gateOpenDelay = 0.35f;
 
     [Header("Scene Load")]
@@ -57,8 +60,14 @@ public class CutsceneManager : MonoBehaviour
 
     private bool _isPlaying;
     private bool _bossWakeUpCutscenePlayed;
+    private PlayableGraph _playerKickGraph;
 
     public bool IsPlaying => _isPlaying;
+    public float GateKickCutsceneDuration =>
+        Mathf.Max(0f, gateKickCameraZoomDuration) +
+        Mathf.Max(0f, gateOpenDelay) +
+        Mathf.Max(0f, playerKickDuration) +
+        Mathf.Max(0f, loadDelay);
 
     private void Awake()
     {
@@ -98,6 +107,8 @@ public class CutsceneManager : MonoBehaviour
 
     private void OnDestroy()
     {
+        DestroyPlayerKickGraph();
+
         if (Instance == this)
         {
             Instance = null;
@@ -137,7 +148,7 @@ public class CutsceneManager : MonoBehaviour
     {
         if (!_isPlaying)
         {
-            StartCoroutine(PlayGateKickRoutine(null));
+            StartCoroutine(PlayGateKickRoutine(null, false));
         }
     }
 
@@ -145,7 +156,7 @@ public class CutsceneManager : MonoBehaviour
     {
         if (!_isPlaying)
         {
-            StartCoroutine(PlayGateKickRoutine(runner));
+            StartCoroutine(PlayGateKickRoutine(runner, true));
         }
     }
 
@@ -198,7 +209,7 @@ public class CutsceneManager : MonoBehaviour
         _isPlaying = false;
     }
 
-    private IEnumerator PlayGateKickRoutine(NetworkRunner runner)
+    private IEnumerator PlayGateKickRoutine(NetworkRunner runner, bool loadSceneOnEnd)
     {
         _isPlaying = true;
 
@@ -221,14 +232,14 @@ public class CutsceneManager : MonoBehaviour
             }
         }
 
-        PlayAnimatorCommand(playerAnimator, playerAnimationMode, playerKickAnimationName);
+        PlayPlayerKickAnimation();
 
         if (gateOpenDelay > 0f)
         {
             yield return new WaitForSeconds(gateOpenDelay);
         }
 
-        PlayAnimatorCommand(gateAnimator, gateAnimationMode, gateOpenAnimationName);
+        PlayGateOpenAnimation();
 
         if (playerKickDuration > 0f)
         {
@@ -240,12 +251,16 @@ public class CutsceneManager : MonoBehaviour
             yield return cameraManager.RestoreGameplayCamera();
         }
 
-        if (loadDelay > 0f)
+        if (loadSceneOnEnd && loadDelay > 0f)
         {
             yield return new WaitForSeconds(loadDelay);
         }
 
-        LoadNextScene(runner);
+        if (loadSceneOnEnd)
+        {
+            LoadNextScene(runner);
+        }
+
         SetPlayerControlEnabled(true);
         _isPlaying = false;
     }
@@ -333,6 +348,70 @@ public class CutsceneManager : MonoBehaviour
         if (playerController != null)
         {
             playerController.enabled = isEnabled;
+        }
+    }
+
+    private void PlayPlayerKickAnimation()
+    {
+        if (playerAnimator == null)
+        {
+            Debug.LogWarning("[CutsceneManager] Player Animator is not assigned.");
+            return;
+        }
+
+        if (playerKickAnimationClip == null)
+        {
+            PlayAnimatorCommand(playerAnimator, playerAnimationMode, playerKickAnimationName);
+            return;
+        }
+
+        DestroyPlayerKickGraph();
+
+        _playerKickGraph = PlayableGraph.Create("GateKickCutscene");
+        AnimationPlayableOutput output = AnimationPlayableOutput.Create(_playerKickGraph, "PlayerKick", playerAnimator);
+        AnimationClipPlayable clipPlayable = AnimationClipPlayable.Create(_playerKickGraph, playerKickAnimationClip);
+        clipPlayable.SetApplyFootIK(true);
+        output.SetSourcePlayable(clipPlayable);
+        _playerKickGraph.Play();
+    }
+
+    private void DestroyPlayerKickGraph()
+    {
+        if (_playerKickGraph.IsValid())
+        {
+            _playerKickGraph.Destroy();
+        }
+    }
+
+    private void PlayGateOpenAnimation()
+    {
+        if (gateAnimation == null)
+        {
+            Debug.LogWarning("[CutsceneManager] Gate Animation is not assigned.");
+            return;
+        }
+
+        string clipName = !string.IsNullOrEmpty(gateOpenAnimationName)
+            ? gateOpenAnimationName
+            : gateOpenAnimationClip != null
+                ? gateOpenAnimationClip.name
+                : string.Empty;
+
+        if (gateOpenAnimationClip != null && !string.IsNullOrEmpty(clipName) && gateAnimation.GetClip(clipName) == null)
+        {
+            gateAnimation.AddClip(gateOpenAnimationClip, clipName);
+        }
+
+        if (!string.IsNullOrEmpty(clipName) && gateAnimation.GetClip(clipName) != null)
+        {
+            gateAnimation.Play(clipName);
+            return;
+        }
+
+        if (gateOpenAnimationClip != null)
+        {
+            gateAnimation.clip = gateOpenAnimationClip;
+            gateAnimation.Play();
         }
     }
 

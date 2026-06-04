@@ -1,13 +1,18 @@
 using Fusion;
 using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq; 
 
 public class NextLevelPortal : NetworkBehaviour
 {
+    [SerializeField] private bool playGateKickCutsceneBeforeLoad = true;
+    [SerializeField] private float gateKickCutsceneFallbackDuration = 2.7f;
+
     private NetworkObject _localPlayerNetObj;
     private Collider _enteredCollider; // [핵심] 꼬임 방지를 위해 들어온 콜라이더의 영수증을 보관합니다.
     private bool _isReady = false; 
+    private bool _isTransitioning = false;
 
     private HashSet<PlayerRef> _readyPlayers = new HashSet<PlayerRef>();
 
@@ -15,7 +20,7 @@ public class NextLevelPortal : NetworkBehaviour
 
     public override void FixedUpdateNetwork()
     {
-        if (HasStateAuthority && ReadyCount > 0)
+        if (HasStateAuthority && ReadyCount > 0 && !_isTransitioning)
         {
             _readyPlayers.RemoveWhere(p => !Runner.ActivePlayers.Contains(p));
             ReadyCount = _readyPlayers.Count;
@@ -25,9 +30,18 @@ public class NextLevelPortal : NetworkBehaviour
             if (ReadyCount >= totalPlayers && totalPlayers > 0)
             {
                 Debug.Log("[Portal] 전원 레디 완료! 다음 층으로 이동합니다.");
+                _isTransitioning = true;
                 ReadyCount = 0; 
                 _readyPlayers.Clear();
-                ChangeToNextLevel(Runner);
+                if (playGateKickCutsceneBeforeLoad && CutsceneManager.Instance != null)
+                {
+                    RPC_PlayGateKickCutscene();
+                    StartCoroutine(ChangeToNextLevelAfterCutscene(Runner));
+                }
+                else
+                {
+                    ChangeToNextLevel(Runner);
+                }
             }
         }
     }
@@ -120,5 +134,33 @@ public class NextLevelPortal : NetworkBehaviour
         {
             GameProgressionManager.Instance.GoToNextLevel(runner);
         }
+    }
+
+    private IEnumerator ChangeToNextLevelAfterCutscene(NetworkRunner runner)
+    {
+        CutsceneManager cutsceneManager = CutsceneManager.Instance;
+        float delay = cutsceneManager != null
+            ? cutsceneManager.GateKickCutsceneDuration
+            : gateKickCutsceneFallbackDuration;
+
+        if (delay > 0f)
+        {
+            yield return new WaitForSeconds(delay);
+        }
+
+        ChangeToNextLevel(runner);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_PlayGateKickCutscene()
+    {
+        CutsceneManager cutsceneManager = CutsceneManager.Instance;
+        if (cutsceneManager == null)
+        {
+            Debug.LogWarning("[Portal] CutsceneManager was not found.");
+            return;
+        }
+
+        cutsceneManager.PlayGateKickCutscene();
     }
 }
