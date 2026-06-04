@@ -468,6 +468,10 @@ PrefabInstance:
       propertyPath: m_Shadows.m_Type
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 3128284752435192069, guid: 23b5baea9d0423047acddd3bec009cd9, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
     - target: {fileID: 3728317436198385835, guid: 23b5baea9d0423047acddd3bec009cd9, type: 3}
       propertyPath: m_Shadows.m_Type
       value: 2
