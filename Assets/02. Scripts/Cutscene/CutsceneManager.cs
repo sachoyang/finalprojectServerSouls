@@ -1,0 +1,374 @@
+using System.Collections;
+using Fusion;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public class CutsceneManager : MonoBehaviour
+{
+    public enum AnimatorCommandMode
+    {
+        Trigger,
+        StateName
+    }
+
+    public static CutsceneManager Instance { get; private set; }
+
+    [Header("Managers")]
+    [SerializeField] private CameraManager cameraManager;
+    [SerializeField] private CameraPointManager cameraPointManager;
+
+    [Header("Gold Chest Cutscene")]
+    [SerializeField] private float goldChestCameraMoveDuration = 1.2f;
+    [SerializeField] private float goldChestCameraFieldOfView = 35f;
+
+    [Header("Boss Wake Up Cutscene")]
+    [SerializeField] private NetworkBossCore boss;
+    [SerializeField] private Animator bossAnimator;
+    [SerializeField] private AnimatorCommandMode bossAnimationMode = AnimatorCommandMode.StateName;
+    [SerializeField] private string bossWakeUpAnimationName = "Scream";
+    [SerializeField] private float bossWakeUpZoomDuration = 0.8f;
+    [SerializeField] private float bossWakeUpFieldOfView = 32f;
+    [SerializeField] private float bossWakeUpDuration = 2.8f;
+    [SerializeField] private float bossWakeUpHoldDuration = 0.25f;
+    [SerializeField] private bool playBossWakeUpOnStart = false;
+    [SerializeField] private bool playBossWakeUpOnBossState = true;
+    [SerializeField] private float bossWakeUpStartDelay = 0.5f;
+
+    [Header("Gate Kick Cutscene")]
+    [SerializeField] private NetworkObject playerObject;
+    [SerializeField] private Animator playerAnimator;
+    [SerializeField] private Transform playerKickPoint;
+    [SerializeField] private AnimatorCommandMode playerAnimationMode = AnimatorCommandMode.Trigger;
+    [SerializeField] private string playerKickAnimationName = "Kick2";
+    [SerializeField] private float gateKickCameraZoomDuration = 0.7f;
+    [SerializeField] private float gateKickCameraFieldOfView = 35f;
+    [SerializeField] private float playerKickDuration = 1.2f;
+
+    [Header("Gate")]
+    [SerializeField] private Animator gateAnimator;
+    [SerializeField] private AnimatorCommandMode gateAnimationMode = AnimatorCommandMode.Trigger;
+    [SerializeField] private string gateOpenAnimationName = "Open";
+    [SerializeField] private float gateOpenDelay = 0.35f;
+
+    [Header("Scene Load")]
+    [SerializeField] private string nextSceneName = "scServer_peace";
+    [SerializeField] private float loadDelay = 0.25f;
+    [SerializeField] private bool restoreCameraBeforeGateLoad = false;
+
+    private bool _isPlaying;
+    private bool _bossWakeUpCutscenePlayed;
+
+    public bool IsPlaying => _isPlaying;
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+        ResolveManagers();
+    }
+
+    private void Start()
+    {
+        if (playBossWakeUpOnStart)
+        {
+            PlayBossWakeUpCutscene();
+        }
+    }
+
+    private void Update()
+    {
+        if (!playBossWakeUpOnBossState ||
+            _bossWakeUpCutscenePlayed ||
+            _isPlaying)
+        {
+            return;
+        }
+
+        ResolveBossReferences();
+        if (boss != null && boss.CurrentState == BossState.WakeUp)
+        {
+            PlayBossWakeUpCutscene();
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+    }
+
+    public void PlayBossWakeUpCutscene()
+    {
+        if (!_isPlaying)
+        {
+            _bossWakeUpCutscenePlayed = true;
+            StartCoroutine(PlayBossWakeUpRoutine());
+        }
+    }
+
+    public IEnumerator PlayGoldChestCutscene()
+    {
+        ResolveManagers();
+
+        if (cameraManager == null || cameraPointManager == null)
+        {
+            yield break;
+        }
+
+        Transform point = cameraPointManager.GoldChestCameraPoint;
+        if (point == null)
+        {
+            Debug.LogWarning("[CutsceneManager] Gold Chest Camera Point is not assigned.");
+            yield break;
+        }
+
+        cameraManager.BeginRewardCutscene();
+        yield return cameraManager.ZoomToPoint(point, goldChestCameraMoveDuration, goldChestCameraFieldOfView);
+    }
+
+    public void PlayGateKickCutscene()
+    {
+        if (!_isPlaying)
+        {
+            StartCoroutine(PlayGateKickRoutine(null));
+        }
+    }
+
+    public void PlayGateKickCutsceneAndLoad(NetworkRunner runner)
+    {
+        if (!_isPlaying)
+        {
+            StartCoroutine(PlayGateKickRoutine(runner));
+        }
+    }
+
+    private IEnumerator PlayBossWakeUpRoutine()
+    {
+        _isPlaying = true;
+
+        if (bossWakeUpStartDelay > 0f)
+        {
+            yield return new WaitForSeconds(bossWakeUpStartDelay);
+        }
+
+        ResolveManagers();
+        ResolveBossReferences();
+
+        if (cameraManager != null && cameraPointManager != null)
+        {
+            Transform point = cameraPointManager.BossWakeUpCameraPoint;
+            if (point != null)
+            {
+                cameraManager.BeginCutscene();
+                yield return cameraManager.ZoomToPoint(point, bossWakeUpZoomDuration, bossWakeUpFieldOfView);
+            }
+            else
+            {
+                Debug.LogWarning("[CutsceneManager] Boss Wake Up Camera Point is not assigned.");
+            }
+        }
+
+        if (boss == null || boss.CurrentState != BossState.WakeUp)
+        {
+            PlayAnimatorCommand(bossAnimator, bossAnimationMode, bossWakeUpAnimationName);
+        }
+
+        if (bossWakeUpDuration > 0f)
+        {
+            yield return new WaitForSeconds(bossWakeUpDuration);
+        }
+
+        if (bossWakeUpHoldDuration > 0f)
+        {
+            yield return new WaitForSeconds(bossWakeUpHoldDuration);
+        }
+
+        if (cameraManager != null)
+        {
+            yield return cameraManager.RestoreGameplayCamera();
+        }
+
+        _isPlaying = false;
+    }
+
+    private IEnumerator PlayGateKickRoutine(NetworkRunner runner)
+    {
+        _isPlaying = true;
+
+        ResolveManagers();
+        ResolveLocalPlayer();
+        SetPlayerControlEnabled(false);
+        AlignPlayerToKickPoint();
+
+        if (cameraManager != null && cameraPointManager != null)
+        {
+            Transform point = cameraPointManager.GateKickCameraPoint;
+            if (point != null)
+            {
+                cameraManager.BeginCutscene();
+                yield return cameraManager.ZoomToPoint(point, gateKickCameraZoomDuration, gateKickCameraFieldOfView);
+            }
+            else
+            {
+                Debug.LogWarning("[CutsceneManager] Gate Kick Camera Point is not assigned.");
+            }
+        }
+
+        PlayAnimatorCommand(playerAnimator, playerAnimationMode, playerKickAnimationName);
+
+        if (gateOpenDelay > 0f)
+        {
+            yield return new WaitForSeconds(gateOpenDelay);
+        }
+
+        PlayAnimatorCommand(gateAnimator, gateAnimationMode, gateOpenAnimationName);
+
+        if (playerKickDuration > 0f)
+        {
+            yield return new WaitForSeconds(playerKickDuration);
+        }
+
+        if (restoreCameraBeforeGateLoad && cameraManager != null)
+        {
+            yield return cameraManager.RestoreGameplayCamera();
+        }
+
+        if (loadDelay > 0f)
+        {
+            yield return new WaitForSeconds(loadDelay);
+        }
+
+        LoadNextScene(runner);
+        SetPlayerControlEnabled(true);
+        _isPlaying = false;
+    }
+
+    private void ResolveManagers()
+    {
+        if (cameraManager == null)
+        {
+            cameraManager = CameraManager.GetOrCreate();
+        }
+
+        if (cameraPointManager == null)
+        {
+            cameraPointManager = CameraPointManager.Instance != null
+                ? CameraPointManager.Instance
+                : FindObjectOfType<CameraPointManager>(true);
+        }
+    }
+
+    private void ResolveBossReferences()
+    {
+        if (boss == null)
+        {
+            boss = FindObjectOfType<NetworkBossCore>();
+        }
+
+        if (bossAnimator == null && boss != null)
+        {
+            bossAnimator = boss.GetComponentInChildren<Animator>(true);
+        }
+
+        if (boss != null)
+        {
+            if (string.IsNullOrEmpty(bossWakeUpAnimationName))
+            {
+                bossWakeUpAnimationName = boss.wakeUpAnimName;
+            }
+
+            if (bossWakeUpDuration <= 0f)
+            {
+                bossWakeUpDuration = boss.wakeUpDuration;
+            }
+        }
+    }
+
+    private void ResolveLocalPlayer()
+    {
+        if (playerObject == null)
+        {
+            NetworkObject[] networkObjects = FindObjectsOfType<NetworkObject>(true);
+            foreach (NetworkObject networkObject in networkObjects)
+            {
+                if (networkObject != null && networkObject.HasInputAuthority)
+                {
+                    playerObject = networkObject;
+                    break;
+                }
+            }
+        }
+
+        if (playerAnimator == null && playerObject != null)
+        {
+            playerAnimator = playerObject.GetComponentInChildren<Animator>(true);
+        }
+    }
+
+    private void AlignPlayerToKickPoint()
+    {
+        if (playerObject == null || playerKickPoint == null)
+        {
+            return;
+        }
+
+        playerObject.transform.SetPositionAndRotation(playerKickPoint.position, playerKickPoint.rotation);
+    }
+
+    private void SetPlayerControlEnabled(bool isEnabled)
+    {
+        if (playerObject == null)
+        {
+            return;
+        }
+
+        NetworkPlayerController playerController = playerObject.GetComponent<NetworkPlayerController>();
+        if (playerController != null)
+        {
+            playerController.enabled = isEnabled;
+        }
+    }
+
+    private static void PlayAnimatorCommand(Animator animator, AnimatorCommandMode mode, string animationName)
+    {
+        if (animator == null || string.IsNullOrEmpty(animationName))
+        {
+            return;
+        }
+
+        if (mode == AnimatorCommandMode.Trigger)
+        {
+            animator.SetTrigger(animationName);
+            return;
+        }
+
+        animator.CrossFade(Animator.StringToHash(animationName), 0.1f, 0, 0f);
+    }
+
+    private void LoadNextScene(NetworkRunner runner)
+    {
+        if (string.IsNullOrEmpty(nextSceneName))
+        {
+            return;
+        }
+
+        if (runner != null)
+        {
+            if (runner.IsServer)
+            {
+                runner.LoadScene(nextSceneName, LoadSceneMode.Single);
+            }
+
+            return;
+        }
+
+        SceneManager.LoadScene(nextSceneName);
+    }
+}
