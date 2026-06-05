@@ -256,6 +256,18 @@ public class LobbyServerManager : NetworkBehaviour
 
         Debug.Log("모든 인원 준비 완료. 보스전 레벨로 전체 이동합니다.");
 
+        // 방 잠그기 (난입 방지)
+        if (Runner != null && Runner.SessionInfo != null)
+        {
+            // 1. IsVisible = false: 자동 매칭(랜덤) 리스트에서 이 방을 숨깁니다.
+            Runner.SessionInfo.IsVisible = false; 
+            
+            // 2. IsOpen = false: 방 코드를 직접 치고 들어오는 것조차 완벽하게 차단합니다.
+            Runner.SessionInfo.IsOpen = false; 
+            
+            Debug.Log("[Lobby] 방 문을 잠갔습니다. 더 이상 새로운 유저가 난입할 수 없습니다.");
+        }
+
         GameProgressionManager.Instance.StartFirstLevel(Runner);
     }
 

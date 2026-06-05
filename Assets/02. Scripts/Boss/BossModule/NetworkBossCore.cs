@@ -235,6 +235,17 @@ public class NetworkBossCore : NetworkBehaviour
                 ChangeState(BossState.WakeUp);
                 StateTimer = TickTimer.CreateFromSeconds(Runner, wakeUpDuration);
                 AggroTimer = TickTimer.CreateFromSeconds(Runner, aggroRefreshTime);
+
+
+                // ==========================================
+                // 전투 시작 시 방 잠금 (디버그 난입 방지 및 안전장치)
+                // ==========================================
+                if (Runner.SessionInfo != null && Runner.SessionInfo.IsOpen)
+                {
+                    Runner.SessionInfo.IsVisible = false;
+                    Runner.SessionInfo.IsOpen = false;
+                    Debug.Log("[네트워크] 보스가 깨어났습니다! 전투 중 난입을 막기 위해 방 문을 잠급니다.");
+                }
             }
             return;
         }
