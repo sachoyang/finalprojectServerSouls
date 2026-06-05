@@ -875,6 +875,10 @@ PrefabInstance:
       propertyPath: m_Range
       value: 6
       objectReference: {fileID: 0}
+    - target: {fileID: 3927632624238885598, guid: ffe4f0c4b63e7824699469bd003f4aaf, type: 3}
+      propertyPath: m_Icon
+      value: 
+      objectReference: {fileID: 3936346786652291628, guid: 0000000000000000d000000000000000, type: 0}
     - target: {fileID: 4172489279380739943, guid: ffe4f0c4b63e7824699469bd003f4aaf, type: 3}
       propertyPath: m_Range
       value: 6
@@ -978,6 +982,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 3927632624238885598, guid: ffe4f0c4b63e7824699469bd003f4aaf, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1435111842}
+    - targetCorrespondingSourceObject: {fileID: 3927632624238885598, guid: ffe4f0c4b63e7824699469bd003f4aaf, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1435111844}
+    - targetCorrespondingSourceObject: {fileID: 3927632624238885598, guid: ffe4f0c4b63e7824699469bd003f4aaf, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1435111845}
   m_SourcePrefab: {fileID: 100100000, guid: ffe4f0c4b63e7824699469bd003f4aaf, type: 3}
 --- !u!1 &1435111841 stripped
 GameObject:
@@ -1010,6 +1020,38 @@ Animation:
   m_CorrespondingSourceObject: {fileID: 8306038025898736384, guid: ffe4f0c4b63e7824699469bd003f4aaf, type: 3}
   m_PrefabInstance: {fileID: 1435111840}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1435111844
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1435111841}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0adbf752e6c4c9a4bb79dc179c9ade52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  healPerSecond: 1000
+--- !u!114 &1435111845
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1435111841}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  SortKey: 3566620185
+  ObjectInterest: 1
+  Flags: 262145
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 1435111844}
+  ForceRemoteRenderTimeframe: 0
 --- !u!1 &1537553049
 GameObject:
   m_ObjectHideFlags: 0

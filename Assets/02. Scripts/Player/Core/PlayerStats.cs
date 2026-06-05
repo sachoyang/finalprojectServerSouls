@@ -320,6 +320,18 @@ public class PlayerStats : NetworkBehaviour
         CurrentHealth = Mathf.Min(MaxHealth, CurrentHealth + amount);
     }
 
+    // ==========================================
+    // 스킬 해금과 무관하게 작동하는 외부 기믹용 강제 힐 함수
+    // ==========================================
+    public void ForceHeal(float amount)
+    {
+        // 권한이 없거나, 이미 죽었거나, 회복량이 0 이하면 무시
+        if (amount <= 0f || !HasStateAuthority || IsDead) return;
+
+        // 최대 체력을 넘지 않는 선에서 체력 증가
+        CurrentHealth = Mathf.Min(MaxHealth, CurrentHealth + amount);
+    }
+
     public void RestoreStamina(float amount)
     {
         // 포션/버프 등 즉시 기력 회복용 함수. 현재는 외부 연결을 위한 기본 입구만 준비한다.
