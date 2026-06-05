@@ -126,6 +126,7 @@ public class PlayerAbilityExecutor : MonoBehaviour
                 context.Owner,
                 attacker,
                 module.HitboxDamage,
+                module.HitboxRevivePower,
                 module.HitboxDelay,
                 module.HitboxLifetime);
         }

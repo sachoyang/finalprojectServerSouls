@@ -1,4 +1,5 @@
 using Fusion;
+using System;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -13,6 +14,7 @@ public class PlayerStats : NetworkBehaviour
         public readonly float BonusMaxStamina;
         public readonly float BonusDefenseRate;
         public readonly float BonusAttackDamageRate;
+        public readonly int DeathCount;
 
         public SessionSnapshot(
             float currentHealth,
@@ -21,7 +23,8 @@ public class PlayerStats : NetworkBehaviour
             float bonusMaxHealth,
             float bonusMaxStamina,
             float bonusDefenseRate,
-            float bonusAttackDamageRate)
+            float bonusAttackDamageRate,
+            int deathCount)
         {
             CurrentHealth = currentHealth;
             CurrentStamina = currentStamina;
@@ -30,6 +33,7 @@ public class PlayerStats : NetworkBehaviour
             BonusMaxStamina = bonusMaxStamina;
             BonusDefenseRate = bonusDefenseRate;
             BonusAttackDamageRate = bonusAttackDamageRate;
+            DeathCount = deathCount;
         }
     }
 
@@ -44,6 +48,13 @@ public class PlayerStats : NetworkBehaviour
     [SerializeField] private float staminaRegenDelay = 0.8f;
     // 연속 충돌로 한 공격이 여러 번 들어가는 것을 막기 위한 짧은 피격 무적 시간.
     [SerializeField] private float hitInvincibleDuration = 0.25f;
+
+    [Header("Revive")]
+    [SerializeField] private float baseReviveGaugePerSegment = 100f;
+    [SerializeField] private float reviveGaugeIncreasePerDeathAfterMaxSegments = 100f;
+    [SerializeField] private int maxReviveSegments = 3;
+    [SerializeField] private float reviveProgressDecayDelay = 2f;
+    [SerializeField] private float reviveProgressDecayPerSecond = 30f;
 
     [Header("Combat")]
     // 받는 데미지를 줄이는 비율. 0.5면 최종 피해가 50%만 적용된다.
@@ -88,6 +99,11 @@ public class PlayerStats : NetworkBehaviour
     [Networked] private float BonusMaxStamina { get; set; }
     [Networked] private float BonusDefenseRate { get; set; }
     [Networked] private float BonusAttackDamageRate { get; set; }
+    [Networked] public int DeathCount { get; private set; }
+    [Networked] public int ReviveSegmentCount { get; private set; }
+    [Networked] public float ReviveGaugePerSegment { get; private set; }
+    [Networked] public float ReviveProgress { get; private set; }
+    [Networked] private TickTimer ReviveDecayDelayTimer { get; set; }
 
     // 외부 스크립트가 수치를 읽을 때 인스펙터 값을 직접 수정하지 못하도록 읽기 전용으로 공개한다.
     public float MaxHealth => Mathf.Max(1f, maxHealth + BonusMaxHealth);
@@ -104,6 +120,11 @@ public class PlayerStats : NetworkBehaviour
     public float JumpSlashStaminaCost => jumpSlashStaminaCost;
     public float PowerUpStaminaCost => powerUpStaminaCost;
     public float SlideSlashStaminaCost => slideSlashStaminaCost;
+    public float ReviveRequiredGauge => Mathf.Max(1f, ReviveSegmentCount * ReviveGaugePerSegment);
+    public float ReviveNormalizedProgress => IsDead ? Mathf.Clamp01(ReviveProgress / ReviveRequiredGauge) : 0f;
+    public event Action<PlayerStats> ReviveStateChanged;
+
+    private ChangeDetector _changeDetector;
 
     public SessionSnapshot CreateSessionSnapshot()
     {
@@ -114,7 +135,8 @@ public class PlayerStats : NetworkBehaviour
             BonusMaxHealth,
             BonusMaxStamina,
             BonusDefenseRate,
-            BonusAttackDamageRate);
+            BonusAttackDamageRate,
+            DeathCount);
     }
 
     public void RestoreSessionSnapshot(SessionSnapshot snapshot)
@@ -128,6 +150,7 @@ public class PlayerStats : NetworkBehaviour
         BonusMaxStamina = snapshot.BonusMaxStamina;
         BonusDefenseRate = snapshot.BonusDefenseRate;
         BonusAttackDamageRate = snapshot.BonusAttackDamageRate;
+        DeathCount = Mathf.Max(0, snapshot.DeathCount);
 
         CurrentHealth = Mathf.Clamp(snapshot.CurrentHealth, 0f, MaxHealth);
         CurrentStamina = Mathf.Clamp(snapshot.CurrentStamina, 0f, MaxStamina);
@@ -135,10 +158,20 @@ public class PlayerStats : NetworkBehaviour
         IsAnimationInvincible = false;
         StaminaRegenDelayTimer = default;
         HitInvincibleTimer = default;
+        if (IsDead)
+        {
+            BeginReviveState(false);
+        }
+        else
+        {
+            ClearReviveProgress();
+        }
     }
 
     public override void Spawned()
     {
+        _changeDetector = GetChangeDetector(ChangeDetector.Source.SimulationState);
+
         // 체력/기력 같은 판정 값은 상태 권한을 가진 쪽에서만 초기화한다.
         // 프록시 클라이언트는 네트워크로 동기화된 값을 받기만 한다.
         if (!HasStateAuthority)
@@ -150,17 +183,46 @@ public class PlayerStats : NetworkBehaviour
         BonusMaxStamina = 0f;
         BonusDefenseRate = 0f;
         BonusAttackDamageRate = 0f;
+        DeathCount = 0;
         CurrentHealth = MaxHealth;
         CurrentStamina = MaxStamina;
         IsDead = false;
         IsAnimationInvincible = false;
+        ClearReviveProgress();
+    }
+
+    public override void Render()
+    {
+        if (_changeDetector == null)
+        {
+            return;
+        }
+
+        foreach (string change in _changeDetector.DetectChanges(this))
+        {
+            if (change == nameof(IsDead) ||
+                change == nameof(DeathCount) ||
+                change == nameof(ReviveSegmentCount) ||
+                change == nameof(ReviveGaugePerSegment) ||
+                change == nameof(ReviveProgress))
+            {
+                ReviveStateChanged?.Invoke(this);
+                break;
+            }
+        }
     }
 
     public override void FixedUpdateNetwork()
     {
         // 상태 권한이 없거나 죽은 상태라면 기력 회복 계산을 하지 않는다.
-        if (!HasStateAuthority || IsDead)
+        if (!HasStateAuthority)
         {
+            return;
+        }
+
+        if (IsDead)
+        {
+            UpdateReviveDecay();
             return;
         }
 
@@ -268,6 +330,17 @@ public class PlayerStats : NetworkBehaviour
         CurrentStamina = Mathf.Min(MaxStamina, CurrentStamina + amount);
     }
 
+    public void RegisterReviveHit(NetworkObject helper = null, float revivePower = 0f)
+    {
+        if (HasStateAuthority)
+        {
+            ApplyReviveHit(helper, revivePower);
+            return;
+        }
+
+        RPC_RegisterReviveHit(helper, revivePower);
+    }
+
     // 패시브 능력 모듈에 들어있는 스탯 보너스를 누적한다.
     // 실제 네트워크 스탯 값은 StateAuthority에서만 바꿔야 모든 클라이언트가 같은 결과를 받는다.
     public void ApplyPassiveStatBonus(PlayerAbilityModule module)
@@ -324,6 +397,12 @@ public class PlayerStats : NetworkBehaviour
         ApplyAnimationInvincible(isInvincible);
     }
 
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    private void RPC_RegisterReviveHit(NetworkObject helper, float revivePower)
+    {
+        ApplyReviveHit(helper, revivePower);
+    }
+
     private void ApplyDamage(float damage)
     {
         // 이미 죽었거나 짧은 피격 무적 중이면 데미지를 무시한다.
@@ -346,6 +425,7 @@ public class PlayerStats : NetworkBehaviour
             // 사망 상태는 NetworkPlayerController에서 입력/이동 제한에 사용된다.
             IsDead = true;
             IsAnimationInvincible = false;
+            BeginReviveState();
             Debug.Log("[Player Dead]");
         }
 
@@ -355,6 +435,87 @@ public class PlayerStats : NetworkBehaviour
     private void ApplyAnimationInvincible(bool isInvincible)
     {
         IsAnimationInvincible = !IsDead && isInvincible;
+    }
+
+    private void BeginReviveState(bool incrementDeath = true)
+    {
+        if (incrementDeath)
+        {
+            DeathCount++;
+        }
+        else if (DeathCount <= 0)
+        {
+            DeathCount = 1;
+        }
+
+        ReviveSegmentCount = Mathf.Clamp(DeathCount, 1, Mathf.Max(1, maxReviveSegments));
+        int extraDeaths = Mathf.Max(0, DeathCount - maxReviveSegments);
+        ReviveGaugePerSegment = Mathf.Max(1f, baseReviveGaugePerSegment + reviveGaugeIncreasePerDeathAfterMaxSegments * extraDeaths);
+        ReviveProgress = 0f;
+        ReviveDecayDelayTimer = default;
+        ReviveStateChanged?.Invoke(this);
+    }
+
+    private void ClearReviveProgress()
+    {
+        ReviveSegmentCount = 0;
+        ReviveGaugePerSegment = Mathf.Max(1f, baseReviveGaugePerSegment);
+        ReviveProgress = 0f;
+        ReviveDecayDelayTimer = default;
+        ReviveStateChanged?.Invoke(this);
+    }
+
+    private void ApplyReviveHit(NetworkObject helper, float revivePower)
+    {
+        if (!IsDead)
+        {
+            return;
+        }
+
+        if (helper != null && Object != null && helper == Object)
+        {
+            return;
+        }
+
+        if (revivePower <= 0f)
+        {
+            return;
+        }
+
+        ReviveProgress = Mathf.Min(ReviveRequiredGauge, ReviveProgress + revivePower);
+        ReviveDecayDelayTimer = TickTimer.CreateFromSeconds(Runner, reviveProgressDecayDelay);
+
+        if (ReviveProgress >= ReviveRequiredGauge)
+        {
+            ReviveFully();
+            return;
+        }
+
+        ReviveStateChanged?.Invoke(this);
+    }
+
+    private void UpdateReviveDecay()
+    {
+        if (ReviveProgress <= 0f || !ReviveDecayDelayTimer.ExpiredOrNotRunning(Runner))
+        {
+            return;
+        }
+
+        ReviveProgress = Mathf.Max(0f, ReviveProgress - reviveProgressDecayPerSecond * Runner.DeltaTime);
+        ReviveStateChanged?.Invoke(this);
+    }
+
+    private void ReviveFully()
+    {
+        IsDead = false;
+        IsAnimationInvincible = false;
+        CurrentHealth = MaxHealth;
+        CurrentStamina = MaxStamina;
+        StaminaRegenDelayTimer = default;
+        HitInvincibleTimer = default;
+        ClearReviveProgress();
+        GetComponent<NetworkPlayerController>()?.NotifyRevived();
+        Debug.Log("[Player Revived]");
     }
 
     private float ApplyAttackBonus(float baseDamage)

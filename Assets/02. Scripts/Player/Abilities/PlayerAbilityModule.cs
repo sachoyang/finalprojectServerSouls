@@ -103,6 +103,8 @@ public class PlayerAbilityModule : ScriptableObject
 
     [SerializeField] private float hitboxDamage;
 
+    [SerializeField] private float hitboxRevivePower = 34f;
+
     [SerializeField] private float hitboxDelay;
 
     [SerializeField] private float hitboxLifetime = 0.3f;
@@ -132,6 +134,7 @@ public class PlayerAbilityModule : ScriptableObject
     public GameObject HitboxPrefab => hitboxPrefab;
     public Vector3 HitboxLocalOffset => hitboxLocalOffset;
     public float HitboxDamage => hitboxDamage;
+    public float HitboxRevivePower => hitboxRevivePower;
     public float HitboxDelay => hitboxDelay;
     public float HitboxLifetime => hitboxLifetime;
 
