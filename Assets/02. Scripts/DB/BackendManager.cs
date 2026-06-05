@@ -11,6 +11,7 @@ public class AuthResponse
     public string message;
     public string nickname;
     public long unlocked_skills; // 64개 스킬 비트마스크 (BIGINT)
+    public string session_token; // 서버에서 보내줄 토큰 변수(마지막 세션 접근한 사람이 로그인)
 }
 
 [Serializable]
@@ -43,6 +44,12 @@ public class BackendManager : MonoBehaviour
     public string CurrentLoginID { get; private set; }
     public string CurrentNickname { get; private set; }
     public long CurrentSkillsBitmask { get; private set; }
+
+    public Action OnSessionExpired; // 세션이 만료되었을 때 호출될 이벤트
+    private Coroutine _heartbeatCoroutine;
+
+    // 로그인 성공 시 캐싱해둘 내 신분증(토큰)
+    public string CurrentSessionToken { get; private set; }
 
     private void Awake()
     {
@@ -158,6 +165,11 @@ public class BackendManager : MonoBehaviour
                     CurrentLoginID = id;
                     CurrentNickname = res.nickname;
                     CurrentSkillsBitmask = res.unlocked_skills;
+                    CurrentSessionToken = res.session_token;
+
+                    // 로그인에 성공하면 10초마다 세션을 검사하는 심장 박동을 켭니다!
+                    if (_heartbeatCoroutine != null) StopCoroutine(_heartbeatCoroutine);
+                    _heartbeatCoroutine = StartCoroutine(HeartbeatRoutine());
 
                     onComplete?.Invoke(true, "로그인 완료! 환영합니다, " + res.nickname);
                 }
@@ -192,6 +204,7 @@ public class BackendManager : MonoBehaviour
         WWWForm form = new WWWForm();
         form.AddField("login_id", id);
         form.AddField("unlocked_skills", newSkillsBitmask.ToString());
+        form.AddField("session_token", CurrentSessionToken);
 
         using (UnityWebRequest www = UnityWebRequest.Post(BASE_URL + "update_skills.php", form))
         {
@@ -199,7 +212,7 @@ public class BackendManager : MonoBehaviour
 
             if (www.result == UnityWebRequest.Result.Success)
             {
-                // 🔥 서버 원본 응답을 먼저 콘솔에 찍어봅니다!
+                // 서버 원본 응답을 먼저 콘솔에 찍어봅니다!
                 string rawText = www.downloadHandler.text;
                 Debug.Log("<color=cyan>[서버 원본 응답]</color> " + rawText);
 
@@ -214,11 +227,54 @@ public class BackendManager : MonoBehaviour
                 else
                 {
                     onComplete?.Invoke(false, res.message);
+                    // UI 스크립트 쪽에서 이 메시지를 받으면 강제로 타이틀 씬으로 돌려보내면 됨
+
                 }
             }
             else
             {
                 onComplete?.Invoke(false, "네트워크 에러: " + www.error);
+            }
+        }
+    }
+
+    // ==========================================
+    // [4] 하트비트 (세션 유효성 검사)
+    // ==========================================
+    private IEnumerator HeartbeatRoutine()
+    {
+        // 로그인되어 있는 동안 무한 반복
+        while (!string.IsNullOrEmpty(CurrentLoginID) && !string.IsNullOrEmpty(CurrentSessionToken))
+        {
+            // 15초 대기 (게임 서버 부하를 줄이려면 30초 정도로 늘려도 됩니다)
+            yield return new WaitForSeconds(15.0f);
+
+            WWWForm form = new WWWForm();
+            form.AddField("login_id", CurrentLoginID);
+            form.AddField("session_token", CurrentSessionToken);
+
+            using (UnityWebRequest www = UnityWebRequest.Post(BASE_URL + "check_session.php", form))
+            {
+                // 통신 실패는 일시적인 인터넷 끊김일 수 있으니 무시하고,
+                // 통신이 성공했는데 서버가 "invalid"를 뱉었을 때만 쫓아냅니다.
+                yield return www.SendWebRequest();
+
+                if (www.result == UnityWebRequest.Result.Success)
+                {
+                    // 간단하게 텍스트에 "invalid"가 포함되어 있는지 검사
+                    if (www.downloadHandler.text.Contains("invalid"))
+                    {
+                        Debug.LogWarning("<color=red>[경고] 중복 접속 감지! 세션이 만료되었습니다.</color>");
+                        
+                        // 하트비트 정지 및 정보 초기화
+                        CurrentLoginID = null;
+                        CurrentSessionToken = null;
+                        
+                        // 강제 로그아웃 이벤트 발생!
+                        OnSessionExpired?.Invoke(); 
+                        break;
+                    }
+                }
             }
         }
     }

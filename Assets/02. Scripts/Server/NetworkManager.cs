@@ -25,6 +25,44 @@ public class NetworkManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
+    // ==========================================
+    // 백엔드의 중복 접속 강제 퇴장 명령 듣기
+    // ==========================================
+    private void Start()
+    {
+        // 백엔드 매니저가 존재하면 이벤트 구독
+        if (BackendManager.Instance != null)
+        {
+            BackendManager.Instance.OnSessionExpired += HandleSessionExpired;
+        }
+    }
+
+    private void OnDestroy()
+    {
+        // 오브젝트 파괴 시 이벤트 구독 해제 (메모리 누수 방지)
+        if (BackendManager.Instance != null)
+        {
+            BackendManager.Instance.OnSessionExpired -= HandleSessionExpired;
+        }
+    }
+
+    // 세션 만료 시 실행될 강제 종료 함수
+    private async void HandleSessionExpired()
+    {
+        Debug.LogWarning("[NetworkManager] 중복 접속 감지! 네트워크를 끊고 타이틀로 강제 이동합니다.");
+
+        // 1. 퓨전 네트워크가 돌아가고 있다면 즉시 셧다운!
+        if (_runner != null && _runner.IsRunning)
+        {
+            await _runner.Shutdown();
+            _runner = null; // 초기화
+        }
+
+        // 2. 타이틀(로그인) 씬으로 쫓아내기 
+        // (LobbyServerManager에 적어두셨던 타이틀 씬 이름 적용!)
+        SceneManager.LoadScene("scLogin"); 
+    }
+
     public void StartAlone()
     {
         StartSession(GameMode.Host, "ALONE_" + Random.Range(1000, 9999));
