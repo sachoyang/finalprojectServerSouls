@@ -433,7 +433,7 @@ public class NetworkBossCore : NetworkBehaviour
 
                 if (CurrentState == BossState.Groggy)
                 {
-                    // 그로기 진입 시: 1.4초 / 5.0초 = 0.28배속으로 느리게 재생!
+                    // 그로기 진입 시 배속으로 느리게 재생!
                     float speedMult = groggyAnimLength / groggyDuration;
                     _visual.SetAnimSpeed(speedMult);
 
@@ -501,17 +501,21 @@ public class NetworkBossCore : NetworkBehaviour
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
     public void RPC_TakeDamage(float damage, float groggyDamage = 10f, NetworkObject attacker = null)
     {
-        if (CurrentHP <= 0)
-        {
-            ExecuteDeath();
-            return; // 여기서 끝! 아래 코드(변신 등)는 실행 안 됨
-        }
+        // 1. 이미 죽어있는 상태면 때려도 무시 (중복 실행 방지)
+        if (CurrentState == BossState.Die || CurrentHP <= 0) return; 
 
-        // 방깎 디버프 등을 계산하여 최종 데미지 산출
+        // 2. 방깎 디버프 등을 계산하여 최종 데미지 산출 후 체력 차감
         float finalDamage = damage * GetIncomingDamageMultiplier();
         CurrentHP -= finalDamage;
 
-        // 그로기 수치 누적 (무적 연출 중이 아닐 때만)
+        // 3. 데미지를 입고 나서 체력이 0 이하가 되었는지 확인!!
+        if (CurrentHP <= 0)
+        {
+            ExecuteDeath();
+            return; // 죽었으면 아래 코드(그로기, 변신 등) 실행 안 하고 함수 종료!
+        }
+
+        // 4. 그로기 수치 누적 (무적 연출 중이 아닐 때만)
         if (CurrentState != BossState.PhaseTransition && CurrentState != BossState.Groggy)
         {
             CurrentGroggy += groggyDamage;
@@ -524,28 +528,27 @@ public class NetworkBossCore : NetworkBehaviour
 
                 StateTimer = TickTimer.CreateFromSeconds(Runner, groggyDuration);
                 ChangeState(BossState.Groggy);
-                // (선택) 여기서 _visual.PlayAction()으로 그로기 애니메이션 재생 해시값 호출
             }
         }
 
-        // 체력이 50% 이하인데 아직 1페이즈고, 매니저가 2페이즈를 허락(5층 이상)했다면?!
+        // 5. 체력이 50% 이하인데 아직 1페이즈고, 매니저가 2페이즈를 허락(5층 이상)했다면?!
         if (CurrentPhase == 1 && AllowedMaxPhase >= 2 && CurrentHP <= (maxHP * 0.5f))
         {
             CurrentPhase = 2; // 즉시 2페이즈 패턴 리스트로 교체!
             ChangeState(BossState.PhaseTransition);
 
-            // 3초 동안 무적 & 포효 연출 진행 (기믹 매니저에게 신호를 보낼 완벽한 타이밍!)
+            // 3초 동안 무적 & 포효 연출 진행
             StateTimer = TickTimer.CreateFromSeconds(Runner, 3.0f);
             Debug.Log("[보스] 체력 50% 이하! 2페이즈 광폭화 돌입!");
             return;
         }
 
+        // 6. 어그로 딜미터기 기록
         if (attacker != null)
         {
             if (_damageTracker.ContainsKey(attacker)) _damageTracker[attacker] += damage;
             else _damageTracker[attacker] = damage;
         }
-
     }
 
     // ==========================================
