@@ -419,7 +419,7 @@ public class NetworkBossCore : NetworkBehaviour
                 int targetHash = action.animationHash != 0 ? action.animationHash : Animator.StringToHash(action.animationStateName);
                 _visual.PlayAction(targetHash);
 
-                // [수정됨: 배속 버그 해결] (원본 클립 길이 / 기획자가 설정한 시간)으로 정확한 배속 도출
+                // (원본 클립 길이 / 기획자가 설정한 시간)으로 정확한 배속 도출
                 if (action.animationClip != null && action.duration > 0f)
                 {
                     float speedMult = action.animationClip.length / action.duration;
