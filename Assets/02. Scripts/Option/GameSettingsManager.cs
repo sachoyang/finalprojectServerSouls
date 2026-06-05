@@ -26,7 +26,7 @@ public class GameSettingsManager : MonoBehaviour
         }
 
         Instance = this;
-        DontDestroyOnLoad(gameObject);
+        DontDestroyOnLoad(transform.root.gameObject);
 
         LoadAndApplySettings();
     }
@@ -100,7 +100,6 @@ public class GameSettingsManager : MonoBehaviour
     {
         if (key == SettingKey.MasterVolume)
         {
-            AudioListener.volume = value;
             SetMixerVolume(MasterVolumeParam, value);
         }
         else if (key == SettingKey.BgmVolume)
@@ -116,10 +115,16 @@ public class GameSettingsManager : MonoBehaviour
     private void SetMixerVolume(string parameterName, float volume)
     {
         if (audioMixer == null)
+        {
+            Debug.LogWarning("[GameSettingsManager] AudioMixer가 연결되지 않았습니다.");
             return;
+        }
 
         float db = volume <= 0.0001f ? -80f : Mathf.Log10(volume) * 20f;
-        audioMixer.SetFloat(parameterName, db);
+        bool success = audioMixer.SetFloat(parameterName, db);
+
+        if (!success)
+            Debug.LogWarning("[GameSettingsManager] AudioMixer 파라미터를 찾을 수 없습니다: " + parameterName);
     }
 
     private string GetPrefsKey(SettingKey key)

@@ -16,6 +16,8 @@ public class AudioManager : MonoBehaviour
     [Header("Default Sounds")]
     [SerializeField] private AudioClip defaultButtonClickSound;
 
+    public AudioClip CurrentBGM => bgmSource != null ? bgmSource.clip : null;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -25,7 +27,7 @@ public class AudioManager : MonoBehaviour
         }
 
         Instance = this;
-        DontDestroyOnLoad(gameObject);
+        DontDestroyOnLoad(transform.root.gameObject);
 
         SetupAudioSources();
     }
@@ -48,9 +50,11 @@ public class AudioManager : MonoBehaviour
 
         bgmSource.loop = true;
         bgmSource.playOnAwake = false;
+        bgmSource.spatialBlend = 0f;
 
         sfxSource.loop = false;
         sfxSource.playOnAwake = false;
+        sfxSource.spatialBlend = 0f;
 
         if (bgmMixerGroup != null)
             bgmSource.outputAudioMixerGroup = bgmMixerGroup;
@@ -62,17 +66,28 @@ public class AudioManager : MonoBehaviour
     public void PlayBGM(AudioClip clip)
     {
         if (clip == null)
+        {
+            Debug.LogWarning("[AudioManager] 재생할 BGM AudioClip이 비어 있습니다.");
             return;
+        }
+
+        if (bgmSource == null)
+            SetupAudioSources();
 
         if (bgmSource.clip == clip && bgmSource.isPlaying)
             return;
 
         bgmSource.clip = clip;
         bgmSource.Play();
+
+        Debug.Log("[AudioManager] BGM 재생: " + clip.name);
     }
 
     public void StopBGM()
     {
+        if (bgmSource == null)
+            return;
+
         bgmSource.Stop();
         bgmSource.clip = null;
     }
@@ -88,7 +103,6 @@ public class AudioManager : MonoBehaviour
         if (sfxSource == null)
             SetupAudioSources();
 
-        Debug.Log("[AudioManager] SFX 재생: " + clip.name);
         sfxSource.PlayOneShot(clip);
     }
 
@@ -108,5 +122,4 @@ public class AudioManager : MonoBehaviour
     {
         PlayButtonClick();
     }
-
 }

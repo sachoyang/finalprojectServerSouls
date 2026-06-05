@@ -42,6 +42,7 @@ public class PlayerAbilityModuleEditor : Editor
     private SerializedProperty _hitboxPrefab;
     private SerializedProperty _hitboxLocalOffset;
     private SerializedProperty _hitboxDamage;
+    private SerializedProperty _hitboxRevivePower;
     private SerializedProperty _hitboxDelay;
     private SerializedProperty _hitboxLifetime;
 
@@ -90,6 +91,7 @@ public class PlayerAbilityModuleEditor : Editor
         _hitboxPrefab = serializedObject.FindProperty("hitboxPrefab");
         _hitboxLocalOffset = serializedObject.FindProperty("hitboxLocalOffset");
         _hitboxDamage = serializedObject.FindProperty("hitboxDamage");
+        _hitboxRevivePower = serializedObject.FindProperty("hitboxRevivePower");
         _hitboxDelay = serializedObject.FindProperty("hitboxDelay");
         _hitboxLifetime = serializedObject.FindProperty("hitboxLifetime");
 
@@ -190,6 +192,7 @@ public class PlayerAbilityModuleEditor : Editor
         EditorGUILayout.PropertyField(_hitboxPrefab);
         EditorGUILayout.PropertyField(_hitboxLocalOffset);
         EditorGUILayout.PropertyField(_hitboxDamage);
+        EditorGUILayout.PropertyField(_hitboxRevivePower);
         EditorGUILayout.PropertyField(_hitboxDelay);
         EditorGUILayout.PropertyField(_hitboxLifetime);
     }

@@ -8,15 +8,18 @@ using UnityEngine;
 public class PlayerSkillHitbox : NetworkBehaviour
 {
     [SerializeField] private float defaultDamage;
+    [SerializeField] private float defaultRevivePower = 34f;
     [SerializeField] private float defaultDelay;
     [SerializeField] private float defaultLifetime = 0.3f;
 
     private readonly HashSet<NetworkBossCore> _hitBosses = new HashSet<NetworkBossCore>();
     private readonly HashSet<BossHitbox> _hitboxesWithoutBoss = new HashSet<BossHitbox>();
+    private readonly HashSet<PlayerStats> _reviveHitPlayers = new HashSet<PlayerStats>();
 
     private GameObject _owner;
     private NetworkObject _attacker;
     private float _damage;
+    private float _revivePower;
     private float _delay;
     private float _lifetime;
     private Collider _hitboxCollider;
@@ -32,6 +35,7 @@ public class PlayerSkillHitbox : NetworkBehaviour
         body.useGravity = false;
 
         _damage = defaultDamage;
+        _revivePower = defaultRevivePower;
         _delay = defaultDelay;
         _lifetime = defaultLifetime;
     }
@@ -44,11 +48,12 @@ public class PlayerSkillHitbox : NetworkBehaviour
         }
     }
 
-    public void Initialize(GameObject owner, NetworkObject attacker, float damage, float delay, float lifetime)
+    public void Initialize(GameObject owner, NetworkObject attacker, float damage, float revivePower, float delay, float lifetime)
     {
         _owner = owner;
         _attacker = attacker;
         _damage = damage > 0f ? damage : defaultDamage;
+        _revivePower = revivePower > 0f ? revivePower : defaultRevivePower;
         _delay = Mathf.Max(0f, delay > 0f ? delay : defaultDelay);
         _lifetime = lifetime > 0f ? lifetime : defaultLifetime;
 
@@ -67,6 +72,17 @@ public class PlayerSkillHitbox : NetworkBehaviour
 
         if (_owner != null && other.transform.IsChildOf(_owner.transform))
         {
+            return;
+        }
+
+        PlayerStats playerStats = other.GetComponentInParent<PlayerStats>();
+        if (playerStats != null && playerStats.IsDead)
+        {
+            if (_reviveHitPlayers.Add(playerStats))
+            {
+                playerStats.RegisterReviveHit(_attacker, _revivePower);
+            }
+
             return;
         }
 

@@ -25,6 +25,7 @@ public class NetworkPlayerController : NetworkBehaviour
     private static readonly int LockMoveY = Animator.StringToHash("LockMoveY");
     private static readonly int LockMoveSpeed = Animator.StringToHash("LockMoveSpeed");
 
+    private const byte ActionNone = 0;
     private const byte ActionAttack = 1;
     private const byte ActionParry = 2;
     private const byte ActionRoll = 3;
@@ -83,6 +84,7 @@ public class NetworkPlayerController : NetworkBehaviour
     [SerializeField] private float attackHitDistance = 1.8f;
     [SerializeField] private float attackHitHeight = 1.1f;
     [SerializeField] private LayerMask attackTargetLayers = ~0;
+    [SerializeField] private float basicAttackRevivePower = 34f;
 
     [Header("Lock On")]
     // 락온 가능한 보스 포인트 탐색 범위와 락온 중 회전 속도.
@@ -122,6 +124,7 @@ public class NetworkPlayerController : NetworkBehaviour
     private int _predictedActionSequence;
     private readonly Collider[] _attackHits = new Collider[16];
     private readonly Dictionary<NetworkBossCore, BossHitbox> _bestBossHitboxes = new Dictionary<NetworkBossCore, BossHitbox>();
+    private readonly HashSet<PlayerStats> _reviveHitPlayers = new HashSet<PlayerStats>();
     private bool _localBasicAttackComboUnlocked;
     private bool _localActionAnimationLocked;
     private byte _localActionLockType;
@@ -835,6 +838,25 @@ public class NetworkPlayerController : NetworkBehaviour
         _queuedComboAttack = false;
     }
 
+    public void NotifyRevived()
+    {
+        _localActionAnimationLocked = false;
+        _localActionLockType = (byte)PlayerActionLockType.None;
+        _localComboInputWindowOpen = false;
+        _queuedComboAttack = false;
+
+        if (HasStateAuthority)
+        {
+            LastAction = ActionNone;
+            BasicAttackComboIndex = 0;
+            BasicAttackComboExpiresAt = Runner != null ? Runner.SimulationTime : Time.time;
+            ActionAnimationLocked = false;
+            ActionLockType = (byte)PlayerActionLockType.None;
+            ComboInputWindowOpen = false;
+            ActionSequence++;
+        }
+    }
+
     public void IsInvincible()
     {
         // 애니메이션 이벤트에서 호출한다. 이 프레임부터 플레이어가 보스 데미지를 무시한다.
@@ -885,6 +907,7 @@ public class NetworkPlayerController : NetworkBehaviour
             QueryTriggerInteraction.Collide);
 
         _bestBossHitboxes.Clear();
+        _reviveHitPlayers.Clear();
         for (int i = 0; i < hitCount; i++)
         {
             Collider hit = _attackHits[i];
@@ -894,6 +917,17 @@ public class NetworkPlayerController : NetworkBehaviour
             }
 
             // 제단 때리기 용 rpc 함수 호출 부문
+            PlayerStats hitPlayerStats = hit.GetComponentInParent<PlayerStats>();
+            if (hitPlayerStats != null && hitPlayerStats != _playerStats && hitPlayerStats.IsDead)
+            {
+                if (_reviveHitPlayers.Add(hitPlayerStats))
+                {
+                    hitPlayerStats.RegisterReviveHit(Object, basicAttackRevivePower);
+                }
+
+                continue;
+            }
+
             GimmickAltar altar = hit.GetComponentInParent<GimmickAltar>();
             if (altar != null)
             {
@@ -1024,6 +1058,10 @@ public class NetworkPlayerController : NetworkBehaviour
         // 네트워크 액션 코드를 실제 Animator 트리거로 변환한다.
         switch (actionType)
         {
+            case ActionNone:
+                animator.SetBool(IsCrawling, false);
+                animator.CrossFade("idle1", 0.1f);
+                break;
             case ActionAttack:
                 animator.SetTrigger(GetBasicAttackTrigger());
                 break;
