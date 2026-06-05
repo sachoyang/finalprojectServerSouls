@@ -86,11 +86,6 @@ public class BossHitbox : MonoBehaviour
         // 부모(NetworkBossCore)에게 네트워크로 체력을 깎으라고 명령합니다.
         if (_bossScript != null)
         {
-            if (attacker != null)
-            {
-                _bossScript.AggroTarget = attacker;
-            }
-
             _bossScript.RPC_TakeDamage(finalDamage);
         }
     }

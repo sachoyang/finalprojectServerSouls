@@ -41,7 +41,7 @@ public class NetworkBossCore : NetworkBehaviour
     public float moveSpeed = 2.5f;
     public float rotationSpeed = 5.0f;
     public float wakeUpRange = 10.0f;
-    public float aggroRefreshTime = 10.0f;
+    public float aggroRefreshTime = 5.0f;
     public float patternCooldown = 2.0f;
 
     [Header("상태이상 도감 (SO 리스트)")]
@@ -233,53 +233,35 @@ public class NetworkBossCore : NetworkBehaviour
             if (AggroTarget != null && Vector3.Distance(transform.position, AggroTarget.transform.position) <= wakeUpRange)
             {
                 ChangeState(BossState.WakeUp);
-
                 StateTimer = TickTimer.CreateFromSeconds(Runner, wakeUpDuration);
-
                 AggroTimer = TickTimer.CreateFromSeconds(Runner, aggroRefreshTime);
             }
             return;
         }
 
-        // 2. 타겟 유실 시 재탐색
-        if (AggroTarget == null) FindClosestTarget();
-        if (AggroTarget == null) return;
-
-        // 1-2. [새로 추가됨] 기상(포효) 중일 때의 처리
+        // 2. 기상(포효) 및 페이즈 변신 (연출 중일 땐 이동/타겟팅 무시)
         if (CurrentState == BossState.WakeUp)
         {
             if (StateTimer.Expired(Runner))
             {
-                // 포효 시간이 끝나면, 첫 공격 쿨타임을 장전하고 비로소 Idle로 넘어갑니다.
                 AttackCooldown = TickTimer.CreateFromSeconds(Runner, patternCooldown);
                 ChangeState(BossState.Idle);
                 AggroTimer = TickTimer.CreateFromSeconds(Runner, aggroRefreshTime);
             }
-            return; // 포효 중에는 밑으로 못 내려가게 막음!
+            return; 
         }
 
-        // 2페이즈 변신 연출 중일 때 대기
         if (CurrentState == BossState.PhaseTransition)
         {
             if (StateTimer.Expired(Runner))
             {
-                // 연출이 끝나면 새로운 공격 쿨타임을 장전하고 전투 재개
                 AttackCooldown = TickTimer.CreateFromSeconds(Runner, patternCooldown);
                 ChangeState(BossState.Idle);
             }
-            return; // 변신 중에는 아래 코드(이동, 패턴 등) 무시
+            return; 
         }
 
-        // 회전 (패턴 중이 아닐 때 혹은 타겟을 쳐다봐야 할 때)
-        if (CurrentState != BossState.ExecutingPattern)
-        {
-            Vector3 dir = (AggroTarget.transform.position - transform.position).normalized;
-            dir.y = 0;
-            if (dir != Vector3.zero)
-                transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir), rotationSpeed * Runner.DeltaTime);
-        }
-
-        // 3. 패턴 진행 중일 때 다음 스텝으로 넘어가기
+        // 3. 🔥 [수정 핵심 1] 패턴 진행 중일 때 타겟이 죽더라도 하던 공격은 끝내도록 순서 변경!
         if (CurrentState == BossState.ExecutingPattern)
         {
             if (StateTimer.Expired(Runner))
@@ -289,22 +271,49 @@ public class NetworkBossCore : NetworkBehaviour
 
                 if (CurrentStepIndex < pattern.ActionCount)
                 {
-                    // 다음 동작 실행
                     ExecuteCurrentPatternStep(pattern.GetAction(CurrentStepIndex));
                 }
                 else
                 {
-                    // 패턴 완전 종료
                     CurrentPatternIndex = -1;
                     CurrentStepIndex = -1;
                     AttackCooldown = TickTimer.CreateFromSeconds(Runner, patternCooldown);
                     ChangeState(BossState.Idle);
                 }
             }
+            return; // 공격 중에는 타겟이 죽거나 도망가도 하던 행동에 집중함
+        }
+
+        // ==========================================
+        // 4.타겟 유효성 검사 (평상시)
+        // ==========================================
+        // 현재 잡고 있는 타겟이 죽어서 태그가 바뀌었다면 즉시 어그로 해제!
+        if (AggroTarget != null && !AggroTarget.gameObject.CompareTag("Player"))
+        {
+            AggroTarget = null;
+        }
+
+        // 타겟이 없으면 가장 가까운 '살아있는' 플레이어 찾기
+        if (AggroTarget == null) FindClosestTarget();
+
+        // 맵에 살아있는 플레이어가 단 한 명도 없다면?
+        if (AggroTarget == null) 
+        {
+            // 걷기를 멈추고 제자리에 서서 숨 고르기 (제자리 걷기 버그 완벽 해결!)
+            if (CurrentState == BossState.Walk) 
+            {
+                ChangeState(BossState.Idle);
+            }
             return;
         }
 
-        // 4. 평상시 상태 (대기/걷기) - 패턴 쿨타임 돌았는지 확인
+        // 5. 타겟을 향해 회전
+        Vector3 dir = (AggroTarget.transform.position - transform.position).normalized;
+        dir.y = 0;
+        if (dir != Vector3.zero)
+            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir), rotationSpeed * Runner.DeltaTime);
+
+        // 6. 패턴 시작 또는 걷기 결정
         if (AttackCooldown.ExpiredOrNotRunning(Runner))
         {
             float dist = Vector3.Distance(transform.position, AggroTarget.transform.position);
@@ -312,12 +321,10 @@ public class NetworkBossCore : NetworkBehaviour
 
             if (selectedPatternIdx >= 0)
             {
-                // 범위 내에 맞는 패턴이 있으면 즉시 실행
                 StartPattern(selectedPatternIdx);
             }
             else
             {
-                // 맞는 패턴이 없으면 걷기로 추적
                 if (CurrentState != BossState.Walk) ChangeState(BossState.Walk);
             }
         }
@@ -326,7 +333,6 @@ public class NetworkBossCore : NetworkBehaviour
             if (CurrentState != BossState.Idle) ChangeState(BossState.Idle);
         }
     }
-
     // ==========================================
     // [패턴 룰렛 시스템]
     // ==========================================
@@ -480,37 +486,37 @@ public class NetworkBossCore : NetworkBehaviour
     }
 
     // ==========================================
-    // 10초마다 호출되는 딜미터기 정산 로직
+    // 5초마다 호출되는 딜미터기 정산 로직
     // ==========================================
     private void UpdateAggroByDamage()
     {
         NetworkObject topDPSPlayer = null;
         float maxDamage = 0f;
 
-        // 1. 장부를 훑어서 가장 딜을 많이 넣은 사람을 찾음
+        // 1. 장부를 훑어서 지난 5초 동안 가장 딜을 많이 넣은 사람을 찾음
         foreach (var kvp in _damageTracker)
         {
-            if (kvp.Key != null && kvp.Value > maxDamage)
+            if (kvp.Key != null && kvp.Key.gameObject.CompareTag("Player") && kvp.Value > maxDamage)
             {
                 maxDamage = kvp.Value;
                 topDPSPlayer = kvp.Key;
             }
         }
 
-        // 2. 딜을 넣은 사람이 있으면 그 사람으로 타겟 변경
+        // 2. 5초 동안 딜을 넣은 사람이 1명이라도 있으면 그 사람으로 타겟 고정!
         if (topDPSPlayer != null && maxDamage > 0)
         {
             AggroTarget = topDPSPlayer;
-            Debug.Log($"[Aggro] 어그로 변경! 대상: {topDPSPlayer.Id} (10초 누적 딜: {maxDamage})");
+            Debug.Log($"[Aggro] 어그로 갱신! 대상: {topDPSPlayer.Id} (5초 누적 딜: {maxDamage})");
         }
         else
         {
-            // 지난 10초간 아무도 때리지 않았다면 제일 가까운 사람으로 타겟 갱신
+            // 3. 5초 동안 아무도 때리지 않았다면(도망만 다녔다면) 제일 가까운 사람으로 타겟 갱신
             FindClosestTarget();
-            Debug.Log("[Aggro] 누적 딜량 없음. 가장 가까운 대상으로 갱신.");
+            Debug.Log("[Aggro] 5초간 누적 딜량 없음. 가장 가까운 대상으로 갱신.");
         }
 
-        // 3. 다음 10초를 위해 장부 초기화 및 타이머 재시작
+        // 4. 다음 5초를 위해 장부 초기화 및 타이머 재시작
         _damageTracker.Clear();
         AggroTimer = TickTimer.CreateFromSeconds(Runner, aggroRefreshTime);
     }
@@ -587,7 +593,7 @@ public class NetworkBossCore : NetworkBehaviour
         // 사망 시 조명 및 기믹 원상복구
         if (IsGimmickActive)
         {
-            IsGimmickActive = false; 
+            IsGimmickActive = false;
         }
     }
 

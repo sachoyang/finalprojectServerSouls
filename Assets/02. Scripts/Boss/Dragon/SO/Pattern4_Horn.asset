@@ -15,14 +15,14 @@ MonoBehaviour:
   patternId: 4
   displayName: Pattern4_Horn
   minRange: 0
-  maxRange: 10
-  weight: 10
+  maxRange: 20
+  weight: 15
   actions:
   - animationClip: {fileID: 7400000, guid: 19a5a8dd9f6eaba49980048610a6e8e3, type: 3}
     animationStateName: Horn Attack
     animationHash: 46661459
     duration: 3
-    moveOffset: {x: 0, y: 0, z: 15}
+    moveOffset: {x: 0, y: 0, z: 20}
     moveCurve:
       serializedVersion: 2
       m_Curve:

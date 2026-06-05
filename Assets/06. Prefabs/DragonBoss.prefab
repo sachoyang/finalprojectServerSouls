@@ -2177,11 +2177,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 968703c2a0c8b2040ababd1616178edb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bossName: "\uB300\uC9C0\uC758 \uB4DC\uB798\uACE4"
+  _bossName: 
   moveSpeed: 3
   rotationSpeed: 2
-  wakeUpRange: 10
-  aggroRefreshTime: 10
+  wakeUpRange: 15
+  aggroRefreshTime: 5
   patternCooldown: 2
   statusDatabase:
   - {fileID: 11400000, guid: 31c5858a67b3f3e4ab6c0f5e8e5eda30, type: 2}
