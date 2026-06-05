@@ -8,41 +8,67 @@ public class SettingSliderUI : MonoBehaviour
     public Slider slider;
 
     private SettingItem _data;
+    private bool _isInitialized;
 
     public void Setup(SettingItem data)
     {
         _data = data;
 
-        itemNameText.text = data.itemName;
+        if (_data == null)
+            return;
 
-        slider.minValue = data.minValue;
-        slider.maxValue = data.maxValue;
+        if (itemNameText != null)
+            itemNameText.text = _data.itemName;
 
-        float savedValue = data.defaultValue;
+        if (slider == null)
+            return;
 
-        if (GameSettingsManager.Instance != null && data.settingKey != SettingKey.None)
-            savedValue = GameSettingsManager.Instance.GetFloat(data.settingKey, data.defaultValue);
+        slider.minValue = _data.minValue;
+        slider.maxValue = _data.maxValue;
 
-        slider.value = savedValue;
+        float value = _data.defaultValue;
 
-        slider.onValueChanged.RemoveAllListeners();
+        if (GameSettingsManager.Instance != null && _data.settingKey != SettingKey.None)
+            value = GameSettingsManager.Instance.GetFloat(_data.settingKey, _data.defaultValue);
+
+        value = Mathf.Clamp(value, slider.minValue, slider.maxValue);
+
+        slider.onValueChanged.RemoveListener(OnSliderChanged);
+        slider.value = value;
         slider.onValueChanged.AddListener(OnSliderChanged);
 
-        OnSliderChanged(slider.value);
+        _isInitialized = true;
+
+        UpdateValueText(value);
+        SaveAndApplySetting(value);
     }
 
     private void OnSliderChanged(float value)
     {
-        if (valueText != null)
-        {
-            float range = slider.maxValue - slider.minValue;
-            float percentage = range <= 0f ? 0f : (value - slider.minValue) / range;
-            int displayValue = Mathf.RoundToInt(percentage * 100);
+        if (!_isInitialized)
+            return;
 
-            valueText.text = displayValue.ToString() + "%";
-        }
+        UpdateValueText(value);
+        SaveAndApplySetting(value);
+    }
 
-        if (GameSettingsManager.Instance != null && _data != null && _data.settingKey != SettingKey.None)
-            GameSettingsManager.Instance.SetFloat(_data.settingKey, value);
+    private void UpdateValueText(float value)
+    {
+        if (valueText == null || slider == null)
+            return;
+
+        float range = slider.maxValue - slider.minValue;
+        float percentage = range > 0f ? (value - slider.minValue) / range : 0f;
+        int displayValue = Mathf.RoundToInt(percentage * 100f);
+
+        valueText.text = displayValue + "%";
+    }
+
+    private void SaveAndApplySetting(float value)
+    {
+        if (GameSettingsManager.Instance == null || _data == null || _data.settingKey == SettingKey.None)
+            return;
+
+        GameSettingsManager.Instance.SetFloat(_data.settingKey, value);
     }
 }

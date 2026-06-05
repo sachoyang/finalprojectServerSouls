@@ -16,28 +16,27 @@ MonoBehaviour:
   categories:
   - categoryName: "\uAE30\uBCF8 \uC124\uC815"
     items:
-    - itemName: "\uD6A8\uACFC\uC74C"
-      itemType: 0
-      options:
-      - "\uCF1C\uAE30"
-      - "\uB044\uAE30"
-      defaultIndex: 1
-      minValue: 1
-      maxValue: 0
-      defaultValue: 0.5
-    - itemName: "\uD6A8\uACFC\uC74C \uC74C\uB7C9"
+    - itemName: "\uB9C8\uC2A4\uD130 \uC74C\uB7C9"
       itemType: 1
+      settingKey: 2
       options: []
       defaultIndex: 1
       minValue: 0
       maxValue: 1
-      defaultValue: 0.5
-    - itemName: "\uBC30\uACBD\uC74C"
-      itemType: 0
-      options:
-      - "\uCF1C\uAE30"
-      - "\uB044\uAE30"
+      defaultValue: 1
+    - itemName: "\uBC30\uACBD\uC74C \uC74C\uB7C9"
+      itemType: 1
+      settingKey: 3
+      options: []
       defaultIndex: 1
       minValue: 0
       maxValue: 1
-      defaultValue: 0.5
+      defaultValue: 1
+    - itemName: "\uD6A8\uACFC\uC74C \uC74C\uB7C9"
+      itemType: 1
+      settingKey: 4
+      options: []
+      defaultIndex: 1
+      minValue: 0
+      maxValue: 1
+      defaultValue: 1
