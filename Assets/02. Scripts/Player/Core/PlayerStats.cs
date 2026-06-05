@@ -121,7 +121,8 @@ public class PlayerStats : NetworkBehaviour
     public float PowerUpStaminaCost => powerUpStaminaCost;
     public float SlideSlashStaminaCost => slideSlashStaminaCost;
     public float ReviveRequiredGauge => Mathf.Max(1f, ReviveSegmentCount * ReviveGaugePerSegment);
-    public float ReviveNormalizedProgress => IsDead ? Mathf.Clamp01(ReviveProgress / ReviveRequiredGauge) : 0f;
+    public float ReviveNormalizedProgress => IsDead ? Mathf.Clamp01(1f - ReviveProgress / ReviveRequiredGauge) : 0f;
+    public float ReviveRemainingNormalized => IsDead ? Mathf.Clamp01(ReviveProgress / ReviveRequiredGauge) : 0f;
     public event Action<PlayerStats> ReviveStateChanged;
 
     private ChangeDetector _changeDetector;
@@ -451,7 +452,7 @@ public class PlayerStats : NetworkBehaviour
         ReviveSegmentCount = Mathf.Clamp(DeathCount, 1, Mathf.Max(1, maxReviveSegments));
         int extraDeaths = Mathf.Max(0, DeathCount - maxReviveSegments);
         ReviveGaugePerSegment = Mathf.Max(1f, baseReviveGaugePerSegment + reviveGaugeIncreasePerDeathAfterMaxSegments * extraDeaths);
-        ReviveProgress = 0f;
+        ReviveProgress = ReviveRequiredGauge;
         ReviveDecayDelayTimer = default;
         ReviveStateChanged?.Invoke(this);
     }
@@ -482,10 +483,10 @@ public class PlayerStats : NetworkBehaviour
             return;
         }
 
-        ReviveProgress = Mathf.Min(ReviveRequiredGauge, ReviveProgress + revivePower);
+        ReviveProgress = Mathf.Max(0f, ReviveProgress - revivePower);
         ReviveDecayDelayTimer = TickTimer.CreateFromSeconds(Runner, reviveProgressDecayDelay);
 
-        if (ReviveProgress >= ReviveRequiredGauge)
+        if (ReviveProgress <= 0f)
         {
             ReviveFully();
             return;
@@ -496,12 +497,12 @@ public class PlayerStats : NetworkBehaviour
 
     private void UpdateReviveDecay()
     {
-        if (ReviveProgress <= 0f || !ReviveDecayDelayTimer.ExpiredOrNotRunning(Runner))
+        if (ReviveProgress >= ReviveRequiredGauge || !ReviveDecayDelayTimer.ExpiredOrNotRunning(Runner))
         {
             return;
         }
 
-        ReviveProgress = Mathf.Max(0f, ReviveProgress - reviveProgressDecayPerSecond * Runner.DeltaTime);
+        ReviveProgress = Mathf.Min(ReviveRequiredGauge, ReviveProgress + reviveProgressDecayPerSecond * Runner.DeltaTime);
         ReviveStateChanged?.Invoke(this);
     }
 

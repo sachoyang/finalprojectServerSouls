@@ -227,6 +227,7 @@ MonoBehaviour:
   - {fileID: 405150133}
   - {fileID: 1898967616}
   - {fileID: 414190329}
+  fadeDuration: 2
 --- !u!1001 &164583458
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1441,6 +1442,11 @@ MonoBehaviour:
     prefab: {fileID: 4925335925602575361, guid: 1980dd89f8fd9314f936f9d805925100, type: 3}
     createOnStart: 1
     activeOnStart: 0
+    instance: {fileID: 0}
+  - prefabId: ReviveUI
+    prefab: {fileID: 100000, guid: d128cf4f821a483c9a0d92f2f051aac7, type: 3}
+    createOnStart: 1
+    activeOnStart: 1
     instance: {fileID: 0}
 --- !u!4 &1484418658
 Transform:
