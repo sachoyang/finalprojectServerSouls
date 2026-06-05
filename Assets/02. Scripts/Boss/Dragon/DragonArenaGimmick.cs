@@ -94,23 +94,6 @@ public class DragonArenaGimmick : NetworkBehaviour
         Debug.Log("[Gimmick] 조명 OFF 완료. 0.5초 후 제단 ON!");
     }
 
-    public void OnAltarDestroyed()
-    {
-        _destroyedAltarCount++;
-        Debug.Log($"[Gimmick] 제단 파괴됨! ({_destroyedAltarCount} / {gimmickOnObjects.Length})");
-
-        if (_destroyedAltarCount >= gimmickOnObjects.Length)
-        {
-            ClearGimmick();
-            
-            if (_targetBoss != null)
-            {
-                float damage = _targetBoss.maxHP * 0.1f;
-                _targetBoss.RPC_TakeDamage(damage, _targetBoss.maxGroggy);
-            }
-        }
-    }
-
     public void ClearGimmick()
     {
         // 1. 남은 제단(파괴된 잔해) 끄기
@@ -171,5 +154,50 @@ public class DragonArenaGimmick : NetworkBehaviour
                 _managedLights[i].lightComp.intensity = _managedLights[i].originalIntensity * targetMultiplier;
             }
         }
+    }
+
+    // ==========================================
+    // [호스트 전용 로직] 
+    // ==========================================
+    public void SetGimmickLogic(NetworkBossCore boss)
+    {
+        _targetBoss = boss;
+        _destroyedAltarCount = 0;
+    }
+
+    public void OnAltarDestroyed()
+    {
+        _destroyedAltarCount++;
+        Debug.Log($"[Gimmick] 제단 파괴됨! ({_destroyedAltarCount} / {gimmickOnObjects.Length})");
+
+        if (_destroyedAltarCount >= gimmickOnObjects.Length)
+        {
+            if (_targetBoss != null)
+            {
+                float damage = _targetBoss.maxHP * 0.1f;
+                _targetBoss.RPC_TakeDamage(damage, _targetBoss.maxGroggy);
+                
+                // 🔥 값 하나만 바꾸면 모든 클라이언트의 불이 스르륵 켜짐!
+                _targetBoss.IsGimmickActive = false; 
+            }
+        }
+    }
+
+    // ==========================================
+    // [시각 효과 연출] 방장 & 참가자 모두의 Render()에서 실행됨
+    // ==========================================
+    public void PlayGimmickVisuals()
+    {
+        if (_fadeCoroutine != null) StopCoroutine(_fadeCoroutine);
+        _fadeCoroutine = StartCoroutine(GimmickActivationSequence());
+    }
+
+    public void StopGimmickVisuals()
+    {
+        foreach (var obj in gimmickOnObjects) { if(obj != null) obj.SetActive(false); }
+        if (_fadeCoroutine != null) StopCoroutine(_fadeCoroutine);
+        _fadeCoroutine = StartCoroutine(FadeLights(1f));
+        
+        Debug.Log("[Gimmick] 기믹 종료! 조명 서서히 복구 완료.");
     }
 }

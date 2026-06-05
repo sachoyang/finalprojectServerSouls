@@ -67,7 +67,7 @@ public class DragonBoss : NetworkBossCore
             
             if (DragonArenaGimmick.Instance != null)
             {
-                DragonArenaGimmick.Instance.StartGimmick(this);
+                DragonArenaGimmick.Instance.SetGimmickLogic(this);
             }
         }
     }

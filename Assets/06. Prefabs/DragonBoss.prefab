@@ -2183,7 +2183,8 @@ MonoBehaviour:
   wakeUpRange: 10
   aggroRefreshTime: 10
   patternCooldown: 2
-  statusDatabase: []
+  statusDatabase:
+  - {fileID: 11400000, guid: 31c5858a67b3f3e4ab6c0f5e8e5eda30, type: 2}
   wakeUpAnimName: Scream
   wakeUpDuration: 2.8
   maxGroggy: 40
@@ -2218,6 +2219,9 @@ MonoBehaviour:
   _AggroTarget: {fileID: 0}
   _CurrentPatternIndex: -1
   _CurrentStepIndex: -1
+  _IsGimmickActive:
+    _value: 0
+  gimmickDamageReduction: 0.3
   rearAttackPatternIndex: 2
 --- !u!114 &3262892183010469501
 MonoBehaviour:

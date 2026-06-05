@@ -34,9 +34,10 @@ public struct ActiveStatusUIInfo
 
 public class NetworkBossCore : NetworkBehaviour
 {
-    [Header("기본 설정")]
     [Tooltip("UI 체력바에 표시될 보스의 이름")]
-    public string bossName = "이름 없는 보스";
+    [Networked, Capacity(32)] public string bossName { get; set; }
+
+    [Header("기본 설정")]
     public float moveSpeed = 2.5f;
     public float rotationSpeed = 5.0f;
     public float wakeUpRange = 10.0f;
@@ -135,6 +136,7 @@ public class NetworkBossCore : NetworkBehaviour
     [Networked] public NetworkBool IsGimmickActive { get; set; }
     [Tooltip("기믹 중에 들어가는 데미지 배율 (0.1 = 10%만 데미지 들어감)")]
     public float gimmickDamageReduction = 0.3f;
+    private bool _localGimmickActive = false;
 
     public override void Spawned()
     {
@@ -457,6 +459,24 @@ public class NetworkBossCore : NetworkBehaviour
                 _lastState = CurrentState;
             }
         }
+
+        // ==========================================
+        // 기믹 시각 효과(불 끄기/켜기) 클라이언트 동기화!
+        // ==========================================
+        // 서버에서 IsGimmickActive를 true로 바꿨는데 내 화면은 아직 안 켜졌다면?
+        if (IsGimmickActive && !_localGimmickActive)
+        {
+            _localGimmickActive = true;
+            if (DragonArenaGimmick.Instance != null)
+                DragonArenaGimmick.Instance.PlayGimmickVisuals();
+        }
+        // 서버에서 IsGimmickActive를 false로 바꿨는데 내 화면은 아직 켜져있다면?
+        else if (!IsGimmickActive && _localGimmickActive)
+        {
+            _localGimmickActive = false;
+            if (DragonArenaGimmick.Instance != null)
+                DragonArenaGimmick.Instance.StopGimmickVisuals();
+        }
     }
 
     // ==========================================
@@ -502,7 +522,7 @@ public class NetworkBossCore : NetworkBehaviour
     public void RPC_TakeDamage(float damage, float groggyDamage = 10f, NetworkObject attacker = null)
     {
         // 1. 이미 죽어있는 상태면 때려도 무시 (중복 실행 방지)
-        if (CurrentState == BossState.Die || CurrentHP <= 0) return; 
+        if (CurrentState == BossState.Die || CurrentHP <= 0) return;
 
         // 2. 방깎 디버프 등을 계산하여 최종 데미지 산출 후 체력 차감
         float finalDamage = damage * GetIncomingDamageMultiplier();
@@ -565,9 +585,9 @@ public class NetworkBossCore : NetworkBehaviour
         ChangeState(BossState.Die);
 
         // 사망 시 조명 및 기믹 원상복구
-        if (IsGimmickActive && DragonArenaGimmick.Instance != null)
+        if (IsGimmickActive)
         {
-            DragonArenaGimmick.Instance.ClearGimmick();
+            IsGimmickActive = false; 
         }
     }
 
