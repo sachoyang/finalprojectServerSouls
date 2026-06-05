@@ -35,7 +35,7 @@ public class NextLevelPortal : NetworkBehaviour
                 _readyPlayers.Clear();
                 if (playGateKickCutsceneBeforeLoad && CutsceneManager.Instance != null)
                 {
-                    RPC_PlayGateKickCutscene();
+                    RPC_PlayGateKickCutscene(GetGateKickPlayer());
                     StartCoroutine(ChangeToNextLevelAfterCutscene(Runner));
                 }
                 else
@@ -151,8 +151,23 @@ public class NextLevelPortal : NetworkBehaviour
         ChangeToNextLevel(runner);
     }
 
+    private PlayerRef GetGateKickPlayer()
+    {
+        if (Runner != null && Runner.LocalPlayer != default)
+        {
+            return Runner.LocalPlayer;
+        }
+
+        foreach (PlayerRef player in Runner.ActivePlayers)
+        {
+            return player;
+        }
+
+        return default;
+    }
+
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    private void RPC_PlayGateKickCutscene()
+    private void RPC_PlayGateKickCutscene(PlayerRef kickPlayer)
     {
         CutsceneManager cutsceneManager = CutsceneManager.Instance;
         if (cutsceneManager == null)
@@ -161,6 +176,6 @@ public class NextLevelPortal : NetworkBehaviour
             return;
         }
 
-        cutsceneManager.PlayGateKickCutscene();
+        cutsceneManager.PlayGateKickCutscene(Runner, kickPlayer);
     }
 }

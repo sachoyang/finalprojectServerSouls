@@ -931,7 +931,13 @@ PlayerSettings:
   XboxOneOverrideIdentityPublisher: 
   vrEditorSettings: {}
   cloudServicesEnabled:
+    Build: 0
+    Game Performance: 0
+    Legacy Analytics: 0
+    Purchasing: 0
+    UDP: 0
     UNet: 1
+    Unity Ads: 0
   luminIcon:
     m_Name: 
     m_ModelFolderPath: 
@@ -951,11 +957,11 @@ PlayerSettings:
   apiCompatibilityLevel: 6
   activeInputHandler: 0
   windowsGamepadBackendHint: 0
-  cloudProjectId: 53c04da8-436e-48d6-8917-9f628b6d1570
+  cloudProjectId: 37fb6723-5aef-4a11-b1db-993347cf00e7
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
   projectName: SoulsServer
-  organizationId: ssammutime
+  organizationId: hyunbin802
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0
   hmiLoadingImage: {fileID: 0}

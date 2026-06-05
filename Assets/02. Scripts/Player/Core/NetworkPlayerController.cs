@@ -24,6 +24,12 @@ public class NetworkPlayerController : NetworkBehaviour
     private static readonly int LockMoveX = Animator.StringToHash("LockMoveX");
     private static readonly int LockMoveY = Animator.StringToHash("LockMoveY");
     private static readonly int LockMoveSpeed = Animator.StringToHash("LockMoveSpeed");
+    private static readonly int IdleState = Animator.StringToHash("idle1");
+    private static readonly int WalkState = Animator.StringToHash("walk1");
+    private static readonly int RunState = Animator.StringToHash("run1");
+    private static readonly int Slash2State = Animator.StringToHash("slash2");
+    private static readonly int Slash3State = Animator.StringToHash("slash3");
+    private static readonly int Slash4State = Animator.StringToHash("slash4");
 
     private const byte ActionNone = 0;
     private const byte ActionAttack = 1;
@@ -103,6 +109,8 @@ public class NetworkPlayerController : NetworkBehaviour
     [Networked] private TickTimer RollTimer { get; set; }
     [Networked] private Vector3 RollDirection { get; set; }
     [Networked] private byte LastAction { get; set; }
+    [Networked] private int LastActionId { get; set; }
+    [Networked] private int LastConsumedActionId { get; set; }
     [Networked] private int ActionSequence { get; set; }
     [Networked] private NetworkBool BasicAttackComboUnlocked { get; set; }
     [Networked] private byte BasicAttackComboIndex { get; set; }
@@ -121,7 +129,14 @@ public class NetworkPlayerController : NetworkBehaviour
     private CameraManager _cameraManager;
     private float _networkControllerRotationSpeed;
     private float _suppressLockOnAnimatorUntil;
-    private int _predictedActionSequence;
+    private bool _hasPredictedAction;
+    private int _predictedActionId;
+    private byte _predictedActionType;
+    private int _lastPredictedPresentationActionId;
+    private byte _lastPredictedPresentationActionType;
+    private float _lastPredictedPresentationSuppressUntil;
+    private bool _hasPendingPredictedPresentation;
+    private byte _pendingPredictedActionType;
     private readonly Collider[] _attackHits = new Collider[16];
     private readonly Dictionary<NetworkBossCore, BossHitbox> _bestBossHitboxes = new Dictionary<NetworkBossCore, BossHitbox>();
     private readonly HashSet<PlayerStats> _reviveHitPlayers = new HashSet<PlayerStats>();
@@ -130,6 +145,8 @@ public class NetworkPlayerController : NetworkBehaviour
     private byte _localActionLockType;
     private bool _localComboInputWindowOpen;
     private bool _queuedComboAttack;
+    private int _queuedComboActionId;
+    private int _lastLocalConsumedActionId;
     private bool _showPlayerDebug;
 
     public bool IsLockOnActive => IsLockOnNetworked;
@@ -184,6 +201,7 @@ public class NetworkPlayerController : NetworkBehaviour
     public override void Spawned()
     {
         _changeDetector = GetChangeDetector(ChangeDetector.Source.SimulationState);
+        ResetLocalActionState();
         UpdatePlayerTag();
         _abilityInventory?.RestoreFromSessionData(Object.InputAuthority);
 
@@ -205,6 +223,45 @@ public class NetworkPlayerController : NetworkBehaviour
         {
             _cameraManager = CameraManager.GetOrCreate();
             _cameraManager.RegisterGameplayCamera(mainCamera, transform);
+        }
+    }
+
+    private void ResetLocalActionState()
+    {
+        _localActionAnimationLocked = false;
+        _localActionLockType = (byte)PlayerActionLockType.None;
+        _localComboInputWindowOpen = false;
+        _queuedComboAttack = false;
+        _queuedComboActionId = 0;
+        _lastLocalConsumedActionId = 0;
+        _hasPredictedAction = false;
+        _predictedActionId = 0;
+        _predictedActionType = 0;
+        _lastPredictedPresentationActionId = 0;
+        _lastPredictedPresentationActionType = 0;
+        _lastPredictedPresentationSuppressUntil = 0f;
+        _hasPendingPredictedPresentation = false;
+        _pendingPredictedActionType = 0;
+
+        if (animator != null)
+        {
+            ResetActionTriggers();
+            animator.SetBool(IsMoving, false);
+            animator.SetBool(IsRunning, false);
+            animator.SetBool(IsLockOn, false);
+            animator.SetFloat(LockMoveX, 0f);
+            animator.SetFloat(LockMoveY, 0f);
+            animator.SetFloat(LockMoveSpeed, 0f);
+        }
+
+        if (HasStateAuthority)
+        {
+            LastAction = ActionNone;
+            LastActionId = 0;
+            LastConsumedActionId = 0;
+            ActionAnimationLocked = false;
+            ActionLockType = (byte)PlayerActionLockType.None;
+            ComboInputWindowOpen = false;
         }
     }
 
@@ -249,23 +306,32 @@ public class NetworkPlayerController : NetworkBehaviour
         bool shiftReleased = WasShiftHeld && !shiftHeld;
         bool isRolling = !RollTimer.ExpiredOrNotRunning(Runner);
         bool isActing = IsActionAnimationLocked;
-        bool attackPressed = data.buttons.IsSet(NetworkInputData.MOUSEBUTTON0);
-        bool jumpPressed = data.buttons.IsSet(NetworkInputData.JUMP);
+        bool rawAttackPressed = data.buttons.IsSet(NetworkInputData.MOUSEBUTTON0);
+        bool rawParryPressed = data.buttons.IsSet(NetworkInputData.MOUSEBUTTON1);
+        bool rawJumpPressed = data.buttons.IsSet(NetworkInputData.JUMP);
+        bool hasActionInput = rawAttackPressed || rawParryPressed || rawJumpPressed;
+        bool canUseActionInput = hasActionInput && TryConsumeInputAction(data.actionId);
+        bool jumpPressed = canUseActionInput && rawJumpPressed;
+        bool attackPressed = canUseActionInput && !rawJumpPressed && rawAttackPressed;
+        bool parryPressed = canUseActionInput && !rawJumpPressed && !rawAttackPressed && rawParryPressed;
 
-        if (jumpPressed)
+        if (rawJumpPressed)
         {
             _queuedComboAttack = false;
+            _queuedComboActionId = 0;
         }
 
         if (CanStartQueuedComboAttack(isActing))
         {
-            StartBasicAttack(GetNextBasicAttackComboIndex());
+            StartBasicAttack(GetNextBasicAttackComboIndex(), _queuedComboActionId);
             isActing = true;
             _queuedComboAttack = false;
+            _queuedComboActionId = 0;
         }
         else if (attackPressed && CanQueueBasicAttackCombo(isActing))
         {
             _queuedComboAttack = true;
+            _queuedComboActionId = data.actionId;
         }
 
         bool isJumpAction = isActing && LastAction == ActionJump;
@@ -284,25 +350,24 @@ public class NetworkPlayerController : NetworkBehaviour
             if (jumpPressed && _networkCharacterController.Grounded)
             {
                 _networkCharacterController.Jump(false, jumpImpulse);
-                StartAction(ActionJump);
+                StartAction(ActionJump, data.actionId);
                 isActing = true;
                 isBusy = true;
-                TriggerPredictedAction(ActionJump);
             }
             else if (attackPressed)
             {
                 // 기본 공격은 StateAuthority에서 최종 스태미나와 피격 판정을 처리한다.
                 if (TrySpendBasicAttackStamina())
                 {
-                    StartBasicAttack(GetOpeningBasicAttackComboIndex());
+                    StartBasicAttack(GetOpeningBasicAttackComboIndex(), data.actionId);
                     isActing = true;
                     isBusy = true;
                 }
             }
-            else if (data.buttons.IsSet(NetworkInputData.MOUSEBUTTON1))
+            else if (parryPressed)
             {
                 // 패링 중 피격되면 PlayerStats가 Impact2 액션을 요청한다.
-                StartAction(ActionParry);
+                StartAction(ActionParry, data.actionId);
                 isActing = true;
                 isBusy = true;
             }
@@ -375,6 +440,13 @@ public class NetworkPlayerController : NetworkBehaviour
             return;
         }
 
+        if (_hasPendingPredictedPresentation)
+        {
+            _hasPendingPredictedPresentation = false;
+            ResetActionTriggers();
+            TriggerAction(_pendingPredictedActionType);
+        }
+
         foreach (string change in _changeDetector.DetectChanges(this))
         {
             if (change == nameof(ActionSequence))
@@ -385,16 +457,7 @@ public class NetworkPlayerController : NetworkBehaviour
                     continue;
                 }
 
-                animator.ResetTrigger(Attack);
-                animator.ResetTrigger(Attack2);
-                animator.ResetTrigger(Attack3);
-                animator.ResetTrigger(Attack4);
-                animator.ResetTrigger(Parry);
-                animator.ResetTrigger(Roll);
-                animator.ResetTrigger(Jump);
-                animator.ResetTrigger(Impact);
-                animator.ResetTrigger(Impact2);
-                animator.ResetTrigger(Death);
+                ResetActionTriggers();
                 TriggerAction(LastAction);
             }
         }
@@ -597,9 +660,29 @@ public class NetworkPlayerController : NetworkBehaviour
 
     private bool ShouldSkipAuthoritativeActionPresentation()
     {
-        if (ActionSequence == _predictedActionSequence)
+        if (LastActionId != 0 &&
+            LastActionId == _lastPredictedPresentationActionId &&
+            LastAction == _lastPredictedPresentationActionType &&
+            Time.time <= _lastPredictedPresentationSuppressUntil)
         {
+            _hasPredictedAction = false;
             return true;
+        }
+
+        if (_hasPredictedAction &&
+            LastActionId != 0 &&
+            LastActionId == _predictedActionId &&
+            LastAction == _predictedActionType)
+        {
+            _hasPredictedAction = false;
+            return true;
+        }
+
+        if (_hasPredictedAction &&
+            LastActionId != 0 &&
+            LastActionId != _predictedActionId)
+        {
+            _hasPredictedAction = false;
         }
 
         if (!_localActionAnimationLocked)
@@ -696,6 +779,38 @@ public class NetworkPlayerController : NetworkBehaviour
         return _playerStats == null || _playerStats.TryUseStamina(_playerStats.AttackStaminaCost);
     }
 
+    private bool TryConsumeInputAction(int actionId)
+    {
+        if (actionId == 0)
+        {
+            return false;
+        }
+
+        if (HasStateAuthority)
+        {
+            if (LastConsumedActionId == actionId)
+            {
+                return false;
+            }
+
+            LastConsumedActionId = actionId;
+            return true;
+        }
+
+        if (Object != null && Object.HasInputAuthority)
+        {
+            if (_lastLocalConsumedActionId == actionId)
+            {
+                return false;
+            }
+
+            _lastLocalConsumedActionId = actionId;
+            return true;
+        }
+
+        return false;
+    }
+
     public void BeginActionAnimation(PlayerActionLockType lockType)
     {
         // None은 락을 소유하지 않는 상태다.
@@ -737,6 +852,7 @@ public class NetworkPlayerController : NetworkBehaviour
             {
                 BasicAttackComboExpiresAt = Runner != null ? Runner.SimulationTime : Time.time;
                 _queuedComboAttack = false;
+                _queuedComboActionId = 0;
                 return;
             }
 
@@ -786,22 +902,24 @@ public class NetworkPlayerController : NetworkBehaviour
         }
     }
 
-    private void StartBasicAttack(byte comboIndex)
+    private void StartBasicAttack(byte comboIndex, int actionId)
     {
         _queuedComboAttack = false;
+        _queuedComboActionId = 0;
         BasicAttackComboIndex = IsBasicAttackComboUnlocked
             ? (byte)Mathf.Clamp(comboIndex, 0, BasicAttackComboLastIndex)
             : (byte)0;
         BasicAttackComboExpiresAt = Runner != null ? Runner.SimulationTime : Time.time;
-        StartAction(ActionAttack);
+        StartAction(ActionAttack, actionId);
     }
 
-    private void StartAction(byte actionType)
+    private void StartAction(byte actionType, int actionId = 0)
     {
         // 액션 번호를 올리면 모든 클라이언트의 Render에서 같은 애니메이션 트리거를 받는다.
         // 액션 번호를 올리면 모든 클라이언트의 Render에서 같은 애니메이션 트리거를 받는다.
         // 동시에 액션 타입별 락을 걸어 다음 입력 틱에서 다른 액션이 끼어들지 못하게 한다.
         LastAction = actionType;
+        LastActionId = actionId;
         ActionSequence++;
         SetActionAnimationLocked(true, GetActionLockType(actionType));
         SetComboInputWindowOpen(false);
@@ -809,11 +927,17 @@ public class NetworkPlayerController : NetworkBehaviour
         if (actionType != ActionAttack)
         {
             _queuedComboAttack = false;
+            _queuedComboActionId = 0;
         }
 
         if (actionType == ActionAttack && HasStateAuthority)
         {
             ApplyAttackDamage();
+        }
+
+        if (Object != null && Object.HasInputAuthority && !HasStateAuthority)
+        {
+            TriggerPredictedAction(actionType, actionId);
         }
     }
 
@@ -832,6 +956,7 @@ public class NetworkPlayerController : NetworkBehaviour
             : IsParryActive()
                 ? ActionParryImpact
                 : ActionImpact;
+        LastActionId = 0;
         ActionSequence++;
         SetActionAnimationLocked(true, GetActionLockType(LastAction));
         SetComboInputWindowOpen(false);
@@ -844,10 +969,22 @@ public class NetworkPlayerController : NetworkBehaviour
         _localActionLockType = (byte)PlayerActionLockType.None;
         _localComboInputWindowOpen = false;
         _queuedComboAttack = false;
+        _queuedComboActionId = 0;
+        _hasPredictedAction = false;
+        _predictedActionId = 0;
+        _predictedActionType = 0;
+        _lastPredictedPresentationActionId = 0;
+        _lastPredictedPresentationActionType = 0;
+        _lastPredictedPresentationSuppressUntil = 0f;
+        _hasPendingPredictedPresentation = false;
+        _pendingPredictedActionType = 0;
+        _lastLocalConsumedActionId = 0;
 
         if (HasStateAuthority)
         {
             LastAction = ActionNone;
+            LastActionId = 0;
+            LastConsumedActionId = 0;
             BasicAttackComboIndex = 0;
             BasicAttackComboExpiresAt = Runner != null ? Runner.SimulationTime : Time.time;
             ActionAnimationLocked = false;
@@ -1063,6 +1200,12 @@ public class NetworkPlayerController : NetworkBehaviour
                 animator.CrossFade("idle1", 0.1f);
                 break;
             case ActionAttack:
+                if (IsAnimatorInState(GetBasicAttackStateHash()))
+                {
+                    animator.ResetTrigger(GetBasicAttackTrigger());
+                    break;
+                }
+
                 animator.SetTrigger(GetBasicAttackTrigger());
                 break;
             case ActionParry:
@@ -1089,7 +1232,7 @@ public class NetworkPlayerController : NetworkBehaviour
         }
     }
 
-    private void TriggerPredictedAction(byte actionType)
+    private void TriggerPredictedAction(byte actionType, int actionId)
     {
         // 입력권한 클라이언트에서 즉시 보여줘야 하는 액션은 예측 재생한다.
         if (!Object.HasInputAuthority || animator == null)
@@ -1097,7 +1240,30 @@ public class NetworkPlayerController : NetworkBehaviour
             return;
         }
 
-        _predictedActionSequence = ActionSequence;
+        if (actionId == 0 || Runner != null && !Runner.IsForward)
+        {
+            return;
+        }
+
+        if (_hasPredictedAction &&
+            _predictedActionId == actionId &&
+            _predictedActionType == actionType)
+        {
+            return;
+        }
+
+        _hasPredictedAction = true;
+        _predictedActionId = actionId;
+        _predictedActionType = actionType;
+        _lastPredictedPresentationActionId = actionId;
+        _lastPredictedPresentationActionType = actionType;
+        _lastPredictedPresentationSuppressUntil = Time.time + 1.5f;
+        _hasPendingPredictedPresentation = true;
+        _pendingPredictedActionType = actionType;
+    }
+
+    private void ResetActionTriggers()
+    {
         animator.ResetTrigger(Attack);
         animator.ResetTrigger(Attack2);
         animator.ResetTrigger(Attack3);
@@ -1108,7 +1274,6 @@ public class NetworkPlayerController : NetworkBehaviour
         animator.ResetTrigger(Impact);
         animator.ResetTrigger(Impact2);
         animator.ResetTrigger(Death);
-        TriggerAction(actionType);
     }
 
     private int GetBasicAttackTrigger()
@@ -1119,6 +1284,43 @@ public class NetworkPlayerController : NetworkBehaviour
         }
 
         return BasicAttackComboTriggers[Mathf.Clamp(BasicAttackComboIndex, 0, BasicAttackComboLastIndex)];
+    }
+
+    private int GetBasicAttackStateHash()
+    {
+        if (!IsBasicAttackComboUnlocked)
+        {
+            return Slash2State;
+        }
+
+        return Mathf.Clamp(BasicAttackComboIndex, 0, BasicAttackComboLastIndex) switch
+        {
+            1 => Slash3State,
+            2 => Slash4State,
+            _ => Slash2State
+        };
+    }
+
+    private bool IsAnimatorInState(int stateHash)
+    {
+        if (animator == null)
+        {
+            return false;
+        }
+
+        AnimatorStateInfo currentState = animator.GetCurrentAnimatorStateInfo(0);
+        if (currentState.shortNameHash == stateHash && currentState.normalizedTime < 0.98f)
+        {
+            return true;
+        }
+
+        if (!animator.IsInTransition(0))
+        {
+            return false;
+        }
+
+        AnimatorStateInfo nextState = animator.GetNextAnimatorStateInfo(0);
+        return nextState.shortNameHash == stateHash;
     }
 
     private void UpdatePlayerTag()
@@ -1183,6 +1385,9 @@ public class NetworkPlayerController : NetworkBehaviour
         }
 
         builder.AppendLine();
+        AppendNetworkActionDebug(builder);
+
+        builder.AppendLine();
         builder.AppendLine("Skills");
         AppendRewardOptions(builder);
 
@@ -1195,6 +1400,52 @@ public class NetworkPlayerController : NetworkBehaviour
         AppendEquippedPassiveSkills(builder);
         AppendActiveSkillCooldowns(builder);
         return builder.ToString();
+    }
+
+    private void AppendNetworkActionDebug(StringBuilder builder)
+    {
+        builder.AppendLine("Network / Action");
+        builder.AppendLine($"Authority : state={HasStateAuthority}, input={Object.HasInputAuthority}, forward={(Runner != null && Runner.IsForward)}");
+        builder.AppendLine($"Action : {GetActionName(LastAction)} / id={LastActionId} / seq={ActionSequence}");
+        builder.AppendLine($"Consumed : net={LastConsumedActionId}, local={_lastLocalConsumedActionId}");
+        builder.AppendLine($"Lock : net={ActionAnimationLocked}({(PlayerActionLockType)ActionLockType}), local={_localActionAnimationLocked}({(PlayerActionLockType)_localActionLockType})");
+        builder.AppendLine($"Combo : index={BasicAttackComboIndex}, window={ComboInputWindowOpen || _localComboInputWindowOpen}, queued={_queuedComboAttack}:{_queuedComboActionId}");
+
+        if (animator == null)
+        {
+            builder.AppendLine("Animator : missing");
+            return;
+        }
+
+        AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
+        builder.AppendLine($"Animator : {GetAnimatorStateName(stateInfo.shortNameHash)} / t={stateInfo.normalizedTime:0.00} / actionTag={stateInfo.IsTag("Action")}");
+        builder.AppendLine($"Move Params : moving={animator.GetBool(IsMoving)}, running={animator.GetBool(IsRunning)}, lockOn={animator.GetBool(IsLockOn)}");
+    }
+
+    private static string GetActionName(byte actionType)
+    {
+        return actionType switch
+        {
+            ActionAttack => "Attack",
+            ActionParry => "Parry",
+            ActionRoll => "Roll",
+            ActionJump => "Jump",
+            ActionImpact => "Impact",
+            ActionParryImpact => "ParryImpact",
+            ActionDeath => "Death",
+            _ => "None"
+        };
+    }
+
+    private static string GetAnimatorStateName(int shortNameHash)
+    {
+        if (shortNameHash == IdleState) return "idle1";
+        if (shortNameHash == WalkState) return "walk1";
+        if (shortNameHash == RunState) return "run1";
+        if (shortNameHash == Slash2State) return "slash2";
+        if (shortNameHash == Slash3State) return "slash3";
+        if (shortNameHash == Slash4State) return "slash4";
+        return shortNameHash.ToString();
     }
 
     private void AppendRewardOptions(StringBuilder builder)

@@ -12,6 +12,8 @@ public class PlayerAbilityController : NetworkBehaviour
     private PlayerStats _stats;
     private NetworkPlayerController _playerController;
     private PlayerAbilityExecutor _executor;
+    private bool _hasPredictedPresentation;
+    private string _predictedPresentationAbilityId;
 
     private void Awake()
     {
@@ -50,6 +52,7 @@ public class PlayerAbilityController : NetworkBehaviour
             if (Input.GetKeyDown(slot.KeyCode))
             {
                 // 키 입력은 로컬에서 감지하지만, 실제 실행은 StateAuthority에 RPC로 요청한다.
+                TryPlayPredictedPresentation(i);
                 RPC_RequestActivateAbility(i);
             }
         }
@@ -123,7 +126,54 @@ public class PlayerAbilityController : NetworkBehaviour
 
         ApplyCooldownToLocalSlot(abilityId, cooldownEndTime);
 
+        if (ShouldSkipPredictedPresentation(abilityId))
+        {
+            return;
+        }
+
         _executor.PlayPresentation(module, _inventory.CreateContext());
+    }
+
+    private bool ShouldSkipPredictedPresentation(string abilityId)
+    {
+        if (Object == null ||
+            !Object.HasInputAuthority ||
+            Object.HasStateAuthority ||
+            !_hasPredictedPresentation ||
+            _predictedPresentationAbilityId != abilityId)
+        {
+            return false;
+        }
+
+        _hasPredictedPresentation = false;
+        _predictedPresentationAbilityId = null;
+        return true;
+    }
+
+    private void TryPlayPredictedPresentation(int activeSlotIndex)
+    {
+        if (Object == null || Object.HasStateAuthority || _inventory == null || _executor == null)
+        {
+            return;
+        }
+
+        PlayerAbilitySlot slot = _inventory.GetActiveSlot(activeSlotIndex);
+        PlayerAbilityModule module = slot?.Module;
+        if (module == null || !module.IsActive)
+        {
+            return;
+        }
+
+        float currentTime = Runner != null ? Runner.SimulationTime : Time.time;
+        PlayerAbilityContext context = _inventory.CreateContext();
+        if (!slot.IsReady(currentTime) || !_executor.CanActivate(module, context))
+        {
+            return;
+        }
+
+        _hasPredictedPresentation = true;
+        _predictedPresentationAbilityId = module.AbilityId;
+        _executor.PlayPresentation(module, context);
     }
 
     private void ApplyCooldownToLocalSlot(string abilityId, float cooldownEndTime)

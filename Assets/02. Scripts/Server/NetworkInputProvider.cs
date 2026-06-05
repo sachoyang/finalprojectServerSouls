@@ -8,27 +8,52 @@ using UnityEngine;
 public class NetworkInputProvider : MonoBehaviour, INetworkRunnerCallbacks
 {
     // Fusion의 OnInput 호출 시점까지 프레임 입력을 잃지 않도록 Update에서 먼저 캐싱한다.
+    private static NetworkInputProvider _activeProvider;
+
     private NetworkRunner _runner;
+    private bool _isActiveProvider;
     private bool _mouseButton0;
     private bool _mouseButton1;
     private bool _jumpPressed;
     private bool _lockOnPressed;
     private bool _lockOnCancelPressed;
+    private int _nextActionId = 1;
+    private int _pendingActionId;
 
     private void OnEnable()
     {
         // NetworkRunner가 DontDestroyOnLoad 오브젝트에 있을 수 있으므로 활성화 시점에 먼저 등록을 시도한다.
-        TryRegisterRunner();
+        TryBecomeActiveProvider();
     }
 
     private void Update()
     {
+        if (!TryBecomeActiveProvider())
+        {
+            return;
+        }
+
         TryRegisterRunner();
 
         // GetKeyDown 계열 입력은 OnInput보다 먼저 지나갈 수 있어 bool로 누적해 둔다.
-        _mouseButton0 = _mouseButton0 || Input.GetMouseButtonDown(0);
-        _mouseButton1 = _mouseButton1 || Input.GetMouseButtonDown(1);
-        _jumpPressed = _jumpPressed || Input.GetKeyDown(KeyCode.Space);
+        if (Input.GetMouseButtonDown(0))
+        {
+            _mouseButton0 = true;
+            CaptureActionId();
+        }
+
+        if (Input.GetMouseButtonDown(1))
+        {
+            _mouseButton1 = true;
+            CaptureActionId();
+        }
+
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            _jumpPressed = true;
+            CaptureActionId();
+        }
+
         _lockOnPressed = _lockOnPressed || Input.GetKeyDown(KeyCode.Q);
         _lockOnCancelPressed = _lockOnCancelPressed || Input.GetKeyDown(KeyCode.E);
     }
@@ -37,19 +62,38 @@ public class NetworkInputProvider : MonoBehaviour, INetworkRunnerCallbacks
     {
         if (_runner == null)
         {
+            if (_activeProvider == this)
+            {
+                _activeProvider = null;
+            }
+
+            _isActiveProvider = false;
             return;
         }
 
         _runner.RemoveCallbacks(this);
         _runner = null;
+
+        if (_activeProvider == this)
+        {
+            _activeProvider = null;
+        }
+
+        _isActiveProvider = false;
     }
 
     public void OnInput(NetworkRunner runner, NetworkInput input)
     {
+        if (!_isActiveProvider)
+        {
+            return;
+        }
+
         // 클라이언트 입력을 Fusion 네트워크 입력 구조체로 변환해 플레이어 컨트롤러에 전달한다.
         var data = new NetworkInputData
         {
-            direction = GetCameraRelativeMove(ReadMoveInput())
+            direction = GetCameraRelativeMove(ReadMoveInput()),
+            actionId = _pendingActionId
         };
 
         data.buttons.Set(NetworkInputData.MOUSEBUTTON0, _mouseButton0);
@@ -64,13 +108,28 @@ public class NetworkInputProvider : MonoBehaviour, INetworkRunnerCallbacks
         _jumpPressed = false;
         _lockOnPressed = false;
         _lockOnCancelPressed = false;
+        _pendingActionId = 0;
 
         input.Set(data);
     }
 
+    private void CaptureActionId()
+    {
+        if (_pendingActionId != 0)
+        {
+            return;
+        }
+
+        _pendingActionId = _nextActionId++;
+        if (_nextActionId == int.MaxValue)
+        {
+            _nextActionId = 1;
+        }
+    }
+
     private void TryRegisterRunner()
     {
-        if (_runner != null)
+        if (!_isActiveProvider || _runner != null)
         {
             return;
         }
@@ -84,6 +143,19 @@ public class NetworkInputProvider : MonoBehaviour, INetworkRunnerCallbacks
 
         _runner = runner;
         _runner.AddCallbacks(this);
+    }
+
+    private bool TryBecomeActiveProvider()
+    {
+        if (_activeProvider != null && _activeProvider != this)
+        {
+            _isActiveProvider = false;
+            return false;
+        }
+
+        _activeProvider = this;
+        _isActiveProvider = true;
+        return true;
     }
 
     private static Vector2 ReadMoveInput()

@@ -152,6 +152,14 @@ public class CutsceneManager : MonoBehaviour
         }
     }
 
+    public void PlayGateKickCutscene(NetworkRunner runner, PlayerRef kickPlayer)
+    {
+        if (!_isPlaying)
+        {
+            StartCoroutine(PlayGateKickRoutine(runner, false, kickPlayer));
+        }
+    }
+
     public void PlayGateKickCutsceneAndLoad(NetworkRunner runner)
     {
         if (!_isPlaying)
@@ -209,12 +217,12 @@ public class CutsceneManager : MonoBehaviour
         _isPlaying = false;
     }
 
-    private IEnumerator PlayGateKickRoutine(NetworkRunner runner, bool loadSceneOnEnd)
+    private IEnumerator PlayGateKickRoutine(NetworkRunner runner, bool loadSceneOnEnd, PlayerRef kickPlayer = default)
     {
         _isPlaying = true;
 
         ResolveManagers();
-        ResolveLocalPlayer();
+        ResolveGateKickPlayer(runner, kickPlayer);
         SetPlayerControlEnabled(false);
         AlignPlayerToKickPoint();
 
@@ -325,6 +333,18 @@ public class CutsceneManager : MonoBehaviour
         {
             playerAnimator = playerObject.GetComponentInChildren<Animator>(true);
         }
+    }
+
+    private void ResolveGateKickPlayer(NetworkRunner runner, PlayerRef kickPlayer)
+    {
+        if (runner != null && kickPlayer != default && runner.TryGetPlayerObject(kickPlayer, out NetworkObject resolvedPlayer) && resolvedPlayer != null)
+        {
+            playerObject = resolvedPlayer;
+            playerAnimator = playerObject.GetComponentInChildren<Animator>(true);
+            return;
+        }
+
+        ResolveLocalPlayer();
     }
 
     private void AlignPlayerToKickPoint()
