@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Stamina Up
   description: Restores stamina with a power-up animation.
   icon: {fileID: 644248103, guid: 7d4e7f6eb9b67bc4da7d17ee567dd146, type: 3}
-  abilityType: 1
+  abilityType: 0
   minBossStage: 1
   maxBossStage: 8
   includeInRewardPool: 1
@@ -29,7 +29,7 @@ MonoBehaviour:
   maxStaminaBonus: 0
   defenseRateBonus: 0
   attackDamageBonusPercent: 0
-  animationClip: {fileID: 7400000, guid: f91d1ffc181042e45bdcbe560e4be586, type: 3}
+  animationClip: {fileID: -203655887218126122, guid: f91d1ffc181042e45bdcbe560e4be586, type: 3}
   animationStateName: 
   animationTrigger: StaminaUp
   effectPrefab: {fileID: 0}

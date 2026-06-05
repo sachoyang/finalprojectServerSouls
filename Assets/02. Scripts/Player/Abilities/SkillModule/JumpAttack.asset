@@ -29,10 +29,10 @@ MonoBehaviour:
   maxStaminaBonus: 0
   defenseRateBonus: 0
   attackDamageBonusPercent: 0
-  animationClip: {fileID: 7400000, guid: 2e360ce02ed05d04faec51172d19bb6d, type: 3}
+  animationClip: {fileID: -203655887218126122, guid: 2e360ce02ed05d04faec51172d19bb6d, type: 3}
   animationStateName: 
   animationTrigger: JumpAttack
-  effectPrefab: {fileID: 0}
+  effectPrefab: {fileID: 100000, guid: fa45173d878d027478169754e02ba58a, type: 3}
   effectLocalOffset: {x: 0, y: 0, z: 0}
   parentEffectToPlayer: 0
   hitboxPrefab: {fileID: 0}

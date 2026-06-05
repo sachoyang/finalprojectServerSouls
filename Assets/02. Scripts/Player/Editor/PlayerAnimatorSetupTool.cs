@@ -1,6 +1,7 @@
 using UnityEditor;
 using UnityEditor.Animations;
 using UnityEngine;
+using System.Collections.Generic;
 
 public static class PlayerAnimatorSetupTool
 {
@@ -147,13 +148,14 @@ public static class PlayerAnimatorSetupTool
 
         AnimatorState idleState = FindState(root, "idle1");
         string[] moduleGuids = AssetDatabase.FindAssets("t:PlayerAbilityModule", new[] { SkillModuleFolder });
+        ClearSkillActions(controller, root, skillMachine, moduleGuids);
         int syncedCount = 0;
 
         foreach (string moduleGuid in moduleGuids)
         {
             string path = AssetDatabase.GUIDToAssetPath(moduleGuid);
             PlayerAbilityModule module = AssetDatabase.LoadAssetAtPath<PlayerAbilityModule>(path);
-            if (module == null || !module.IsActive)
+            if (module == null || !module.IncludeInRewardPool)
             {
                 continue;
             }
@@ -161,14 +163,15 @@ public static class PlayerAnimatorSetupTool
             if (module.AnimationClip == null || string.IsNullOrWhiteSpace(module.AnimationTrigger))
             {
                 // 액티브 스킬은 런타임에서 Trigger로 재생하므로 Clip과 Trigger 둘 중 하나라도 없으면 Animator 연결을 만들지 않는다.
-                Debug.LogWarning($"Skipped active ability module with missing animation data: {path}");
+                if (module.IsActive)
+                {
+                    Debug.LogWarning($"Skipped active ability module with missing animation data: {path}");
+                }
                 continue;
             }
 
             // State Name을 비워둔 모듈은 클립 이름을 그대로 State 이름으로 사용해 빠르게 세팅할 수 있게 한다.
-            string stateName = !string.IsNullOrWhiteSpace(module.AnimationStateName)
-                ? module.AnimationStateName
-                : module.AnimationClip.name;
+            string stateName = GetModuleStateName(module);
 
             AddParameter(controller, module.AnimationTrigger, AnimatorControllerParameterType.Trigger);
 
@@ -186,6 +189,141 @@ public static class PlayerAnimatorSetupTool
             EnsureAnyStateTriggerTransition(root, state, module.AnimationTrigger);
             EnsureTimedExitTransition(state, idleState);
             syncedCount++;
+        }
+    }
+
+    private static void RemoveExcludedSkillAnimatorEntries(
+        AnimatorController controller,
+        AnimatorStateMachine root,
+        AnimatorStateMachine skillMachine,
+        string[] moduleGuids)
+    {
+        foreach (string moduleGuid in moduleGuids)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(moduleGuid);
+            PlayerAbilityModule module = AssetDatabase.LoadAssetAtPath<PlayerAbilityModule>(path);
+            if (module == null || module.IncludeInRewardPool)
+            {
+                continue;
+            }
+
+            string stateName = GetModuleStateName(module);
+            if (!string.IsNullOrWhiteSpace(stateName))
+            {
+                AnimatorState state = FindState(skillMachine, stateName);
+                if (state != null)
+                {
+                    RemoveAnyStateTransitionsTo(root, state);
+                    skillMachine.RemoveState(state);
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(module.AnimationTrigger) &&
+                !IsTriggerUsedByIncludedModule(module.AnimationTrigger, moduleGuids))
+            {
+                RemoveAnyStateTransitionsWithTrigger(root, module.AnimationTrigger);
+                RemoveParameter(controller, module.AnimationTrigger);
+            }
+        }
+    }
+
+    private static void ClearSkillActions(
+        AnimatorController controller,
+        AnimatorStateMachine root,
+        AnimatorStateMachine skillMachine,
+        string[] moduleGuids)
+    {
+        List<AnimatorState> states = new List<AnimatorState>();
+        foreach (ChildAnimatorState child in skillMachine.states)
+        {
+            states.Add(child.state);
+        }
+
+        foreach (AnimatorState state in states)
+        {
+            RemoveAnyStateTransitionsTo(root, state);
+            skillMachine.RemoveState(state);
+        }
+
+        foreach (string moduleGuid in moduleGuids)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(moduleGuid);
+            PlayerAbilityModule module = AssetDatabase.LoadAssetAtPath<PlayerAbilityModule>(path);
+            if (module != null && !string.IsNullOrWhiteSpace(module.AnimationTrigger))
+            {
+                RemoveAnyStateTransitionsWithTrigger(root, module.AnimationTrigger);
+                RemoveParameter(controller, module.AnimationTrigger);
+            }
+        }
+    }
+
+    private static string GetModuleStateName(PlayerAbilityModule module)
+    {
+        if (!string.IsNullOrWhiteSpace(module.AnimationStateName))
+        {
+            return module.AnimationStateName;
+        }
+
+        if (!string.IsNullOrWhiteSpace(module.AnimationTrigger))
+        {
+            return module.AnimationTrigger;
+        }
+
+        return module.AnimationClip != null ? module.AnimationClip.name : string.Empty;
+    }
+
+    private static bool IsTriggerUsedByIncludedModule(string triggerName, string[] moduleGuids)
+    {
+        foreach (string moduleGuid in moduleGuids)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(moduleGuid);
+            PlayerAbilityModule module = AssetDatabase.LoadAssetAtPath<PlayerAbilityModule>(path);
+            if (module != null &&
+                module.IncludeInRewardPool &&
+                module.AnimationTrigger == triggerName)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static void RemoveAnyStateTransitionsTo(AnimatorStateMachine root, AnimatorState destination)
+    {
+        foreach (AnimatorStateTransition transition in root.anyStateTransitions)
+        {
+            if (transition.destinationState == destination)
+            {
+                root.RemoveAnyStateTransition(transition);
+            }
+        }
+    }
+
+    private static void RemoveAnyStateTransitionsWithTrigger(AnimatorStateMachine root, string triggerName)
+    {
+        foreach (AnimatorStateTransition transition in root.anyStateTransitions)
+        {
+            foreach (AnimatorCondition condition in transition.conditions)
+            {
+                if (condition.parameter == triggerName)
+                {
+                    root.RemoveAnyStateTransition(transition);
+                    break;
+                }
+            }
+        }
+    }
+
+    private static void RemoveParameter(AnimatorController controller, string name)
+    {
+        foreach (AnimatorControllerParameter parameter in controller.parameters)
+        {
+            if (parameter.name == name)
+            {
+                controller.RemoveParameter(parameter);
+                return;
+            }
         }
     }
 
