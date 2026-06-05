@@ -577,6 +577,9 @@ public class NetworkBossCore : NetworkBehaviour
             // 3초 동안 무적 & 포효 연출 진행
             StateTimer = TickTimer.CreateFromSeconds(Runner, 3.0f);
             Debug.Log("[보스] 체력 50% 이하! 2페이즈 광폭화 돌입!");
+
+            ApplyStatus(1); // 광폭화 SO 만들어둔 거 부여
+
             return;
         }
 
@@ -733,12 +736,24 @@ public class NetworkBossCore : NetworkBehaviour
     }
 
     // ------------------------------------------
-    // 상태이상 부여 함수 (Enum을 버리고 int ID로만 받음!)
+    // 상태이상 부여 (SO 데이터를 기반으로 자동 설정) 함수
     // ------------------------------------------
-    public void ApplyStatus(int statusId, float duration, float power = 1.0f)
+    public void ApplyStatus(int statusId)
     {
         if (!HasStateAuthority || CurrentState == BossState.Die) return;
         if (statusId == 0) return; // 0은 빈 칸을 의미하므로 무시
+
+        // 도감에서 SO 데이터 찾기
+        StatusEffectData data = statusDatabase.Find(x => x.statusId == statusId);
+        if (data == null)
+        {
+            Debug.LogWarning($"[Status] ID {statusId}에 해당하는 상태이상 데이터를 찾을 수 없습니다.");
+            return;
+        }
+
+        // 무한 지속일 경우 약 11일(999999초) 동안 유지되도록 설정하여 시간 제한을 사실상 없앰
+        float duration = data.isInfinite ? 999999f : data.defaultDuration;
+        float targetEndTime = Runner.SimulationTime + duration;
 
         // 이미 같은 상태이상이 있는지 찾아서 덮어씌우기 (시간 연장)
         for (int i = 0; i < ActiveStatuses.Length; i++)
@@ -746,8 +761,8 @@ public class NetworkBossCore : NetworkBehaviour
             if (ActiveStatuses[i].StatusId == statusId)
             {
                 BossStatusData existing = ActiveStatuses[i];
-                existing.EndTime = Runner.SimulationTime + duration;
-                existing.Power = power;
+                existing.EndTime = targetEndTime;
+                existing.Power = data.Power;
                 ActiveStatuses.Set(i, existing);
                 return;
             }
@@ -756,14 +771,33 @@ public class NetworkBossCore : NetworkBehaviour
         // 없다면 빈자리(0)를 찾아서 새로 넣기
         for (int i = 0; i < ActiveStatuses.Length; i++)
         {
-            if (ActiveStatuses[i].StatusId == 0) // None 대신 0 사용
+            if (ActiveStatuses[i].StatusId == 0) 
             {
                 ActiveStatuses.Set(i, new BossStatusData
                 {
                     StatusId = statusId,
-                    EndTime = Runner.SimulationTime + duration,
-                    Power = power
+                    EndTime = targetEndTime,
+                    Power = data.Power
                 });
+                return;
+            }
+        }
+    }
+
+    // ------------------------------------------
+    // 특정 트리거로 상태이상을 강제로 끌 때 사용하는 함수
+    // ------------------------------------------
+    public void RemoveStatus(int statusId)
+    {
+        if (!HasStateAuthority) return;
+
+        for (int i = 0; i < ActiveStatuses.Length; i++)
+        {
+            if (ActiveStatuses[i].StatusId == statusId)
+            {
+                // 빈 깡통으로 덮어씌워서 즉시 삭제!
+                ActiveStatuses.Set(i, new BossStatusData());
+                Debug.Log($"[Status] 상태이상(ID: {statusId})이 강제 해제되었습니다.");
                 return;
             }
         }
