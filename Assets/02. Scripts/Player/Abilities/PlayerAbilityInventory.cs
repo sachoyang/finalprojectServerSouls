@@ -182,12 +182,9 @@ public class PlayerAbilityInventory : MonoBehaviour
 
         // 패시브는 장착 즉시 스탯 보너스와 즉시 효과를 적용한다.
         // 액티브는 슬롯에 등록하고 실제 실행은 PlayerAbilityController가 담당한다.
-        if (!module.IsActive)
-        {
-            _executor?.EquipPassive(module, context);
-        }
+        _executor?.EquipModule(module, context);
 
-        if (module.IsActive)
+        if (module.IsActive && module.SpecialEffect == PlayerAbilitySpecialEffect.None)
         {
             int slotIndex = activeSlots.Count;
             activeSlots.Add(new PlayerAbilitySlot(module, GetSavedOrDefaultKey(slotIndex)));

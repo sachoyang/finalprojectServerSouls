@@ -17,16 +17,26 @@ public class PlayerAbilityExecutor : MonoBehaviour
                (context.Stats == null || !context.Stats.IsDead);
     }
 
-    public void EquipPassive(PlayerAbilityModule module, PlayerAbilityContext context)
+    public void EquipModule(PlayerAbilityModule module, PlayerAbilityContext context)
     {
-        if (module == null || module.IsActive)
+        if (module == null)
         {
             return;
         }
 
-        context.Stats?.ApplyPassiveStatBonus(module);
-        PlayPresentation(module, context);
-        ApplyEffect(module, context);
+        if (!module.IsActive)
+        {
+            context.Stats?.ApplyPassiveStatBonus(module);
+            PlayPresentation(module, context);
+            ApplyEffect(module, context);
+        }
+
+        ApplySpecialEffect(module, context);
+    }
+
+    public void EquipPassive(PlayerAbilityModule module, PlayerAbilityContext context)
+    {
+        EquipModule(module, context);
     }
 
     public void Activate(PlayerAbilityModule module, PlayerAbilityContext context)
@@ -90,6 +100,10 @@ public class PlayerAbilityExecutor : MonoBehaviour
             context.Stats?.RestoreStamina(module.StaminaRestoreAmount);
         }
 
+    }
+
+    private static void ApplySpecialEffect(PlayerAbilityModule module, PlayerAbilityContext context)
+    {
         if (module.SpecialEffect == PlayerAbilitySpecialEffect.UnlockBasicAttackCombo)
         {
             context.Owner?.GetComponent<NetworkPlayerController>()?.UnlockBasicAttackCombo();

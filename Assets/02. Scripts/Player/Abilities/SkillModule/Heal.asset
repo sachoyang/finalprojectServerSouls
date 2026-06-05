@@ -30,9 +30,9 @@ MonoBehaviour:
   defenseRateBonus: 0
   attackDamageBonusPercent: 0
   animationClip: {fileID: -203655887218126122, guid: b87c0223bacdbd840967e74c4a41288f, type: 3}
-  animationStateName: 
+  animationStateName: Heal
   animationTrigger: Heal
-  effectPrefab: {fileID: 6117522121999580243, guid: 0d47c36199aafbd4e851dbc6a74ea775, type: 3}
+  effectPrefab: {fileID: 0}
   effectLocalOffset: {x: 0, y: 0, z: 0}
   parentEffectToPlayer: 1
   hitboxPrefab: {fileID: 0}
