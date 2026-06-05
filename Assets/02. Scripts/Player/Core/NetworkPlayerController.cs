@@ -666,6 +666,7 @@ public class NetworkPlayerController : NetworkBehaviour
                !isActing &&
                _queuedComboAttack &&
                LastAction == ActionAttack &&
+               BasicAttackComboIndex < BasicAttackComboLastIndex &&
                Runner.SimulationTime <= BasicAttackComboExpiresAt;
     }
 
@@ -707,7 +708,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
     public void OpenComboInputWindow()
     {
-        if (LastAction != ActionAttack)
+        if (LastAction != ActionAttack || BasicAttackComboIndex >= BasicAttackComboLastIndex)
         {
             return;
         }
@@ -729,6 +730,13 @@ public class NetworkPlayerController : NetworkBehaviour
 
         if (LastAction == ActionAttack)
         {
+            if (BasicAttackComboIndex >= BasicAttackComboLastIndex)
+            {
+                BasicAttackComboExpiresAt = Runner != null ? Runner.SimulationTime : Time.time;
+                _queuedComboAttack = false;
+                return;
+            }
+
             BasicAttackComboExpiresAt = Runner != null
                 ? Runner.SimulationTime + Mathf.Max(0f, comboGraceSeconds)
                 : Time.time + Mathf.Max(0f, comboGraceSeconds);

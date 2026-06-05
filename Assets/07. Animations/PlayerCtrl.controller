@@ -1403,7 +1403,7 @@ AnimatorStateTransition:
   m_HasFixedDuration: 1
   m_InterruptionSource: 0
   m_OrderedInterruption: 1
-  m_CanTransitionToSelf: 1
+  m_CanTransitionToSelf: 0
 --- !u!1101 &3000000000000000002
 AnimatorStateTransition:
   m_ObjectHideFlags: 1
@@ -1428,7 +1428,7 @@ AnimatorStateTransition:
   m_HasFixedDuration: 1
   m_InterruptionSource: 0
   m_OrderedInterruption: 1
-  m_CanTransitionToSelf: 1
+  m_CanTransitionToSelf: 0
 --- !u!1101 &3000000000000000003
 AnimatorStateTransition:
   m_ObjectHideFlags: 1
@@ -1453,7 +1453,7 @@ AnimatorStateTransition:
   m_HasFixedDuration: 1
   m_InterruptionSource: 0
   m_OrderedInterruption: 1
-  m_CanTransitionToSelf: 1
+  m_CanTransitionToSelf: 0
 --- !u!114 &3100000000000000002
 MonoBehaviour:
   m_ObjectHideFlags: 1

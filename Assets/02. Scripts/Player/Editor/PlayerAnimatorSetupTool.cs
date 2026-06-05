@@ -456,7 +456,7 @@ public static class PlayerAnimatorSetupTool
                 {
                     transition.hasExitTime = false;
                     transition.duration = 0.05f;
-                    transition.canTransitionToSelf = true;
+                    transition.canTransitionToSelf = !IsBasicAttackComboTrigger(triggerName);
                     return;
                 }
             }
@@ -465,8 +465,13 @@ public static class PlayerAnimatorSetupTool
         AnimatorStateTransition anyToSkill = root.AddAnyStateTransition(destination);
         anyToSkill.hasExitTime = false;
         anyToSkill.duration = 0.05f;
-        anyToSkill.canTransitionToSelf = true;
+        anyToSkill.canTransitionToSelf = !IsBasicAttackComboTrigger(triggerName);
         anyToSkill.AddCondition(AnimatorConditionMode.If, 0f, triggerName);
+    }
+
+    private static bool IsBasicAttackComboTrigger(string triggerName)
+    {
+        return triggerName == Attack2 || triggerName == Attack3 || triggerName == Attack4;
     }
 
     private static void EnsureExitTransition(AnimatorState lockOnState, AnimatorState idleState)
