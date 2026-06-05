@@ -55,6 +55,13 @@ public class NetworkBossCore : NetworkBehaviour
     public float wakeUpDuration = 2.8f;
     private int _wakeUpAnimHash; // 최적화용 해시 변수
 
+    [Header("Boss SFX")]
+    [SerializeField] private AnimationClip wakeUpSfxClip;
+    [SerializeField] private AnimationClip phaseTransitionSfxClip;
+    [SerializeField] private AnimationClip dieSfxClip;
+
+    private BossSFXController _sfxController;
+
     [Header("그로기(Stagger) 설정")]
     public float maxGroggy = 40f;
     public float groggyDuration = 3.0f; // 그로기 지속 시간
@@ -141,6 +148,8 @@ public class NetworkBossCore : NetworkBehaviour
     public override void Spawned()
     {
         _visual = GetComponentInChildren<IBossVisual>();
+        _sfxController = GetComponent<BossSFXController>();
+
         _wakeUpAnimHash = Animator.StringToHash(wakeUpAnimName);
 
         if (HasStateAuthority)
@@ -418,6 +427,7 @@ public class NetworkBossCore : NetworkBehaviour
                 // 해시값이 비어있으면 실시간으로 문자열을 찾아 해시로 변환하는 안전장치
                 int targetHash = action.animationHash != 0 ? action.animationHash : Animator.StringToHash(action.animationStateName);
                 _visual.PlayAction(targetHash);
+                _sfxController?.PlaySFX(action.animationClip);
 
                 // (원본 클립 길이 / 기획자가 설정한 시간)으로 정확한 배속 도출
                 if (action.animationClip != null && action.duration > 0f)

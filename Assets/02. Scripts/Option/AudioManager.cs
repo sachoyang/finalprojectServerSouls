@@ -103,7 +103,26 @@ public class AudioManager : MonoBehaviour
         if (sfxSource == null)
             SetupAudioSources();
 
+        sfxSource.pitch = 1f;
         sfxSource.PlayOneShot(clip);
+    }
+
+    public void PlaySFX(AudioClip clip, float volume, float pitch)
+    {
+        if (clip == null)
+        {
+            Debug.LogWarning("[AudioManager] 재생할 SFX AudioClip이 비어 있습니다.");
+            return;
+        }
+
+        if (sfxSource == null)
+            SetupAudioSources();
+
+        float previousPitch = sfxSource.pitch;
+
+        sfxSource.pitch = Mathf.Clamp(pitch, 0.1f, 3f);
+        sfxSource.PlayOneShot(clip, Mathf.Clamp01(volume));
+        sfxSource.pitch = previousPitch;
     }
 
     public void PlayButtonClick()

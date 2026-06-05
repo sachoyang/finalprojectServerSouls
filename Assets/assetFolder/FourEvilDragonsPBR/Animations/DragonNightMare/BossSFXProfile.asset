@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68d9af4a129a3564ba032e845f26f32e, type: 3}
+  m_Name: BossSFXProfile
+  m_EditorClassIdentifier: 
+  entries:
+  - animationClip: {fileID: 7400000, guid: 111c5f2baba40874c84636fdf0cf746e, type: 3}
+    clips:
+    - clip: {fileID: 8300000, guid: d816eb5ebd3ebb843bd9b07a4c32fe17, type: 3}
+      delay: 0
+      volume: 1
+      pitch: 1
+  - animationClip: {fileID: 7400000, guid: a8d68f882ac2f2f48982204cc9c22f27, type: 3}
+    clips:
+    - clip: {fileID: 8300000, guid: d816eb5ebd3ebb843bd9b07a4c32fe17, type: 3}
+      delay: 0
+      volume: 1
+      pitch: 1
+  - animationClip: {fileID: 7400000, guid: 4b1dcfc331de54549a94b650385f751e, type: 3}
+    clips:
+    - clip: {fileID: 8300000, guid: d816eb5ebd3ebb843bd9b07a4c32fe17, type: 3}
+      delay: 0
+      volume: 1
+      pitch: 1
+  - animationClip: {fileID: 7400000, guid: e6a84557d6aca2f4daa1b608739267d9, type: 3}
+    clips:
+    - clip: {fileID: 8300000, guid: d816eb5ebd3ebb843bd9b07a4c32fe17, type: 3}
+      delay: 0
+      volume: 1
+      pitch: 1
