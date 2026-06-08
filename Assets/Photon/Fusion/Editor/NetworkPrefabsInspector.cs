@@ -62,8 +62,8 @@ namespace Fusion.Editor {
 
     [Serializable]
     private class InspectorTreeViewState : TreeViewState {
-      public MultiColumnHeaderState HeaderState;
-      public bool                   SyncSelection;
+      public MultiColumnHeaderState HeaderState   = default;
+      public bool                   SyncSelection = default;
     }
 
     private class GridItem : FusionGridItem {
