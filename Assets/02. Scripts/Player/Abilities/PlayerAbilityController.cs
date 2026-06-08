@@ -8,12 +8,16 @@ using UnityEngine;
 // 상태 권한을 가진 쪽에서 최종 스태미나/쿨다운 검사와 효과 실행을 처리한다.
 public class PlayerAbilityController : NetworkBehaviour
 {
+    private const int PredictedPresentationCacheSize = 8;
+
     private PlayerAbilityInventory _inventory;
     private PlayerStats _stats;
     private NetworkPlayerController _playerController;
     private PlayerAbilityExecutor _executor;
-    private bool _hasPredictedPresentation;
-    private string _predictedPresentationAbilityId;
+    private readonly int[] _predictedPresentationRequestIds = new int[PredictedPresentationCacheSize];
+    private readonly string[] _predictedPresentationAbilityIds = new string[PredictedPresentationCacheSize];
+    private int _predictedPresentationCursor;
+    private int _nextPresentationRequestId = 1;
 
     private void Awake()
     {
@@ -52,15 +56,23 @@ public class PlayerAbilityController : NetworkBehaviour
             if (Input.GetKeyDown(slot.KeyCode))
             {
                 // 키 입력은 로컬에서 감지하지만, 실제 실행은 StateAuthority에 RPC로 요청한다.
-                TryPlayPredictedPresentation(i);
-                RPC_RequestActivateAbility(i);
+                int presentationRequestId = AllocatePresentationRequestId();
+                if (HasStateAuthority)
+                {
+                    TryActivateAbility(i, presentationRequestId);
+                }
+                else
+                {
+                    TryPlayPredictedPresentation(i, presentationRequestId);
+                    RPC_RequestActivateAbility(i, presentationRequestId);
+                }
             }
         }
     }
 
     // 액티브 슬롯 번호에 해당하는 능력을 실제로 실행한다.
     // 테스트나 AI용으로 직접 호출할 수도 있지만, 네트워크 플레이에서는 RPC를 통해 호출되는 흐름이 기본이다.
-    public bool TryActivateAbility(int activeSlotIndex)
+    public bool TryActivateAbility(int activeSlotIndex, int presentationRequestId = 0)
     {
         if (_inventory == null || (_playerController != null && _playerController.IsActionAnimationLocked))
         {
@@ -93,20 +105,20 @@ public class PlayerAbilityController : NetworkBehaviour
         // 실제 애니메이션, 이펙트, 히트박스, 회복 같은 실행은 Executor가 담당한다.
         _executor.Activate(module, context);
         slot.StartCooldown(currentTime);
-        RPC_PlayAbilityPresentation(module.AbilityId, slot.NextReadyTime);
+        RPC_PlayAbilityPresentation(module.AbilityId, slot.NextReadyTime, presentationRequestId);
         return true;
     }
 
     // 입력 권한을 가진 클라이언트가 StateAuthority에게 "이 슬롯 능력을 사용하고 싶다"고 요청한다.
     // 최종 성공/실패 판정은 TryActivateAbility에서 서버/호스트 기준으로 처리된다.
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
-    private void RPC_RequestActivateAbility(int activeSlotIndex)
+    private void RPC_RequestActivateAbility(int activeSlotIndex, int presentationRequestId)
     {
-        TryActivateAbility(activeSlotIndex);
+        TryActivateAbility(activeSlotIndex, presentationRequestId);
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    private void RPC_PlayAbilityPresentation(string abilityId, float cooldownEndTime)
+    private void RPC_PlayAbilityPresentation(string abilityId, float cooldownEndTime, int presentationRequestId)
     {
         if (_inventory == null)
         {
@@ -126,7 +138,7 @@ public class PlayerAbilityController : NetworkBehaviour
 
         ApplyCooldownToLocalSlot(abilityId, cooldownEndTime);
 
-        if (ShouldSkipPredictedPresentation(abilityId))
+        if (ShouldSkipPredictedPresentation(abilityId, presentationRequestId))
         {
             return;
         }
@@ -134,46 +146,86 @@ public class PlayerAbilityController : NetworkBehaviour
         _executor.PlayPresentation(module, _inventory.CreateContext());
     }
 
-    private bool ShouldSkipPredictedPresentation(string abilityId)
+    private bool ShouldSkipPredictedPresentation(string abilityId, int presentationRequestId)
     {
         if (Object == null ||
             !Object.HasInputAuthority ||
             Object.HasStateAuthority ||
-            !_hasPredictedPresentation ||
-            _predictedPresentationAbilityId != abilityId)
+            presentationRequestId == 0 ||
+            !WasPresentationPredicted(abilityId, presentationRequestId))
         {
             return false;
         }
 
-        _hasPredictedPresentation = false;
-        _predictedPresentationAbilityId = null;
         return true;
     }
 
-    private void TryPlayPredictedPresentation(int activeSlotIndex)
+    private bool TryPlayPredictedPresentation(int activeSlotIndex, int presentationRequestId)
     {
         if (Object == null || Object.HasStateAuthority || _inventory == null || _executor == null)
         {
-            return;
+            return false;
         }
 
         PlayerAbilitySlot slot = _inventory.GetActiveSlot(activeSlotIndex);
         PlayerAbilityModule module = slot?.Module;
         if (module == null || !module.IsActive)
         {
-            return;
+            return false;
         }
 
         float currentTime = Runner != null ? Runner.SimulationTime : Time.time;
         PlayerAbilityContext context = _inventory.CreateContext();
         if (!slot.IsReady(currentTime) || !_executor.CanActivate(module, context))
         {
+            return false;
+        }
+
+        RememberPredictedPresentation(module.AbilityId, presentationRequestId);
+        _executor.PlayPresentation(module, context);
+        return true;
+    }
+
+    private int AllocatePresentationRequestId()
+    {
+        int requestId = _nextPresentationRequestId++;
+        if (_nextPresentationRequestId == int.MaxValue)
+        {
+            _nextPresentationRequestId = 1;
+        }
+
+        return requestId;
+    }
+
+    private void RememberPredictedPresentation(string abilityId, int presentationRequestId)
+    {
+        if (presentationRequestId == 0 || string.IsNullOrWhiteSpace(abilityId))
+        {
             return;
         }
 
-        _hasPredictedPresentation = true;
-        _predictedPresentationAbilityId = module.AbilityId;
-        _executor.PlayPresentation(module, context);
+        _predictedPresentationRequestIds[_predictedPresentationCursor] = presentationRequestId;
+        _predictedPresentationAbilityIds[_predictedPresentationCursor] = abilityId;
+        _predictedPresentationCursor = (_predictedPresentationCursor + 1) % PredictedPresentationCacheSize;
+    }
+
+    private bool WasPresentationPredicted(string abilityId, int presentationRequestId)
+    {
+        if (presentationRequestId == 0 || string.IsNullOrWhiteSpace(abilityId))
+        {
+            return false;
+        }
+
+        for (int i = 0; i < PredictedPresentationCacheSize; i++)
+        {
+            if (_predictedPresentationRequestIds[i] == presentationRequestId &&
+                _predictedPresentationAbilityIds[i] == abilityId)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void ApplyCooldownToLocalSlot(string abilityId, float cooldownEndTime)

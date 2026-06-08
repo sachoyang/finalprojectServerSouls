@@ -51,6 +51,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
     private const string AlivePlayerTag = "Player";
     private const string DeadPlayerTag = "DeadPlayer";
+    private const int LocalPresentationCacheSize = 12;
 
     private static readonly int[] BasicAttackComboTriggers =
     {
@@ -83,6 +84,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
     [Header("Basic Attack Combo")]
     [SerializeField] private float comboGraceSeconds = 0.5f;
+    [SerializeField] private float comboInputBufferSeconds = 0.35f;
 
     [Header("Combat")]
     // 기본 공격 판정 구체의 위치와 크기. Gizmo도 이 값을 사용한다.
@@ -129,14 +131,11 @@ public class NetworkPlayerController : NetworkBehaviour
     private CameraManager _cameraManager;
     private float _networkControllerRotationSpeed;
     private float _suppressLockOnAnimatorUntil;
-    private bool _hasPredictedAction;
-    private int _predictedActionId;
-    private byte _predictedActionType;
-    private int _lastPredictedPresentationActionId;
-    private byte _lastPredictedPresentationActionType;
-    private float _lastPredictedPresentationSuppressUntil;
-    private bool _hasPendingPredictedPresentation;
-    private byte _pendingPredictedActionType;
+    private bool _hasPendingLocalPresentation;
+    private byte _pendingLocalPresentationActionType;
+    private readonly int[] _locallyPresentedActionIds = new int[LocalPresentationCacheSize];
+    private readonly byte[] _locallyPresentedActionTypes = new byte[LocalPresentationCacheSize];
+    private int _locallyPresentedActionCursor;
     private readonly Collider[] _attackHits = new Collider[16];
     private readonly Dictionary<NetworkBossCore, BossHitbox> _bestBossHitboxes = new Dictionary<NetworkBossCore, BossHitbox>();
     private readonly HashSet<PlayerStats> _reviveHitPlayers = new HashSet<PlayerStats>();
@@ -144,6 +143,9 @@ public class NetworkPlayerController : NetworkBehaviour
     private bool _localActionAnimationLocked;
     private byte _localActionLockType;
     private bool _localComboInputWindowOpen;
+    private bool _bufferedComboAttack;
+    private int _bufferedComboActionId;
+    private float _bufferedComboExpiresAt;
     private bool _queuedComboAttack;
     private int _queuedComboActionId;
     private int _lastLocalConsumedActionId;
@@ -231,17 +233,11 @@ public class NetworkPlayerController : NetworkBehaviour
         _localActionAnimationLocked = false;
         _localActionLockType = (byte)PlayerActionLockType.None;
         _localComboInputWindowOpen = false;
-        _queuedComboAttack = false;
-        _queuedComboActionId = 0;
+        ClearComboRequests();
         _lastLocalConsumedActionId = 0;
-        _hasPredictedAction = false;
-        _predictedActionId = 0;
-        _predictedActionType = 0;
-        _lastPredictedPresentationActionId = 0;
-        _lastPredictedPresentationActionType = 0;
-        _lastPredictedPresentationSuppressUntil = 0f;
-        _hasPendingPredictedPresentation = false;
-        _pendingPredictedActionType = 0;
+        _hasPendingLocalPresentation = false;
+        _pendingLocalPresentationActionType = 0;
+        ClearLocalPresentationCache();
 
         if (animator != null)
         {
@@ -317,21 +313,23 @@ public class NetworkPlayerController : NetworkBehaviour
 
         if (rawJumpPressed)
         {
-            _queuedComboAttack = false;
-            _queuedComboActionId = 0;
+            ClearComboRequests();
         }
+
+        PruneExpiredBufferedComboAttack();
+        TryPromoteBufferedComboAttack(isActing);
 
         if (CanStartQueuedComboAttack(isActing))
         {
             StartBasicAttack(GetNextBasicAttackComboIndex(), _queuedComboActionId);
             isActing = true;
-            _queuedComboAttack = false;
-            _queuedComboActionId = 0;
         }
-        else if (attackPressed && CanQueueBasicAttackCombo(isActing))
+        else if (attackPressed)
         {
-            _queuedComboAttack = true;
-            _queuedComboActionId = data.actionId;
+            if (!TryQueueBasicAttackCombo(isActing, data.actionId))
+            {
+                TryBufferBasicAttackCombo(isActing, data.actionId);
+            }
         }
 
         bool isJumpAction = isActing && LastAction == ActionJump;
@@ -440,11 +438,11 @@ public class NetworkPlayerController : NetworkBehaviour
             return;
         }
 
-        if (_hasPendingPredictedPresentation)
+        if (_hasPendingLocalPresentation)
         {
-            _hasPendingPredictedPresentation = false;
+            _hasPendingLocalPresentation = false;
             ResetActionTriggers();
-            TriggerAction(_pendingPredictedActionType);
+            TriggerAction(_pendingLocalPresentationActionType);
         }
 
         foreach (string change in _changeDetector.DetectChanges(this))
@@ -660,40 +658,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
     private bool ShouldSkipAuthoritativeActionPresentation()
     {
-        if (LastActionId != 0 &&
-            LastActionId == _lastPredictedPresentationActionId &&
-            LastAction == _lastPredictedPresentationActionType &&
-            Time.time <= _lastPredictedPresentationSuppressUntil)
-        {
-            _hasPredictedAction = false;
-            return true;
-        }
-
-        if (_hasPredictedAction &&
-            LastActionId != 0 &&
-            LastActionId == _predictedActionId &&
-            LastAction == _predictedActionType)
-        {
-            _hasPredictedAction = false;
-            return true;
-        }
-
-        if (_hasPredictedAction &&
-            LastActionId != 0 &&
-            LastActionId != _predictedActionId)
-        {
-            _hasPredictedAction = false;
-        }
-
-        if (!_localActionAnimationLocked)
-        {
-            return false;
-        }
-
-        PlayerActionLockType localLockType = (PlayerActionLockType)_localActionLockType;
-        PlayerActionLockType incomingLockType = GetActionLockType(LastAction);
-        return localLockType == PlayerActionLockType.Jump &&
-               incomingLockType == PlayerActionLockType.Attack;
+        return LastActionId != 0 && WasActionPresentedLocally(LastActionId, LastAction);
     }
 
     private bool IsInActionAnimation()
@@ -742,8 +707,7 @@ public class NetworkPlayerController : NetworkBehaviour
                LastAction == ActionAttack &&
                BasicAttackComboIndex < BasicAttackComboLastIndex &&
                !_queuedComboAttack &&
-               IsComboInputWindowOpen() &&
-               TrySpendBasicAttackStamina();
+               IsComboInputWindowOpen();
     }
 
     private bool CanStartQueuedComboAttack(bool isActing)
@@ -751,9 +715,86 @@ public class NetworkPlayerController : NetworkBehaviour
         return IsBasicAttackComboUnlocked &&
                !isActing &&
                _queuedComboAttack &&
+               _queuedComboActionId != 0 &&
                LastAction == ActionAttack &&
                BasicAttackComboIndex < BasicAttackComboLastIndex &&
                Runner.SimulationTime <= BasicAttackComboExpiresAt;
+    }
+
+    private bool TryQueueBasicAttackCombo(bool isActing, int actionId)
+    {
+        if (actionId == 0 || !CanQueueBasicAttackCombo(isActing) || !TrySpendBasicAttackStamina())
+        {
+            return false;
+        }
+
+        _queuedComboAttack = true;
+        _queuedComboActionId = actionId;
+        ClearBufferedComboAttack();
+        return true;
+    }
+
+    private bool TryBufferBasicAttackCombo(bool isActing, int actionId)
+    {
+        if (!CanBufferBasicAttackCombo(isActing) || actionId == 0)
+        {
+            return false;
+        }
+
+        _bufferedComboAttack = true;
+        _bufferedComboActionId = actionId;
+        _bufferedComboExpiresAt = GetSimulationTime() + Mathf.Max(0.01f, comboInputBufferSeconds);
+        return true;
+    }
+
+    private bool CanBufferBasicAttackCombo(bool isActing)
+    {
+        return IsBasicAttackComboUnlocked &&
+               isActing &&
+               LastAction == ActionAttack &&
+               BasicAttackComboIndex < BasicAttackComboLastIndex &&
+               !_queuedComboAttack &&
+               !IsComboInputWindowOpen();
+    }
+
+    private void TryPromoteBufferedComboAttack(bool isActing)
+    {
+        if (!_bufferedComboAttack)
+        {
+            return;
+        }
+
+        if (TryQueueBasicAttackCombo(isActing, _bufferedComboActionId))
+        {
+            return;
+        }
+
+        if (!CanBufferBasicAttackCombo(isActing))
+        {
+            ClearBufferedComboAttack();
+        }
+    }
+
+    private void PruneExpiredBufferedComboAttack()
+    {
+        if (_bufferedComboAttack && GetSimulationTime() > _bufferedComboExpiresAt)
+        {
+            ClearBufferedComboAttack();
+        }
+    }
+
+    private void ClearComboRequests()
+    {
+        ClearBufferedComboAttack();
+        _queuedComboAttack = false;
+        _queuedComboActionId = 0;
+    }
+
+    private void ClearBufferedComboAttack()
+    {
+        _bufferedComboAttack = false;
+        _bufferedComboActionId = 0;
+        _bufferedComboExpiresAt = 0f;
     }
 
     private byte GetOpeningBasicAttackComboIndex()
@@ -772,6 +813,11 @@ public class NetworkPlayerController : NetworkBehaviour
     private byte GetNextBasicAttackComboIndex()
     {
         return (byte)Mathf.Min(BasicAttackComboIndex + 1, BasicAttackComboLastIndex);
+    }
+
+    private float GetSimulationTime()
+    {
+        return Runner != null ? Runner.SimulationTime : Time.time;
     }
 
     private bool TrySpendBasicAttackStamina()
@@ -851,8 +897,7 @@ public class NetworkPlayerController : NetworkBehaviour
             if (BasicAttackComboIndex >= BasicAttackComboLastIndex)
             {
                 BasicAttackComboExpiresAt = Runner != null ? Runner.SimulationTime : Time.time;
-                _queuedComboAttack = false;
-                _queuedComboActionId = 0;
+                ClearComboRequests();
                 return;
             }
 
@@ -862,7 +907,7 @@ public class NetworkPlayerController : NetworkBehaviour
             return;
         }
 
-        _queuedComboAttack = false;
+        ClearComboRequests();
     }
 
     private bool IsComboInputWindowOpen()
@@ -904,8 +949,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
     private void StartBasicAttack(byte comboIndex, int actionId)
     {
-        _queuedComboAttack = false;
-        _queuedComboActionId = 0;
+        ClearComboRequests();
         BasicAttackComboIndex = IsBasicAttackComboUnlocked
             ? (byte)Mathf.Clamp(comboIndex, 0, BasicAttackComboLastIndex)
             : (byte)0;
@@ -926,8 +970,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
         if (actionType != ActionAttack)
         {
-            _queuedComboAttack = false;
-            _queuedComboActionId = 0;
+            ClearComboRequests();
         }
 
         if (actionType == ActionAttack && HasStateAuthority)
@@ -960,7 +1003,7 @@ public class NetworkPlayerController : NetworkBehaviour
         ActionSequence++;
         SetActionAnimationLocked(true, GetActionLockType(LastAction));
         SetComboInputWindowOpen(false);
-        _queuedComboAttack = false;
+        ClearComboRequests();
     }
 
     public void NotifyRevived()
@@ -968,16 +1011,10 @@ public class NetworkPlayerController : NetworkBehaviour
         _localActionAnimationLocked = false;
         _localActionLockType = (byte)PlayerActionLockType.None;
         _localComboInputWindowOpen = false;
-        _queuedComboAttack = false;
-        _queuedComboActionId = 0;
-        _hasPredictedAction = false;
-        _predictedActionId = 0;
-        _predictedActionType = 0;
-        _lastPredictedPresentationActionId = 0;
-        _lastPredictedPresentationActionType = 0;
-        _lastPredictedPresentationSuppressUntil = 0f;
-        _hasPendingPredictedPresentation = false;
-        _pendingPredictedActionType = 0;
+        ClearComboRequests();
+        _hasPendingLocalPresentation = false;
+        _pendingLocalPresentationActionType = 0;
+        ClearLocalPresentationCache();
         _lastLocalConsumedActionId = 0;
 
         if (HasStateAuthority)
@@ -1235,7 +1272,7 @@ public class NetworkPlayerController : NetworkBehaviour
     private void TriggerPredictedAction(byte actionType, int actionId)
     {
         // 입력권한 클라이언트에서 즉시 보여줘야 하는 액션은 예측 재생한다.
-        if (!Object.HasInputAuthority || animator == null)
+        if (!Object.HasInputAuthority || HasStateAuthority || animator == null)
         {
             return;
         }
@@ -1245,21 +1282,56 @@ public class NetworkPlayerController : NetworkBehaviour
             return;
         }
 
-        if (_hasPredictedAction &&
-            _predictedActionId == actionId &&
-            _predictedActionType == actionType)
+        if (WasActionPresentedLocally(actionId, actionType))
         {
             return;
         }
 
-        _hasPredictedAction = true;
-        _predictedActionId = actionId;
-        _predictedActionType = actionType;
-        _lastPredictedPresentationActionId = actionId;
-        _lastPredictedPresentationActionType = actionType;
-        _lastPredictedPresentationSuppressUntil = Time.time + 1.5f;
-        _hasPendingPredictedPresentation = true;
-        _pendingPredictedActionType = actionType;
+        RememberLocallyPresentedAction(actionId, actionType);
+        _hasPendingLocalPresentation = true;
+        _pendingLocalPresentationActionType = actionType;
+    }
+
+    private void RememberLocallyPresentedAction(int actionId, byte actionType)
+    {
+        if (actionId == 0)
+        {
+            return;
+        }
+
+        _locallyPresentedActionIds[_locallyPresentedActionCursor] = actionId;
+        _locallyPresentedActionTypes[_locallyPresentedActionCursor] = actionType;
+        _locallyPresentedActionCursor = (_locallyPresentedActionCursor + 1) % LocalPresentationCacheSize;
+    }
+
+    private bool WasActionPresentedLocally(int actionId, byte actionType)
+    {
+        if (actionId == 0)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < LocalPresentationCacheSize; i++)
+        {
+            if (_locallyPresentedActionIds[i] == actionId &&
+                _locallyPresentedActionTypes[i] == actionType)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void ClearLocalPresentationCache()
+    {
+        for (int i = 0; i < LocalPresentationCacheSize; i++)
+        {
+            _locallyPresentedActionIds[i] = 0;
+            _locallyPresentedActionTypes[i] = 0;
+        }
+
+        _locallyPresentedActionCursor = 0;
     }
 
     private void ResetActionTriggers()
