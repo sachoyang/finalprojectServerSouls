@@ -543,7 +543,7 @@ public static class PlayerAnimatorSetupTool
             behaviour = state.AddStateMachineBehaviour<PlayerActionStateBehaviour>();
         }
 
-        behaviour.Configure(lockType, opensComboInput, 0.5f);
+        behaviour.Configure(lockType, opensComboInput, 0.2f);
         EditorUtility.SetDirty(behaviour);
     }
 
