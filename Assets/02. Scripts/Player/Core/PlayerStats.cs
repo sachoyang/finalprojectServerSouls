@@ -141,6 +141,17 @@ public class PlayerStats : NetworkBehaviour
             DeathCount);
     }
 
+    public PlayerHUDData GetHUDData()
+    {
+        // UI가 PlayerStats 내부 계산식을 직접 알 필요 없도록 표시용 값만 묶어서 반환한다.
+        return new PlayerHUDData(
+            CurrentHealth,
+            MaxHealth,
+            CurrentStamina,
+            MaxStamina,
+            IsDead);
+    }
+
     public void RestoreSessionSnapshot(SessionSnapshot snapshot)
     {
         if (!HasStateAuthority)

@@ -218,6 +218,35 @@ public class PlayerAbilityInventory : MonoBehaviour
         return activeSlotIndex >= 0 && activeSlotIndex < activeSlots.Count ? activeSlots[activeSlotIndex] : null;
     }
 
+    public List<SkillSlotUIData> GetSkillSlotUIData(float currentTime)
+    {
+        // HUD는 슬롯 내부 구조를 직접 조립하지 않고, 여기서 만든 표시용 데이터만 읽는다.
+        EnsureRuntimeLists();
+        List<SkillSlotUIData> slots = new List<SkillSlotUIData>(activeSlots.Count);
+
+        for (int i = 0; i < activeSlots.Count; i++)
+        {
+            PlayerAbilitySlot slot = activeSlots[i];
+            PlayerAbilityModule module = slot?.Module;
+            if (slot == null || module == null)
+            {
+                slots.Add(SkillSlotUIData.Empty);
+                continue;
+            }
+
+            slots.Add(new SkillSlotUIData(
+                false,
+                module.AbilityId,
+                module.DisplayName,
+                module.Icon,
+                slot.KeyCode,
+                Mathf.Max(0f, slot.NextReadyTime - currentTime),
+                module.CooldownSeconds));
+        }
+
+        return slots;
+    }
+
     // 모듈 함수에 넘겨줄 플레이어 실행 정보를 만든다.
     public PlayerAbilityContext CreateContext()
     {
