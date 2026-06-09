@@ -125,8 +125,6 @@ namespace BFX
             initializedPosition   = Vector3.positiveInfinity;
         }
 
-        Vector3 startTest, dirTest;
-
         void EnableDecalAnimation()
         {
             shaderProperies.CanUpdate = true;
@@ -142,8 +140,6 @@ namespace BFX
 
             Gizmos.color = new Color(49 / 255.0f, 136 / 255.0f, 1, 0.85f);
             Gizmos.DrawWireCube(Vector3.zero, Vector3.one);
-
-            Debug.DrawRay(startTest, -dirTest);
         }
     }
 }

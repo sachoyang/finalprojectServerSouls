@@ -80,18 +80,14 @@ public class RewardManager : MonoBehaviour
 
         if (_spawnedChest != null)
         {
-            CameraManager cameraManager = CameraManager.GetOrCreate();
-            if (cameraManager != null)
+            CutsceneManager cutsceneManager = CutsceneManager.Instance;
+            if (cutsceneManager != null)
             {
-                CutsceneManager cutsceneManager = CutsceneManager.Instance;
-                if (cutsceneManager != null)
-                {
-                    yield return cutsceneManager.PlayGoldChestCutscene();
-                }
-                else
-                {
-                    Debug.LogWarning("[RewardManager] CutsceneManager was not found.");
-                }
+                yield return cutsceneManager.PlayGoldChestCutscene();
+            }
+            else
+            {
+                Debug.LogWarning("[RewardManager] CutsceneManager was not found.");
             }
 
             yield return new WaitForSeconds(chestOpenDelay);
@@ -101,9 +97,9 @@ public class RewardManager : MonoBehaviour
 
             yield return WaitForChestOpenAnimation(_spawnedChest);
 
-            if (cameraManager != null)
+            if (cutsceneManager != null)
             {
-                yield return cameraManager.RestoreGameplayCamera();
+                yield return cutsceneManager.RestoreGameplayCamera();
             }
         }
 

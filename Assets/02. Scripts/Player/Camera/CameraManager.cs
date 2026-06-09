@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [DefaultExecutionOrder(1000)]
 public class CameraManager : MonoBehaviour
@@ -8,15 +9,14 @@ public class CameraManager : MonoBehaviour
     {
         PlayerFollow,
         LockOn,
-        Reward,
         Cutscene
     }
 
     public static CameraManager Instance { get; private set; }
 
     [SerializeField] private Camera managedCamera;
-    [SerializeField] private float rewardCameraRestoreDuration = 1.0f;
-    [SerializeField] private bool restoreControllersAfterReward = true;
+    [SerializeField, FormerlySerializedAs("rewardCameraRestoreDuration")] private float gameplayCameraRestoreDuration = 1.0f;
+    [SerializeField, FormerlySerializedAs("restoreControllersAfterReward")] private bool restoreControllersAfterCutscene = true;
 
     private MonoBehaviour[] _disabledCameraControllers;
     private bool[] _cameraControllerWasEnabled;
@@ -72,12 +72,6 @@ public class CameraManager : MonoBehaviour
 
         GameObject managerObject = new GameObject("CameraManager");
         return managerObject.AddComponent<CameraManager>();
-    }
-
-    public void BeginRewardCutscene()
-    {
-        _currentMode = CameraMode.Reward;
-        BeginCutscene(restoreControllersAfterReward);
     }
 
     public void RegisterGameplayCamera(Camera camera, Transform target)
@@ -136,7 +130,12 @@ public class CameraManager : MonoBehaviour
         }
     }
 
-    public void BeginCutscene(bool restoreControllersOnEnd = true)
+    public void BeginCutscene()
+    {
+        BeginCutscene(restoreControllersAfterCutscene);
+    }
+
+    public void BeginCutscene(bool restoreControllersOnEnd)
     {
         if (!ResolveCamera())
         {
@@ -144,11 +143,7 @@ public class CameraManager : MonoBehaviour
             return;
         }
 
-        if (_currentMode != CameraMode.Reward)
-        {
-            _currentMode = CameraMode.Cutscene;
-        }
-
+        _currentMode = CameraMode.Cutscene;
         _restoreControllersOnEnd = restoreControllersOnEnd;
         _originalFieldOfView = managedCamera.fieldOfView;
 
@@ -276,7 +271,7 @@ public class CameraManager : MonoBehaviour
         float targetFieldOfView = _originalFieldOfView;
 
         float elapsed = 0f;
-        float safeDuration = Mathf.Max(0.01f, rewardCameraRestoreDuration);
+        float safeDuration = Mathf.Max(0.01f, gameplayCameraRestoreDuration);
         while (elapsed < safeDuration)
         {
             elapsed += Time.deltaTime;

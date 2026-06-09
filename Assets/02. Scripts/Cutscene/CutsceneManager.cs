@@ -140,8 +140,20 @@ public class CutsceneManager : MonoBehaviour
             yield break;
         }
 
-        cameraManager.BeginRewardCutscene();
+        cameraManager.BeginCutscene();
         yield return cameraManager.ZoomToPoint(point, goldChestCameraMoveDuration, goldChestCameraFieldOfView);
+    }
+
+    public IEnumerator RestoreGameplayCamera()
+    {
+        ResolveManagers();
+
+        if (cameraManager == null)
+        {
+            yield break;
+        }
+
+        yield return cameraManager.RestoreGameplayCamera();
     }
 
     public void PlayGateKickCutscene()

@@ -9342,7 +9342,7 @@ namespace Fusion.Editor {
     private class AsmDefData {
       public string[] includePlatforms = Array.Empty<string>();
       public string   name             = string.Empty;
-      public bool     allowUnsafeCode;
+      public bool     allowUnsafeCode  = default;
     }
     
     private struct AssemblyInfo {
