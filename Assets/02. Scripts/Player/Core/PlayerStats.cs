@@ -126,6 +126,7 @@ public class PlayerStats : NetworkBehaviour
     public event Action<PlayerStats> ReviveStateChanged;
 
     private ChangeDetector _changeDetector;
+    private PlayerStatusController _statusController;
 
     public SessionSnapshot CreateSessionSnapshot()
     {
@@ -172,6 +173,7 @@ public class PlayerStats : NetworkBehaviour
     public override void Spawned()
     {
         _changeDetector = GetChangeDetector(ChangeDetector.Source.SimulationState);
+        _statusController = GetComponent<PlayerStatusController>();
 
         // 체력/기력 같은 판정 값은 상태 권한을 가진 쪽에서만 초기화한다.
         // 프록시 클라이언트는 네트워크로 동기화된 값을 받기만 한다.
@@ -427,6 +429,11 @@ public class PlayerStats : NetworkBehaviour
 
         // 방어율을 적용한 최종 피해만 체력에서 차감한다.
         float finalDamage = damage * (1f - DefenseRate);
+        if (_statusController != null)
+        {
+            finalDamage *= _statusController.GetIncomingDamageMultiplier();
+        }
+
         CurrentHealth = Mathf.Max(0f, CurrentHealth - finalDamage);
         HitInvincibleTimer = TickTimer.CreateFromSeconds(Runner, hitInvincibleDuration);
         bool becameDead = CurrentHealth <= 0f;

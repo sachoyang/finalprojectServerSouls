@@ -130,13 +130,20 @@ public class PlayerAbilityExecutor : MonoBehaviour
         }
 
         NetworkObject attacker = context.Owner != null ? context.Owner.GetComponent<NetworkObject>() : null;
+        PlayerStatusController statusController = context.Owner != null ? context.Owner.GetComponent<PlayerStatusController>() : null;
+        float damage = module.HitboxDamage;
+        if (statusController != null)
+        {
+            damage *= statusController.GetOutgoingDamageMultiplier();
+        }
+
         PlayerSkillHitbox skillHitbox = hitbox.GetComponent<PlayerSkillHitbox>();
         if (skillHitbox != null)
         {
             skillHitbox.Initialize(
                 context.Owner,
                 attacker,
-                module.HitboxDamage,
+                damage,
                 module.HitboxRevivePower,
                 module.HitboxDelay,
                 module.HitboxLifetime);

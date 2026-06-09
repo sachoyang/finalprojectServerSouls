@@ -121,6 +121,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
     private NetworkCharacterController _networkCharacterController;
     private PlayerStats _playerStats;
+    private PlayerStatusController _statusController;
     private PlayerAbilityInventory _abilityInventory;
     private PlayerAbilityRewardController _abilityRewardController;
     private ChangeDetector _changeDetector;
@@ -170,6 +171,7 @@ public class NetworkPlayerController : NetworkBehaviour
         animator ??= GetComponent<Animator>();
         _networkCharacterController = GetComponent<NetworkCharacterController>();
         _playerStats = GetComponent<PlayerStats>();
+        _statusController = GetComponent<PlayerStatusController>();
         _abilityInventory = GetComponent<PlayerAbilityInventory>();
         _abilityRewardController = GetComponent<PlayerAbilityRewardController>();
         lockOnTargetSelector ??= GetComponent<LockOnTargetSelector>();
@@ -426,6 +428,8 @@ public class NetworkPlayerController : NetworkBehaviour
             moveDirection = desiredMove.normalized;
         }
 
+        currentSpeed *= GetMoveSpeedMultiplier();
+
         if (actionBlocksMovement)
         {
             // 제자리 액션 중에는 이전 틱의 수평 속도가 남아 미끄러지지 않게 지운다.
@@ -505,7 +509,7 @@ public class NetworkPlayerController : NetworkBehaviour
         }
 
         Vector3 moveDirection = desiredMove.sqrMagnitude > 0.001f ? desiredMove.normalized : Vector3.zero;
-        ApplyMovement(moveDirection, crawlSpeed, Vector3.zero);
+        ApplyMovement(moveDirection, crawlSpeed * GetMoveSpeedMultiplier(), Vector3.zero);
         UpdateMovementState(moveDirection.sqrMagnitude > 0.001f, false, LockMoveIdle);
         WasShiftHeld = false;
         ShiftHoldTime = 0f;
@@ -1269,17 +1273,32 @@ public class NetworkPlayerController : NetworkBehaviour
             return 0f;
         }
 
+        float damage;
         if (!IsBasicAttackComboUnlocked)
         {
-            return _playerStats.AttackPower;
+            damage = _playerStats.AttackPower;
+        }
+        else
+        {
+            damage = BasicAttackComboIndex switch
+            {
+                1 => _playerStats.SecondAttackDamage,
+                2 => _playerStats.ThirdAttackDamage,
+                _ => _playerStats.FirstAttackDamage
+            };
         }
 
-        return BasicAttackComboIndex switch
-        {
-            1 => _playerStats.SecondAttackDamage,
-            2 => _playerStats.ThirdAttackDamage,
-            _ => _playerStats.FirstAttackDamage
-        };
+        return damage * GetOutgoingDamageMultiplier();
+    }
+
+    private float GetMoveSpeedMultiplier()
+    {
+        return _statusController != null ? _statusController.GetMoveSpeedMultiplier() : 1f;
+    }
+
+    private float GetOutgoingDamageMultiplier()
+    {
+        return _statusController != null ? _statusController.GetOutgoingDamageMultiplier() : 1f;
     }
 
     private void StartRoll(Vector3 desiredMove)
