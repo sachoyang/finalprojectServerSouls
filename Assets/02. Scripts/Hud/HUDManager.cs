@@ -21,6 +21,7 @@ public class HUDManager : MonoBehaviour
     [Header("Player Data")]
     [SerializeField] private PlayerStats playerStats;
     [SerializeField] private PlayerAbilityInventory abilityInventory;
+    [SerializeField] private PlayerStatusController playerStatusController;
 
     [Header("Boss Data")]
     [SerializeField] private NetworkBossCore boss;
@@ -65,6 +66,9 @@ public class HUDManager : MonoBehaviour
 
             if (abilityInventory == null)
                 abilityInventory = localPlayerController.GetComponent<PlayerAbilityInventory>();
+
+            if (playerStatusController == null)
+                playerStatusController = localPlayerController.GetComponent<PlayerStatusController>();
         }
 
         if (boss == null || boss.CurrentState == BossState.Die)
@@ -76,6 +80,7 @@ public class HUDManager : MonoBehaviour
         if (localPlayerController != null &&
             playerStats != null &&
             abilityInventory != null &&
+            playerStatusController != null &&
             boss != null &&
             boss.CurrentState != BossState.Die)
         {
@@ -110,8 +115,14 @@ public class HUDManager : MonoBehaviour
         if (playerHUDView == null || playerStats == null)
             return;
 
-        playerHUDView.SetHp(playerStats.CurrentHealth, playerStats.MaxHealth);
-        playerHUDView.SetSp(playerStats.CurrentStamina, playerStats.MaxStamina);
+        PlayerHUDData hudData = playerStats.GetHUDData();
+        playerHUDView.SetHp(hudData.CurrentHealth, hudData.MaxHealth);
+        playerHUDView.SetSp(hudData.CurrentStamina, hudData.MaxStamina);
+
+        if (playerStatusController != null)
+            playerHUDView.SetStatuses(playerStatusController.GetActiveStatusesForUI());
+        else
+            playerHUDView.ClearStatuses();
     }
 
     private void UpdateBossHUD()
@@ -124,6 +135,7 @@ public class HUDManager : MonoBehaviour
 
         if (boss == null)
         {
+            bossHUDView.ClearStatuses();
             bossHUDView.SetVisible(false);
             return;
         }
@@ -136,6 +148,7 @@ public class HUDManager : MonoBehaviour
 
         bossHUDView.SetBossName(boss.bossName);
         bossHUDView.SetHp(currentHp, maxHp);
+        bossHUDView.SetStatuses(boss.GetActiveStatusesForUI());
         bossHUDView.SetVisible(boss.CurrentState != BossState.Die);
     }
 
@@ -177,27 +190,19 @@ public class HUDManager : MonoBehaviour
             ? localPlayerController.Runner.SimulationTime
             : Time.time;
 
+        List<SkillSlotUIData> slots = abilityInventory.GetSkillSlotUIData(currentTime);
         for (int i = 0; i < skillSlotViews.Length; i++)
         {
             if (skillSlotViews[i] == null)
                 continue;
 
-            if (i >= abilityInventory.ActiveSlots.Count)
+            if (i >= slots.Count)
             {
                 skillSlotViews[i].Clear();
                 continue;
             }
 
-            PlayerAbilitySlot slot = abilityInventory.ActiveSlots[i];
-
-            if (slot == null || slot.Module == null)
-            {
-                skillSlotViews[i].Clear();
-                continue;
-            }
-
-            float remainingCooldown = Mathf.Max(0f, slot.NextReadyTime - currentTime);
-            skillSlotViews[i].SetSlot(slot.Module, slot.KeyCode, remainingCooldown);
+            skillSlotViews[i].SetData(slots[i]);
         }
     }
 
@@ -206,32 +211,26 @@ public class HUDManager : MonoBehaviour
         if (partyMemberHUDViews == null || partyMemberHUDViews.Length == 0)
             return;
 
-        List<PlayerStats> partyStats = FindPartyPlayerStats();
+        List<PartyMemberUIData> partyMembers = FindPartyMemberUIData();
 
         for (int i = 0; i < partyMemberHUDViews.Length; i++)
         {
             if (partyMemberHUDViews[i] == null)
                 continue;
 
-            if (i >= partyStats.Count || partyStats[i] == null)
+            if (i >= partyMembers.Count)
             {
                 partyMemberHUDViews[i].SetVisible(false);
                 continue;
             }
 
-            partyMemberHUDViews[i].SetVisible(true);
-            partyMemberHUDViews[i].SetStats(
-                partyStats[i].CurrentHealth,
-                partyStats[i].MaxHealth,
-                partyStats[i].CurrentStamina,
-                partyStats[i].MaxStamina
-            );
+            partyMemberHUDViews[i].SetData(partyMembers[i]);
         }
     }
 
-    private List<PlayerStats> FindPartyPlayerStats()
+    private List<PartyMemberUIData> FindPartyMemberUIData()
     {
-        List<PlayerStats> partyStats = new List<PlayerStats>();
+        List<PartyMemberUIData> partyMembers = new List<PartyMemberUIData>();
         NetworkPlayerController[] players = FindObjectsOfType<NetworkPlayerController>();
 
         for (int i = 0; i < players.Length; i++)
@@ -245,12 +244,24 @@ public class HUDManager : MonoBehaviour
                 continue;
 
             PlayerStats stats = player.GetComponent<PlayerStats>();
+            if (stats == null)
+                continue;
 
-            if (stats != null)
-                partyStats.Add(stats);
+            PlayerHUDData hudData = stats.GetHUDData();
+            int playerKey = player.Object.InputAuthority.RawEncoded;
+            partyMembers.Add(new PartyMemberUIData(
+                playerKey,
+                $"Player {playerKey}",
+                hudData.CurrentHealth,
+                hudData.MaxHealth,
+                hudData.CurrentStamina,
+                hudData.MaxStamina,
+                !hudData.IsDead,
+                hudData.IsDead,
+                false));
         }
 
-        return partyStats;
+        return partyMembers;
     }
 
     private void ClearSkillSlots()
@@ -271,6 +282,7 @@ public class HUDManager : MonoBehaviour
         {
             playerHUDView.SetHp(0f, 1f);
             playerHUDView.SetSp(0f, 1f);
+            playerHUDView.ClearStatuses();
         }
 
         if (bossHUDView != null)

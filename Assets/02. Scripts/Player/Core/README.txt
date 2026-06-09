@@ -1,24 +1,27 @@
 Player/Core README
 
 목적:
-- 플레이어의 네트워크 이동, 전투 기본 동작, 체력/스태미나, 사망/부활, 상태이상, 저장 데이터를 담당하는 핵심 스크립트 설명.
+- 플레이어의 네트워크 이동, 기본 전투, 체력/스태미나, 사망/부활, 상태이상, 저장 데이터를 담당하는 핵심 스크립트 설명.
+- UI는 이 컴포넌트들의 값을 직접 수정하지 않고, 표시용 데이터 함수로 읽기만 한다.
 
 
 1. 전체 흐름
 
 NetworkPlayerController
--> 입력을 받아 이동/구르기/점프/기본 공격/패링/락온 처리
+-> 입력을 받아 이동, 구르기, 점프, 기본 공격, 패링, 락온 처리
 -> 애니메이션 액션 상태를 Networked 값으로 기록
 -> 기본 공격이 맞으면 PlayerStats.TakeDamage() 또는 RegisterReviveHit() 호출
 
 PlayerStats
--> 체력/스태미나/사망/부활/패시브 스탯 보너스 처리
+-> 체력, 스태미나, 사망, 부활, 패시브 스탯 보너스 처리
 -> 피해를 받으면 방어율과 PlayerStatusController 배율 적용
--> 사망/피격 결과를 NetworkPlayerController.NotifyDamageReaction()에 알림
+-> 피격/사망 결과를 NetworkPlayerController.NotifyDamageReaction()에 알림
+-> HUD용 체력/스태미나 값은 GetHUDData()로 제공
 
 PlayerStatusController
 -> 플레이어 버프/디버프를 NetworkArray로 관리
 -> 받는 피해, 주는 피해, 이동속도 배율 제공
+-> UI용 상태 목록은 GetActiveStatusesForUI()로 제공
 
 NetworkPlayerData
 -> 획득한 abilityId 목록과 보상 선택 상태를 네트워크로 동기화
@@ -92,6 +95,14 @@ PlayerSessionStore
 - RegisterReviveHit(NetworkObject helper, float revivePower): 죽은 플레이어 부활 게이지 감소.
 - ApplyPassiveStatBonus(PlayerAbilityModule): 패시브 보너스 적용.
 - RemovePassiveStatBonus(PlayerAbilityModule): 패시브 보너스 제거.
+- GetHUDData(): HUD 표시용 PlayerHUDData 반환.
+
+GetHUDData()가 주는 값:
+- CurrentHealth
+- MaxHealth
+- CurrentStamina
+- MaxStamina
+- IsDead
 
 중요 내부 함수:
 - ApplyDamage(float damage): 방어율, 상태이상 배율, 피격 무적, 사망 판정.
@@ -100,12 +111,9 @@ PlayerSessionStore
 - ReviveFully(): 부활 완료 후 NotifyRevived() 호출.
 - UpdateReviveDecay(): 도움을 받지 않으면 ReviveProgress를 다시 채움.
 
-UI가 읽을 값:
-- CurrentHealth, MaxHealth
-- CurrentStamina, MaxStamina
-- IsDead
-- ReviveProgress, ReviveRequiredGauge, ReviveSegmentCount
-- ReviveNormalizedProgress, ReviveRemainingNormalized
+UI 연동 규칙:
+- UI는 CurrentHealth 같은 값을 직접 조합해도 읽기만 가능하지만, 앞으로는 GetHUDData()를 우선 사용한다.
+- UI는 PlayerStats 상태를 직접 수정하지 않는다.
 
 
 4. PlayerStatusController.cs
@@ -142,6 +150,10 @@ Inspector:
 - GetAbilityId(int index): 저장된 abilityId 조회.
 - HasAbilityId(string abilityId): 이미 보유했는지 확인.
 - MarkRewardSelected(int bossStage): 해당 보스 층 보상 선택 완료 기록.
+
+서버 기준 보유 스킬:
+- SavedAbilityIds가 서버/호스트 기준 보유 목록이다.
+- UI 표시용 아이콘/이름은 abilityId를 PlayerAbilityInventory.FindModuleById()로 다시 모듈에 매칭해서 읽는다.
 
 DB 연결 시:
 - SavedAbilityIds는 현재 string 기반이다.

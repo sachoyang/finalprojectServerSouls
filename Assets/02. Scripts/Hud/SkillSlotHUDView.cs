@@ -13,9 +13,10 @@ public class SkillSlotHUDView : MonoBehaviour
     [Header("Key")]
     [SerializeField] private Text keyText;
 
-    public void SetSlot(PlayerAbilityModule module, KeyCode keyCode, float remainingCooldown)
+    public void SetData(SkillSlotUIData data)
     {
-        if (module == null)
+        // SkillSlotUIData는 이미 표시용으로 가공된 값이므로 이 뷰는 화면 갱신만 담당한다.
+        if (data.IsEmpty)
         {
             Clear();
             return;
@@ -23,14 +24,14 @@ public class SkillSlotHUDView : MonoBehaviour
 
         if (iconImage != null)
         {
-            iconImage.sprite = module.Icon;
-            iconImage.enabled = module.Icon != null;
+            iconImage.sprite = data.Icon;
+            iconImage.enabled = data.Icon != null;
         }
 
         if (keyText != null)
-            keyText.text = keyCode.ToString();
+            keyText.text = data.KeyCode != KeyCode.None ? data.KeyCode.ToString() : "";
 
-        SetCooldown(remainingCooldown, module.CooldownSeconds);
+        SetCooldown(data.CooldownRemaining, data.CooldownDuration);
     }
 
     public void Clear()
