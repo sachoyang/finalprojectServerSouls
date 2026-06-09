@@ -465,6 +465,11 @@ public class NetworkBossCore : NetworkBehaviour
                     _visual.SetAnimSpeed(speedMult);
 
                     _visual.PlayAction(Animator.StringToHash("getHit"));
+
+                    if(audioClips[1]!=null)
+                    {
+                        SoundManager.Instance.PlaySFX_3D(audioClips[1], transform.position, SoundCategory.BossGimmick, 0.7f, 0.1f);
+                    }
                     
                 }
                 else if (CurrentState == BossState.Idle || CurrentState == BossState.Walk)

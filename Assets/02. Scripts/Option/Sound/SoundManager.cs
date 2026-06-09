@@ -24,7 +24,7 @@ public enum SoundCategory
 public class SoundCategorySetting
 {
     public SoundCategory category;
-    
+
     [Header("그룹 볼륨 배율")]
     [Tooltip("기본 볼륨에 곱해집니다. (1 = 100%, 0.5 = 50%)")]
     [Range(0f, 2f)] public float volumeMultiplier = 1.0f;
@@ -34,10 +34,8 @@ public class SoundCategorySetting
     public float maxDistance = 30f;
 }
 
-public class SoundManager : MonoBehaviour
+public class SoundManager : MonoSingleton<SoundManager>
 {
-    public static SoundManager Instance { get; private set; }
-
     [Header("Audio Mixers")]
     public AudioMixer mainMixer;
     public AudioMixerGroup bgmMixerGroup;
@@ -56,15 +54,9 @@ public class SoundManager : MonoBehaviour
     private AudioSource _bgmSource;
     private List<AudioSource> _sfxSources = new List<AudioSource>();
 
-    private void Awake()
+    protected override void Awake()
     {
-        if (Instance != null && Instance != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
-        Instance = this;
-        DontDestroyOnLoad(gameObject);
+        base.Awake();
 
         // 인스펙터에 등록된 리스트를 빠르게 찾을 수 있도록 딕셔너리로 변환
         foreach (var setting in categorySettings)
@@ -94,11 +86,11 @@ public class SoundManager : MonoBehaviour
         {
             GameObject speakerObj = new GameObject($"Speaker_{i}");
             speakerObj.transform.SetParent(sfxParent.transform);
-            
+
             AudioSource sfxSource = speakerObj.AddComponent<AudioSource>();
             sfxSource.playOnAwake = false;
             sfxSource.outputAudioMixerGroup = sfxMixerGroup;
-            sfxSource.rolloffMode = AudioRolloffMode.Linear; 
+            sfxSource.rolloffMode = AudioRolloffMode.Linear;
             _sfxSources.Add(sfxSource);
         }
     }
@@ -119,7 +111,7 @@ public class SoundManager : MonoBehaviour
     // ==========================================
     // 🎵 BGM 재생
     // ==========================================
-    public void PlayBGM(AudioClip clip, float baseVolume = 1.0f,float delay = 0f)
+    public void PlayBGM(AudioClip clip, float baseVolume = 1.0f, float delay = 0f)
     {
         if (clip == null) return;
 
@@ -153,7 +145,7 @@ public class SoundManager : MonoBehaviour
     // ==========================================
     // 🔊 2D 사운드 재생 (카테고리 필수 입력)
     // ==========================================
-    public void PlaySFX_2D(AudioClip clip, SoundCategory category, float baseVolume = 1.0f,float delay = 0f)
+    public void PlaySFX_2D(AudioClip clip, SoundCategory category, float baseVolume = 1.0f, float delay = 0f)
     {
         if (clip == null) return;
 
@@ -184,7 +176,7 @@ public class SoundManager : MonoBehaviour
     // ==========================================
     // 🔊 3D 사운드 재생 (카테고리 필수 입력)
     // ==========================================
-    public void PlaySFX_3D(AudioClip clip, Vector3 playPosition, SoundCategory category, float baseVolume = 1.0f,float delay = 0f)
+    public void PlaySFX_3D(AudioClip clip, Vector3 playPosition, SoundCategory category, float baseVolume = 1.0f, float delay = 0f)
     {
         if (clip == null) return;
 
@@ -201,7 +193,7 @@ public class SoundManager : MonoBehaviour
 
             source.transform.position = playPosition;
             source.spatialBlend = 1f;
-            
+
             // 🔥 카테고리에 설정된 3D 거리 적용!
             source.minDistance = setting.minDistance;
             source.maxDistance = setting.maxDistance;
@@ -230,7 +222,7 @@ public class SoundManager : MonoBehaviour
     // ==========================================
     // UI 연동용 볼륨 조절 API
     // ==========================================
-    
+
     /// <summary>
     /// 마스터(전체) 볼륨 조절
     /// </summary>
