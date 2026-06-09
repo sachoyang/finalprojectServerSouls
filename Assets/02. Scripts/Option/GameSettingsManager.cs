@@ -5,17 +5,10 @@ public class GameSettingsManager : MonoBehaviour
 {
     public static GameSettingsManager Instance { get; private set; }
 
-    [Header("Audio Mixer")]
-    [SerializeField] private AudioMixer audioMixer;
-
     private const string GraphicsQualityKey = "Settings_GraphicsQuality";
     private const string MasterVolumeKey = "Settings_MasterVolume";
     private const string BgmVolumeKey = "Settings_BgmVolume";
     private const string SfxVolumeKey = "Settings_SfxVolume";
-
-    private const string MasterVolumeParam = "MasterVolume";
-    private const string BgmVolumeParam = "BgmVolume";
-    private const string SfxVolumeParam = "SfxVolume";
 
     private void Awake()
     {
@@ -27,16 +20,20 @@ public class GameSettingsManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(transform.root.gameObject);
+    }
 
+    private void Start()
+    {
         LoadAndApplySettings();
     }
 
     public void LoadAndApplySettings()
     {
         SetGraphicsQuality(GetInt(SettingKey.GraphicsQuality, QualitySettings.GetQualityLevel()));
-        SetMasterVolume(GetFloat(SettingKey.MasterVolume, 1f));
-        SetBgmVolume(GetFloat(SettingKey.BgmVolume, 1f));
-        SetSfxVolume(GetFloat(SettingKey.SfxVolume, 1f));
+
+        SetFloat(SettingKey.MasterVolume, GetFloat(SettingKey.MasterVolume, 1f));
+        SetFloat(SettingKey.BgmVolume, GetFloat(SettingKey.BgmVolume, 1f));
+        SetFloat(SettingKey.SfxVolume, GetFloat(SettingKey.SfxVolume, 1f));
     }
 
     public int GetInt(SettingKey key, int defaultValue)
@@ -72,21 +69,6 @@ public class GameSettingsManager : MonoBehaviour
         SetInt(SettingKey.GraphicsQuality, qualityIndex);
     }
 
-    public void SetMasterVolume(float volume)
-    {
-        SetFloat(SettingKey.MasterVolume, volume);
-    }
-
-    public void SetBgmVolume(float volume)
-    {
-        SetFloat(SettingKey.BgmVolume, volume);
-    }
-
-    public void SetSfxVolume(float volume)
-    {
-        SetFloat(SettingKey.SfxVolume, volume);
-    }
-
     private void ApplyIntSetting(SettingKey key, int value)
     {
         if (key == SettingKey.GraphicsQuality)
@@ -98,33 +80,14 @@ public class GameSettingsManager : MonoBehaviour
 
     private void ApplyFloatSetting(SettingKey key, float value)
     {
+        if (SoundManager.Instance == null) return;
+
         if (key == SettingKey.MasterVolume)
-        {
-            SetMixerVolume(MasterVolumeParam, value);
-        }
+            SoundManager.Instance.SetMasterVolume(value);
         else if (key == SettingKey.BgmVolume)
-        {
-            SetMixerVolume(BgmVolumeParam, value);
-        }
+            SoundManager.Instance.SetBGMVolume(value);
         else if (key == SettingKey.SfxVolume)
-        {
-            SetMixerVolume(SfxVolumeParam, value);
-        }
-    }
-
-    private void SetMixerVolume(string parameterName, float volume)
-    {
-        if (audioMixer == null)
-        {
-            Debug.LogWarning("[GameSettingsManager] AudioMixer가 연결되지 않았습니다.");
-            return;
-        }
-
-        float db = volume <= 0.0001f ? -80f : Mathf.Log10(volume) * 20f;
-        bool success = audioMixer.SetFloat(parameterName, db);
-
-        if (!success)
-            Debug.LogWarning("[GameSettingsManager] AudioMixer 파라미터를 찾을 수 없습니다: " + parameterName);
+            SoundManager.Instance.SetSFXVolume(value);
     }
 
     private string GetPrefsKey(SettingKey key)

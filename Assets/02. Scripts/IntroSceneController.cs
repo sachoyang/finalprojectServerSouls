@@ -7,6 +7,7 @@ public class IntroSceneController : MonoBehaviour
     [SerializeField] private SceneFadeManager fadeManager;
     [SerializeField] private Text pressAnyKeyText;
     [SerializeField] private string nextSceneName = "scTitle";
+    public AudioClip buttonSound;
 
     private bool canInput;
     private bool isChangingScene;
@@ -37,6 +38,7 @@ public class IntroSceneController : MonoBehaviour
             pressAnyKeyText.gameObject.SetActive(false);
 
             fadeManager.ChangeScene(nextSceneName);
+            SoundManager.Instance.PlaySFX_2D(buttonSound, SoundCategory.UI);
         }
     }
 }

@@ -9,7 +9,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 921400755166075069}
-  - component: {fileID: 2902068703530338212}
   - component: {fileID: 7814566008286212578}
   m_Layer: 0
   m_Name: GlobalManagers
@@ -33,23 +32,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2902068703530338212
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 587837183854658475}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 22b88e5c94301994f94a7cec93c61e2b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  bgmMixerGroup: {fileID: 5911570474735338081, guid: a59153e0432e35641920378033b4e3f6, type: 2}
-  sfxMixerGroup: {fileID: -4328684361248184724, guid: a59153e0432e35641920378033b4e3f6, type: 2}
-  bgmSource: {fileID: 0}
-  sfxSource: {fileID: 0}
-  defaultButtonClickSound: {fileID: 8300000, guid: d816eb5ebd3ebb843bd9b07a4c32fe17, type: 3}
 --- !u!114 &7814566008286212578
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -62,4 +44,3 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b56ff95a01caffc40a15dd3c1d86a019, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  audioMixer: {fileID: 24100000, guid: a59153e0432e35641920378033b4e3f6, type: 2}
