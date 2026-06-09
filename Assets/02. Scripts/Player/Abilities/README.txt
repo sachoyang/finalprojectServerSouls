@@ -2,6 +2,7 @@ Player/Abilities README
 
 목적:
 - 플레이어 스킬, 패시브, 액티브 슬롯, 보상 획득, 스킬 히트박스 구조 설명.
+- UI는 스킬 슬롯 내부 구조를 직접 조합하지 않고 GetSkillSlotUIData()가 만든 표시용 데이터를 사용한다.
 
 
 1. 전체 흐름
@@ -22,8 +23,10 @@ PlayerAbilityController.Update()
 -> Client면 RPC_RequestActivateAbility()
 -> StateAuthority에서 TryActivateAbility()
 -> PlayerAbilityExecutor.Activate()
+-> slot.StartCooldown(currentTime)
 -> RPC_PlayAbilityPresentation(abilityId, cooldownEndTime)
--> 모든 클라이언트에서 PlayerAbilityExecutor.PlayPresentation()
+-> 모든 클라이언트에서 ApplyCooldownToLocalSlot()
+-> HUD는 GetSkillSlotUIData(currentTime)로 남은 쿨타임 표시
 
 
 2. PlayerAbilityModule.cs
@@ -72,8 +75,24 @@ PlayerAbilityController.Update()
 - RestoreFromSessionData(PlayerRef owner): PlayerSessionStore 기준 복구.
 - TryChangeActiveKey(int activeSlotIndex, KeyCode newKey): 액티브 키 변경.
 - GetActiveSlot(int activeSlotIndex): 슬롯 조회.
+- GetSkillSlotUIData(float currentTime): HUD 표시용 스킬 슬롯 데이터 목록 반환.
 - CreateContext(): Executor에 넘길 컨텍스트 생성.
 - FindModuleById(string abilityId): abilityId로 모듈 찾기.
+
+GetSkillSlotUIData()가 주는 값:
+- IsEmpty
+- AbilityId
+- DisplayName
+- Icon
+- KeyCode
+- CooldownRemaining
+- CooldownDuration
+- IsReady
+
+UI 연동 규칙:
+- SkillSlotHUDView는 SetData(SkillSlotUIData)를 사용한다.
+- 기존 SetSlot(PlayerAbilityModule, KeyCode, float)은 제거됐다.
+- UI는 ActiveSlots, NextReadyTime, Module.Icon 등을 직접 조합하지 않는다.
 
 이벤트:
 - RewardOptionsGenerated
@@ -93,7 +112,7 @@ PlayerAbilityController.Update()
 - InputAuthority만 Update()에서 키 입력을 읽는다.
 - Client는 RPC_RequestActivateAbility()로 StateAuthority에 요청한다.
 - StateAuthority가 쿨타임, 스태미나, 액션 잠금, 사용 가능 여부를 최종 판정한다.
-- 성공 후 RPC_PlayAbilityPresentation()으로 모든 클라이언트에 표시를 보낸다.
+- 성공 후 RPC_PlayAbilityPresentation()으로 모든 클라이언트에 표시와 쿨타임 종료 시간을 보낸다.
 
 
 5. PlayerAbilityExecutor.cs
@@ -153,6 +172,9 @@ PlayerAbilityController.Update()
 - IsReady(float currentTime)
 - StartCooldown(float currentTime)
 - SetCooldownEndTime(float readyTime)
+
+주의:
+- UI는 PlayerAbilitySlot을 직접 표시하지 않고 PlayerAbilityInventory.GetSkillSlotUIData()를 통해 SkillSlotUIData로 읽는다.
 
 
 9. PlayerAbilityContext.cs
