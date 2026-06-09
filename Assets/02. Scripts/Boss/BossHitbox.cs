@@ -4,20 +4,22 @@ using UnityEngine;
 public class BossHitbox : MonoBehaviour
 {
     public enum HitboxType { Head, Body, Claw, Mouth, Tail }
-    
+
     [Header("부위 설정")]
     public HitboxType hitboxType;
 
     [Header("피격 (보스가 맞는) 설정")]
-    public bool isHurtbox = true;         
-    public float damageMultiplier = 1.0f; 
+    public bool isHurtbox = true;
+    public float damageMultiplier = 1.0f;
 
     [Header("공격 (플레이어를 때리는) 설정")]
-    public bool isAttackHitbox = false;   
-    public float baseDamage = 10f;        
+    public bool isAttackHitbox = false;
+    public float baseDamage = 10f;
 
     private Collider _collider;
-    
+
+    public AudioClip audioClip_hit;
+
     // [핵심] 콜라이더를 끄는 대신, 이 변수로 데미지 판정 여부를 결정합니다.
     public bool _isCurrentlyAttacking = false;
 
@@ -37,14 +39,14 @@ public class BossHitbox : MonoBehaviour
     // ==========================================
     // 외부(DragonVisual)에서 애니메이션 이벤트로 호출할 함수
     // ==========================================
-    public void StartAttack() 
-    { 
-        if (isAttackHitbox) _isCurrentlyAttacking = true; 
+    public void StartAttack()
+    {
+        if (isAttackHitbox) _isCurrentlyAttacking = true;
     }
-    
-    public void StopAttack() 
-    { 
-        if (isAttackHitbox) _isCurrentlyAttacking = false; 
+
+    public void StopAttack()
+    {
+        if (isAttackHitbox) _isCurrentlyAttacking = false;
     }
 
     // ==========================================
@@ -68,9 +70,10 @@ public class BossHitbox : MonoBehaviour
 
                 playerStats.TakeDamage(finalDamage);
                 Debug.Log($"[Hit] 보스 공격 적중! 최종 딜: {finalDamage}");
+
             }
-            
-            _isCurrentlyAttacking = false; 
+
+            _isCurrentlyAttacking = false;
         }
     }
 
@@ -87,6 +90,10 @@ public class BossHitbox : MonoBehaviour
         if (_bossScript != null)
         {
             _bossScript.RPC_TakeDamage(finalDamage);
+            if (audioClip_hit != null)
+            {
+                SoundManager.Instance.PlaySFX_3D(audioClip_hit, transform.position, SoundCategory.CombatHurt);
+            }
         }
     }
 }
