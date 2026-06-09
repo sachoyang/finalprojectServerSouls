@@ -160,6 +160,9 @@ public class NetworkPlayerController : NetworkBehaviour
     public Vector3 AttackHitLocalCenter => Vector3.up * attackHitHeight + Vector3.forward * attackHitDistance;
     public bool IsBasicAttackComboUnlocked => BasicAttackComboUnlocked || _localBasicAttackComboUnlocked;
     public bool IsActionAnimationLocked => ActionAnimationLocked || _localActionAnimationLocked;
+    public bool IsDamageOrDeathActionActive =>
+        (_playerStats != null && _playerStats.IsDead) ||
+        (IsActionAnimationLocked && IsDamageOrDeathAction(LastAction));
 
     private void Awake()
     {
@@ -1598,6 +1601,15 @@ public class NetworkPlayerController : NetworkBehaviour
             ActionDeath => "Death",
             _ => "None"
         };
+    }
+
+    private static bool IsDamageOrDeathAction(byte actionType)
+    {
+        // 피격/사망 반응은 스킬 시전보다 우선순위가 높은 연출 이벤트다.
+        // 늦게 도착한 스킬 RPC가 이 애니메이션을 덮어쓰지 못하도록 구분한다.
+        return actionType == ActionImpact ||
+               actionType == ActionParryImpact ||
+               actionType == ActionDeath;
     }
 
     private static string GetAnimatorStateName(int shortNameHash)
