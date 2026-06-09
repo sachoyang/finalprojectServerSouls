@@ -315,7 +315,7 @@ public class RewardManager : MonoBehaviour
                     return;
                 }
 
-                SaveActivePlayerStats(runner);
+                PlayerSessionStore.SaveActivePlayerStats(runner);
                 runner.LoadScene(nextSceneName, LoadSceneMode.Single);
             }
 
@@ -329,28 +329,6 @@ public class RewardManager : MonoBehaviour
         }
 
         SceneManager.LoadScene(nextSceneName);
-    }
-
-    private static void SaveActivePlayerStats(NetworkRunner runner)
-    {
-        if (runner == null)
-        {
-            return;
-        }
-
-        foreach (PlayerRef player in runner.ActivePlayers)
-        {
-            if (!runner.TryGetPlayerObject(player, out NetworkObject playerObject) || playerObject == null)
-            {
-                continue;
-            }
-
-            PlayerStats stats = playerObject.GetComponent<PlayerStats>();
-            if (stats != null)
-            {
-                PlayerSessionStore.SaveStats(player, stats.CreateSessionSnapshot());
-            }
-        }
     }
 
     private static PlayerAbilityRewardController FindLocalRewardController()

@@ -126,6 +126,9 @@ public class NextLevelPortal : NetworkBehaviour
         if (GameProgressionManager.Instance == null) return;
         int currentLevel = GameProgressionManager.Instance.CurrentLevel;
 
+        // Path 씬에서 회복된 체력/스태미나를 다음 보스 씬 스폰 전에 세션 저장소에 남긴다.
+        PlayerSessionStore.SaveActivePlayerStats(runner);
+
         if (currentLevel >= 8)
         {
             runner.LoadScene("scEnding", UnityEngine.SceneManagement.LoadSceneMode.Single);

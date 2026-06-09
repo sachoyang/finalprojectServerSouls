@@ -60,6 +60,31 @@ public static class PlayerSessionStore
         StatsByPlayer[GetKey(player)] = snapshot;
     }
 
+    public static void SaveActivePlayerStats(NetworkRunner runner)
+    {
+        if (runner == null)
+        {
+            return;
+        }
+
+        foreach (PlayerRef player in runner.ActivePlayers)
+        {
+            if (!runner.TryGetPlayerObject(player, out NetworkObject playerObject) || playerObject == null)
+            {
+                continue;
+            }
+
+            PlayerStats stats = playerObject.GetComponent<PlayerStats>();
+            if (stats == null)
+            {
+                continue;
+            }
+
+            // 씬 이동 직전의 서버 확정 체력/스태미나를 저장해야 다음 씬 스폰 때 이전 값으로 되돌아가지 않는다.
+            SaveStats(player, stats.CreateSessionSnapshot());
+        }
+    }
+
     public static bool TryGetStats(PlayerRef player, out PlayerStats.SessionSnapshot snapshot)
     {
         return StatsByPlayer.TryGetValue(GetKey(player), out snapshot);
