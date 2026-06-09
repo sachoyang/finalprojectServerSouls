@@ -8,6 +8,9 @@ public class DragonBoss : NetworkBossCore
     [Tooltip("플레이어가 등 뒤에 있을 때 강제로 발동할 패턴 리스트 인덱스 (예: 점프 내려찍기)")]
     public int rearAttackPatternIndex = 2; 
 
+    [Tooltip("2페이즈 진입 시 드래곤에게 부여할 상태이상 ID (예: 1 = 광폭화)")]
+    public int phase2BuffId = 1;
+
     // 부모의 스폰(Awake 같은 역할)을 그대로 가져다 씁니다.
     public override void Spawned()
     {
@@ -64,6 +67,9 @@ public class DragonBoss : NetworkBossCore
         if (CurrentState == BossState.PhaseTransition && !IsGimmickActive)
         {
             IsGimmickActive = true;
+
+            // 드래곤 전용 버프 부여! (부모 클래스의 ApplyStatus 호출) - 버프 하는 곳
+            ApplyStatus(phase2BuffId);
             
             if (DragonArenaGimmick.Instance != null)
             {
