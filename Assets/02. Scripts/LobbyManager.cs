@@ -38,7 +38,7 @@ public class LobbyManager : MonoBehaviour
 
     private void Start()
     {
-        Debug.Log("LobbyManager Start ½ÇÇàµÊ");
+        Debug.Log("LobbyManager Start ì‹¤í–‰ë¨");
 
         ShowLobbyCharacters();
         SetPlayer1Ready(false);
@@ -56,7 +56,7 @@ public class LobbyManager : MonoBehaviour
     {
         if (!isPlayer1Ready)
         {
-            ShowWarningMessage("ÁØºñÇÏÁö ¾ÊÀº ÇÃ·¹ÀÌ¾î°¡ ÀÖ½À´Ï´Ù.");
+            ShowWarningMessage("ì¤€ë¹„í•˜ì§€ ì•Šì€ í”Œë ˆì´ì–´ê°€ ìˆìŠµë‹ˆë‹¤.");
             return;
         }
 
@@ -73,15 +73,15 @@ public class LobbyManager : MonoBehaviour
     {
         if (playerNameText == null)
         {
-            Debug.LogError("LobbyManager: Player Name Text°¡ ¿¬°áµÇÁö ¾Ê¾Ò½À´Ï´Ù.");
+            Debug.LogError("LobbyManager: Player Name Textê°€ ì—°ê²°ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤.");
             return;
         }
 
         bool hasNickname = PlayerPrefs.HasKey(CurrentNicknameKey);
         string nickname = PlayerPrefs.GetString(CurrentNicknameKey, "Player");
 
-        Debug.Log("LobbyManager: CurrentNickname Á¸Àç ¿©ºÎ = " + hasNickname);
-        Debug.Log("LobbyManager: Lobby¿¡¼­ ÀĞÀº CurrentNickname = " + nickname);
+        Debug.Log("LobbyManager: CurrentNickname ì¡´ì¬ ì—¬ë¶€ = " + hasNickname);
+        Debug.Log("LobbyManager: Lobbyì—ì„œ ì½ì€ CurrentNickname = " + nickname);
 
         playerNameText.text = nickname;
     }
@@ -102,7 +102,7 @@ public class LobbyManager : MonoBehaviour
     {
         if (lobbyCharacters == null || lobbyCharacters.Length == 0)
         {
-            Debug.LogWarning("LobbyManager: Lobby Characters°¡ ºñ¾î ÀÖ½À´Ï´Ù.");
+            Debug.LogWarning("LobbyManager: Lobby Charactersê°€ ë¹„ì–´ ìˆìŠµë‹ˆë‹¤.");
             return;
         }
 
@@ -135,7 +135,7 @@ public class LobbyManager : MonoBehaviour
     {
         if (warningMessageText == null)
         {
-            Debug.LogWarning("LobbyManager: Warning Message Text°¡ ¿¬°áµÇÁö ¾Ê¾Ò½À´Ï´Ù.");
+            Debug.LogWarning("LobbyManager: Warning Message Textê°€ ì—°ê²°ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤.");
             return;
         }
 
@@ -168,13 +168,13 @@ public class LobbyManager : MonoBehaviour
 
         if (fadeManager == null)
         {
-            Debug.LogError("LobbyManager: Fade Manager°¡ ¿¬°áµÇÁö ¾Ê¾Ò½À´Ï´Ù.");
+            Debug.LogError("LobbyManager: Fade Managerê°€ ì—°ê²°ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤.");
             return;
         }
 
         if (string.IsNullOrEmpty(sceneName))
         {
-            Debug.LogError("LobbyManager: ÀÌµ¿ÇÒ ¾À ÀÌ¸§ÀÌ ºñ¾î ÀÖ½À´Ï´Ù.");
+            Debug.LogError("LobbyManager: ì´ë™í•  ì”¬ ì´ë¦„ì´ ë¹„ì–´ ìˆìŠµë‹ˆë‹¤.");
             return;
         }
 

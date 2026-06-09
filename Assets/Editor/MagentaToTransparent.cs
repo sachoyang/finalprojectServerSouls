@@ -11,7 +11,7 @@ public static class MagentaToTransparent
 
         if (sourceTexture == null)
         {
-            Debug.LogWarning("Åõ¸íÈ­ÇÒ Texture2D¸¦ Project Ã¢¿¡¼­ ¼±ÅÃÇØÁÖ¼¼¿ä.");
+            Debug.LogWarning("íˆ¬ëª…í™”í•  Texture2Dë¥¼ Project ì°½ì—ì„œ ì„ íƒí•´ì£¼ì„¸ìš”.");
             return;
         }
 
@@ -20,7 +20,7 @@ public static class MagentaToTransparent
 
         if (importer == null)
         {
-            Debug.LogWarning("TextureImporter¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù.");
+            Debug.LogWarning("TextureImporterë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.");
             return;
         }
 
@@ -60,6 +60,6 @@ public static class MagentaToTransparent
 
         AssetDatabase.Refresh();
 
-        Debug.Log("¸¶Á¨Å¸ ¹è°æÀ» Åõ¸íÈ­Çß½À´Ï´Ù: " + assetPath);
+        Debug.Log("ë§ˆì  íƒ€ ë°°ê²½ì„ íˆ¬ëª…í™”í–ˆìŠµë‹ˆë‹¤: " + assetPath);
     }
 }

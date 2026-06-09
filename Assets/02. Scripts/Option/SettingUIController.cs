@@ -12,8 +12,8 @@ public class SettingUIController : MonoBehaviour
 
     [Header("Prefabs")]
     public GameObject categoryPrefab;  // OptionTop
-    public GameObject itemPrefab;      // OptionMid (¹öÆ°Çü)
-    public GameObject sliderItemPrefab; // OptionMid_Slider (½½¶óÀÌ´õÇü)
+    public GameObject itemPrefab;      // OptionMid (ë²„íŠ¼í˜•)
+    public GameObject sliderItemPrefab; // OptionMid_Slider (ìŠ¬ë¼ì´ë”í˜•)
 
     void Start()
     {
@@ -32,28 +32,28 @@ public class SettingUIController : MonoBehaviour
 
     public void RefreshUI()
     {
-        // 1. ±âÁ¸ UI Á¦°Å
+        // 1. ê¸°ì¡´ UI ì œê±°
         foreach (Transform child in contentParent)
         {
             Destroy(child.gameObject);
         }
 
-        // 2. µ¥ÀÌÅÍ ±â¹İ »ı¼º
+        // 2. ë°ì´í„° ê¸°ë°˜ ìƒì„±
         foreach (var cat in currentTabData.categories)
         {
-            // ´ëÇ×¸ñ »ı¼º
+            // ëŒ€í•­ëª© ìƒì„±
             GameObject catObj = Instantiate(categoryPrefab, contentParent);
             Text categoryText = catObj.GetComponentInChildren<Text>();
             if (categoryText != null) categoryText.text = cat.categoryName;
 
-            // ÁßÇ×¸ñ »ı¼º
+            // ì¤‘í•­ëª© ìƒì„±
             foreach (var item in cat.items)
             {
-                // Å¸ÀÔ¿¡ µû¶ó ÇÁ¸®ÆÕ °áÁ¤
+                // íƒ€ì…ì— ë”°ë¼ í”„ë¦¬íŒ¹ ê²°ì •
                 GameObject prefabToUse = (item.itemType == SettingType.Slider) ? sliderItemPrefab : itemPrefab;
                 GameObject itemObj = Instantiate(prefabToUse, contentParent);
 
-                // Å¸ÀÔ¿¡ ¸Â´Â ¼Â¾÷ ½ÇÇà
+                // íƒ€ì…ì— ë§ëŠ” ì…‹ì—… ì‹¤í–‰
                 if (item.itemType == SettingType.Slider)
                 {
                     SettingSliderUI sliderScript = itemObj.GetComponent<SettingSliderUI>();

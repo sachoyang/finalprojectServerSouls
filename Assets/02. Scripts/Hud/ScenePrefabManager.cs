@@ -42,13 +42,13 @@ public class ScenePrefabManager : MonoBehaviour
 
             if (string.IsNullOrEmpty(entry.prefabId))
             {
-                Debug.LogWarning("ScenePrefabManager: Prefab ID°¡ ºñ¾î ÀÖ½À´Ï´Ù.");
+                Debug.LogWarning("ScenePrefabManager: Prefab IDê°€ ë¹„ì–´ ìˆìŠµë‹ˆë‹¤.");
                 continue;
             }
 
             if (prefabMap.ContainsKey(entry.prefabId))
             {
-                Debug.LogWarning("ScenePrefabManager: Áßº¹µÈ Prefab ID°¡ ÀÖ½À´Ï´Ù. " + entry.prefabId);
+                Debug.LogWarning("ScenePrefabManager: ì¤‘ë³µëœ Prefab IDê°€ ìˆìŠµë‹ˆë‹¤. " + entry.prefabId);
                 continue;
             }
 
@@ -73,7 +73,7 @@ public class ScenePrefabManager : MonoBehaviour
     {
         if (!prefabMap.TryGetValue(prefabId, out ScenePrefabEntry entry))
         {
-            Debug.LogWarning("ScenePrefabManager: µî·ÏµÇÁö ¾ÊÀº Prefab IDÀÔ´Ï´Ù. " + prefabId);
+            Debug.LogWarning("ScenePrefabManager: ë“±ë¡ë˜ì§€ ì•Šì€ Prefab IDì…ë‹ˆë‹¤. " + prefabId);
             return null;
         }
 
@@ -82,7 +82,7 @@ public class ScenePrefabManager : MonoBehaviour
 
         if (entry.prefab == null)
         {
-            Debug.LogWarning("ScenePrefabManager: PrefabÀÌ ºñ¾î ÀÖ½À´Ï´Ù. " + prefabId);
+            Debug.LogWarning("ScenePrefabManager: Prefabì´ ë¹„ì–´ ìˆìŠµë‹ˆë‹¤. " + prefabId);
             return null;
         }
 
