@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -14,6 +15,9 @@ public class BossHUDView : MonoBehaviour
 
     [Header("State")]
     [SerializeField] private Text stateText;
+
+    [Header("Status")]
+    [SerializeField] private StatusIconBarView statusIconBarView;
 
     private void Awake()
     {
@@ -59,10 +63,23 @@ public class BossHUDView : MonoBehaviour
         stateText.text = string.IsNullOrEmpty(stateName) ? string.Empty : stateName;
     }
 
+    public void SetStatuses(IReadOnlyList<ActiveStatusUIInfo> statuses)
+    {
+        if (statusIconBarView != null)
+            statusIconBarView.SetStatuses(statuses);
+    }
+
+    public void ClearStatuses()
+    {
+        if (statusIconBarView != null)
+            statusIconBarView.Clear();
+    }
+
     public void Clear()
     {
         SetBossName(string.Empty);
         SetHp(0f, 1f);
         SetStateText(string.Empty);
+        ClearStatuses();
     }
 }

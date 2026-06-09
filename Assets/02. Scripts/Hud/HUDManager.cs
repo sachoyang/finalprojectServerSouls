@@ -21,6 +21,7 @@ public class HUDManager : MonoBehaviour
     [Header("Player Data")]
     [SerializeField] private PlayerStats playerStats;
     [SerializeField] private PlayerAbilityInventory abilityInventory;
+    [SerializeField] private PlayerStatusController playerStatusController;
 
     [Header("Boss Data")]
     [SerializeField] private NetworkBossCore boss;
@@ -65,6 +66,9 @@ public class HUDManager : MonoBehaviour
 
             if (abilityInventory == null)
                 abilityInventory = localPlayerController.GetComponent<PlayerAbilityInventory>();
+
+            if (playerStatusController == null)
+                playerStatusController = localPlayerController.GetComponent<PlayerStatusController>();
         }
 
         if (boss == null || boss.CurrentState == BossState.Die)
@@ -76,6 +80,7 @@ public class HUDManager : MonoBehaviour
         if (localPlayerController != null &&
             playerStats != null &&
             abilityInventory != null &&
+            playerStatusController != null &&
             boss != null &&
             boss.CurrentState != BossState.Die)
         {
@@ -112,6 +117,11 @@ public class HUDManager : MonoBehaviour
 
         playerHUDView.SetHp(playerStats.CurrentHealth, playerStats.MaxHealth);
         playerHUDView.SetSp(playerStats.CurrentStamina, playerStats.MaxStamina);
+
+        if (playerStatusController != null)
+            playerHUDView.SetStatuses(playerStatusController.GetActiveStatusesForUI());
+        else
+            playerHUDView.ClearStatuses();
     }
 
     private void UpdateBossHUD()
@@ -124,6 +134,7 @@ public class HUDManager : MonoBehaviour
 
         if (boss == null)
         {
+            bossHUDView.ClearStatuses();
             bossHUDView.SetVisible(false);
             return;
         }
@@ -136,6 +147,7 @@ public class HUDManager : MonoBehaviour
 
         bossHUDView.SetBossName(boss.bossName);
         bossHUDView.SetHp(currentHp, maxHp);
+        bossHUDView.SetStatuses(boss.GetActiveStatusesForUI());
         bossHUDView.SetVisible(boss.CurrentState != BossState.Die);
     }
 
@@ -271,6 +283,7 @@ public class HUDManager : MonoBehaviour
         {
             playerHUDView.SetHp(0f, 1f);
             playerHUDView.SetSp(0f, 1f);
+            playerHUDView.ClearStatuses();
         }
 
         if (bossHUDView != null)

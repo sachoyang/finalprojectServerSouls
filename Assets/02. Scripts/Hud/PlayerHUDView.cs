@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,6 +9,9 @@ public class PlayerHUDView : MonoBehaviour
 
     [Header("SP")]
     [SerializeField] private Image spFillImage;
+
+    [Header("Status")]
+    [SerializeField] private StatusIconBarView statusIconBarView;
 
     public void SetHp(float currentHp, float maxHp)
     {
@@ -23,6 +27,18 @@ public class PlayerHUDView : MonoBehaviour
 
         if (spFillImage != null)
             spFillImage.fillAmount = spRatio;
+    }
+
+    public void SetStatuses(IReadOnlyList<ActiveStatusUIInfo> statuses)
+    {
+        if (statusIconBarView != null)
+            statusIconBarView.SetStatuses(statuses);
+    }
+
+    public void ClearStatuses()
+    {
+        if (statusIconBarView != null)
+            statusIconBarView.Clear();
     }
 
     private float GetSafeRatio(float currentValue, float maxValue)
