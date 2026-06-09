@@ -57,6 +57,17 @@ public class PlayerAbilityExecutor : MonoBehaviour
             return;
         }
 
+        PlayerStats stats = context.Owner.GetComponent<PlayerStats>();
+        NetworkPlayerController controller = context.Owner.GetComponent<NetworkPlayerController>();
+        if ((stats != null && stats.IsDead) ||
+            (controller != null && controller.IsDamageOrDeathActionActive))
+        {
+            // 스킬 연출은 피격/사망 연출보다 우선순위가 낮다.
+            // 늦게 도착한 스킬 RPC가 호스트와 클라이언트에서 피격/사망 애니메이션을
+            // 서로 다르게 덮어쓰지 못하도록 여기서 막는다.
+            return;
+        }
+
         PlayAnimation(module, context);
         SpawnLocalPrefab(context, module.EffectPrefab, module.EffectLocalOffset, module.ParentEffectToPlayer);
     }
@@ -119,13 +130,20 @@ public class PlayerAbilityExecutor : MonoBehaviour
         }
 
         NetworkObject attacker = context.Owner != null ? context.Owner.GetComponent<NetworkObject>() : null;
+        PlayerStatusController statusController = context.Owner != null ? context.Owner.GetComponent<PlayerStatusController>() : null;
+        float damage = module.HitboxDamage;
+        if (statusController != null)
+        {
+            damage *= statusController.GetOutgoingDamageMultiplier();
+        }
+
         PlayerSkillHitbox skillHitbox = hitbox.GetComponent<PlayerSkillHitbox>();
         if (skillHitbox != null)
         {
             skillHitbox.Initialize(
                 context.Owner,
                 attacker,
-                module.HitboxDamage,
+                damage,
                 module.HitboxRevivePower,
                 module.HitboxDelay,
                 module.HitboxLifetime);

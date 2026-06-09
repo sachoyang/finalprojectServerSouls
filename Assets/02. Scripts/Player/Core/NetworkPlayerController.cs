@@ -121,6 +121,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
     private NetworkCharacterController _networkCharacterController;
     private PlayerStats _playerStats;
+    private PlayerStatusController _statusController;
     private PlayerAbilityInventory _abilityInventory;
     private PlayerAbilityRewardController _abilityRewardController;
     private ChangeDetector _changeDetector;
@@ -160,6 +161,9 @@ public class NetworkPlayerController : NetworkBehaviour
     public Vector3 AttackHitLocalCenter => Vector3.up * attackHitHeight + Vector3.forward * attackHitDistance;
     public bool IsBasicAttackComboUnlocked => BasicAttackComboUnlocked || _localBasicAttackComboUnlocked;
     public bool IsActionAnimationLocked => ActionAnimationLocked || _localActionAnimationLocked;
+    public bool IsDamageOrDeathActionActive =>
+        (_playerStats != null && _playerStats.IsDead) ||
+        (IsActionAnimationLocked && IsDamageOrDeathAction(LastAction));
 
     private void Awake()
     {
@@ -167,6 +171,7 @@ public class NetworkPlayerController : NetworkBehaviour
         animator ??= GetComponent<Animator>();
         _networkCharacterController = GetComponent<NetworkCharacterController>();
         _playerStats = GetComponent<PlayerStats>();
+        _statusController = GetComponent<PlayerStatusController>();
         _abilityInventory = GetComponent<PlayerAbilityInventory>();
         _abilityRewardController = GetComponent<PlayerAbilityRewardController>();
         lockOnTargetSelector ??= GetComponent<LockOnTargetSelector>();
@@ -423,6 +428,8 @@ public class NetworkPlayerController : NetworkBehaviour
             moveDirection = desiredMove.normalized;
         }
 
+        currentSpeed *= GetMoveSpeedMultiplier();
+
         if (actionBlocksMovement)
         {
             // 제자리 액션 중에는 이전 틱의 수평 속도가 남아 미끄러지지 않게 지운다.
@@ -502,7 +509,7 @@ public class NetworkPlayerController : NetworkBehaviour
         }
 
         Vector3 moveDirection = desiredMove.sqrMagnitude > 0.001f ? desiredMove.normalized : Vector3.zero;
-        ApplyMovement(moveDirection, crawlSpeed, Vector3.zero);
+        ApplyMovement(moveDirection, crawlSpeed * GetMoveSpeedMultiplier(), Vector3.zero);
         UpdateMovementState(moveDirection.sqrMagnitude > 0.001f, false, LockMoveIdle);
         WasShiftHeld = false;
         ShiftHoldTime = 0f;
@@ -1266,17 +1273,32 @@ public class NetworkPlayerController : NetworkBehaviour
             return 0f;
         }
 
+        float damage;
         if (!IsBasicAttackComboUnlocked)
         {
-            return _playerStats.AttackPower;
+            damage = _playerStats.AttackPower;
+        }
+        else
+        {
+            damage = BasicAttackComboIndex switch
+            {
+                1 => _playerStats.SecondAttackDamage,
+                2 => _playerStats.ThirdAttackDamage,
+                _ => _playerStats.FirstAttackDamage
+            };
         }
 
-        return BasicAttackComboIndex switch
-        {
-            1 => _playerStats.SecondAttackDamage,
-            2 => _playerStats.ThirdAttackDamage,
-            _ => _playerStats.FirstAttackDamage
-        };
+        return damage * GetOutgoingDamageMultiplier();
+    }
+
+    private float GetMoveSpeedMultiplier()
+    {
+        return _statusController != null ? _statusController.GetMoveSpeedMultiplier() : 1f;
+    }
+
+    private float GetOutgoingDamageMultiplier()
+    {
+        return _statusController != null ? _statusController.GetOutgoingDamageMultiplier() : 1f;
     }
 
     private void StartRoll(Vector3 desiredMove)
@@ -1598,6 +1620,15 @@ public class NetworkPlayerController : NetworkBehaviour
             ActionDeath => "Death",
             _ => "None"
         };
+    }
+
+    private static bool IsDamageOrDeathAction(byte actionType)
+    {
+        // 피격/사망 반응은 스킬 시전보다 우선순위가 높은 연출 이벤트다.
+        // 늦게 도착한 스킬 RPC가 이 애니메이션을 덮어쓰지 못하도록 구분한다.
+        return actionType == ActionImpact ||
+               actionType == ActionParryImpact ||
+               actionType == ActionDeath;
     }
 
     private static string GetAnimatorStateName(int shortNameHash)

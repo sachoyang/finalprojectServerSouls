@@ -3268,6 +3268,7 @@ GameObject:
   - component: {fileID: 887917814547890475}
   - component: {fileID: 8473531464486402951}
   - component: {fileID: 6138425169054327812}
+  - component: {fileID: 2468013579246801357}
   - component: {fileID: 6615164983512902201}
   - component: {fileID: -3789471070017338798}
   - component: {fileID: -1636750999124312810}
@@ -3383,6 +3384,7 @@ MonoBehaviour:
   - {fileID: 2252031246122198364}
   - {fileID: 8473531464486402951}
   - {fileID: 6138425169054327812}
+  - {fileID: 2468013579246801357}
   - {fileID: 6615164983512902201}
   - {fileID: -1636750999124312810}
   ForceRemoteRenderTimeframe: 0
@@ -3412,12 +3414,15 @@ MonoBehaviour:
   jumpImpulse: 8
   jumpAnimationLockDuration: 0.45
   comboGraceSeconds: 0.5
+  comboInputBufferSeconds: 0.2
   attackHitRadius: 1.4
   attackHitDistance: 1.8
   attackHitHeight: 1.1
   attackTargetLayers:
     serializedVersion: 2
     m_Bits: 4294967295
+  basicAttackRevivePower: 34
+  lockOnTargetSelector: {fileID: 0}
   lockOnSearchRadius: 80
   lockOnRotationSpeed: 900
 --- !u!114 &6138425169054327812
@@ -3437,6 +3442,11 @@ MonoBehaviour:
   staminaRegenPerSecond: 100
   staminaRegenDelay: 0.8
   hitInvincibleDuration: 0.25
+  baseReviveGaugePerSegment: 100
+  reviveGaugeIncreasePerDeathAfterMaxSegments: 100
+  maxReviveSegments: 3
+  reviveProgressDecayDelay: 2
+  reviveProgressDecayPerSecond: 30
   defenseRate: 0.5
   firstAttackDamage: 7000
   secondAttackDamage: 9000
@@ -3452,6 +3462,23 @@ MonoBehaviour:
   _CurrentStamina: 0
   _IsDead: 0
   _IsAnimationInvincible: 0
+  _DeathCount: 0
+  _ReviveSegmentCount: 0
+  _ReviveGaugePerSegment: 0
+  _ReviveProgress: 0
+--- !u!114 &2468013579246801357
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7435228771337582382}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f6b2d5d46924aaf9af38432e4b00e65, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  statusDatabase: []
 --- !u!114 &6615164983512902201
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3464,6 +3491,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0db6e089df1f42349a52186dc4f01a1f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _SavedAbilityCount: 0
+  _LastSelectedRewardStage: 0
+  _SavedAbilityIds: []
 --- !u!114 &-3789471070017338798
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3525,7 +3555,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8dbef57a70044702933c40d2132aa99e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  debugBossStage: 1
   offerRewardKey: 286
   selectFirstOptionKey: 287
   selectSecondOptionKey: 288
