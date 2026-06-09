@@ -205,7 +205,7 @@ public class SoundManager : MonoBehaviour
     public void SetBGMVolume(float sliderValue)
     {
         float value = Mathf.Max(0.0001f, sliderValue);
-        mainMixer.SetFloat("BGMVolume", Mathf.Log10(value) * 20);
+        mainMixer.SetFloat("BgmVolume", Mathf.Log10(value) * 20);
     }
 
     /// <summary>
