@@ -33,23 +33,35 @@ public class StatusIconBarView : MonoBehaviour
             sortedStatuses.Add(status);
         }
 
-        sortedStatuses.Sort(CompareStatus);
-
-        int maxVisibleStatusCount = statusIconImages.Length;
-
-        if (sortedStatuses.Count > statusIconImages.Length)
+        if (sortedStatuses.Count == 0)
         {
-            maxVisibleStatusCount = statusIconImages.Length - 1;
+            return;
         }
 
-        for (int i = 0; i < maxVisibleStatusCount; i++)
+        sortedStatuses.Sort(CompareStatus);
+
+        int slotCount = statusIconImages.Length;
+        bool needMoreSlot = sortedStatuses.Count > slotCount;
+
+        int visibleStatusCount;
+
+        if (needMoreSlot)
+        {
+            visibleStatusCount = Mathf.Min(sortedStatuses.Count, slotCount - 1);
+        }
+        else
+        {
+            visibleStatusCount = Mathf.Min(sortedStatuses.Count, slotCount);
+        }
+
+        for (int i = 0; i < visibleStatusCount; i++)
         {
             SetSlot(i, sortedStatuses[i].Data.icon);
         }
 
-        if (sortedStatuses.Count > statusIconImages.Length)
+        if (needMoreSlot && slotCount > 0)
         {
-            SetSlot(statusIconImages.Length - 1, moreStatusSprite);
+            SetSlot(slotCount - 1, moreStatusSprite);
         }
     }
 
