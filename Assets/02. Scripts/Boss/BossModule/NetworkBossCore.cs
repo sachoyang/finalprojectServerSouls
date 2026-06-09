@@ -588,7 +588,7 @@ public class NetworkBossCore : NetworkBehaviour
             StateTimer = TickTimer.CreateFromSeconds(Runner, 3.0f);
             Debug.Log("[보스] 체력 50% 이하! 2페이즈 광폭화 돌입!");
 
-            ApplyStatus(1); // 광폭화 SO 만들어둔 거 부여
+            //ApplyStatus(1); // 광폭화 SO 만들어둔 거 부여
 
             return;
         }
