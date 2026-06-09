@@ -143,6 +143,8 @@ public class NetworkBossCore : NetworkBehaviour
     public float gimmickDamageReduction = 0.3f;
     private bool _localGimmickActive = false;
 
+    public AudioClip[] audioClips;
+
     public override void Spawned()
     {
         _visual = GetComponentInChildren<IBossVisual>();
@@ -463,6 +465,12 @@ public class NetworkBossCore : NetworkBehaviour
                     _visual.SetAnimSpeed(speedMult);
 
                     _visual.PlayAction(Animator.StringToHash("getHit"));
+
+                    if(audioClips[1]!=null)
+                    {
+                        SoundManager.Instance.PlaySFX_3D(audioClips[1], transform.position, SoundCategory.BossGimmick, 0.7f, 0.1f);
+                    }
+                    
                 }
                 else if (CurrentState == BossState.Idle || CurrentState == BossState.Walk)
                 {
@@ -477,6 +485,10 @@ public class NetworkBossCore : NetworkBehaviour
                 {
                     // 변신할 때도 임시로 기상 포효(Scream) 애니메이션을 재활용합니다!
                     _visual.PlayAction(_wakeUpAnimHash);
+                    if(audioClips[0]!= null)
+                    {
+                        SoundManager.Instance.PlaySFX_3D(audioClips[0],transform.position, SoundCategory.BossGimmick,1,1);
+                    }
                 }
 
                 _lastState = CurrentState;

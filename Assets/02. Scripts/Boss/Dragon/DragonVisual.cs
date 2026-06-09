@@ -16,10 +16,12 @@ public class DragonVisual : MonoBehaviour, IBossVisual
 
     [Header("광역기 이펙트 프리팹")]
     public GameObject jumpSlamEffectPrefab;
-    public Transform jumpSlamSpawnPoint; 
+    public Transform jumpSlamSpawnPoint;
 
     [Header("경고 장판 (Telegraph)")]
     public GameObject jumpWarningPrefab;
+
+    public AudioClip[] audioClips;
 
     private void Awake()
     {
@@ -35,7 +37,7 @@ public class DragonVisual : MonoBehaviour, IBossVisual
     public void PlayAction(int stateHash, float crossFadeTime = 0.1f)
     {
         anim.CrossFade(stateHash, crossFadeTime, 0, 0f);
-        
+
         // (참고) 만약 특정 이펙트를 위해 어떤 해시인지 검사해야 한다면?
         // if (stateHash == Animator.StringToHash("Basic Attack")) { fireBreath.Play(); }
     }
@@ -55,6 +57,10 @@ public class DragonVisual : MonoBehaviour, IBossVisual
     {
         if (leftClawHitbox != null) leftClawHitbox.StartAttack();
         if (rightClawHitbox != null) rightClawHitbox.StartAttack();
+        if (audioClips[0] != null)
+        {
+            SoundManager.Instance.PlaySFX_3D(audioClips[0], transform.position, SoundCategory.CombatHit);
+        }
     }
     public void DisableClawHitbox()
     {
@@ -89,15 +95,17 @@ public class DragonVisual : MonoBehaviour, IBossVisual
 
     public void EnableHornAttackHitbox()
     {
-        EnableClawHitbox();
-        EnableMouthHitbox();
-        EnableBodyHitbox();
+        if (leftClawHitbox != null) leftClawHitbox.StartAttack();
+        if (rightClawHitbox != null) rightClawHitbox.StartAttack();
+        if (mouthHitbox != null) mouthHitbox.StartAttack();
+        if (bodyHitbox != null) bodyHitbox.StartAttack();
     }
 
     public void DisableHornAttackHitbox()
     {
-        DisableClawHitbox();
-        DisableMouthHitbox();
-        DisableBodyHitbox();
+        if (leftClawHitbox != null) leftClawHitbox.StopAttack();
+        if (rightClawHitbox != null) rightClawHitbox.StopAttack();
+        if (mouthHitbox != null) mouthHitbox.StopAttack();
+        if (bodyHitbox != null) bodyHitbox.StopAttack();
     }
 }
