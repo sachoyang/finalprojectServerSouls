@@ -61,19 +61,35 @@ public class LoginSceneController : MonoBehaviour
             return;
         }
 
-        // [🔥 DB 연동 부분] 기존 TryLogin 대신 BackendManager를 호출합니다!
+        // [🔥 DB 연동 부분] BackendManager 호출
         BackendManager.Instance.LoginUser(id, pw, (isSuccess, message) =>
         {
             if (isSuccess)
             {
-                // BackendManager 내부에 닉네임과 스킬 정보가 저장되어 있습니다.
                 Debug.Log($"DB 로그인 성공 ID: {id}, Nickname: {BackendManager.Instance.CurrentNickname}");
-                ChangeScene(titleSceneName);
+                
+                // 씬을 넘기기 전에 로딩 메시지를 띄우고 스킬 데이터를 요청합니다.
+                ShowSystemMessage("서버에서 스킬 데이터를 불러오는 중...");
+
+                // 스킬 모듈 데이터 패치!
+                AbilityManager.Instance.FetchAbilities((isLoaded) => 
+                {
+                    if (isLoaded)
+                    {
+                        // 스킬 조립까지 완벽하게 끝났으면 메인 씬으로 이동!
+                        ChangeScene(titleSceneName);
+                    }
+                    else
+                    {
+                        // 서버에서 스킬을 못 가져오면 씬 이동을 막고 에러 띄움
+                        ShowSystemMessage("스킬 데이터를 불러오는데 실패했습니다.");
+                    }
+                });
             }
             else
             {
                 Debug.Log($"DB 로그인 실패: {message}");
-                ShowSystemMessage(message); // "아이디 또는 비밀번호가 틀렸습니다." 등 출력
+                ShowSystemMessage(message);
             }
         });
     }

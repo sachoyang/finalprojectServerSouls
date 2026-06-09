@@ -142,4 +142,34 @@ public class PlayerAbilityModule : ScriptableObject
     {
         return bossStage >= minBossStage && bossStage <= maxBossStage;
     }
+
+    // ==========================================
+    // 🔥 서버 데이터로 모듈을 조립하는 런타임 초기화 함수
+    // ==========================================
+    public void InitializeFromDB(AbilityDBData dbData, AbilityAssetDatabase assetDB)
+    {
+        this.name = dbData.ability_id; // 메모리 상의 에셋 이름
+        
+        this.abilityId = dbData.ability_id;
+        this.displayName = dbData.display_name;
+        this.description = dbData.description;
+        
+        this.abilityType = (dbData.ability_type == "Active") ? AbilityType.Active : AbilityType.Passive;
+        this.staminaCost = dbData.stamina_cost;
+        this.cooldownSeconds = dbData.cooldown_seconds;
+        this.hitboxDamage = dbData.damage_multiplier; // 데미지 매핑
+        this.hitboxLifetime = dbData.duration; // 지속시간 매핑
+
+        // 특수 효과 Enum 매핑
+        if (System.Enum.TryParse(dbData.special_effect, out PlayerAbilitySpecialEffect effect))
+        {
+            this.specialEffect = effect;
+        }
+
+        // 에셋 매핑 (데이터베이스에서 꺼내오기)
+        if (!string.IsNullOrEmpty(dbData.icon_key)) this.icon = assetDB.GetIcon(dbData.icon_key);
+        if (!string.IsNullOrEmpty(dbData.animation_key)) this.animationClip = assetDB.GetAnim(dbData.animation_key);
+        if (!string.IsNullOrEmpty(dbData.vfx_key)) this.effectPrefab = assetDB.GetPrefab(dbData.vfx_key);
+        if (!string.IsNullOrEmpty(dbData.hitbox_key)) this.hitboxPrefab = assetDB.GetPrefab(dbData.hitbox_key);
+    }
 }
