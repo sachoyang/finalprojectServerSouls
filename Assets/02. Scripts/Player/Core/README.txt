@@ -193,3 +193,22 @@ DB 연동 후보:
 역할:
 - Scene 뷰에서 기본 공격 범위를 보여주는 디버그용 Gizmo.
 - 실제 게임 판정에는 영향이 없다.
+최신 변경: 중앙 조작 잠금
+
+PlayerControlLockFlags
+- Movement: 이동 잠금. NetworkPlayerController.FixedUpdateNetwork() 진입부에서 이동과 달리기 상태를 멈춘다.
+- Action: 기본 공격, 점프, 패링, 구르기 같은 컨트롤러 액션 입력 잠금.
+- Skill: PlayerAbilityController의 액티브 스킬 입력/사용 요청 잠금.
+- Camera: 카메라 조작 잠금용 예약 플래그.
+- Interaction: 포탈, 보상, 오브젝트 상호작용 잠금용 예약 플래그.
+- All: 전체 잠금. 보스 등장 컷신과 문 열기 컷신에서 사용한다.
+
+NetworkPlayerController 추가 함수
+- SetControlLock(PlayerControlLockFlags flags, bool isLocked): 지정한 조작 묶음을 잠그거나 해제한다.
+- HasControlLock(PlayerControlLockFlags flags): 현재 지정한 조작이 잠겨 있는지 확인한다.
+
+규칙
+- 컷신, UI, 포탈 같은 외부 시스템은 이동 컴포넌트나 스킬 컴포넌트를 직접 끄지 않고 SetControlLock()만 호출한다.
+- 새 기능을 추가할 때는 기능 입구에서 HasControlLock(필요한 플래그)을 확인한다.
+- enum이나 순수 helper 클래스로 스크립트를 분리하는 경우 프리팹에 새 컴포넌트를 붙일 필요가 없다.
+- MonoBehaviour나 NetworkBehaviour로 새 책임을 분리할 때만 프리팹/씬에 컴포넌트를 추가해야 한다.

@@ -33,7 +33,8 @@ public class PlayerAbilityController : NetworkBehaviour
             !Object.HasInputAuthority ||
             _inventory == null ||
             (_stats != null && _stats.IsDead) ||
-            (_playerController != null && _playerController.IsActionAnimationLocked))
+            (_playerController != null &&
+             (_playerController.IsActionAnimationLocked || _playerController.HasControlLock(PlayerControlLockFlags.Skill))))
         {
             return;
         }
@@ -69,7 +70,9 @@ public class PlayerAbilityController : NetworkBehaviour
     {
         // 스킬은 공격/피격/구르기 같은 액션락 중에는 시작하지 않는다.
         // 이 검사는 서버 권한에서 최종 적용되며, 클라이언트 로컬 입력은 RPC 요청까지만 담당한다.
-        if (_inventory == null || (_playerController != null && _playerController.IsActionAnimationLocked))
+        if (_inventory == null ||
+            (_playerController != null &&
+             (_playerController.IsActionAnimationLocked || _playerController.HasControlLock(PlayerControlLockFlags.Skill))))
         {
             return false;
         }

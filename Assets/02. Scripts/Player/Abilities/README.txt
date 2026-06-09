@@ -188,3 +188,17 @@ UI 연동 규칙:
 
 역할:
 - 에디터/개발 빌드에서 보상 흐름을 키 입력으로 테스트하는 디버그 스크립트.
+최신 변경: 중앙 조작 잠금과 스킬 입력
+
+PlayerAbilityController는 컷신 매니저나 UI 상태를 직접 알지 않는다.
+스킬 입력/사용 가능 여부는 NetworkPlayerController.HasControlLock(PlayerControlLockFlags.Skill)로 확인한다.
+
+스킬 사용 차단 흐름:
+- CutsceneManager 또는 다른 외부 시스템이 SetControlLock(PlayerControlLockFlags.Skill, true)를 호출한다.
+- PlayerAbilityController.Update()는 Skill 잠금이면 키 입력을 읽어도 스킬 사용 요청을 보내지 않는다.
+- TryActivateAbility()도 Skill 잠금이면 false를 반환한다.
+
+새 액티브 스킬 입력 경로를 추가할 때의 규칙:
+- 컷신 여부를 직접 검사하지 않는다.
+- 스킬을 실행하기 전에 HasControlLock(PlayerControlLockFlags.Skill)을 확인한다.
+- 서버 권한에서 최종 판정하는 쿨타임, 스태미나, 사용 가능 조건은 기존 TryActivateAbility() 흐름을 유지한다.

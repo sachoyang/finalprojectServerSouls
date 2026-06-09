@@ -183,6 +183,8 @@ public class CutsceneManager : MonoBehaviour
     private IEnumerator PlayBossWakeUpRoutine()
     {
         _isPlaying = true;
+        ResolveLocalPlayer();
+        SetPlayerControlEnabled(false);
 
         if (bossWakeUpStartDelay > 0f)
         {
@@ -226,6 +228,7 @@ public class CutsceneManager : MonoBehaviour
             yield return cameraManager.RestoreGameplayCamera();
         }
 
+        SetPlayerControlEnabled(true);
         _isPlaying = false;
     }
 
@@ -379,7 +382,7 @@ public class CutsceneManager : MonoBehaviour
         NetworkPlayerController playerController = playerObject.GetComponent<NetworkPlayerController>();
         if (playerController != null)
         {
-            playerController.enabled = isEnabled;
+            playerController.SetControlLock(PlayerControlLockFlags.All, !isEnabled);
         }
     }
 

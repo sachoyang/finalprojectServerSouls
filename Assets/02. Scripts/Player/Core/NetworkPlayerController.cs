@@ -3,6 +3,18 @@ using System.Text;
 using Fusion;
 using UnityEngine;
 
+[System.Flags]
+public enum PlayerControlLockFlags
+{
+    None = 0,
+    Movement = 1 << 0,
+    Action = 1 << 1,
+    Skill = 1 << 2,
+    Camera = 1 << 3,
+    Interaction = 1 << 4,
+    All = Movement | Action | Skill | Camera | Interaction
+}
+
 [RequireComponent(typeof(NetworkCharacterController))]
 public class NetworkPlayerController : NetworkBehaviour
 {
@@ -118,6 +130,7 @@ public class NetworkPlayerController : NetworkBehaviour
     [Networked] private NetworkBool ActionAnimationLocked { get; set; }
     [Networked] private byte ActionLockType { get; set; }
     [Networked] private NetworkBool ComboInputWindowOpen { get; set; }
+    [Networked] private int ControlLockMask { get; set; }
 
     private NetworkCharacterController _networkCharacterController;
     private PlayerStats _playerStats;
@@ -146,6 +159,7 @@ public class NetworkPlayerController : NetworkBehaviour
     private bool _localActionAnimationLocked;
     private byte _localActionLockType;
     private bool _localComboInputWindowOpen;
+    private int _localControlLockMask;
     // buffer는 아직 입력창이 열리기 전의 짧은 선입력, queue는 다음 공격으로 확정된 선입력이다.
     private bool _bufferedComboAttack;
     private int _bufferedComboActionId;
@@ -262,11 +276,18 @@ public class NetworkPlayerController : NetworkBehaviour
             ActionAnimationLocked = false;
             ActionLockType = (byte)PlayerActionLockType.None;
             ComboInputWindowOpen = false;
+            ControlLockMask = 0;
         }
     }
 
     public override void FixedUpdateNetwork()
     {
+        if (HasControlLock(PlayerControlLockFlags.Movement))
+        {
+            StopForControlLock();
+            return;
+        }
+
         // HP가 0이 되면 전투 입력은 막고 느린 크롤링 이동만 허용한다.
         if (_playerStats != null && _playerStats.IsDead)
         {
@@ -312,7 +333,9 @@ public class NetworkPlayerController : NetworkBehaviour
         bool hasActionInput = rawAttackPressed || rawParryPressed || rawJumpPressed;
         // Fusion 입력은 누르고 있는 동안 여러 틱에서 반복 전달될 수 있다.
         // actionId를 한 번만 소비해서 "한 번 누른 입력"이 공격/점프/패링을 중복 실행하지 않게 한다.
-        bool canUseActionInput = hasActionInput && TryConsumeInputAction(data.actionId);
+        bool canUseActionInput = hasActionInput &&
+                                 !HasControlLock(PlayerControlLockFlags.Action) &&
+                                 TryConsumeInputAction(data.actionId);
         bool jumpPressed = canUseActionInput && rawJumpPressed;
         bool attackPressed = canUseActionInput && !rawJumpPressed && rawAttackPressed;
         bool parryPressed = canUseActionInput && !rawJumpPressed && !rawAttackPressed && rawParryPressed;
@@ -450,6 +473,49 @@ public class NetworkPlayerController : NetworkBehaviour
         {
             ShiftHoldTime = 0f;
         }
+    }
+
+    public bool HasControlLock(PlayerControlLockFlags flags)
+    {
+        int mask = ControlLockMask | _localControlLockMask;
+        return ((PlayerControlLockFlags)mask & flags) != PlayerControlLockFlags.None;
+    }
+
+    public void SetControlLock(PlayerControlLockFlags flags, bool isLocked)
+    {
+        int flagMask = (int)flags;
+        _localControlLockMask = isLocked
+            ? _localControlLockMask | flagMask
+            : _localControlLockMask & ~flagMask;
+
+        if (Object == null)
+        {
+            return;
+        }
+
+        if (HasStateAuthority)
+        {
+            ApplyControlLockMask(flagMask, isLocked);
+            return;
+        }
+
+        if (Object.HasInputAuthority)
+        {
+            RPC_SetControlLock(flagMask, isLocked);
+        }
+    }
+
+    private void ApplyControlLockMask(int flagMask, bool isLocked)
+    {
+        ControlLockMask = isLocked
+            ? ControlLockMask | flagMask
+            : ControlLockMask & ~flagMask;
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    private void RPC_SetControlLock(int flagMask, NetworkBool isLocked)
+    {
+        ApplyControlLockMask(flagMask, isLocked);
     }
 
     public override void Render()
@@ -1355,6 +1421,17 @@ public class NetworkPlayerController : NetworkBehaviour
         velocity.x = 0f;
         velocity.z = 0f;
         _networkCharacterController.Velocity = velocity;
+    }
+
+    private void StopForControlLock()
+    {
+        // 이동 잠금 중에는 입력이 들어와도 서버 시뮬레이션에서 이동과 달리기 상태를 즉시 멈춘다.
+        ClearComboRequests();
+        StopHorizontalVelocity();
+        ApplyMovement(Vector3.zero, walkSpeed, Vector3.zero);
+        UpdateMovementState(false, false, LockMoveIdle);
+        WasShiftHeld = false;
+        ShiftHoldTime = 0f;
     }
 
     private void RotateTowards(Vector3 direction, float rotateSpeed)
