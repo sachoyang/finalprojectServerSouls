@@ -34,6 +34,8 @@ public struct ActiveStatusUIInfo
 
 public class NetworkBossCore : NetworkBehaviour
 {
+    public bool IsSpawnedReady { get; private set; }
+
     [Tooltip("UI 체력바에 표시될 보스의 이름")]
     [Networked, Capacity(32)] public string bossName { get; set; }
 
@@ -147,6 +149,8 @@ public class NetworkBossCore : NetworkBehaviour
 
     public override void Spawned()
     {
+        IsSpawnedReady = true;
+
         _visual = GetComponentInChildren<IBossVisual>();
 
         _wakeUpAnimHash = Animator.StringToHash(wakeUpAnimName);

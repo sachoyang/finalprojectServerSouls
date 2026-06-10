@@ -71,7 +71,7 @@ public class HUDManager : MonoBehaviour
                 playerStatusController = localPlayerController.GetComponent<PlayerStatusController>();
         }
 
-        if (boss == null || boss.CurrentState == BossState.Die)
+        if (boss == null || !boss.IsSpawnedReady || boss.CurrentState == BossState.Die)
             boss = FindActiveBoss();
     }
 
@@ -82,6 +82,7 @@ public class HUDManager : MonoBehaviour
             abilityInventory != null &&
             playerStatusController != null &&
             boss != null &&
+            boss.IsSpawnedReady &&
             boss.CurrentState != BossState.Die)
         {
             return;
@@ -112,7 +113,7 @@ public class HUDManager : MonoBehaviour
 
     private void UpdatePlayerHUD()
     {
-        if (playerHUDView == null || playerStats == null)
+        if (playerHUDView == null || playerStats == null || !playerStats.IsSpawnedReady)
             return;
 
         PlayerHUDData hudData = playerStats.GetHUDData();
@@ -130,10 +131,10 @@ public class HUDManager : MonoBehaviour
         if (bossHUDView == null)
             return;
 
-        if (boss == null || boss.CurrentState == BossState.Die)
+        if (boss == null || !boss.IsSpawnedReady || boss.CurrentState == BossState.Die)
             boss = FindActiveBoss();
 
-        if (boss == null)
+        if (boss == null || !boss.IsSpawnedReady)
         {
             bossHUDView.ClearStatuses();
             bossHUDView.SetVisible(false);
@@ -164,6 +165,9 @@ public class HUDManager : MonoBehaviour
                 continue;
 
             if (!targetBoss.gameObject.activeInHierarchy)
+                continue;
+
+            if (!targetBoss.IsSpawnedReady)
                 continue;
 
             if (targetBoss.CurrentState == BossState.Die)
@@ -244,7 +248,7 @@ public class HUDManager : MonoBehaviour
                 continue;
 
             PlayerStats stats = player.GetComponent<PlayerStats>();
-            if (stats == null)
+            if (stats == null || !stats.IsSpawnedReady)
                 continue;
 
             PlayerHUDData hudData = stats.GetHUDData();

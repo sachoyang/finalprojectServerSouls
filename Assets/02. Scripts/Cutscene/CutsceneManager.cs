@@ -99,7 +99,7 @@ public class CutsceneManager : MonoBehaviour
         }
 
         ResolveBossReferences();
-        if (boss != null && boss.CurrentState == BossState.WakeUp)
+        if (boss != null && boss.IsSpawnedReady && boss.CurrentState == BossState.WakeUp)
         {
             PlayBossWakeUpCutscene();
         }
@@ -208,7 +208,7 @@ public class CutsceneManager : MonoBehaviour
             }
         }
 
-        if (boss == null || boss.CurrentState != BossState.WakeUp)
+        if (boss == null || !boss.IsSpawnedReady || boss.CurrentState != BossState.WakeUp)
         {
             PlayAnimatorCommand(bossAnimator, bossAnimationMode, bossWakeUpAnimationName);
         }

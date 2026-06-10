@@ -5,6 +5,8 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class PlayerStats : NetworkBehaviour
 {
+    public bool IsSpawnedReady { get; private set; }
+
     public readonly struct SessionSnapshot
     {
         public readonly float CurrentHealth;
@@ -183,6 +185,8 @@ public class PlayerStats : NetworkBehaviour
 
     public override void Spawned()
     {
+        IsSpawnedReady = true;
+
         _changeDetector = GetChangeDetector(ChangeDetector.Source.SimulationState);
         _statusController = GetComponent<PlayerStatusController>();
 
