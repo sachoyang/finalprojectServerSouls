@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<title>ServerSouls - Unity 아키텍처 리포트 (한국어)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+<style>
+  :root {
+    --bg-0: #0d1117;
+    --bg-1: #161b22;
+    --bg-2: #1f2630;
+    --border: #2d333b;
+    --fg-0: #e6edf3;
+    --fg-1: #9da7b3;
+    --fg-2: #6e7681;
+    --accent: #58a6ff;
+    --warn: #f0883e;
+    --danger: #ff6b6b;
+    --ok: #3fb950;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg-0);
+    color: var(--fg-0);
+    font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    line-height: 1.65;
+  }
+  .wrap { max-width: 1400px; margin: 0 auto; padding: 32px 24px 80px; }
+  header.hero {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 24px; margin-bottom: 32px;
+  }
+  header.hero h1 {
+    margin: 0 0 6px 0; font-size: 28px; letter-spacing: -0.01em;
+  }
+  header.hero p.subtitle {
+    margin: 0; color: var(--fg-1); font-size: 14px;
+  }
+  .pill {
+    display: inline-block; padding: 2px 8px; font-size: 11px;
+    border-radius: 999px; background: var(--bg-2); color: var(--fg-1);
+    border: 1px solid var(--border); margin-right: 6px;
+  }
+  h2 {
+    font-size: 19px; margin: 40px 0 12px;
+    border-left: 3px solid var(--accent); padding-left: 10px;
+  }
+  h3 { font-size: 15px; margin: 18px 0 8px; color: var(--fg-0); }
+  p, li { color: var(--fg-1); font-size: 14px; }
+  code, .mono {
+    font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    background: var(--bg-2); color: var(--fg-0);
+    padding: 1px 6px; border-radius: 4px; font-size: 12.5px;
+  }
+  .grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px; margin: 16px 0 8px;
+  }
+  .card {
+    background: var(--bg-1); border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px 16px;
+  }
+  .stat .num {
+    font-size: 26px; font-weight: 600; color: var(--fg-0); line-height: 1;
+  }
+  .stat .label {
+    font-size: 11.5px; color: var(--fg-2);
+    letter-spacing: 0.04em; margin-top: 6px;
+  }
+  .callout {
+    border-left: 3px solid var(--warn);
+    background: rgba(240, 136, 62, 0.07);
+    padding: 12px 16px; border-radius: 6px;
+    margin: 10px 0;
+  }
+  .callout.danger { border-left-color: var(--danger); background: rgba(255, 107, 107, 0.07); }
+  .callout.ok     { border-left-color: var(--ok);     background: rgba(63, 185, 80, 0.07); }
+  .callout.info   { border-left-color: var(--accent); background: rgba(88, 166, 255, 0.07); }
+  .callout strong { color: var(--fg-0); }
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 8px 14px; margin: 8px 0 18px;
+  }
+  .legend .swatch {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12.5px; color: var(--fg-1);
+  }
+  .swatch .dot {
+    display: inline-block; width: 12px; height: 12px; border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.12);
+  }
+  .toolbar {
+    display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 12px;
+  }
+  .toolbar button {
+    background: var(--bg-2); color: var(--fg-0); border: 1px solid var(--border);
+    padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12.5px;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .toolbar button:hover { background: #2d3540; border-color: var(--accent); }
+  .toolbar button.active { background: var(--accent); border-color: var(--accent); color: #0d1117; font-weight: 600; }
+  #graph {
+    width: 100%; height: 820px;
+    background: #0a0d12;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  table.cat {
+    width: 100%; border-collapse: collapse; font-size: 13.5px;
+    background: var(--bg-1); border: 1px solid var(--border); border-radius: 8px;
+    overflow: hidden;
+  }
+  table.cat th, table.cat td {
+    padding: 10px 14px; text-align: left;
+    border-bottom: 1px solid var(--border);
+    color: var(--fg-1); vertical-align: top;
+  }
+  table.cat th { background: var(--bg-2); color: var(--fg-0); font-weight: 600; font-size: 12.5px; letter-spacing: 0.04em; }
+  table.cat tr:last-child td { border-bottom: none; }
+  .tag {
+    display: inline-block; padding: 1px 8px; border-radius: 999px;
+    font-size: 11px; font-weight: 600;
+  }
+  footer {
+    margin-top: 48px; padding-top: 18px;
+    border-top: 1px solid var(--border);
+    font-size: 12px; color: var(--fg-2); text-align: center;
+  }
+  details { background: var(--bg-1); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; margin: 8px 0; }
+  details summary { cursor: pointer; color: var(--fg-0); font-size: 14px; }
+  details[open] summary { margin-bottom: 8px; }
+
+  /* 네트워크 흐름 다이어그램 */
+  .flow {
+    background: var(--bg-1); border: 1px solid var(--border);
+    border-radius: 10px; padding: 18px;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 12.5px;
+    overflow-x: auto;
+    white-space: pre;
+    line-height: 1.6;
+    color: var(--fg-0);
+  }
+  .flow .lbl { color: #79c0ff; }
+  .flow .arr { color: var(--accent); }
+  .flow .note { color: var(--fg-2); }
+  .flow .net { color: #ffd166; }
+  .flow .db { color: #4493f8; }
+  .flow .ph { color: #b392f0; }
+  .endpoint {
+    display: grid; grid-template-columns: 200px 90px 1fr;
+    gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .endpoint:last-child { border-bottom: none; }
+  .endpoint .url { font-family: "JetBrains Mono", monospace; color: #79c0ff; }
+  .endpoint .method { font-family: monospace; font-weight: 600; }
+  .method.POST { color: #ffd166; }
+  .method.GET  { color: #56d4dd; }
+  .endpoint .desc { color: var(--fg-1); }
+  .endpoints-table {
+    background: var(--bg-1); border: 1px solid var(--border);
+    border-radius: 8px; overflow: hidden;
+  }
+  .endpoints-header {
+    display: grid; grid-template-columns: 200px 90px 1fr;
+    gap: 8px; padding: 10px 12px; background: var(--bg-2);
+    font-size: 12px; font-weight: 600; color: var(--fg-0);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <span class="pill">Unity</span>
+  <span class="pill">Photon Fusion</span>
+  <span class="pill">C# / PHP</span>
+  <span class="pill">생성일 2026-06-10</span>
+  <h1>ServerSouls - Unity 아키텍처 리포트</h1>
+  <p class="subtitle"><strong>약 94개의 커스텀 <code>.cs</code> 스크립트</strong>(<code>Assets/02. Scripts</code> 기준)에 대한 정적 분석 결과입니다. 외부 플러그인은 자동 제외했으며, 클래스 시그니처/상속/필드/컴포넌트 룩업/싱글톤 접근을 기준으로 의존성을 추출했습니다.</p>
+</header>
+
+<section>
+<h2>1. 전체 아키텍처 개요</h2>
+<p>
+  <strong>ServerSouls</strong>는 3인 협동 보스러시 게임으로, <strong>Unity + Photon Fusion</strong>(호스트 권한 모델) 위에 자체 PHP 백엔드를 결합한 구조입니다.
+  코드베이스는 기능 도메인(Player / Boss / HUD / Reward / Stage / Options / DB / Server)으로 명확히 분리되어 있고,
+  <strong>Manager 싱글톤 패턴</strong>이 횡단 관심사(네트워크, 사운드, 설정, 진행도, 컷씬, 카메라, 능력치, 백엔드, 기믹)를 9곳에서 조율합니다.
+  게임 데이터는 <strong>ScriptableObject</strong>로 외부화되어 있으며(<code>PlayerAbilityModule</code>, <code>BossPatternModule</code>, <code>BossEncounterData</code>, <code>StatusEffectData</code>, <code>SettingData</code>, <code>AbilityAssetDatabase</code>), 이것이 프로젝트의 가장 강력한 디커플링 메커니즘입니다.
+</p>
+<p>
+  아키텍처의 압력 지점은 두 개의 <strong>"갓 NetworkBehaviour"</strong>에 집중되어 있습니다 -
+  <code>NetworkPlayerController</code>(1300+ 라인, 7개 이상의 동일 GameObject 컴포넌트 참조)와
+  <code>NetworkBossCore</code>(650+ 라인, 상태/패턴/상태이상 DB/비주얼 위임을 모두 보유).
+  HUD/Reward 계층은 매 프레임 <code>FindObjectsOfType&lt;NetworkPlayerController&gt;</code>를 호출해 플레이어를 재발견하고 있어, 중앙 플레이어 레지스트리가 없음을 보여줍니다.
+</p>
+</section>
+
+<section>
+<h2>2. 한눈에 보는 통계</h2>
+<div class="grid">
+  <div class="card stat"><div class="num">94</div><div class="label">커스텀 .cs 파일</div></div>
+  <div class="card stat"><div class="num">100+</div><div class="label">타입(클래스/구조체/열거형)</div></div>
+  <div class="card stat"><div class="num">5</div><div class="label">아키텍처 레이어</div></div>
+  <div class="card stat"><div class="num">9</div><div class="label">싱글톤</div></div>
+  <div class="card stat"><div class="num">17</div><div class="label">NetworkBehaviour</div></div>
+  <div class="card stat"><div class="num">6</div><div class="label">ScriptableObject 데이터 타입</div></div>
+  <div class="card stat"><div class="num">5</div><div class="label">PHP REST 엔드포인트</div></div>
+  <div class="card stat"><div class="num">2</div><div class="label">갓 오브젝트 핫스팟</div></div>
+</div>
+</section>
+
+<section>
+<h2>3. 네트워크 &amp; DB 통합 분석</h2>
+
+<p>
+  ServerSouls는 두 개의 외부 시스템과 통신합니다:
+  <strong>(1) Photon Fusion Cloud</strong>로 실시간 게임플레이를 동기화하고,
+  <strong>(2) 자체 호스팅 PHP 백엔드(MySQL/MariaDB로 추정)</strong>로 인증/스킬 잠금해제 데이터를 영속화합니다.
+  두 통신은 완전히 분리되어 있으며 - 게임 시작 전 단계에서 PHP로 인증 + 스킬 DB를 모두 로드한 후, 게임 진입 후엔 Photon만 사용합니다.
+</p>
+
+<h3>3-1. PHP REST API 백엔드</h3>
+<p>
+  <code>BackendManager</code>(싱글톤)가 모든 HTTP 통신을 담당합니다. <code>UnityWebRequest</code> + <code>WWWForm</code>(POST)으로 PHP 서버에 요청을 보내고,
+  응답은 <code>JsonUtility.FromJson</code>으로 파싱합니다.
+  <strong>주목할 특징</strong>:
+</p>
+<ul>
+  <li><strong>LAN/WAN 자동 탐지</strong> - 게임 시작 시 <code>log_viewer.php</code>를 1초 타임아웃으로 핑하여,
+      같은 공유기 내부에 있으면 LAN IP(<code>192.168.0.5</code>)를, 아니면 공인 IP(<code>1.233.102.137</code>)를 사용합니다.
+      베이스 URL은 모두 <code>http://{IP}:8080/soulrush_api/</code> 형식입니다.</li>
+  <li><strong>세션 토큰 + 하트비트</strong> - 로그인 성공 시 PHP가 <code>session_token</code>을 발급하고,
+      클라이언트는 15초마다 <code>check_session.php</code>를 호출해 "invalid" 응답을 받으면 중복접속 처리로 강제 로그아웃됩니다.
+      이 이벤트는 <code>OnSessionExpired</code>로 발행되어 <code>NetworkManager</code>가 구독, Photon 런너를 셧다운한 뒤 로그인 씬으로 강제 이동시킵니다.</li>
+  <li><strong>64비트 스킬 비트마스크</strong> - 유저가 잠금해제한 스킬은 <code>BIGINT</code> 한 컬럼(<code>unlocked_skills</code>)에
+      비트마스크로 저장됩니다. 클라이언트는 <code>AbilityManager.GetUnlockedAbilitiesList(long userBitmask)</code>로 비트 AND 연산하여 보유 스킬을 복원합니다.
+      최대 64개 스킬까지 확장 가능한 설계입니다.</li>
+  <li><strong>라이브 데이터 패치</strong> - <code>get_abilities.php</code>가 반환한 최신 데미지/쿨타임 값으로
+      Resources에서 로드한 <code>PlayerAbilityModule</code>(ScriptableObject)을 <code>InitializeFromDB</code>로 덮어씁니다.
+      <em>"클라이언트 패치 없이 밸런스 조정 가능"</em>한 핵심 메커니즘입니다.</li>
+</ul>
+
+<h3>3-2. PHP 엔드포인트 카탈로그</h3>
+<div class="endpoints-table">
+  <div class="endpoints-header"><div>엔드포인트</div><div>메서드</div><div>역할</div></div>
+  <div class="endpoint"><div class="url">register.php</div><div class="method POST">POST</div><div class="desc">신규 계정 생성 (login_id, password, nickname 전송)</div></div>
+  <div class="endpoint"><div class="url">login.php</div><div class="method POST">POST</div><div class="desc">로그인 인증 - 성공 시 nickname, unlocked_skills(BIGINT), session_token 반환</div></div>
+  <div class="endpoint"><div class="url">check_session.php</div><div class="method POST">POST</div><div class="desc">하트비트 - 15초마다 호출, 응답에 "invalid"가 있으면 강제 로그아웃</div></div>
+  <div class="endpoint"><div class="url">update_skills.php</div><div class="method POST">POST</div><div class="desc">스킬 비트마스크 저장 (session_token으로 인증)</div></div>
+  <div class="endpoint"><div class="url">get_abilities.php</div><div class="method GET">GET</div><div class="desc">전체 스킬 카탈로그 다운로드 - bit_index, damage_multiplier, cooldown 등</div></div>
+  <div class="endpoint"><div class="url">log_viewer.php</div><div class="method GET">GET</div><div class="desc">LAN 핑 테스트 전용(1초 타임아웃)</div></div>
+</div>
+
+<h3>3-3. Photon Fusion 실시간 네트워크 흐름</h3>
+<p>
+  Photon Fusion은 <strong>호스트 권한(Host Authority)</strong> 모델을 사용합니다.
+  <code>NetworkManager</code>가 <code>NetworkRunner</code>를 생성/관리하고,
+  <code>GameMode</code>는 솔로 플레이(<code>Host</code>), 자동 매칭(<code>AutoHostOrClient</code>), 코드 입장(<code>AutoHostOrClient</code>+세션명) 세 가지로 분기합니다.
+  방장 클라이언트가 모든 상태 권한(StateAuthority)을 가지며, 나머지는 입력만 제출합니다(<code>NetworkInputProvider</code>+<code>NetworkInputData</code>).
+</p>
+<ul>
+  <li><strong>로비</strong> - <code>LobbyServerManager</code>가 슬롯 3개(<code>Slot0_Owner</code>~<code>Slot2_Owner</code>) + 레디 상태를 <code>[Networked]</code> 변수로 동기화. <code>RPC_ToggleReady</code>로 레디 토글, <code>OnClickBattleButton</code>으로 방을 잠그고(<code>IsVisible=false</code>, <code>IsOpen=false</code>) 보스 씬 진입.</li>
+  <li><strong>보스 아레나</strong> - <code>BossArenaManager</code>가 <code>INetworkRunnerCallbacks</code>로 입장한 플레이어를 스폰. 이전 씬의 플레이어 오브젝트가 살아 있으면 위치만 이동시켜 세션 상태(<code>PlayerSessionStore</code> 스냅샷, <code>PlayerAbilityInventory</code>)를 복원.</li>
+  <li><strong>층수 증가</strong> - <code>GameProgressionManager.CurrentLevel</code>은 호스트가 권한을 가지고, <code>BossArenaManager.NetworkedStageLevel</code>로 클라이언트에 브로드캐스트. 보스의 HP/데미지가 <code>(level-1) × 0.2~0.1</code>씩 증가.</li>
+  <li><strong>씬 전환</strong> - <code>NextLevelPortal.OnTriggerEnter</code>가 호스트 권한일 때 <code>GameProgressionManager.GoToNextLevel(runner)</code>을 호출. 모든 플레이어 스탯이 <code>PlayerSessionStore</code>에 스냅샷되어 새 씬에서 복원됨.</li>
+</ul>
+
+<h3>3-4. 통신 흐름 시퀀스 다이어그램</h3>
+<div class="flow">
+<span class="lbl">[게임 시작]</span>
+  Unity Client
+    <span class="arr">└─▶</span> <span class="db">BackendManager.AutoDetectServerRoutine()</span>
+          <span class="arr">└─▶</span> GET log_viewer.php (1s timeout)  → LAN/WAN 자동 결정
+          BASE_URL = http://{IP}:8080/soulrush_api/
+
+<span class="lbl">[로그인]</span>
+  LoginSceneController
+    <span class="arr">└─▶</span> <span class="db">BackendManager.LoginUser(id, pw)</span>
+          <span class="arr">└─▶</span> POST login.php
+                 <span class="note">⇐ AuthResponse { nickname, unlocked_skills (BIGINT), session_token }</span>
+          캐싱: CurrentLoginID / CurrentNickname / CurrentSkillsBitmask / CurrentSessionToken
+          <span class="arr">└─▶</span> StartCoroutine(HeartbeatRoutine)  <span class="note">// 15초 간격 무한 루프</span>
+    <span class="arr">└─▶</span> <span class="db">AbilityManager.FetchAbilities()</span>
+          <span class="arr">└─▶</span> GET get_abilities.php
+                 <span class="note">⇐ AbilityDBResponse { data: [{ bit_index, damage_multiplier, ... }] }</span>
+          Resources.Load&lt;PlayerAbilityModule&gt;("GeneratedAbilities/{ability_id}")
+          → bakedModule.InitializeFromDB(dbData)  <span class="note">// 라이브 밸런스 패치</span>
+
+<span class="lbl">[하트비트 (15초 주기)]</span>
+  BackendManager.HeartbeatRoutine
+    <span class="arr">└─▶</span> POST check_session.php { login_id, session_token }
+          만약 응답에 "invalid" 포함:
+            <span class="arr">└─▶</span> OnSessionExpired 이벤트 발행
+                  <span class="arr">└─▶</span> NetworkManager.HandleSessionExpired
+                        <span class="arr">├─▶</span> <span class="ph">Runner.Shutdown()</span>
+                        <span class="arr">└─▶</span> SceneManager.LoadScene("scLogin")
+
+<span class="lbl">[게임플레이 (Photon Fusion)]</span>
+  TitleManager.OnClickAutoMatch
+    <span class="arr">└─▶</span> <span class="ph">NetworkManager.StartAutoMatch()</span>
+          <span class="arr">└─▶</span> Runner.StartGame(GameMode.AutoHostOrClient)
+                Runner.LoadScene("scLobbyMain")  <span class="note">// 호스트만</span>
+  LobbyServerManager  <span class="note">// NetworkBehaviour, ChangeDetector</span>
+    [Networked] Slot0/1/2_Owner, Slot0/1/2_Ready
+    OnClickBattleButton (호스트만)
+      <span class="arr">└─▶</span> SessionInfo.IsVisible = false; IsOpen = false  <span class="note">// 방 잠금</span>
+      <span class="arr">└─▶</span> GameProgressionManager.StartFirstLevel(Runner)
+            <span class="arr">└─▶</span> Runner.LoadScene("scBossArena_L1")
+  BossArenaManager.Spawned (호스트)
+    <span class="arr">├─▶</span> SpawnPlayer × N  <span class="note">// 이전 씬 오브젝트는 위치만 이동</span>
+    <span class="arr">└─▶</span> Runner.Spawn(bossPrefab) + 층수 보정(HP/Damage 배율)
+
+<span class="lbl">[스킬 데이터 저장]</span>
+  (보스 보상 획득 시점)
+    <span class="arr">└─▶</span> <span class="db">BackendManager.UpdateSkills(newBitmask)</span>
+          <span class="arr">└─▶</span> POST update_skills.php { login_id, unlocked_skills, session_token }
+                 <span class="note">⇐ SkillResponse { status, updated_skills }</span>
+</div>
+
+<div class="callout info" style="margin-top:18px">
+  <strong>관찰</strong> - PHP 백엔드와 Photon은 서로를 직접 모릅니다. 둘 사이의 유일한 연결점은
+  <code>NetworkManager → BackendManager.OnSessionExpired</code> 이벤트 구독 한 줄로, 백엔드 세션이 만료되면 Photon 런너를 강제 종료하는 단방향 흐름입니다.
+  덕분에 게임플레이 도중에는 PHP 의존성이 거의 없고(스킬 저장 호출 정도), 인터넷이 잠시 끊겨도 하트비트 통신 실패는 무시됩니다.
+</div>
+</section>
+
+<section>
+<h2>4. 주요 아키텍처 발견사항</h2>
+
+<div class="callout danger">
+  <strong>핫스팟 - <code>NetworkPlayerController</code> (갓 오브젝트).</strong>
+  약 1300줄 규모. 동일 GameObject의 <em>7개</em> 컴포넌트
+  (<code>PlayerStats</code>, <code>PlayerStatusController</code>, <code>PlayerAbilityInventory</code>,
+  <code>PlayerAbilityRewardController</code>, <code>LockOnTargetSelector</code>,
+  <code>NetworkCharacterController</code>, <code>Animator</code>)를 캐싱하고,
+  외부로는 <code>CameraManager</code>, <code>BossHitbox</code>, <code>NetworkBossCore</code>, <code>GimmickAltar</code>까지 직접 접근합니다.
+  <strong>개선안:</strong> Input / Movement / Combat / NetworkSync 4개 partial 또는 NetworkBehaviour로 분할하고,
+  InputContext 구조체를 이벤트로 브로드캐스트하면 됩니다.
+</div>
+
+<div class="callout danger">
+  <strong>핫스팟 - <code>NetworkBossCore</code> (갓 오브젝트).</strong>
+  약 650줄. 페이즈 로직, 패턴 선택, 상태이상 데이터베이스, 데미지 적용, 비주얼 인터페이스(<code>IBossVisual</code>), 기믹 라이프사이클을 모두 보유.
+  파생 클래스는 <code>DragonBoss</code> 단 하나뿐이라, 추상화 자체가 전략 패턴의 역할을 하고 있는지 재검토가 필요합니다.
+</div>
+
+<div class="callout">
+  <strong>싱글톤 난립.</strong>
+  9개 싱글톤 중 <em>2개만</em> 제네릭 <code>MonoSingleton&lt;T&gt;</code>를 상속하고, 나머지 7개는 같은 패턴을 수동으로 다시 구현합니다.
+  <code>NetworkManager</code>, <code>BackendManager</code>, <code>GameSettingsManager</code>,
+  <code>GameProgressionManager</code>, <code>CutsceneManager</code>, <code>ScenePrefabManager</code>,
+  <code>CameraManager</code>, <code>CameraPointManager</code>, <code>DragonArenaGimmick</code>을 <code>MonoSingleton&lt;T&gt;</code> 기반으로 통일하는 것을 권장합니다.
+</div>
+
+<div class="callout">
+  <strong><code>FindObjectsOfType</code> 남용 - 발견 메커니즘 부재.</strong>
+  <code>HUDManager</code>(3회), <code>RewardManager</code>(4회), <code>ReviveUIManager</code>, <code>InventoryPanelController</code>,
+  <code>CutsceneManager</code>, <code>CameraManager</code>, <code>DragonBossOrigin</code>에서 매번 O(n) 씬 스캔이 발생합니다.
+  <code>NetworkPlayerController.Spawned()</code> / <code>Despawned()</code>에서 갱신되는 <em>플레이어 정적 레지스트리</em>를 도입하면 위 호출이 모두 제거됩니다.
+</div>
+
+<div class="callout">
+  <strong>네트워크 ↔ 백엔드 교차 의존성.</strong>
+  <code>NetworkManager</code>가 <code>BackendManager.OnSessionExpired</code>를 직접 구독해 Photon 런너를 셧다운합니다.
+  현재는 한 줄짜리 약한 결합이지만, <code>ISessionGuard</code> 같은 인터페이스로 추상화해두면 백엔드 없이 네트워크 레이어만 테스트할 수 있게 됩니다.
+</div>
+
+<div class="callout">
+  <strong>레거시 중복 코드 의심.</strong>
+  <code>DragonBossOrigin</code>과 <code>DragonVisualOrigin</code>은 활성 경로(<code>DragonBoss</code>/<code>DragonVisual</code>)와 필드 구성이 거의 동일합니다.
+  <code>BossArenaManager</code>가 스폰하는 프리팹이 <code>NetworkBossCore</code> 기반이므로,
+  <code>*Origin</code> 클래스가 더 이상 어떤 프리팹에도 연결되지 않았는지 확인 후 제거를 검토하세요.
+</div>
+
+<div class="callout ok">
+  <strong>유지해야 할 좋은 패턴.</strong>
+  ScriptableObject 기반 데이터 주도 설계(능력/패턴/조우/상태이상/설정),
+  <code>NetworkBossCore</code> ↔ <code>IBossVisual</code>의 상태/비주얼 분리,
+  이벤트 기반 보상 흐름(<code>BossRewardOffered</code>),
+  씬 간 스냅샷 저장(<code>PlayerSessionStore</code>),
+  HUD의 View/DTO 분리(<code>PlayerHUDView</code> + <code>PlayerHUDData</code>),
+  PHP 라이브 패치(<code>InitializeFromDB</code>로 데미지/쿨타임 핫리로드).
+</div>
+</section>
+
+<section>
+<h2>5. 발견된 디자인 패턴</h2>
+<table class="cat">
+  <thead><tr><th style="width:30%">패턴</th><th>구현 위치</th></tr></thead>
+  <tbody>
+    <tr><td><strong>제네릭 싱글톤</strong></td><td><code>MonoSingleton&lt;T&gt;</code> → <code>SoundManager</code>, <code>AbilityManager</code></td></tr>
+    <tr><td><strong>수동 싱글톤</strong></td><td><code>NetworkManager</code>, <code>BackendManager</code>, <code>GameSettingsManager</code>, <code>GameProgressionManager</code>, <code>CutsceneManager</code>, <code>ScenePrefabManager</code>, <code>CameraManager</code>, <code>CameraPointManager</code>, <code>DragonArenaGimmick</code></td></tr>
+    <tr><td><strong>State Machine</strong></td><td><code>PlayerActionStateBehaviour</code>, <code>PlaySoundOnAnimState</code> (Animator <code>StateMachineBehaviour</code>)</td></tr>
+    <tr><td><strong>Strategy / 데이터 주도</strong></td><td><code>PlayerAbilityModule</code>(SO), <code>BossPatternModule</code> + <code>BossActionModule</code>, <code>BossEncounterData</code>, <code>StatusEffectData</code></td></tr>
+    <tr><td><strong>Observer (C# 이벤트)</strong></td><td><code>PlayerAbilityInventory.RewardOptionsGenerated</code>, <code>PlayerAbilityRewardController.BossRewardOffered</code>, <code>BackendManager.OnSessionExpired</code>, <code>PlayerStats.ReviveStateChanged</code></td></tr>
+    <tr><td><strong>인터페이스 다형성</strong></td><td><code>IBossVisual</code> ← <code>DragonVisual</code></td></tr>
+    <tr><td><strong>MVC-Lite (View + DTO)</strong></td><td><code>HUDManager</code> → <code>PlayerHUDView</code>/<code>PlayerHUDData</code>, <code>SkillSlotHUDView</code>/<code>SkillSlotUIData</code>, <code>PartyMemberHUDView</code>/<code>PartyMemberUIData</code></td></tr>
+    <tr><td><strong>네트워크 RPC / Tick</strong></td><td>Photon Fusion - <code>[Networked]</code> 프로퍼티, <code>[Rpc]</code> 메서드, <code>FixedUpdateNetwork</code>, <code>ChangeDetector</code></td></tr>
+    <tr><td><strong>세션 스냅샷</strong></td><td><code>PlayerSessionStore</code>(static)가 씬 전환 시 <code>PlayerStats.SessionSnapshot</code>을 보관</td></tr>
+    <tr><td><strong>비트마스크 권한</strong></td><td>스킬 잠금해제를 <code>long</code>(64bit)로 인코딩, DB에 <code>BIGINT</code> 한 컬럼으로 저장</td></tr>
+  </tbody>
+</table>
+</section>
+
+<section>
+<h2>6. 계층형 의존성 그래프</h2>
+<p>
+  노드는 <strong>클래스/데이터 타입</strong>이며 카테고리별 색상으로 구분됩니다.
+  레이아웃은 위에서 아래로(Up-Down) 흐르는 <strong>계층형(Hierarchical)</strong>이고, 물리 엔진은 비활성화되어 노드가 흔들리지 않습니다.
+  사소한 의존성(SoundManager 호출, 씬 페이드, 디버그/에디터 스크립트, 단순 비주얼 트리거)은 그래프 명료성을 위해 의도적으로 제외했습니다.
+</p>
+
+<div class="legend" id="legend"></div>
+
+<div class="toolbar">
+  <button data-filter="all" class="active">전체 표시</button>
+  <button data-filter="External">외부 시스템</button>
+  <button data-filter="Singleton">싱글톤 매니저</button>
+  <button data-filter="SceneCtrl">씬 컨트롤러</button>
+  <button data-filter="Player">플레이어 계층</button>
+  <button data-filter="Boss">보스 계층</button>
+  <button data-filter="HUD">UI/HUD</button>
+  <button data-filter="Data">데이터(SO)</button>
+  <button id="btn-direction">방향 전환 (UD↔LR)</button>
+  <button id="btn-fit">화면 맞춤</button>
+</div>
+
+<div id="graph"></div>
+<p style="font-size:12px;color:var(--fg-2);margin-top:8px">
+  ※ 화살표 방향: <em>A → B</em> 는 "A가 B에 의존한다"는 의미입니다. 노드를 클릭하면 연결된 클래스만 강조됩니다.
+</p>
+</section>
+
+<section>
+<h2>7. 카테고리별 클래스 인벤토리</h2>
+<details open>
+  <summary>전체 카테고리 분류 (클릭하여 펼치기)</summary>
+  <table class="cat">
+    <thead><tr><th>카테고리</th><th>주요 클래스</th><th>역할</th></tr></thead>
+    <tbody>
+      <tr><td><span class="tag" style="background:#ff6b6b;color:#1a0000">외부 시스템</span></td>
+          <td>Photon Cloud, PHP REST API (MySQL/MariaDB)</td>
+          <td>실시간 동기화(Photon) + 인증/스킬 영속화(PHP)</td></tr>
+      <tr><td><span class="tag" style="background:#c9a227;color:#1a1300">싱글톤/시스템</span></td>
+          <td><code>NetworkManager</code>, <code>BackendManager</code>, <code>AbilityManager</code>, <code>GameProgressionManager</code>, <code>SoundManager</code>, <code>GameSettingsManager</code>, <code>CutsceneManager</code>, <code>CameraManager</code>, <code>ScenePrefabManager</code>, <code>CameraPointManager</code>, <code>DragonArenaGimmick</code>, <code>MonoSingleton&lt;T&gt;</code></td>
+          <td>씬 간 유지되는 횡단 관심사. 9개 싱글톤 + 기반 클래스.</td></tr>
+      <tr><td><span class="tag" style="background:#ff9f43;color:#1a0a00">씬 컨트롤러</span></td>
+          <td><code>TitleManager</code>, <code>LoginSceneController</code>, <code>IntroSceneController</code>, <code>LobbyManager</code>, <code>LobbyServerManager</code>, <code>BossArenaManager</code>, <code>MatchManager</code>, <code>SceneFadeManager</code></td>
+          <td>각 씬의 진입/이탈 및 Photon 룸 매칭, 슬롯 동기화.</td></tr>
+      <tr><td><span class="tag" style="background:#3fb950;color:#012a0f">플레이어 코어</span></td>
+          <td><code>NetworkPlayerController</code>, <code>PlayerStats</code>, <code>PlayerStatusController</code>, <code>NetworkPlayerData</code>, <code>PlayerSessionStore</code>, <code>PlayerActionStateBehaviour</code></td>
+          <td>네트워크 동기화 플레이어 - 이동/전투/상태/세션. <strong>갓 오브젝트 리스크.</strong></td></tr>
+      <tr><td><span class="tag" style="background:#79c0ff;color:#001a33">능력 시스템</span></td>
+          <td><code>PlayerAbilityController</code>, <code>PlayerAbilityInventory</code>, <code>PlayerAbilityExecutor</code>, <code>PlayerAbilityModule</code>(SO), <code>PlayerAbilityContext</code>(struct), <code>PlayerAbilitySlot</code>, <code>PlayerAbilityRewardController</code>, <code>PlayerSkillHitbox</code></td>
+          <td>SO 기반 모듈 아키텍처. <strong>가장 잘 설계된 서브시스템.</strong></td></tr>
+      <tr><td><span class="tag" style="background:#56d4dd;color:#002b2e">카메라</span></td>
+          <td><code>CameraManager</code>(싱글톤), <code>ThirdPersonCameraController</code>, <code>CameraPointManager</code>, <code>LockOnTargetSelector</code></td>
+          <td>3인칭 카메라 + 컷씬 포인트 + 락온 타겟 선택자</td></tr>
+      <tr><td><span class="tag" style="background:#b392f0;color:#1a0f33">보스 시스템</span></td>
+          <td><code>NetworkBossCore</code>, <code>DragonBoss</code>, <code>IBossVisual</code>, <code>DragonVisual</code>, <code>BossHitbox</code>, <code>BossAOEHitbox</code>, <code>BossPatternModule</code>(SO), <code>BossActionModule</code>, <code>StatusEffectData</code>(SO), <code>DragonArenaGimmick</code>, <code>GimmickAltar</code></td>
+          <td>패턴 모듈 + IBossVisual 분리는 좋음. <code>*Origin</code>은 레거시 의심.</td></tr>
+      <tr><td><span class="tag" style="background:#ff7ab6;color:#330018">HUD</span></td>
+          <td><code>HUDManager</code>, <code>PlayerHUDView</code>, <code>BossHUDView</code>, <code>SkillSlotHUDView</code>, <code>PartyMemberHUDView</code>, <code>PartyMemberSkillBarView</code>, <code>StatusIconBarView</code>, + 각종 <code>*UIData</code> DTO</td>
+          <td>View/Data 분리는 좋으나 컨트롤러가 매 프레임 씬 스캔.</td></tr>
+      <tr><td><span class="tag" style="background:#f778ba;color:#330018">인벤토리/보상 UI</span></td>
+          <td><code>InventoryPanelController</code>, <code>InventoryCardSlotView</code>, <code>InventoryTooltipView</code>, <code>RewardManager</code>, <code>RewardSelectView</code>, <code>RewardCardView</code>, <code>RewardDistortionTrigger</code>, <code>ReviveUIManager</code>, <code>ReviveScreenIndicator</code></td>
+          <td>패널 + 슬롯 + 툴팁 컴포지션. <code>RewardManager</code>가 5개 싱글톤을 호출하는 가장 무거운 소비자.</td></tr>
+      <tr><td><span class="tag" style="background:#a371f7;color:#1a0033">옵션</span></td>
+          <td><code>SettingData</code>(SO), <code>SettingUIController</code>, <code>SettingItemUI</code>, <code>SettingSliderUI</code></td>
+          <td>탭 기반 설정 UI - <code>GameSettingsManager</code>에 바인딩됨</td></tr>
+      <tr><td><span class="tag" style="background:#d29922;color:#221700">스테이지</span></td>
+          <td><code>GameProgressionManager</code>, <code>BossEncounterData</code>(SO), <code>HealingAltar</code>, <code>NextLevelPortal</code></td>
+          <td>층별 진행 + 아레나 오브젝트</td></tr>
+      <tr><td><span class="tag" style="background:#4493f8;color:#001028">DB/백엔드</span></td>
+          <td><code>BackendManager</code>, <code>AbilityManager</code>, <code>AbilityAssetDatabase</code>(SO), <code>AbilityBakeWindow</code>(에디터), <code>AuthResponse</code>, <code>SkillResponse</code>, <code>AbilityDBData</code></td>
+          <td>HTTP 인증 + 스킬 카탈로그 가져오기 + 에셋 베이크 툴</td></tr>
+    </tbody>
+  </table>
+</details>
+</section>
+
+<section>
+<h2>8. 권장 다음 단계</h2>
+<ol>
+  <li><strong>플레이어 레지스트리 도입.</strong> 모든 <code>FindObjectsOfType&lt;NetworkPlayerController&gt;</code>를 <code>Spawned()</code>/<code>Despawned()</code>에서 갱신되는 정적 리스트로 대체. 약 8회의 매 프레임 O(n) 씬 스캔이 사라집니다.</li>
+  <li><strong><code>NetworkPlayerController</code> 분할.</strong> 입력 파싱 → <code>PlayerInputRouter</code>, 전투 히트 감지 → <code>PlayerCombatController</code>로 분리. 본 클래스는 <code>[Networked]</code> 프로퍼티만 보유하는 얇은 코디네이터로 남기세요.</li>
+  <li><strong>싱글톤 통일.</strong> 9개 중 7개가 패턴을 수동 재구현 - 모두 <code>MonoSingleton&lt;T&gt;</code>를 상속하도록 통일하면 코드 중복이 사라집니다.</li>
+  <li><strong>레거시 <code>*Origin</code> 정리.</strong> <code>DragonBossOrigin</code> / <code>DragonVisualOrigin</code>이 어떤 프리팹에도 연결되어 있지 않다면 제거 - 보스 서브시스템의 인지 부담이 절반으로 줄어듭니다.</li>
+  <li><strong><code>IBossVisual</code> 활용 확대.</strong> 두 번째 비-드래곤 보스를 추가해 추상화를 검증하세요. 현재는 구현체가 하나뿐이라 이론적인 인터페이스입니다.</li>
+  <li><strong>네트워크 ↔ 백엔드 결합 완화.</strong> <code>BackendManager</code>가 도메인 이벤트만 발행하고, 작은 <code>SessionGuard</code> 컴포넌트가 그것을 받아 Photon 런너를 종료하도록 분리하세요.</li>
+  <li><strong>HTTP 보안 보강.</strong> 현재 모든 PHP 통신이 평문 HTTP(<code>:8080</code>)입니다. 비밀번호 + session_token이 그대로 전송되므로, HTTPS 종단(Nginx 리버스 프록시 + Let's Encrypt) 적용이 시급합니다.</li>
+</ol>
+</section>
+
+<footer>
+  Claude Code의 정적 분석 리포트 · 읽기 전용 스캔 · 어떠한 <code>.cs</code> 파일도 수정되지 않았습니다.
+</footer>
+
+</div>
+
+<script>
+// ========== 카테고리 정의 ==========
+const CATEGORIES = {
+  External:  { color: '#ff6b6b', label: '외부 시스템 (PHP / Photon)' },
+  Singleton: { color: '#c9a227', label: '싱글톤 매니저' },
+  SceneCtrl: { color: '#ff9f43', label: '씬 컨트롤러' },
+  Player:    { color: '#3fb950', label: '플레이어 코어' },
+  Ability:   { color: '#79c0ff', label: '능력 시스템' },
+  Camera:    { color: '#56d4dd', label: '카메라' },
+  Boss:      { color: '#b392f0', label: '보스 시스템' },
+  HUD:       { color: '#ff7ab6', label: 'HUD' },
+  UI:        { color: '#f778ba', label: '인벤토리/보상 UI' },
+  Options:   { color: '#a371f7', label: '옵션' },
+  Stage:     { color: '#d29922', label: '스테이지' },
+  Data:      { color: '#4493f8', label: 'DB / 데이터 SO' }
+};
+
+// 카테고리 → 레이어 매핑 (계층형 레이아웃)
+// Level 0: 외부 시스템
+// Level 1: 싱글톤 매니저 (글로벌 인프라)
+// Level 2: 씬 컨트롤러
+// Level 3: 네트워크 엔티티 (Player/Boss Core)
+// Level 4: 컴포넌트 (Stats, Abilities, Hitbox 등)
+// Level 5: View, ScriptableObject, 데이터
+
+const NODES = [
+  // ===== Level 0: 외부 시스템 =====
+  { id: 'PHP_Backend',   label: 'PHP API\n(soulrush_api)', cat: 'External', level: 0 },
+  { id: 'Photon_Cloud',  label: 'Photon Cloud\n(Fusion)',  cat: 'External', level: 0 },
+
+  // ===== Level 1: 싱글톤 매니저 =====
+  { id: 'BackendManager',         cat: 'Data',      level: 1 },
+  { id: 'NetworkManager',         cat: 'Singleton', level: 1 },
+  { id: 'AbilityManager',         cat: 'Data',      level: 1 },
+  { id: 'GameProgressionManager', cat: 'Singleton', level: 1 },
+  { id: 'SoundManager',           cat: 'Singleton', level: 1 },
+  { id: 'GameSettingsManager',    cat: 'Singleton', level: 1 },
+  { id: 'CutsceneManager',        cat: 'Singleton', level: 1 },
+  { id: 'CameraManager',          cat: 'Camera',    level: 1 },
+  { id: 'CameraPointManager',     cat: 'Camera',    level: 1 },
+  { id: 'DragonArenaGimmick',     cat: 'Boss',      level: 1 },
+
+  // ===== Level 2: 씬 컨트롤러 =====
+  { id: 'TitleManager',          cat: 'SceneCtrl', level: 2 },
+  { id: 'LoginSceneController',  cat: 'SceneCtrl', level: 2 },
+  { id: 'LobbyManager',          cat: 'SceneCtrl', level: 2 },
+  { id: 'LobbyServerManager',    cat: 'SceneCtrl', level: 2 },
+  { id: 'BossArenaManager',      cat: 'SceneCtrl', level: 2 },
+  { id: 'HUDManager',            cat: 'HUD',       level: 2 },
+  { id: 'RewardManager',         cat: 'UI',        level: 2 },
+  { id: 'InventoryPanelController', cat: 'UI',     level: 2 },
+  { id: 'ReviveUIManager',       cat: 'UI',        level: 2 },
+  { id: 'SettingUIController',   cat: 'Options',   level: 2 },
+
+  // ===== Level 3: 네트워크 엔티티 =====
+  { id: 'NetworkPlayerController', cat: 'Player', level: 3 },
+  { id: 'NetworkBossCore',         cat: 'Boss',   level: 3 },
+  { id: 'DragonBoss',              cat: 'Boss',   level: 3 },
+  { id: 'NetworkInputProvider',    cat: 'Player', level: 3 },
+
+  // ===== Level 4: 컴포넌트 =====
+  { id: 'PlayerStats',                  cat: 'Player',  level: 4 },
+  { id: 'PlayerStatusController',       cat: 'Player',  level: 4 },
+  { id: 'NetworkPlayerData',            cat: 'Player',  level: 4 },
+  { id: 'PlayerAbilityController',      cat: 'Ability', level: 4 },
+  { id: 'PlayerAbilityInventory',       cat: 'Ability', level: 4 },
+  { id: 'PlayerAbilityExecutor',        cat: 'Ability', level: 4 },
+  { id: 'PlayerAbilityRewardController',cat: 'Ability', level: 4 },
+  { id: 'PlayerSkillHitbox',            cat: 'Ability', level: 4 },
+  { id: 'LockOnTargetSelector',         cat: 'Camera',  level: 4 },
+  { id: 'ThirdPersonCameraController',  cat: 'Camera',  level: 4 },
+  { id: 'BossPatternModule',            cat: 'Boss',    level: 4 },
+  { id: 'BossHitbox',                   cat: 'Boss',    level: 4 },
+  { id: 'GimmickAltar',                 cat: 'Boss',    level: 4 },
+  { id: 'IBossVisual',                  cat: 'Boss',    level: 4 },
+  { id: 'NextLevelPortal',              cat: 'Stage',   level: 4 },
+  { id: 'HealingAltar',                 cat: 'Stage',   level: 4 },
+  { id: 'PlayerSessionStore',           cat: 'Player',  level: 4 },
+
+  // ===== Level 5: 데이터 & View =====
+  { id: 'PlayerAbilityModule', cat: 'Ability', level: 5 },
+  { id: 'PlayerAbilityContext',cat: 'Ability', level: 5 },
+  { id: 'PlayerAbilitySlot',   cat: 'Ability', level: 5 },
+  { id: 'BossEncounterData',   cat: 'Stage',   level: 5 },
+  { id: 'BossActionModule',    cat: 'Boss',    level: 5 },
+  { id: 'StatusEffectData',    cat: 'Boss',    level: 5 },
+  { id: 'DragonVisual',        cat: 'Boss',    level: 5 },
+  { id: 'AbilityAssetDatabase',cat: 'Data',    level: 5 },
+  { id: 'SettingData',         cat: 'Options', level: 5 },
+  { id: 'PlayerHUDView',       cat: 'HUD',     level: 5 },
+  { id: 'BossHUDView',         cat: 'HUD',     level: 5 },
+  { id: 'SkillSlotHUDView',    cat: 'HUD',     level: 5 },
+  { id: 'PartyMemberHUDView',  cat: 'HUD',     level: 5 },
+  { id: 'RewardSelectView',    cat: 'UI',      level: 5 },
+  { id: 'RewardCardView',      cat: 'UI',      level: 5 },
+  { id: 'InventoryCardSlotView',cat: 'UI',     level: 5 },
+  { id: 'InventoryTooltipView',cat: 'UI',      level: 5 },
+  { id: 'ReviveScreenIndicator', cat: 'UI',    level: 5 },
+  { id: 'NetworkInputData',    cat: 'Player',  level: 5 }
+];
+
+// kind: extends | implements | http | photon | event | uses
+const E = (from, to, kind = 'uses') => ({ from, to, kind });
+const EDGES = [
+  // === 외부 통신 ===
+  E('BackendManager', 'PHP_Backend', 'http'),
+  E('AbilityManager', 'PHP_Backend', 'http'),
+  E('NetworkManager', 'Photon_Cloud', 'photon'),
+  E('LobbyServerManager',  'Photon_Cloud', 'photon'),
+  E('BossArenaManager',    'Photon_Cloud', 'photon'),
+  E('NetworkInputProvider','Photon_Cloud', 'photon'),
+
+  // === 싱글톤 간 (Level1) ===
+  E('AbilityManager', 'BackendManager', 'event'),
+  E('NetworkManager', 'BackendManager', 'event'),   // OnSessionExpired 구독
+  E('GameSettingsManager', 'SoundManager'),         // 볼륨 적용
+
+  // === 씬 컨트롤러 → 싱글톤 ===
+  E('TitleManager', 'NetworkManager'),
+  E('LoginSceneController', 'BackendManager'),
+  E('LoginSceneController', 'AbilityManager'),
+  E('LobbyServerManager', 'GameProgressionManager'),
+  E('BossArenaManager', 'GameProgressionManager'),
+  E('BossArenaManager', 'PlayerSessionStore'),
+  E('CutsceneManager', 'CameraPointManager'),
+  E('CutsceneManager', 'CameraManager'),
+  E('HUDManager', 'NetworkPlayerController'),
+  E('HUDManager', 'NetworkBossCore'),
+  E('RewardManager', 'NetworkBossCore'),
+  E('RewardManager', 'GameProgressionManager'),
+  E('RewardManager', 'CutsceneManager'),
+  E('RewardManager', 'NetworkManager'),
+  E('RewardManager', 'RewardSelectView'),
+  E('ReviveUIManager', 'NetworkPlayerController'),
+  E('InventoryPanelController', 'NetworkPlayerController'),
+  E('SettingUIController', 'SettingData'),
+
+  // === 씬 컨트롤러 → Level3 엔티티 ===
+  E('BossArenaManager', 'NetworkPlayerController'),
+  E('BossArenaManager', 'NetworkBossCore'),
+
+  // === Level3 엔티티 → Level1 싱글톤 ===
+  E('NetworkPlayerController', 'CameraManager'),
+  E('NetworkBossCore', 'DragonArenaGimmick'),
+  E('DragonBoss', 'DragonArenaGimmick'),
+  E('DragonArenaGimmick', 'NetworkBossCore'),
+  E('NetworkInputProvider', 'NetworkManager'),
+
+  // === 상속/구현 ===
+  E('DragonBoss', 'NetworkBossCore', 'extends'),
+  E('DragonVisual', 'IBossVisual', 'implements'),
+
+  // === NetworkPlayerController → 컴포넌트 ===
+  E('NetworkPlayerController', 'PlayerStats'),
+  E('NetworkPlayerController', 'PlayerStatusController'),
+  E('NetworkPlayerController', 'PlayerAbilityInventory'),
+  E('NetworkPlayerController', 'PlayerAbilityRewardController'),
+  E('NetworkPlayerController', 'LockOnTargetSelector'),
+  E('NetworkPlayerController', 'ThirdPersonCameraController'),
+  E('NetworkPlayerController', 'NetworkInputData'),
+  E('NetworkPlayerController', 'BossHitbox'),
+  E('NetworkPlayerController', 'GimmickAltar'),
+  E('NetworkPlayerController', 'NetworkBossCore'),
+
+  // === PlayerStats 흐름 ===
+  E('PlayerStats', 'PlayerStatusController'),
+  E('PlayerStats', 'PlayerAbilityModule'),
+  E('NetworkPlayerData', 'PlayerAbilityInventory'),
+  E('NetworkPlayerData', 'PlayerAbilityModule'),
+  E('PlayerSessionStore', 'PlayerStats'),
+
+  // === 능력 시스템 ===
+  E('PlayerAbilityController', 'PlayerAbilityInventory'),
+  E('PlayerAbilityController', 'PlayerAbilityExecutor'),
+  E('PlayerAbilityController', 'PlayerStats'),
+  E('PlayerAbilityInventory', 'PlayerAbilityExecutor'),
+  E('PlayerAbilityInventory', 'NetworkPlayerData'),
+  E('PlayerAbilityInventory', 'PlayerAbilityModule'),
+  E('PlayerAbilityInventory', 'PlayerAbilitySlot'),
+  E('PlayerAbilityInventory', 'PlayerAbilityContext'),
+  E('PlayerAbilityExecutor',  'PlayerAbilityModule'),
+  E('PlayerAbilityExecutor',  'PlayerAbilityContext'),
+  E('PlayerAbilityExecutor',  'PlayerSkillHitbox'),
+  E('PlayerAbilityRewardController', 'PlayerAbilityInventory'),
+  E('PlayerAbilityRewardController', 'PlayerAbilityModule'),
+  E('PlayerSkillHitbox', 'NetworkBossCore'),
+  E('PlayerSkillHitbox', 'BossHitbox'),
+  E('PlayerSkillHitbox', 'PlayerStats'),
+  E('PlayerAbilitySlot', 'PlayerAbilityModule'),
+
+  // === 능력 SO ← AbilityManager ===
+  E('AbilityManager', 'PlayerAbilityModule'),
+  E('AbilityManager', 'AbilityAssetDatabase'),
+  E('PlayerAbilityModule', 'AbilityAssetDatabase'),
+
+  // === 카메라 ===
+  E('CameraManager', 'ThirdPersonCameraController'),
+  E('LockOnTargetSelector', 'NetworkBossCore'),
+
+  // === 보스 시스템 ===
+  E('NetworkBossCore', 'BossPatternModule'),
+  E('NetworkBossCore', 'StatusEffectData'),
+  E('NetworkBossCore', 'IBossVisual'),
+  E('BossPatternModule', 'BossActionModule'),
+  E('BossHitbox', 'NetworkBossCore'),
+  E('BossHitbox', 'PlayerStats'),
+  E('GimmickAltar', 'DragonArenaGimmick'),
+  E('PlayerStatusController', 'StatusEffectData'),
+
+  // === 스테이지 ===
+  E('GameProgressionManager', 'BossEncounterData'),
+  E('BossArenaManager', 'BossEncounterData'),
+  E('NextLevelPortal', 'GameProgressionManager'),
+  E('NextLevelPortal', 'CutsceneManager'),
+  E('HealingAltar', 'PlayerStats'),
+
+  // === HUD ===
+  E('HUDManager', 'PlayerHUDView'),
+  E('HUDManager', 'BossHUDView'),
+  E('HUDManager', 'SkillSlotHUDView'),
+  E('HUDManager', 'PartyMemberHUDView'),
+  E('HUDManager', 'PlayerStats'),
+  E('HUDManager', 'PlayerAbilityInventory'),
+
+  // === 인벤토리/보상 UI ===
+  E('InventoryPanelController', 'PlayerAbilityInventory'),
+  E('InventoryPanelController', 'InventoryCardSlotView'),
+  E('InventoryPanelController', 'InventoryTooltipView'),
+  E('InventoryPanelController', 'PlayerAbilityModule'),
+  E('InventoryCardSlotView', 'PlayerAbilityModule'),
+  E('InventoryTooltipView', 'PlayerAbilityModule'),
+  E('RewardSelectView', 'PlayerAbilityRewardController'),
+  E('RewardSelectView', 'PlayerAbilityModule'),
+  E('RewardSelectView', 'RewardCardView'),
+  E('RewardSelectView', 'InventoryPanelController'),
+  E('RewardCardView', 'PlayerAbilityModule'),
+  E('ReviveUIManager', 'ReviveScreenIndicator'),
+  E('ReviveUIManager', 'PlayerStats'),
+  E('ReviveScreenIndicator', 'PlayerStats')
+];
+
+// ========== 시각화 빌드 ==========
+function nodeStyle(node) {
+  const c = CATEGORIES[node.cat] || { color: '#888' };
+  const hotspots = ['NetworkPlayerController','NetworkBossCore','RewardManager','HUDManager','BackendManager','NetworkManager'];
+  const isHot = hotspots.includes(node.id);
+
+  return {
+    id: node.id,
+    label: node.label || node.id,
+    title: `${node.id}\n카테고리: ${CATEGORIES[node.cat]?.label || node.cat}\n레이어: L${node.level}`,
+    shape: 'box',
+    color: {
+      background: c.color,
+      border: isHot ? '#ffffff' : '#0a0d12',
+      highlight: { background: c.color, border: '#fff' }
+    },
+    font: { color: '#0a0d12', size: 13, face: 'Pretendard, sans-serif', strokeWidth: 0, multi: true },
+    borderWidth: isHot ? 3 : 1,
+    margin: 8,
+    level: node.level,
+    _category: node.cat
+  };
+}
+
+function edgeStyle(e) {
+  const base = {
+    from: e.from, to: e.to,
+    arrows: { to: { enabled: true, scaleFactor: 0.6 } },
+    _kind: e.kind
+  };
+  switch (e.kind) {
+    case 'extends':
+      return { ...base, color: { color: '#ffffff', opacity: 0.85 }, width: 2.5, label: '▷ 상속', font: { color: '#fff', size: 10, background: 'rgba(10,13,18,0.85)' } };
+    case 'implements':
+      return { ...base, color: { color: '#ffd166', opacity: 0.9 }, dashes: [4, 4], width: 2, label: '▷ 구현', font: { color: '#ffd166', size: 10, background: 'rgba(10,13,18,0.85)' } };
+    case 'http':
+      return { ...base, color: { color: '#4493f8', opacity: 0.95 }, width: 2.5, label: 'HTTP', font: { color: '#79c0ff', size: 11, background: 'rgba(10,13,18,0.85)' } };
+    case 'photon':
+      return { ...base, color: { color: '#b392f0', opacity: 0.95 }, width: 2.5, label: 'Fusion', font: { color: '#b392f0', size: 11, background: 'rgba(10,13,18,0.85)' } };
+    case 'event':
+      return { ...base, color: { color: '#79c0ff', opacity: 0.75 }, dashes: [3, 4], width: 1.8 };
+    case 'uses':
+    default:
+      return { ...base, color: { color: '#6e7681', opacity: 0.5 }, width: 1 };
+  }
+}
+
+const allNodes = NODES.map(nodeStyle);
+const allEdges = EDGES.map(edgeStyle);
+
+const nodesDS = new vis.DataSet(allNodes);
+const edgesDS = new vis.DataSet(allEdges);
+
+const container = document.getElementById('graph');
+const data = { nodes: nodesDS, edges: edgesDS };
+
+// ========== 계층형 레이아웃 ==========
+let currentDirection = 'UD';
+function buildOptions(direction) {
+  return {
+    layout: {
+      hierarchical: {
+        enabled: true,
+        direction: direction,     // UD = Up-Down, LR = Left-Right
+        sortMethod: 'directed',
+        shakeTowards: 'roots',
+        levelSeparation: direction === 'UD' ? 170 : 280,
+        nodeSpacing: direction === 'UD' ? 180 : 70,
+        treeSpacing: 220,
+        blockShifting: true,
+        edgeMinimization: true,
+        parentCentralization: true
+      }
+    },
+    physics: {
+      enabled: false   // 계층형은 물리 비활성화로 노드 흔들림 방지
+    },
+    edges: {
+      smooth: { type: 'cubicBezier', forceDirection: direction === 'UD' ? 'vertical' : 'horizontal', roundness: 0.4 }
+    },
+    interaction: {
+      hover: true,
+      tooltipDelay: 120,
+      navigationButtons: true,
+      keyboard: true,
+      dragNodes: true,
+      dragView: true
+    }
+  };
+}
+
+const network = new vis.Network(container, data, buildOptions(currentDirection));
+
+// ========== 범례 ==========
+const legendEl = document.getElementById('legend');
+Object.entries(CATEGORIES).forEach(([k, v]) => {
+  const span = document.createElement('span');
+  span.className = 'swatch';
+  span.innerHTML = `<span class="dot" style="background:${v.color}"></span>${v.label}`;
+  legendEl.appendChild(span);
+});
+
+// 추가 범례 (엣지 종류)
+const edgeKinds = [
+  { kind: 'HTTP', color: '#4493f8', desc: 'PHP REST 호출' },
+  { kind: 'Fusion', color: '#b392f0', desc: 'Photon 네트워크' },
+  { kind: '상속', color: '#ffffff', desc: '클래스 상속' },
+  { kind: '구현', color: '#ffd166', desc: '인터페이스 구현' },
+  { kind: '이벤트', color: '#79c0ff', desc: 'C# event 구독' }
+];
+edgeKinds.forEach(k => {
+  const span = document.createElement('span');
+  span.className = 'swatch';
+  span.innerHTML = `<span class="dot" style="background:${k.color}"></span>${k.kind} - ${k.desc}`;
+  legendEl.appendChild(span);
+});
+
+// ========== 클릭 강조 ==========
+network.on('selectNode', function(params) {
+  const id = params.nodes[0];
+  const connected = new Set([id, ...network.getConnectedNodes(id)]);
+  nodesDS.forEach(n => {
+    nodesDS.update({ id: n.id, opacity: connected.has(n.id) ? 1 : 0.18 });
+  });
+});
+network.on('deselectNode', function() {
+  nodesDS.forEach(n => nodesDS.update({ id: n.id, opacity: 1 }));
+});
+
+// ========== 필터 ==========
+function applyFilter(cat) {
+  if (cat === 'all') {
+    nodesDS.update(allNodes.map(n => ({ id: n.id, hidden: false })));
+    edgesDS.getIds().forEach(id => edgesDS.update({ id: id, hidden: false }));
+    return;
+  }
+
+  // 카테고리 매핑
+  const groupMap = {
+    'External':  ['External'],
+    'Singleton': ['Singleton', 'External'],
+    'SceneCtrl': ['SceneCtrl', 'Singleton'],
+    'Player':    ['Player', 'Ability', 'Camera'],
+    'Boss':      ['Boss'],
+    'HUD':       ['HUD', 'UI'],
+    'Data':      ['Data', 'Ability', 'Stage']
+  };
+  const allowedCats = new Set(groupMap[cat] || [cat]);
+  const visible = new Set(NODES.filter(n => allowedCats.has(n.cat)).map(n => n.id));
+
+  // 한 홉 확장: 가시 노드의 직접 의존성도 포함
+  EDGES.forEach(e => {
+    if (visible.has(e.from)) visible.add(e.to);
+    if (visible.has(e.to)) visible.add(e.from);
+  });
+
+  nodesDS.update(allNodes.map(n => ({ id: n.id, hidden: !visible.has(n.id) })));
+  edgesDS.getIds().forEach(id => {
+    const ed = edgesDS.get(id);
+    if (!ed) return;
+    const ok = visible.has(ed.from) && visible.has(ed.to);
+    edgesDS.update({ id: id, hidden: !ok });
+  });
+}
+
+document.querySelectorAll('.toolbar button[data-filter]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.toolbar button[data-filter]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    applyFilter(btn.dataset.filter);
+  });
+});
+
+document.getElementById('btn-direction').addEventListener('click', () => {
+  currentDirection = currentDirection === 'UD' ? 'LR' : 'UD';
+  network.setOptions(buildOptions(currentDirection));
+  network.fit({ animation: true });
+});
+
+document.getElementById('btn-fit').addEventListener('click', () => network.fit({ animation: true }));
+</script>
+</body>
+</html>
