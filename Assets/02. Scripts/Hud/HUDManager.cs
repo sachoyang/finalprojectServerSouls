@@ -195,6 +195,7 @@ public class HUDManager : MonoBehaviour
             : Time.time;
 
         List<SkillSlotUIData> slots = abilityInventory.GetSkillSlotUIData(currentTime);
+
         for (int i = 0; i < skillSlotViews.Length; i++)
         {
             if (skillSlotViews[i] == null)
@@ -215,7 +216,7 @@ public class HUDManager : MonoBehaviour
         if (partyMemberHUDViews == null || partyMemberHUDViews.Length == 0)
             return;
 
-        List<PartyMemberUIData> partyMembers = FindPartyMemberUIData();
+        List<PartyMemberRuntimeData> partyMembers = FindPartyMemberRuntimeData();
 
         for (int i = 0; i < partyMemberHUDViews.Length; i++)
         {
@@ -224,17 +225,19 @@ public class HUDManager : MonoBehaviour
 
             if (i >= partyMembers.Count)
             {
+                partyMemberHUDViews[i].ClearSkills();
                 partyMemberHUDViews[i].SetVisible(false);
                 continue;
             }
 
-            partyMemberHUDViews[i].SetData(partyMembers[i]);
+            partyMemberHUDViews[i].SetData(partyMembers[i].UIData);
+            partyMemberHUDViews[i].SetSkills(partyMembers[i].Skills);
         }
     }
 
-    private List<PartyMemberUIData> FindPartyMemberUIData()
+    private List<PartyMemberRuntimeData> FindPartyMemberRuntimeData()
     {
-        List<PartyMemberUIData> partyMembers = new List<PartyMemberUIData>();
+        List<PartyMemberRuntimeData> partyMembers = new List<PartyMemberRuntimeData>();
         NetworkPlayerController[] players = FindObjectsOfType<NetworkPlayerController>();
 
         for (int i = 0; i < players.Length; i++)
@@ -253,7 +256,8 @@ public class HUDManager : MonoBehaviour
 
             PlayerHUDData hudData = stats.GetHUDData();
             int playerKey = player.Object.InputAuthority.RawEncoded;
-            partyMembers.Add(new PartyMemberUIData(
+
+            PartyMemberUIData uiData = new PartyMemberUIData(
                 playerKey,
                 $"Player {playerKey}",
                 hudData.CurrentHealth,
@@ -262,10 +266,40 @@ public class HUDManager : MonoBehaviour
                 hudData.MaxStamina,
                 !hudData.IsDead,
                 hudData.IsDead,
-                false));
+                false);
+
+            PlayerAbilityInventory partyInventory = player.GetComponent<PlayerAbilityInventory>();
+            List<PartyMemberSkillUIData> skills = BuildPartyMemberSkillUIData(partyInventory);
+
+            partyMembers.Add(new PartyMemberRuntimeData(uiData, skills));
         }
 
         return partyMembers;
+    }
+
+    private List<PartyMemberSkillUIData> BuildPartyMemberSkillUIData(PlayerAbilityInventory partyInventory)
+    {
+        List<PartyMemberSkillUIData> skills = new List<PartyMemberSkillUIData>();
+
+        if (partyInventory == null)
+            return skills;
+
+        IReadOnlyList<PlayerAbilityModule> equippedModules = partyInventory.EquippedModules;
+
+        for (int i = 0; i < equippedModules.Count; i++)
+        {
+            PlayerAbilityModule module = equippedModules[i];
+
+            if (module == null || module.Icon == null)
+                continue;
+
+            skills.Add(new PartyMemberSkillUIData(
+                module.DisplayName,
+                module.Icon,
+                module.IsActive));
+        }
+
+        return skills;
     }
 
     private void ClearSkillSlots()
@@ -303,7 +337,10 @@ public class HUDManager : MonoBehaviour
         for (int i = 0; i < partyMemberHUDViews.Length; i++)
         {
             if (partyMemberHUDViews[i] != null)
+            {
+                partyMemberHUDViews[i].ClearSkills();
                 partyMemberHUDViews[i].SetVisible(false);
+            }
         }
     }
 
@@ -318,5 +355,17 @@ public class HUDManager : MonoBehaviour
         }
 
         return null;
+    }
+
+    private readonly struct PartyMemberRuntimeData
+    {
+        public readonly PartyMemberUIData UIData;
+        public readonly List<PartyMemberSkillUIData> Skills;
+
+        public PartyMemberRuntimeData(PartyMemberUIData uiData, List<PartyMemberSkillUIData> skills)
+        {
+            UIData = uiData;
+            Skills = skills;
+        }
     }
 }
