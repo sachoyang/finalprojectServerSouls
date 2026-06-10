@@ -7,6 +7,8 @@ public class DragonArenaGimmick : NetworkBehaviour
 {
     public static DragonArenaGimmick Instance { get; private set; }
 
+    public AudioClip destroyclip;
+
     [Header("기믹 오브젝트 설정")]
     [Tooltip("2페이즈 시작 시 서서히 꺼질 조명들의 부모 객체 (예: castlelight)")]
     public GameObject[] gimmickOffObjects;
@@ -169,7 +171,7 @@ public class DragonArenaGimmick : NetworkBehaviour
     {
         _destroyedAltarCount++;
         Debug.Log($"[Gimmick] 제단 파괴됨! ({_destroyedAltarCount} / {gimmickOnObjects.Length})");
-
+        SoundManager.Instance.PlaySFX_3D(destroyclip, gimmickOnObjects[_destroyedAltarCount].transform.position, SoundCategory.BossGimmick);
         if (_destroyedAltarCount >= gimmickOnObjects.Length)
         {
             if (_targetBoss != null)

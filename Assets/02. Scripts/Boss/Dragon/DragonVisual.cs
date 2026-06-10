@@ -50,7 +50,14 @@ public class DragonVisual : MonoBehaviour, IBossVisual
     // [애니메이션 이벤트용 함수] 
     // 애니메이션 클립 타임라인에 심어둔 이벤트들이 이 함수들을 호출하므로 그대로 둡니다.
     // ==========================================
-    public void EnableMouthHitbox() { if (mouthHitbox != null) mouthHitbox.StartAttack(); }
+    public void EnableMouthHitbox() 
+    { 
+        if (mouthHitbox != null) mouthHitbox.StartAttack(); 
+        if (audioClips[2] != null)//bite1
+        {
+            SoundManager.Instance.PlaySFX_3D(audioClips[2], transform.position, SoundCategory.BossGimmick);
+        }
+    }
     public void DisableMouthHitbox() { if (mouthHitbox != null) mouthHitbox.StopAttack(); }
 
     public void EnableClawHitbox()

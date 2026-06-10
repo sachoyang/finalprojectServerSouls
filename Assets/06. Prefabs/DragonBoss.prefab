@@ -137,7 +137,7 @@ MonoBehaviour:
   damageMultiplier: 1
   isAttackHitbox: 1
   baseDamage: 2000
-  audioClip_hit: {fileID: 8300000, guid: 713d9aa71f48e874da4b0243b69b7e90, type: 3}
+  audioClip_hit: {fileID: 0}
   _isCurrentlyAttacking: 0
 --- !u!136 &2377954804649313697
 CapsuleCollider:
@@ -815,6 +815,9 @@ MonoBehaviour:
   audioClips:
   - {fileID: 8300000, guid: 981f3a6479c59ab42818cf6f9c84e15c, type: 3}
   - {fileID: 8300000, guid: f10a5a23b530bb0438cc5fdf6d2d0dcc, type: 3}
+  - {fileID: 8300000, guid: 1795f267dcd725647b17026c29ea21d3, type: 3}
+  - {fileID: 8300000, guid: 758e068136b6926489cc09641a043693, type: 3}
+  - {fileID: 8300000, guid: dc36b68d2c1d1794287ec2b4639d06c7, type: 3}
 --- !u!1 &2703312729836752367
 GameObject:
   m_ObjectHideFlags: 0
@@ -1472,7 +1475,7 @@ MonoBehaviour:
   damageMultiplier: 1
   isAttackHitbox: 1
   baseDamage: 2000
-  audioClip_hit: {fileID: 8300000, guid: 713d9aa71f48e874da4b0243b69b7e90, type: 3}
+  audioClip_hit: {fileID: 0}
   _isCurrentlyAttacking: 0
 --- !u!1 &5231139237601353139
 GameObject:
@@ -2232,8 +2235,8 @@ MonoBehaviour:
     _value: 0
   gimmickDamageReduction: 0.3
   audioClips:
-  - {fileID: 8300000, guid: 3b6f156c120ec064098c264cfffb94c9, type: 3}
-  - {fileID: 8300000, guid: 713d9aa71f48e874da4b0243b69b7e90, type: 3}
+  - {fileID: 8300000, guid: 7578464f0df9560419b25563a0b516ed, type: 3}
+  - {fileID: 8300000, guid: 544f86abba0919e4abf03dbf10056fcc, type: 3}
   rearAttackPatternIndex: 2
   phase2BuffId: 1
 --- !u!114 &3262892183010469501
