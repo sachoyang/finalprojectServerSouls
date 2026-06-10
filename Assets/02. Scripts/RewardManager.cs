@@ -333,17 +333,8 @@ public class RewardManager : MonoBehaviour
 
     private static PlayerAbilityRewardController FindLocalRewardController()
     {
-        PlayerAbilityRewardController[] rewardControllers = FindObjectsOfType<PlayerAbilityRewardController>(true);
-        foreach (PlayerAbilityRewardController rewardController in rewardControllers)
-        {
-            NetworkObject networkObject = rewardController.GetComponent<NetworkObject>();
-            if (networkObject == null || networkObject.HasInputAuthority)
-            {
-                return rewardController;
-            }
-        }
-
-        return null;
+        NetworkPlayerController localPlayer = PlayerRegistry.LocalPlayer;
+        return localPlayer != null ? localPlayer.GetComponent<PlayerAbilityRewardController>() : null;
     }
 
     private static NetworkRunner GetRunner()

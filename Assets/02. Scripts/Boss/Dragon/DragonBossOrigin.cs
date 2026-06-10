@@ -365,8 +365,10 @@ public class DragonBossOrigin : NetworkBehaviour
 
     private bool IsAnyPlayerBehind()
     {
-        foreach (var player in FindObjectsOfType<NetworkPlayerController>())
+        IReadOnlyList<NetworkPlayerController> players = PlayerRegistry.All;
+        for (int i = 0; i < players.Count; i++)
         {
+            NetworkPlayerController player = players[i];
             if (player == null) continue;
 
             Vector3 toPlayer = (player.transform.position - transform.position);

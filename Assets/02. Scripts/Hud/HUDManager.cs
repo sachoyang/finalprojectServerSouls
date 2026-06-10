@@ -238,9 +238,9 @@ public class HUDManager : MonoBehaviour
     private List<PartyMemberRuntimeData> FindPartyMemberRuntimeData()
     {
         List<PartyMemberRuntimeData> partyMembers = new List<PartyMemberRuntimeData>();
-        NetworkPlayerController[] players = FindObjectsOfType<NetworkPlayerController>();
+        IReadOnlyList<NetworkPlayerController> players = PlayerRegistry.All;
 
-        for (int i = 0; i < players.Length; i++)
+        for (int i = 0; i < players.Count; i++)
         {
             NetworkPlayerController player = players[i];
 
@@ -346,15 +346,7 @@ public class HUDManager : MonoBehaviour
 
     private NetworkPlayerController FindLocalPlayerController()
     {
-        NetworkPlayerController[] players = FindObjectsOfType<NetworkPlayerController>();
-
-        for (int i = 0; i < players.Length; i++)
-        {
-            if (players[i] != null && players[i].Object != null && players[i].Object.HasInputAuthority)
-                return players[i];
-        }
-
-        return null;
+        return PlayerRegistry.LocalPlayer;
     }
 
     private readonly struct PartyMemberRuntimeData
