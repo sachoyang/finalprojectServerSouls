@@ -45,7 +45,7 @@ public class RewardManager : MonoBehaviour
         }
 
         boss ??= FindObjectOfType<NetworkBossCore>();
-        if (boss == null)
+        if (boss == null || !boss.IsSpawnedReady)
         {
             return;
         }
