@@ -59,7 +59,6 @@ public class AbilityManager : MonoSingleton<AbilityManager>
 
     private IEnumerator FetchRoutine(Action<bool> onComplete)
     {
-        // BackendManager의 BASE_URL을 활용
         string url = BackendManager.Instance.BASE_URL + "get_abilities.php";
 
         using (UnityWebRequest www = UnityWebRequest.Get(url))
@@ -73,23 +72,28 @@ public class AbilityManager : MonoSingleton<AbilityManager>
                 if (res.status == "success")
                 {
                     AllAbilitiesDict.Clear();
-                    _debugLoadedAbilities.Clear(); // 🔥 디버그 리스트도 초기화
+                    _debugLoadedAbilities.Clear();
 
                     foreach (AbilityDBData dbData in res.data)
                     {
-                        // 1. 메모리에 빈 ScriptableObject 생성
-                        PlayerAbilityModule newModule = ScriptableObject.CreateInstance<PlayerAbilityModule>();
+                        // 🔥 [핵심 변경] 새로 만들지 말고, Bake 툴이 만들어둔 실제 파일을 가져옵니다!
+                        PlayerAbilityModule bakedModule = Resources.Load<PlayerAbilityModule>($"GeneratedAbilities/{dbData.ability_id}");
                         
-                        // 2. 데이터와 에셋 주입
-                        newModule.InitializeFromDB(dbData, assetDatabase);
-                        
-                        // 3. 딕셔너리에 보관 (key: bit_index)
-                        AllAbilitiesDict[dbData.bit_index] = newModule;
-
-                        _debugLoadedAbilities.Add(newModule);
+                        if (bakedModule != null)
+                        {
+                            // 라이브 업데이트: 서버에서 바뀐 최신 데미지/쿨타임 수치만 덮어씌움! (클라이언트 패치 불필요)
+                            bakedModule.InitializeFromDB(dbData, assetDatabase);
+                            
+                            AllAbilitiesDict[dbData.bit_index] = bakedModule;
+                            _debugLoadedAbilities.Add(bakedModule);
+                        }
+                        else
+                        {
+                            Debug.LogWarning($"[AbilityManager] '{dbData.ability_id}' 파일을 찾을 수 없습니다. 에디터에서 Bake 툴을 먼저 돌려주세요!");
+                        }
                     }
 
-                    Debug.Log($"<color=green>[AbilityManager] 서버에서 {AllAbilitiesDict.Count}개의 스킬을 성공적으로 생성했습니다!</color>");
+                    Debug.Log($"<color=green>[AbilityManager] 서버 데이터 동기화 완료! {AllAbilitiesDict.Count}개 스킬 준비됨.</color>");
                     onComplete?.Invoke(true);
                 }
                 else
