@@ -28,6 +28,7 @@ public class DragonVisual : MonoBehaviour, IBossVisual
     public AudioClip wakeUpAndPhaseSound; // (구 Core.audioClips[0])
     public AudioClip groggySound;         // (구 Core.audioClips[1])
     public AudioClip dieSound;            // (필요시 추가)
+    public AudioClip walkSound;
 
     private void Awake()
     {
@@ -74,15 +75,14 @@ public class DragonVisual : MonoBehaviour, IBossVisual
 
         if (groggySound != null)
         {
-            // 기존과 완벽히 동일한 볼륨(0.7)과 딜레이(0.1)
-            SoundManager.Instance.PlaySFX_3D(groggySound, transform.position, SoundCategory.BossGimmick, 0.7f, 0.1f);
+            SoundManager.Instance.PlaySFX_3D(groggySound, transform.position, SoundCategory.BossGimmick, 0.5f, 0.1f);
         }
     }
 
     public void PlayDie()
     {
         PlayAction(Animator.StringToHash("die"));
-        
+
         if (dieSound != null)
         {
             SoundManager.Instance.PlaySFX_3D(dieSound, transform.position, SoundCategory.BossGimmick);
@@ -91,15 +91,26 @@ public class DragonVisual : MonoBehaviour, IBossVisual
 
     public void SetSpeed(float speedValue) { anim.SetFloat("MoveSpeed", speedValue); }
     public void SetAnimSpeed(float multiplier) { anim.speed = multiplier; }
-    public void DoLocomotion() { anim.CrossFade("Locomotion", 0.1f); }
+    public void DoLocomotion()
+    {
+        anim.CrossFade("Locomotion", 0.1f);
+    }
 
     // ==========================================
     // [애니메이션 이벤트용 함수] 
-    // 애니메이션 클립 타임라인에 심어둔 이벤트들이 이 함수들을 호출하므로 그대로 둡니다.
     // ==========================================
-    public void EnableMouthHitbox() 
-    { 
-        if (mouthHitbox != null) mouthHitbox.StartAttack(); 
+
+    public void PlayFootstep()
+    {
+        if (walkSound != null)
+        {
+            SoundManager.Instance.PlaySFX_3D(walkSound, transform.position, SoundCategory.Footstep);
+        }
+    }
+
+    public void EnableMouthHitbox()
+    {
+        if (mouthHitbox != null) mouthHitbox.StartAttack();
         if (audioClips[2] != null)//bite1
         {
             SoundManager.Instance.PlaySFX_3D(audioClips[2], transform.position, SoundCategory.BossGimmick);
