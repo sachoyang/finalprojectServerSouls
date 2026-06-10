@@ -12,7 +12,7 @@ public class DragonArenaGimmick : NetworkBehaviour
     [Header("기믹 오브젝트 설정")]
     [Tooltip("2페이즈 시작 시 서서히 꺼질 조명들의 부모 객체 (예: castlelight)")]
     public GameObject[] gimmickOffObjects;
-    
+
     [Tooltip("2페이즈 시작 시 켜질 제단(도깨비불) 오브젝트들")]
     public GameObject[] gimmickOnObjects;
 
@@ -29,10 +29,10 @@ public class DragonArenaGimmick : NetworkBehaviour
         public Light lightComp;
         public float originalIntensity;
     }
-    
+
     // 관리할 모든 조명 리스트
     private List<LightData> _managedLights = new List<LightData>();
-    
+
     // 현재 실행 중인 페이드 코루틴 (중복 실행 방지용)
     private Coroutine _fadeCoroutine;
 
@@ -69,7 +69,7 @@ public class DragonArenaGimmick : NetworkBehaviour
 
         // 기존에 돌아가던 조명 코루틴이 있다면 정지
         if (_fadeCoroutine != null) StopCoroutine(_fadeCoroutine);
-        
+
         // 🔥 조명 끄기 -> 대기 -> 제단 켜기 순서를 관리하는 '시퀀스 코루틴'을 실행합니다.
         _fadeCoroutine = StartCoroutine(GimmickActivationSequence());
     }
@@ -88,18 +88,18 @@ public class DragonArenaGimmick : NetworkBehaviour
         yield return new WaitForSeconds(0.5f);
 
         // 3. 제단 팟! 하고 켜기
-        foreach (var obj in gimmickOnObjects) 
-        { 
-            if(obj != null) obj.SetActive(true); 
+        foreach (var obj in gimmickOnObjects)
+        {
+            if (obj != null) obj.SetActive(true);
         }
-        
+
         Debug.Log("[Gimmick] 조명 OFF 완료. 0.5초 후 제단 ON!");
     }
 
     public void ClearGimmick()
     {
         // 1. 남은 제단(파괴된 잔해) 끄기
-        foreach (var obj in gimmickOnObjects) { if(obj != null) obj.SetActive(false); }
+        foreach (var obj in gimmickOnObjects) { if (obj != null) obj.SetActive(false); }
 
         // 2. 조명 서서히 원래 밝기로 켜기 (목표 밝기 배율 = 1f)
         if (_fadeCoroutine != null) StopCoroutine(_fadeCoroutine);
@@ -119,7 +119,7 @@ public class DragonArenaGimmick : NetworkBehaviour
     private IEnumerator FadeLights(float targetMultiplier)
     {
         float elapsed = 0f;
-        
+
         // 조명이 꺼지던 도중에 기믹이 풀렸을 때 튀는 현상을 막기 위해, '현재 밝기'를 시작점으로 잡음
         float[] startMultipliers = new float[_managedLights.Count];
         for (int i = 0; i < _managedLights.Count; i++)
@@ -169,18 +169,19 @@ public class DragonArenaGimmick : NetworkBehaviour
 
     public void OnAltarDestroyed()
     {
+        SoundManager.Instance.PlaySFX_3D(destroyclip, gimmickOnObjects[_destroyedAltarCount].transform.position, SoundCategory.BossGimmick);
+
         _destroyedAltarCount++;
         Debug.Log($"[Gimmick] 제단 파괴됨! ({_destroyedAltarCount} / {gimmickOnObjects.Length})");
-        SoundManager.Instance.PlaySFX_3D(destroyclip, gimmickOnObjects[_destroyedAltarCount].transform.position, SoundCategory.BossGimmick);
         if (_destroyedAltarCount >= gimmickOnObjects.Length)
         {
             if (_targetBoss != null)
             {
                 float damage = _targetBoss.maxHP * 0.1f;
                 _targetBoss.RPC_TakeDamage(damage, _targetBoss.maxGroggy);
-                
+
                 // 🔥 값 하나만 바꾸면 모든 클라이언트의 불이 스르륵 켜짐!
-                _targetBoss.IsGimmickActive = false; 
+                _targetBoss.IsGimmickActive = false;
             }
         }
     }
@@ -196,10 +197,10 @@ public class DragonArenaGimmick : NetworkBehaviour
 
     public void StopGimmickVisuals()
     {
-        foreach (var obj in gimmickOnObjects) { if(obj != null) obj.SetActive(false); }
+        foreach (var obj in gimmickOnObjects) { if (obj != null) obj.SetActive(false); }
         if (_fadeCoroutine != null) StopCoroutine(_fadeCoroutine);
         _fadeCoroutine = StartCoroutine(FadeLights(1f));
-        
+
         Debug.Log("[Gimmick] 기믹 종료! 조명 서서히 복구 완료.");
     }
 }

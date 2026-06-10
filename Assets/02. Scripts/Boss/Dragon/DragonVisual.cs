@@ -21,7 +21,13 @@ public class DragonVisual : MonoBehaviour, IBossVisual
     [Header("경고 장판 (Telegraph)")]
     public GameObject jumpWarningPrefab;
 
+    [Header("공격 패턴 사운드")]
     public AudioClip[] audioClips;
+
+    [Header("상태 변화 사운드")]
+    public AudioClip wakeUpAndPhaseSound; // (구 Core.audioClips[0])
+    public AudioClip groggySound;         // (구 Core.audioClips[1])
+    public AudioClip dieSound;            // (필요시 추가)
 
     private void Awake()
     {
@@ -40,6 +46,47 @@ public class DragonVisual : MonoBehaviour, IBossVisual
 
         // (참고) 만약 특정 이펙트를 위해 어떤 해시인지 검사해야 한다면?
         // if (stateHash == Animator.StringToHash("Basic Attack")) { fireBreath.Play(); }
+    }
+
+    public void PlayWakeUp(int wakeUpHash)
+    {
+        PlayAction(wakeUpHash);
+        if (wakeUpAndPhaseSound != null)
+        {
+            SoundManager.Instance.PlaySFX_3D(wakeUpAndPhaseSound, transform.position, SoundCategory.BossGimmick, 1f, 1f);
+        }
+    }
+
+    public void PlayPhaseTransition(int wakeUpHash)
+    {
+        // 변신 연출도 기상(WakeUp)과 같은 동작/사운드를 사용했었음
+        PlayAction(wakeUpHash);
+        if (wakeUpAndPhaseSound != null)
+        {
+            SoundManager.Instance.PlaySFX_3D(wakeUpAndPhaseSound, transform.position, SoundCategory.BossGimmick, 1f, 1f);
+        }
+    }
+
+    public void PlayGroggy(float speedMultiplier)
+    {
+        SetAnimSpeed(speedMultiplier);
+        PlayAction(Animator.StringToHash("getHit"));
+
+        if (groggySound != null)
+        {
+            // 기존과 완벽히 동일한 볼륨(0.7)과 딜레이(0.1)
+            SoundManager.Instance.PlaySFX_3D(groggySound, transform.position, SoundCategory.BossGimmick, 0.7f, 0.1f);
+        }
+    }
+
+    public void PlayDie()
+    {
+        PlayAction(Animator.StringToHash("die"));
+        
+        if (dieSound != null)
+        {
+            SoundManager.Instance.PlaySFX_3D(dieSound, transform.position, SoundCategory.BossGimmick);
+        }
     }
 
     public void SetSpeed(float speedValue) { anim.SetFloat("MoveSpeed", speedValue); }

@@ -55,11 +55,6 @@ public class NetworkBossCore : NetworkBehaviour
     public float wakeUpDuration = 2.8f;
     private int _wakeUpAnimHash; // 최적화용 해시 변수
 
-    [Header("Boss SFX")]
-    [SerializeField] private AnimationClip wakeUpSfxClip;
-    [SerializeField] private AnimationClip phaseTransitionSfxClip;
-    [SerializeField] private AnimationClip dieSfxClip;
-
     [Header("그로기(Stagger) 설정")]
     public float maxGroggy = 40f;
     public float groggyDuration = 3.0f; // 그로기 지속 시간
@@ -143,7 +138,6 @@ public class NetworkBossCore : NetworkBehaviour
     public float gimmickDamageReduction = 0.3f;
     private bool _localGimmickActive = false;
 
-    public AudioClip[] audioClips;
 
     public override void Spawned()
     {
@@ -451,44 +445,33 @@ public class NetworkBossCore : NetworkBehaviour
 
             // 걷기 블렌드 트리 속도 및 수면 상태 적용은 매 프레임 유지
             _visual.SetSpeed(CurrentState == BossState.Walk ? 1.0f : 0.0f);
-            //_visual.SetSleep(CurrentState == BossState.Sleep || CurrentState == BossState.Groggy);
 
             // 상태가 '방금 딱 바뀌었을 때만' 1회 호출
             if (_lastState != CurrentState)
             {
                 _visual.SetAnimSpeed(1.0f); // 패턴이 끝났으니 배속을 무조건 1.0(정상)으로 복구
 
+                // 🔥 [수정됨] 복잡한 사운드/애니 로직을 모두 Visual에게 위임합니다!
                 if (CurrentState == BossState.Groggy)
                 {
-                    // 그로기 진입 시 배속으로 느리게 재생!
                     float speedMult = groggyAnimLength / groggyDuration;
-                    _visual.SetAnimSpeed(speedMult);
-
-                    _visual.PlayAction(Animator.StringToHash("getHit"));
-
-                    if(audioClips[1]!=null)
-                    {
-                        SoundManager.Instance.PlaySFX_3D(audioClips[1], transform.position, SoundCategory.BossGimmick, 0.7f, 0.1f);
-                    }
-                    
+                    _visual.PlayGroggy(speedMult);
                 }
                 else if (CurrentState == BossState.Idle || CurrentState == BossState.Walk)
                 {
-                    _visual.DoLocomotion(); // 딱 한 번만 CrossFade 발동!
+                    _visual.DoLocomotion(); 
                 }
                 else if (CurrentState == BossState.Die)
                 {
-                    // 죽음 상태 진입 시 사망 애니메이션 재생
-                    _visual.PlayAction(Animator.StringToHash("die"));
+                    _visual.PlayDie();
                 }
-                else if (CurrentState == BossState.WakeUp || CurrentState == BossState.PhaseTransition)
+                else if (CurrentState == BossState.WakeUp)
                 {
-                    // 변신할 때도 임시로 기상 포효(Scream) 애니메이션을 재활용합니다!
-                    _visual.PlayAction(_wakeUpAnimHash);
-                    if(audioClips[0]!= null)
-                    {
-                        SoundManager.Instance.PlaySFX_3D(audioClips[0],transform.position, SoundCategory.BossGimmick,1,1);
-                    }
+                    _visual.PlayWakeUp(_wakeUpAnimHash);
+                }
+                else if (CurrentState == BossState.PhaseTransition)
+                {
+                    _visual.PlayPhaseTransition(_wakeUpAnimHash);
                 }
 
                 _lastState = CurrentState;

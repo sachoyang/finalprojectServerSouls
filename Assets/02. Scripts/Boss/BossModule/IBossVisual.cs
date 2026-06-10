@@ -8,4 +8,9 @@ public interface IBossVisual
     void SetSpeed(float speedValue);
     void SetAnimSpeed(float multiplier);
     void DoLocomotion();
+
+    void PlayWakeUp(int wakeUpHash);
+    void PlayPhaseTransition(int wakeUpHash);
+    void PlayGroggy(float speedMultiplier);
+    void PlayDie();
 }
