@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -12,9 +13,11 @@ public class PartyMemberHUDView : MonoBehaviour
     [Header("SP")]
     [SerializeField] private Image spFillImage;
 
+    [Header("Skill")]
+    [SerializeField] private PartyMemberSkillBarView skillBarView;
+
     public void SetData(PartyMemberUIData data)
     {
-        // 파티원 슬롯은 네트워크 상태를 수정하지 않고, 전달받은 UI 데이터만 표시한다.
         SetVisible(true);
         SetStats(
             data.CurrentHealth,
@@ -38,6 +41,18 @@ public class PartyMemberHUDView : MonoBehaviour
 
         if (spFillImage != null)
             spFillImage.fillAmount = GetSafeRatio(currentSp, maxSp);
+    }
+
+    public void SetSkills(IReadOnlyList<PartyMemberSkillUIData> skills)
+    {
+        if (skillBarView != null)
+            skillBarView.SetSkills(skills);
+    }
+
+    public void ClearSkills()
+    {
+        if (skillBarView != null)
+            skillBarView.Clear();
     }
 
     private float GetSafeRatio(float currentValue, float maxValue)
