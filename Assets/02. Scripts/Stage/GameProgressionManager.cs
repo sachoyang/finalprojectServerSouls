@@ -2,10 +2,8 @@ using UnityEngine;
 using System.Collections.Generic;
 using Fusion;
 
-public class GameProgressionManager : MonoBehaviour
+public class GameProgressionManager : MonoSingleton<GameProgressionManager> // 제네릭 모노싱글톤 상속
 {
-    public static GameProgressionManager Instance { get; private set; }
-
     [Header("등장 가능한 보스 풀 (랜덤 추첨)")]
     public List<BossEncounterData> bossPool;
 
@@ -13,18 +11,7 @@ public class GameProgressionManager : MonoBehaviour
     public int CurrentLevel { get; private set; } = 1;
     public BossEncounterData CurrentBossData { get; private set; }
 
-    private void Awake()
-    {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject); // 씬이 넘어가도 절대 파괴되지 않음
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
-    }
+    // 구형 싱글톤 보일러플레이트 제거 (Instance/Awake는 베이스가 처리)
 
     // 로비에서 레디가 끝나면 호출됨
     public void StartFirstLevel(NetworkRunner runner)

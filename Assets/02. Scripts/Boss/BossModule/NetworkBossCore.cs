@@ -123,8 +123,11 @@ public class NetworkBossCore : NetworkBehaviour
     [Networked] public TickTimer AttackCooldown { get; set; }
     [Networked] private TickTimer AggroTimer { get; set; }
 
-    // 딜미터기 장부
-    protected Dictionary<NetworkObject, float> _damageTracker = new Dictionary<NetworkObject, float>();
+    // 책임 분리된 헬퍼들 (Spawned에서 주입) - 갓 오브젝트 해체
+    protected BossStatusEffectResolver _statusResolver; // 상태이상 DB/배율
+    protected BossPatternSelector _patternSelector;     // 패턴 룰렛
+    protected BossAggroTracker _aggroTracker;           // 딜미터기 장부
+    private BossMovementController _movement;            // 벽 미끄러짐/지형 밀착
 
     // 시각화 인터페이스 (자식 클래스나 Awake에서 할당)
     protected IBossVisual _visual;
@@ -143,6 +146,13 @@ public class NetworkBossCore : NetworkBehaviour
 
     public override void Spawned()
     {
+        // 헬퍼 주입을 IsSpawnedReady보다 먼저 (UI가 즉시 조회해도 안전)
+        _statusResolver = new BossStatusEffectResolver(statusDatabase);
+        _patternSelector = new BossPatternSelector();
+        _aggroTracker = new BossAggroTracker();
+        _movement = new BossMovementController(wallLayerMask, bodyRadius, castHeightOffset,
+                                               groundLayerMask, stepHeight, gravitySpeed);
+
         IsSpawnedReady = true;
 
         _visual = GetComponentInChildren<IBossVisual>();
@@ -222,8 +232,8 @@ public class NetworkBossCore : NetworkBehaviour
             Vector3 worldMoveOffset = transform.TransformDirection(action.moveOffset);
             Vector3 frameDisplacement = worldMoveOffset * deltaCurve;
 
-            // 벽 미끄러짐 함수를 호출하여 안전하게 이동
-            PerformWallSlideDisplacement(frameDisplacement);
+            // 벽 미끄러짐 연산을 헬퍼에 위임하여 안전하게 이동
+            _movement.MoveWithWallSlide(transform, frameDisplacement, Runner.DeltaTime);
         }
     }
 
@@ -355,34 +365,8 @@ public class NetworkBossCore : NetworkBehaviour
     // ==========================================
     protected virtual int SelectPatternBasedOnRange(float currentDistance)
     {
-        List<int> validPatternIndices = new List<int>();
-        int totalWeight = 0;
-
-        // 1. 현재 사거리에 발동 가능한 패턴만 추려냅니다.
-        for (int i = 0; i < CurrentAvailablePatterns.Count; i++)
-        {
-            var pattern = CurrentAvailablePatterns[i];
-            if (currentDistance >= pattern.minRange && currentDistance <= pattern.maxRange)
-            {
-                validPatternIndices.Add(i);
-                totalWeight += pattern.weight;
-            }
-        }
-
-        if (validPatternIndices.Count == 0) return -1;
-
-        // 2. 가중치(Weight) 기반으로 룰렛을 돌려 패턴을 선택합니다.
-        int randomVal = UnityEngine.Random.Range(0, totalWeight);
-        int accumulatedWeight = 0;
-
-        foreach (int idx in validPatternIndices)
-        {
-            accumulatedWeight += CurrentAvailablePatterns[idx].weight;
-            if (randomVal <= accumulatedWeight)
-                return idx;
-        }
-
-        return validPatternIndices[0];
+        // 룰렛 로직은 BossPatternSelector로 위임 (자식은 이 메서드를 오버라이드해 가로채기 가능)
+        return _patternSelector.SelectByRange(CurrentAvailablePatterns, currentDistance);
     }
 
     private void StartPattern(int patternIndex)
@@ -506,34 +490,22 @@ public class NetworkBossCore : NetworkBehaviour
     // ==========================================
     private void UpdateAggroByDamage()
     {
-        NetworkObject topDPSPlayer = null;
-        float maxDamage = 0f;
+        // 최다 딜러 산출은 BossAggroTracker에 위임
+        NetworkObject topDPSPlayer = _aggroTracker.GetTopAttacker();
 
-        // 1. 장부를 훑어서 지난 5초 동안 가장 딜을 많이 넣은 사람을 찾음
-        foreach (var kvp in _damageTracker)
-        {
-            if (kvp.Key != null && kvp.Key.gameObject.CompareTag("Player") && kvp.Value > maxDamage)
-            {
-                maxDamage = kvp.Value;
-                topDPSPlayer = kvp.Key;
-            }
-        }
-
-        // 2. 5초 동안 딜을 넣은 사람이 1명이라도 있으면 그 사람으로 타겟 고정!
-        if (topDPSPlayer != null && maxDamage > 0)
+        if (topDPSPlayer != null)
         {
             AggroTarget = topDPSPlayer;
-            Debug.Log($"[Aggro] 어그로 갱신! 대상: {topDPSPlayer.Id} (5초 누적 딜: {maxDamage})");
+            Debug.Log($"[Aggro] 어그로 갱신! 대상: {topDPSPlayer.Id}");
         }
         else
         {
-            // 3. 5초 동안 아무도 때리지 않았다면(도망만 다녔다면) 제일 가까운 사람으로 타겟 갱신
+            // 누적 딜이 없으면 가장 가까운 대상으로 갱신
             FindClosestTarget();
-            Debug.Log("[Aggro] 5초간 누적 딜량 없음. 가장 가까운 대상으로 갱신.");
+            Debug.Log("[Aggro] 누적 딜량 없음. 가장 가까운 대상으로 갱신.");
         }
 
-        // 4. 다음 5초를 위해 장부 초기화 및 타이머 재시작
-        _damageTracker.Clear();
+        _aggroTracker.Clear();
         AggroTimer = TickTimer.CreateFromSeconds(Runner, aggroRefreshTime);
     }
 
@@ -588,12 +560,8 @@ public class NetworkBossCore : NetworkBehaviour
             return;
         }
 
-        // 6. 어그로 딜미터기 기록
-        if (attacker != null)
-        {
-            if (_damageTracker.ContainsKey(attacker)) _damageTracker[attacker] += damage;
-            else _damageTracker[attacker] = damage;
-        }
+        // 6. 어그로 딜미터기 기록 (장부 관리는 헬퍼에 위임)
+        _aggroTracker.Record(attacker, damage);
     }
 
     // ==========================================
@@ -670,73 +638,9 @@ public class NetworkBossCore : NetworkBehaviour
             Quaternion targetRotation = Quaternion.LookRotation(direction);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Runner.DeltaTime);
 
-            // 초당 속도를 프레임당 이동 거리로 변환하여 물리 미끄러짐 함수에 전달
+            // 초당 속도를 프레임당 이동 거리로 변환하여 물리 미끄러짐 헬퍼에 전달
             Vector3 frameDisplacement = transform.forward * moveSpeed * Runner.DeltaTime;
-            PerformWallSlideDisplacement(frameDisplacement);
-        }
-    }
-
-    // ==========================================
-    // 벽 미끄러짐 물리 연산 (y축 갱신도 추가함)
-    // ==========================================
-    private void PerformWallSlideDisplacement(Vector3 targetDisplacement)
-    {
-        if (targetDisplacement.sqrMagnitude < 0.000001f) return;
-
-        Vector3 sphereCenter = transform.position + Vector3.up * castHeightOffset;
-
-        if (Physics.SphereCast(sphereCenter, bodyRadius, targetDisplacement.normalized, out RaycastHit hit, targetDisplacement.magnitude, wallLayerMask))
-        {
-            float safeDistance = Mathf.Max(0f, hit.distance - 0.01f);
-            Vector3 safeMove = targetDisplacement.normalized * safeDistance;
-            transform.position += safeMove;
-
-            Vector3 remainingDisplacement = targetDisplacement - safeMove;
-            Vector3 slideDisplacement = Vector3.ProjectOnPlane(remainingDisplacement, hit.normal);
-            slideDisplacement.y = 0;
-
-            if (slideDisplacement.sqrMagnitude > 0.000001f)
-            {
-                Vector3 newSphereCenter = transform.position + Vector3.up * castHeightOffset;
-                if (Physics.SphereCast(newSphereCenter, bodyRadius, slideDisplacement.normalized, out RaycastHit hit2, slideDisplacement.magnitude, wallLayerMask))
-                {
-                    float safeDistance2 = Mathf.Max(0f, hit2.distance - 0.01f);
-                    transform.position += slideDisplacement.normalized * safeDistance2;
-                }
-                else
-                {
-                    transform.position += slideDisplacement;
-                }
-            }
-        }
-        else
-        {
-            transform.position += targetDisplacement;
-        }
-
-        StickToGround();
-    }
-
-    // ==========================================
-    // Y축 지형에 보스를 밀착시키는 로직
-    // ==========================================
-    private void StickToGround()
-    {
-        // 1. 레이저를 쏠 시작점: 보스 발바닥에서 계단 높이(stepHeight)만큼 위로 올린 위치
-        Vector3 rayStart = transform.position + (Vector3.up * stepHeight);
-
-        // 2. 바닥을 향해 레이저를 쏩니다. (거리는 stepHeight + 여유분)
-        if (Physics.Raycast(rayStart, Vector3.down, out RaycastHit hit, stepHeight * 2f, groundLayerMask))
-        {
-            // 3. 바닥을 찾았다면? 보스의 Y축 위치를 바닥의 Y축과 정확히 일치시킵니다.
-            Vector3 newPosition = transform.position;
-            newPosition.y = hit.point.y;
-            transform.position = newPosition;
-        }
-        else
-        {
-            // 4. 바닥이 안 닿는다면? (절벽이거나 공중에 떴을 때) -> 가짜 중력을 적용해 아래로 떨어뜨립니다.
-            transform.position += Vector3.down * gravitySpeed * Runner.DeltaTime;
+            _movement.MoveWithWallSlide(transform, frameDisplacement, Runner.DeltaTime);
         }
     }
 
@@ -748,8 +652,8 @@ public class NetworkBossCore : NetworkBehaviour
         if (!HasStateAuthority || CurrentState == BossState.Die) return;
         if (statusId == 0) return; // 0은 빈 칸을 의미하므로 무시
 
-        // 도감에서 SO 데이터 찾기
-        StatusEffectData data = statusDatabase.Find(x => x.statusId == statusId);
+        // 도감 조회는 Resolver에 위임
+        StatusEffectData data = _statusResolver.GetData(statusId);
         if (data == null)
         {
             Debug.LogWarning($"[Status] ID {statusId}에 해당하는 상태이상 데이터를 찾을 수 없습니다.");
@@ -829,80 +733,16 @@ public class NetworkBossCore : NetworkBehaviour
     // ------------------------------------------
     // 실시간 데미지 배율 계산기 (SO 완전 연동)
     // ------------------------------------------
+    // 배율/UI 계산은 모두 Resolver에 위임 (공개 시그니처 유지)
     public float GetIncomingDamageMultiplier()
-    {
-        float multiplier = 1.0f;
-
-        // 기믹이 켜져있다면, 기본적으로 약한 데미지만 들어가게 깎아버립니다!
-        if (IsGimmickActive)
-        {
-            multiplier *= gimmickDamageReduction;
-        }
-
-        for (int i = 0; i < ActiveStatuses.Length; i++)
-        {
-            if (ActiveStatuses[i].StatusId != 0)
-            {
-                // 1. 도감에서 현재 적용 중인 SO 데이터를 찾는다
-                StatusEffectData data = statusDatabase.Find(x => x.statusId == ActiveStatuses[i].StatusId);
-
-                // 2. 이 SO가 '받는 피해(IncomingDamage)'에 영향을 주는 놈이면 배율을 곱한다!
-                if (data != null && data.effectTarget == StatusEffectTarget.IncomingDamage)
-                {
-                    multiplier *= ActiveStatuses[i].Power;
-                }
-            }
-        }
-        return multiplier;
-    }
+        => _statusResolver.GetIncomingMultiplier(ActiveStatuses, IsGimmickActive, gimmickDamageReduction);
 
     public float GetOutgoingDamageMultiplier()
-    {
-        float multiplier = DamageMultiplier; // 기존 스테이지 난이도 배율 베이스
-        for (int i = 0; i < ActiveStatuses.Length; i++)
-        {
-            if (ActiveStatuses[i].StatusId != 0)
-            {
-                StatusEffectData data = statusDatabase.Find(x => x.statusId == ActiveStatuses[i].StatusId);
-
-                // '주는 피해(OutgoingDamage)'에 영향을 주는 놈이면 배율을 곱한다!
-                if (data != null && data.effectTarget == StatusEffectTarget.OutgoingDamage)
-                {
-                    multiplier *= ActiveStatuses[i].Power;
-                }
-            }
-        }
-        return multiplier;
-    }
+        => _statusResolver.GetOutgoingMultiplier(ActiveStatuses, DamageMultiplier);
 
     // ==========================================
     // UI 쪽 스크립트에 전달할 함수
     // ==========================================
     public List<ActiveStatusUIInfo> GetActiveStatusesForUI()
-    {
-        List<ActiveStatusUIInfo> activeList = new List<ActiveStatusUIInfo>();
-
-        for (int i = 0; i < ActiveStatuses.Length; i++)
-        {
-            if (ActiveStatuses[i].StatusId != 0)
-            {
-                // 도감에서 현재 걸린 상태이상의 SO 데이터를 찾아옵니다.
-                StatusEffectData so = statusDatabase.Find(x => x.statusId == ActiveStatuses[i].StatusId);
-
-                if (so != null)
-                {
-                    activeList.Add(new ActiveStatusUIInfo
-                    {
-                        Data = so,
-                        // 현재 시간(SimulationTime)을 빼서 순수하게 '남은 시간'만 계산해서 넘겨줍니다.
-                        RemainingTime = Mathf.Max(0, ActiveStatuses[i].EndTime - Runner.SimulationTime),
-                        Power = ActiveStatuses[i].Power
-                    });
-                }
-            }
-        }
-
-        return activeList;
-    }
-    // ... 나머지 기존 기능들
+        => _statusResolver.BuildUIList(ActiveStatuses, Runner.SimulationTime);
 }

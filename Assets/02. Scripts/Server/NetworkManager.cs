@@ -2,11 +2,9 @@ using Fusion;
 using UnityEngine;
 using UnityEngine.SceneManagement; // LoadSceneMode 사용을 위해 필수
 
-public class NetworkManager : MonoBehaviour
+// ISessionGuard 구현: 백엔드를 직접 모른 채 '세션 만료 시 네트워크 종료'만 책임
+public class NetworkManager : MonoSingleton<NetworkManager>, ISessionGuard // 제네릭 모노싱글톤 상속
 {
-    private static NetworkManager _instance;
-    public static NetworkManager Instance => _instance;
-
     private NetworkRunner _runner;
     public NetworkRunner Runner => _runner;
 
@@ -14,40 +12,21 @@ public class NetworkManager : MonoBehaviour
     [Tooltip("로비 씬의 정확한 이름을 적어주세요.")]
     public string lobbySceneName = "scLobbyMain";
 
-    private void Awake()
+    // 구형 싱글톤 보일러플레이트 제거 (Instance/중복파괴/DontDestroyOnLoad는 베이스가 처리)
+    protected override void Awake()
     {
-        if (_instance != null && _instance != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
-        _instance = this;
-        DontDestroyOnLoad(gameObject);
+        base.Awake(); // 베이스 싱글톤 초기화 먼저
+        if (Instance != this) return; // 중복 인스턴스(파괴 예정)면 가드 부착 생략
+
+        // 세션 가드 부착: 백엔드 의존을 SessionGuard로 격리 (NetworkManager는 BackendManager를 모름)
+        SessionGuard guard = gameObject.AddComponent<SessionGuard>();
+        guard.Initialize(this);
     }
 
     // ==========================================
-    // 백엔드의 중복 접속 강제 퇴장 명령 듣기
+    // ISessionGuard: 세션 만료 시 실행될 강제 종료 함수 (SessionGuard가 호출)
     // ==========================================
-    private void Start()
-    {
-        // 백엔드 매니저가 존재하면 이벤트 구독
-        if (BackendManager.Instance != null)
-        {
-            BackendManager.Instance.OnSessionExpired += HandleSessionExpired;
-        }
-    }
-
-    private void OnDestroy()
-    {
-        // 오브젝트 파괴 시 이벤트 구독 해제 (메모리 누수 방지)
-        if (BackendManager.Instance != null)
-        {
-            BackendManager.Instance.OnSessionExpired -= HandleSessionExpired;
-        }
-    }
-
-    // 세션 만료 시 실행될 강제 종료 함수
-    private async void HandleSessionExpired()
+    public async void HandleSessionExpired()
     {
         Debug.LogWarning("[NetworkManager] 중복 접속 감지! 네트워크를 끊고 타이틀로 강제 이동합니다.");
 

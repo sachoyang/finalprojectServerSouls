@@ -22,11 +22,8 @@ public class SkillResponse
     public long updated_skills;
 }
 
-public class BackendManager : MonoBehaviour
+public class BackendManager : MonoSingleton<BackendManager> // 제네릭 모노싱글톤 상속
 {
-    // 싱글톤 세팅: 어디서든 BackendManager.Instance 로 접근 가능!
-    public static BackendManager Instance { get; private set; }
-
     [Header("서버 IP 자동화 세팅")]
     [Tooltip("서버 PC의 내부 IP (예: 192.168.0.15)")]
     public string lanIP = "192.168.0.5"; 
@@ -51,18 +48,7 @@ public class BackendManager : MonoBehaviour
     // 로그인 성공 시 캐싱해둘 내 신분증(토큰)
     public string CurrentSessionToken { get; private set; }
 
-    private void Awake()
-    {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject); // 씬이 넘어가도 파괴되지 않음
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
-    }
+    // 구형 싱글톤 보일러플레이트 제거 (Instance/Awake는 베이스가 처리)
 
     private void Start()
     {
