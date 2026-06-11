@@ -21,7 +21,8 @@ public class SessionGuard : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (BackendManager.Instance != null)
+        // 안전한 인스턴스 체크 (좀비 싱글톤 생성/종료 중 접근 방지)
+        if (BackendManager.HasInstance)
             BackendManager.Instance.OnSessionExpired -= OnSessionExpired;
     }
 

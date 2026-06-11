@@ -4,15 +4,23 @@ using UnityEngine;
 public abstract class MonoSingleton<T> : MonoBehaviour where T : MonoBehaviour
 {
     private static T _instance;
-    
-    // 유니티 에디터 종료 시 싱글톤을 다시 생성하려는 버그 방지용 플래그
-    private static bool _isQuitting = false; 
+
+    // 좀비 싱글톤 생성 방지 플래그 (종료 중 표시)
+    private static bool _applicationIsQuitting = false;
+
+    // 안전한 인스턴스 체크: 종료 중엔 false → 파괴 콜백에서 사용
+    public static bool HasInstance => _instance != null && !_applicationIsQuitting;
 
     public static T Instance
     {
         get
         {
-            if (_isQuitting) return null;
+            // 종료 중이면 새 오브젝트를 만들지 않고 null 반환 (좀비 방지)
+            if (_applicationIsQuitting)
+            {
+                Debug.LogWarning($"[MonoSingleton] 종료 중 '{typeof(T).Name}' 인스턴스 요청 → null 반환");
+                return null;
+            }
 
             if (_instance == null)
             {
@@ -47,6 +55,6 @@ public abstract class MonoSingleton<T> : MonoBehaviour where T : MonoBehaviour
 
     protected virtual void OnApplicationQuit()
     {
-        _isQuitting = true;
+        _applicationIsQuitting = true; // 종료 플래그 set (이후 Instance 접근은 null)
     }
 }
