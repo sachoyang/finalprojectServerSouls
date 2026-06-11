@@ -1,9 +1,12 @@
 using UnityEngine;
 using System.Collections.Generic;
 using Fusion;
+using UnityEngine.SceneManagement; // 씬 로드 이벤트 구독용
 
-public class GameProgressionManager : MonoSingleton<GameProgressionManager> // 제네릭 모노싱글톤 상속
+public class GameProgressionManager : MonoBehaviour // 런(Run) 동안 유지되는 준영속 매니저
 {
+    public static GameProgressionManager Instance { get; private set; } // 정적 인스턴스
+
     [Header("등장 가능한 보스 풀 (랜덤 추첨)")]
     public List<BossEncounterData> bossPool;
 
@@ -11,7 +14,27 @@ public class GameProgressionManager : MonoSingleton<GameProgressionManager> // �
     public int CurrentLevel { get; private set; } = 1;
     public BossEncounterData CurrentBossData { get; private set; }
 
-    // 구형 싱글톤 보일러플레이트 제거 (Instance/Awake는 베이스가 처리)
+    private void Awake()
+    {
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        Instance = this;
+        DontDestroyOnLoad(gameObject); // 런(Run) 유지용 (scPath 등 전환 시 생존)
+        SceneManager.sceneLoaded += OnSceneLoaded; // 복귀 감지용 구독
+    }
+
+    // 타이틀/로비 복귀 시 런 초기화(자폭)
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (scene.name == "scTitle uicreate Main" || scene.name == "scLobby")
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    private void OnDestroy()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded; // 핸들러 누수 방지
+    }
 
     // 로비에서 레디가 끝나면 호출됨
     public void StartFirstLevel(NetworkRunner runner)
