@@ -732,11 +732,11 @@ MonoBehaviour:
     maxDistance: 0
   - category: 5
     volumeMultiplier: 1
-    minDistance: 3
-    maxDistance: 30
+    minDistance: 20
+    maxDistance: 100
   - category: 6
     volumeMultiplier: 1
-    minDistance: 30
+    minDistance: 20
     maxDistance: 100
   sfxPoolSize: 20
 --- !u!4 &516942650
