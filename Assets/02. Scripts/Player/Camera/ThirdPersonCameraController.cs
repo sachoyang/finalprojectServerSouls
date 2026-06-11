@@ -13,8 +13,21 @@ public class ThirdPersonCameraController : MonoBehaviour
     [SerializeField] private float maxDistance = 6f;
     [SerializeField] private float zoomSpeed = 2f;
 
+    [Header("Collision")]
+    [SerializeField] private LayerMask obstructionLayers = ~0;
+    [SerializeField] private float collisionOffset = 0.15f;
+    [SerializeField] private float collisionFocusOffset = 0.45f;
+    [SerializeField] private float minCollisionDistance = 1.6f;
+    [SerializeField] private float collisionSmoothTime = 0.06f;
+    [SerializeField] private float collisionReturnSmoothTime = 0.18f;
+    [SerializeField] private float collisionReturnDelay = 0.12f;
+    [SerializeField] private bool boostRotationWhenObstructed = true;
+    [SerializeField] private float maxObstructedRotationBoost = 1.8f;
+
     [Header("Rotation")]
-    [SerializeField] private float mouseSensitivity = 180f;
+    [SerializeField] private float mouseSensitivity = 4f;
+    [SerializeField] private float maxMouseDelta = 8f;
+    [SerializeField] private float startPitch = 15f;
     [SerializeField] private float minPitch = -20f;
     [SerializeField] private float maxPitch = 65f;
 
@@ -22,6 +35,7 @@ public class ThirdPersonCameraController : MonoBehaviour
     [SerializeField] private float positionSmoothTime = 0.08f;
     [SerializeField] private float rotationSmoothTime = 0.04f;
     [SerializeField] private float lockOnRotationSharpness = 14f;
+    [SerializeField] private bool alignBehindTargetOnStart = true;
     [SerializeField] private bool lockCursorOnStart = true;
 
     [Header("Lock On")]
@@ -39,6 +53,10 @@ public class ThirdPersonCameraController : MonoBehaviour
     private float _pitchVelocity;
     private Vector3 _currentVelocity;
     private Transform _lockOnTarget;
+    private bool _hasAlignedToTarget;
+    private float _currentCollisionDistance = -1f;
+    private float _collisionDistanceVelocity;
+    private float _lastCollisionTime = -999f;
 
     public Transform Target => target;
     public Vector3 TargetOffset => targetOffset;
@@ -56,6 +74,11 @@ public class ThirdPersonCameraController : MonoBehaviour
         _pitch = NormalizeAngle(currentEuler.x);
         _targetYaw = _yaw;
         _targetPitch = _pitch;
+
+        if (alignBehindTargetOnStart)
+        {
+            AlignBehindTarget(true);
+        }
 
         SetCursorLock(lockCursorOnStart);
     }
@@ -88,6 +111,10 @@ public class ThirdPersonCameraController : MonoBehaviour
     public void SetTarget(Transform newTarget)
     {
         target = newTarget;
+        if (alignBehindTargetOnStart && !_hasAlignedToTarget)
+        {
+            AlignBehindTarget(true);
+        }
     }
 
     public void SetLockOnTarget(Transform newTarget)
@@ -116,10 +143,59 @@ public class ThirdPersonCameraController : MonoBehaviour
 
         float mouseX = Input.GetAxisRaw("Mouse X");
         float mouseY = Input.GetAxisRaw("Mouse Y");
+        mouseX = Mathf.Clamp(mouseX, -maxMouseDelta, maxMouseDelta);
+        mouseY = Mathf.Clamp(mouseY, -maxMouseDelta, maxMouseDelta);
+        float sensitivityScale = GetObstructedRotationScale();
 
-        _targetYaw += mouseX * mouseSensitivity;
-        _targetPitch -= mouseY * mouseSensitivity;
+        _targetYaw += mouseX * mouseSensitivity * sensitivityScale;
+        _targetPitch -= mouseY * mouseSensitivity * sensitivityScale;
         _targetPitch = Mathf.Clamp(_targetPitch, minPitch, maxPitch);
+    }
+
+    private float GetObstructedRotationScale()
+    {
+        if (!boostRotationWhenObstructed || _currentCollisionDistance <= 0f || distance <= 0f)
+        {
+            return 1f;
+        }
+
+        float distanceRatio = distance / Mathf.Max(_currentCollisionDistance, minCollisionDistance);
+        return Mathf.Clamp(distanceRatio, 1f, maxObstructedRotationBoost);
+    }
+
+    private void AlignBehindTarget(bool snapPosition)
+    {
+        if (target == null)
+        {
+            return;
+        }
+
+        Vector3 targetForward = Vector3.ProjectOnPlane(target.forward, Vector3.up);
+        if (targetForward.sqrMagnitude < 0.0001f)
+        {
+            targetForward = Vector3.forward;
+        }
+
+        Quaternion targetRotation = Quaternion.LookRotation(targetForward.normalized, Vector3.up);
+        _yaw = targetRotation.eulerAngles.y;
+        _pitch = Mathf.Clamp(startPitch, minPitch, maxPitch);
+        _targetYaw = _yaw;
+        _targetPitch = _pitch;
+        _yawVelocity = 0f;
+        _pitchVelocity = 0f;
+        _currentVelocity = Vector3.zero;
+        _hasAlignedToTarget = true;
+
+        if (!snapPosition)
+        {
+            return;
+        }
+
+        Quaternion rotation = Quaternion.Euler(_pitch, _yaw, 0f);
+        Vector3 focusPoint = target.position + targetOffset;
+        Vector3 desiredPosition = focusPoint - rotation * Vector3.forward * distance;
+        transform.position = ResolveCameraCollision(focusPoint, desiredPosition);
+        transform.rotation = rotation;
     }
 
     private void UpdateZoom()
@@ -142,6 +218,7 @@ public class ThirdPersonCameraController : MonoBehaviour
         Quaternion rotation = Quaternion.Euler(_pitch, _yaw, 0f);
         Vector3 focusPoint = target.position + targetOffset;
         Vector3 desiredPosition = focusPoint - rotation * Vector3.forward * distance;
+        desiredPosition = ResolveCameraCollision(focusPoint, desiredPosition);
 
         transform.position = Vector3.SmoothDamp(
             transform.position,
@@ -171,6 +248,7 @@ public class ThirdPersonCameraController : MonoBehaviour
         flatToLock.Normalize();
         Vector3 desiredPosition = focusPoint - flatToLock * distance + Vector3.up * lockOnHeight;
         desiredPosition = KeepClearOfLockOnTarget(desiredPosition, lockPoint, flatToLock);
+        desiredPosition = ResolveCameraCollision(focusPoint, desiredPosition);
 
         transform.position = Vector3.SmoothDamp(
             transform.position,
@@ -216,6 +294,58 @@ public class ThirdPersonCameraController : MonoBehaviour
         Vector3 clearedPosition = lockPoint + pushDirection * lockOnTargetClearance;
         clearedPosition.y = desiredPosition.y;
         return clearedPosition;
+    }
+
+    private Vector3 ResolveCameraCollision(Vector3 focusPoint, Vector3 desiredPosition)
+    {
+        Vector3 toCamera = desiredPosition - focusPoint;
+        float desiredDistance = toCamera.magnitude;
+        if (desiredDistance <= 0.0001f)
+        {
+            return desiredPosition;
+        }
+
+        Vector3 direction = toCamera / desiredDistance;
+        Vector3 castOrigin = focusPoint + direction * collisionFocusOffset;
+        float castDistance = Mathf.Max(0f, desiredDistance - collisionFocusOffset);
+        float targetDistance = desiredDistance;
+        RaycastHit hit = default;
+        bool hasObstruction = castDistance > 0.0001f && Physics.Raycast(
+                castOrigin,
+                direction,
+                out hit,
+                castDistance,
+                obstructionLayers,
+                QueryTriggerInteraction.Ignore);
+
+        if (hasObstruction)
+        {
+            targetDistance = Mathf.Max(minCollisionDistance, collisionFocusOffset + hit.distance - collisionOffset);
+            _lastCollisionTime = Time.time;
+        }
+        else if (_currentCollisionDistance > 0f &&
+                 _currentCollisionDistance < desiredDistance &&
+                 Time.time - _lastCollisionTime < collisionReturnDelay)
+        {
+            targetDistance = _currentCollisionDistance;
+        }
+
+        if (_currentCollisionDistance < 0f)
+        {
+            _currentCollisionDistance = targetDistance;
+        }
+
+        float smoothTime = targetDistance < _currentCollisionDistance
+            ? collisionSmoothTime
+            : collisionReturnSmoothTime;
+
+        _currentCollisionDistance = Mathf.SmoothDamp(
+            _currentCollisionDistance,
+            targetDistance,
+            ref _collisionDistanceVelocity,
+            smoothTime);
+
+        return focusPoint + direction * _currentCollisionDistance;
     }
 
     private Quaternion GetClampedLockOnRotation(Vector3 lookDirection)
