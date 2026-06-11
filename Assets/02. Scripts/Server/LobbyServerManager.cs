@@ -24,6 +24,10 @@ public class LobbyServerManager : NetworkBehaviour
     [Tooltip("자신이 누구인지 알려주는 'YOU' 인디케이터 오브젝트")]
     public GameObject[] youIndicators;
 
+    [Header("Player Name UI")]
+    [Tooltip("모든 유저에게 보여질 닉네임 텍스트")]
+    public Text[] nicknameTexts;
+
     [Header("Ready State UI (Global)")]
     public Button battleButton;
     public Text warningMessageText;
@@ -53,6 +57,10 @@ public class LobbyServerManager : NetworkBehaviour
     [Networked] public NetworkBool Slot1_Ready { get; set; }
     [Networked] public NetworkBool Slot2_Ready { get; set; }
 
+    [Networked, Capacity(32)] public string Slot0_Nickname { get; set; }
+    [Networked, Capacity(32)] public string Slot1_Nickname { get; set; }
+    [Networked, Capacity(32)] public string Slot2_Nickname { get; set; }
+
     private void Start()
     {
         ShowLobbyCharacters();
@@ -75,18 +83,21 @@ public class LobbyServerManager : NetworkBehaviour
         {
             Slot0_Owner = PlayerRef.None;
             Slot0_Ready = false;
+            Slot0_Nickname = "";
         }
 
         if (Slot1_Owner != PlayerRef.None && !Runner.ActivePlayers.Contains(Slot1_Owner))
         {
             Slot1_Owner = PlayerRef.None;
             Slot1_Ready = false;
+            Slot1_Nickname = "";
         }
 
         if (Slot2_Owner != PlayerRef.None && !Runner.ActivePlayers.Contains(Slot2_Owner))
         {
             Slot2_Owner = PlayerRef.None;
             Slot2_Ready = false;
+            Slot2_Nickname = "";
         }
 
         foreach (var player in Runner.ActivePlayers)
@@ -124,6 +135,9 @@ public class LobbyServerManager : NetworkBehaviour
                 case nameof(Slot0_Owner):
                 case nameof(Slot1_Owner):
                 case nameof(Slot2_Owner):
+                case nameof(Slot0_Nickname):
+                case nameof(Slot1_Nickname):
+                case nameof(Slot2_Nickname):
                     RefreshLobbyUI();
                     break;
             }
@@ -142,6 +156,14 @@ public class LobbyServerManager : NetworkBehaviour
 
         if (hasP0)
         {
+            if (Slot0_Owner == Runner.LocalPlayer && Slot0_Nickname != BackendManager.Instance.CurrentNickname)
+            {
+                RPC_SetNickname(0, BackendManager.Instance.CurrentNickname);
+            }
+
+            if (nicknameTexts != null && nicknameTexts.Length > 0 && nicknameTexts[0] != null)
+                nicknameTexts[0].text = string.IsNullOrEmpty(Slot0_Nickname) ? "Loading..." : Slot0_Nickname;
+
             if (readyTexts != null && readyTexts.Length > 0 && readyTexts[0] != null)
                 readyTexts[0].text = Slot0_Ready ? "Ready!" : "Ready";
 
@@ -161,6 +183,14 @@ public class LobbyServerManager : NetworkBehaviour
 
         if (hasP1)
         {
+            if (Slot1_Owner == Runner.LocalPlayer && Slot1_Nickname != BackendManager.Instance.CurrentNickname)
+            {
+                RPC_SetNickname(1, BackendManager.Instance.CurrentNickname);
+            }
+
+            if (nicknameTexts != null && nicknameTexts.Length > 1 && nicknameTexts[1] != null)
+                nicknameTexts[1].text = string.IsNullOrEmpty(Slot1_Nickname) ? "Loading..." : Slot1_Nickname;
+
             if (readyTexts != null && readyTexts.Length > 1 && readyTexts[1] != null)
                 readyTexts[1].text = Slot1_Ready ? "Ready!" : "Ready";
 
@@ -180,6 +210,14 @@ public class LobbyServerManager : NetworkBehaviour
 
         if (hasP2)
         {
+            if (Slot2_Owner == Runner.LocalPlayer && Slot2_Nickname != BackendManager.Instance.CurrentNickname)
+            {
+                RPC_SetNickname(2, BackendManager.Instance.CurrentNickname);
+            }
+
+            if (nicknameTexts != null && nicknameTexts.Length > 2 && nicknameTexts[2] != null)
+                nicknameTexts[2].text = string.IsNullOrEmpty(Slot2_Nickname) ? "Loading..." : Slot2_Nickname;
+
             if (readyTexts != null && readyTexts.Length > 2 && readyTexts[2] != null)
                 readyTexts[2].text = Slot2_Ready ? "Ready!" : "Ready";
 
@@ -246,6 +284,14 @@ public class LobbyServerManager : NetworkBehaviour
         if (slotIndex == 0) Slot0_Ready = nextReadyState;
         if (slotIndex == 1) Slot1_Ready = nextReadyState;
         if (slotIndex == 2) Slot2_Ready = nextReadyState;
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    private void RPC_SetNickname(int slotIndex, string nickname)
+    {
+        if (slotIndex == 0) Slot0_Nickname = nickname;
+        if (slotIndex == 1) Slot1_Nickname = nickname;
+        if (slotIndex == 2) Slot2_Nickname = nickname;
     }
 
     public void OnClickBattleButton()
