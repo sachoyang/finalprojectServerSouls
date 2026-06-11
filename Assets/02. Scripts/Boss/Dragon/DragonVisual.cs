@@ -30,6 +30,10 @@ public class DragonVisual : MonoBehaviour, IBossVisual
     public AudioClip dieSound;            // (필요시 추가)
     public AudioClip walkSound;
 
+    [Header("2페이즈 전용 테마곡")]
+    [Tooltip("변신 연출이 시작될 때 재생되며, 기존 맵 BGM과 크로스페이드 됩니다.")]
+    public AudioClip phase2ThemeBGM;
+
     private void Awake()
     {
         if (anim == null)
@@ -65,6 +69,12 @@ public class DragonVisual : MonoBehaviour, IBossVisual
         if (wakeUpAndPhaseSound != null)
         {
             SoundManager.Instance.PlaySFX_3D(wakeUpAndPhaseSound, transform.position, SoundCategory.BossGimmick, 1f, 1f);
+        }
+
+        if (phase2ThemeBGM != null && SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlayBGM(phase2ThemeBGM);
+            Debug.Log("[Visual] 2페이즈 돌입! 2페이즈 전용 테마곡으로 브금을 교체합니다.");
         }
     }
 

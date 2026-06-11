@@ -20,6 +20,10 @@ public class RewardManager : MonoBehaviour
     [SerializeField] private float chestOpenDelay = 0.25f;
     [SerializeField] private float chestOpenFallbackDuration = 1.5f;
 
+    [Header("Sound")]
+    [Tooltip("보스가 죽었을 때 재생할 승리/보상 테마곡")]
+    [SerializeField] private AudioClip rewardBGM;
+
     [Header("Reward Selection Phase")]
     [SerializeField] private GameObject distortionAllProperties;
     [SerializeField] private RewardDistortionTrigger distortionTrigger;
@@ -75,6 +79,12 @@ public class RewardManager : MonoBehaviour
             yield return new WaitForSeconds(bossDeathDelay);
         }
 
+        if (rewardBGM != null && SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlayBGM(rewardBGM);
+            Debug.Log("[RewardManager] 보스 처치! 보상 BGM으로 교체합니다.");
+        }
+        
         Transform spawnPoint = goldChestSpawnPoint != null ? goldChestSpawnPoint : transform;
         _spawnedChest = SpawnGoldChest(spawnPoint);
 
