@@ -117,6 +117,7 @@ public class HUDManager : MonoBehaviour
             return;
 
         PlayerHUDData hudData = playerStats.GetHUDData();
+
         playerHUDView.SetHp(hudData.CurrentHealth, hudData.MaxHealth);
         playerHUDView.SetSp(hudData.CurrentStamina, hudData.MaxStamina);
 
@@ -238,9 +239,9 @@ public class HUDManager : MonoBehaviour
     private List<PartyMemberRuntimeData> FindPartyMemberRuntimeData()
     {
         List<PartyMemberRuntimeData> partyMembers = new List<PartyMemberRuntimeData>();
-        IReadOnlyList<NetworkPlayerController> players = PlayerRegistry.All;
+        NetworkPlayerController[] players = FindObjectsOfType<NetworkPlayerController>();
 
-        for (int i = 0; i < players.Count; i++)
+        for (int i = 0; i < players.Length; i++)
         {
             NetworkPlayerController player = players[i];
 
@@ -268,8 +269,7 @@ public class HUDManager : MonoBehaviour
                 hudData.IsDead,
                 false);
 
-            PlayerAbilityInventory partyInventory = player.GetComponent<PlayerAbilityInventory>();
-            List<PartyMemberSkillUIData> skills = BuildPartyMemberSkillUIData(partyInventory);
+            List<PartyMemberSkillUIData> skills = BuildPartyMemberSkillUIData(player);
 
             partyMembers.Add(new PartyMemberRuntimeData(uiData, skills));
         }
@@ -277,14 +277,39 @@ public class HUDManager : MonoBehaviour
         return partyMembers;
     }
 
-    private List<PartyMemberSkillUIData> BuildPartyMemberSkillUIData(PlayerAbilityInventory partyInventory)
+    private List<PartyMemberSkillUIData> BuildPartyMemberSkillUIData(NetworkPlayerController player)
     {
         List<PartyMemberSkillUIData> skills = new List<PartyMemberSkillUIData>();
 
-        if (partyInventory == null)
+        if (player == null)
             return skills;
 
-        IReadOnlyList<PlayerAbilityModule> equippedModules = partyInventory.EquippedModules;
+        PlayerAbilityInventory inventory = player.GetComponent<PlayerAbilityInventory>();
+        NetworkPlayerData playerData = player.GetComponent<NetworkPlayerData>();
+
+        if (inventory == null)
+            return skills;
+
+        if (playerData != null)
+        {
+            for (int i = 0; i < playerData.SavedAbilityCount; i++)
+            {
+                string abilityId = playerData.GetAbilityId(i);
+                PlayerAbilityModule module = inventory.FindModuleById(abilityId);
+
+                if (module == null || module.Icon == null)
+                    continue;
+
+                skills.Add(new PartyMemberSkillUIData(
+                    module.DisplayName,
+                    module.Icon,
+                    module.IsActive));
+            }
+
+            return skills;
+        }
+
+        IReadOnlyList<PlayerAbilityModule> equippedModules = inventory.EquippedModules;
 
         for (int i = 0; i < equippedModules.Count; i++)
         {
@@ -346,7 +371,15 @@ public class HUDManager : MonoBehaviour
 
     private NetworkPlayerController FindLocalPlayerController()
     {
-        return PlayerRegistry.LocalPlayer;
+        NetworkPlayerController[] players = FindObjectsOfType<NetworkPlayerController>();
+
+        for (int i = 0; i < players.Length; i++)
+        {
+            if (players[i] != null && players[i].Object != null && players[i].Object.HasInputAuthority)
+                return players[i];
+        }
+
+        return null;
     }
 
     private readonly struct PartyMemberRuntimeData
