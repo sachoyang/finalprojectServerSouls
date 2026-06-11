@@ -75,7 +75,7 @@ public static class PlayerSessionStore
             }
 
             PlayerStats stats = playerObject.GetComponent<PlayerStats>();
-            if (stats == null)
+            if (stats == null || !stats.IsSpawnedReady)
             {
                 continue;
             }

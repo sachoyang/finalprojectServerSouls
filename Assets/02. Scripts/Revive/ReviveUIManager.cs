@@ -57,12 +57,16 @@ public class ReviveUIManager : MonoBehaviour
 
     private void RefreshIndicators()
     {
-        PlayerStats[] statsList = FindObjectsOfType<PlayerStats>();
+        IReadOnlyList<NetworkPlayerController> players = PlayerRegistry.All;
 
-        for (int i = 0; i < statsList.Length; i++)
+        for (int i = 0; i < players.Count; i++)
         {
-            PlayerStats stats = statsList[i];
-            if (stats == null || !stats.IsDead || ShouldHide(stats))
+            NetworkPlayerController player = players[i];
+            if (player == null)
+                continue;
+
+            PlayerStats stats = player.GetComponent<PlayerStats>();
+            if (stats == null || !stats.IsSpawnedReady || !stats.IsDead || ShouldHide(player))
                 continue;
 
             if (indicators.ContainsKey(stats))
@@ -76,7 +80,8 @@ public class ReviveUIManager : MonoBehaviour
         foreach (KeyValuePair<PlayerStats, ReviveScreenIndicator> pair in indicators)
         {
             PlayerStats stats = pair.Key;
-            if (stats == null || !stats.IsDead || ShouldHide(stats))
+            NetworkPlayerController player = stats != null ? stats.GetComponent<NetworkPlayerController>() : null;
+            if (stats == null || !stats.IsSpawnedReady || !stats.IsDead || ShouldHide(player))
                 removeBuffer.Add(stats);
         }
 
@@ -84,12 +89,11 @@ public class ReviveUIManager : MonoBehaviour
             RemoveIndicator(removeBuffer[i]);
     }
 
-    private bool ShouldHide(PlayerStats stats)
+    private bool ShouldHide(NetworkPlayerController controller)
     {
         if (!hideLocalPlayerReviveUI)
             return false;
 
-        NetworkPlayerController controller = stats.GetComponent<NetworkPlayerController>();
         return controller != null && controller.Object != null && controller.Object.HasInputAuthority;
     }
 

@@ -190,14 +190,6 @@ public class InventoryPanelController : MonoBehaviour
 
     private NetworkPlayerController FindLocalPlayerController()
     {
-        NetworkPlayerController[] players = FindObjectsOfType<NetworkPlayerController>();
-
-        for (int i = 0; i < players.Length; i++)
-        {
-            if (players[i] != null && players[i].Object != null && players[i].Object.HasInputAuthority)
-                return players[i];
-        }
-
-        return null;
+        return PlayerRegistry.LocalPlayer;
     }
 }

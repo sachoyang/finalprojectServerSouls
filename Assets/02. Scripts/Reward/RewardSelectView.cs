@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Fusion;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -259,15 +258,8 @@ public class RewardSelectView : MonoBehaviour
 
     private static PlayerAbilityRewardController FindLocalRewardController()
     {
-        PlayerAbilityRewardController[] rewardControllers = FindObjectsOfType<PlayerAbilityRewardController>(true);
-        foreach (PlayerAbilityRewardController controller in rewardControllers)
-        {
-            NetworkObject networkObject = controller.GetComponent<NetworkObject>();
-            if (networkObject == null || networkObject.HasInputAuthority)
-                return controller;
-        }
-
-        return null;
+        NetworkPlayerController localPlayer = PlayerRegistry.LocalPlayer;
+        return localPlayer != null ? localPlayer.GetComponent<PlayerAbilityRewardController>() : null;
     }
 
     private void SetConfirmButtonState(bool hasSelectedCard)
