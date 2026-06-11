@@ -11,4 +11,8 @@ public class BossEncounterData : ScriptableObject
 
     [Tooltip("이 보스가 등장할 씬(맵)의 정확한 이름 (예: scVolcano)")]
     public string sceneName = "scLevel"; 
+
+    [Header("사운드 트랙")]
+    [Tooltip("보스방 진입 시 재생될 1페이즈 BGM")]
+    public AudioClip stageMainBGM;
 }

@@ -51,7 +51,15 @@ public class SoundManager : MonoSingleton<SoundManager>
     [Header("오브젝트 풀 설정")]
     public int sfxPoolSize = 20;
 
-    private AudioSource _bgmSource;
+    [Header("BGM 설정")]
+    [Tooltip("BGM이 자연스럽게 교차되는 시간(초)")]
+    public float bgmCrossfadeDuration = 1.5f;
+
+    private AudioSource _bgmSourceA;
+    private AudioSource _bgmSourceB;
+    private AudioSource _activeBgmSource; 
+    private Coroutine _crossfadeCoroutine;
+
     private List<AudioSource> _sfxSources = new List<AudioSource>();
 
     protected override void Awake()
@@ -72,12 +80,22 @@ public class SoundManager : MonoSingleton<SoundManager>
 
     private void InitializeSoundManager()
     {
-        GameObject bgmObject = new GameObject("BGM_Player");
-        bgmObject.transform.SetParent(transform);
-        _bgmSource = bgmObject.AddComponent<AudioSource>();
-        _bgmSource.loop = true;
-        _bgmSource.spatialBlend = 0f;
-        _bgmSource.outputAudioMixerGroup = bgmMixerGroup;
+        // 🔥 BGM 스피커를 2개로 복제해서 달아줍니다.
+        GameObject bgmObjectA = new GameObject("BGM_Player_A");
+        bgmObjectA.transform.SetParent(transform);
+        _bgmSourceA = bgmObjectA.AddComponent<AudioSource>();
+        _bgmSourceA.loop = true;
+        _bgmSourceA.spatialBlend = 0f;
+        _bgmSourceA.outputAudioMixerGroup = bgmMixerGroup;
+
+        GameObject bgmObjectB = new GameObject("BGM_Player_B");
+        bgmObjectB.transform.SetParent(transform);
+        _bgmSourceB = bgmObjectB.AddComponent<AudioSource>();
+        _bgmSourceB.loop = true;
+        _bgmSourceB.spatialBlend = 0f;
+        _bgmSourceB.outputAudioMixerGroup = bgmMixerGroup;
+
+        _activeBgmSource = _bgmSourceA;
 
         GameObject sfxParent = new GameObject("SFX_Pool");
         sfxParent.transform.SetParent(transform);
@@ -109,39 +127,63 @@ public class SoundManager : MonoSingleton<SoundManager>
     }
 
     // ==========================================
-    // 🎵 BGM 재생
+    // 🎵 BGM 재생 (크로스페이드 적용!)
     // ==========================================
     public void PlayBGM(AudioClip clip, float baseVolume = 1.0f, float delay = 0f)
     {
         if (clip == null) return;
 
-        // 딜레이가 있다면 코루틴으로 예약!
-        if (delay > 0f)
-        {
-            StartCoroutine(CoPlayBGM(clip, baseVolume, delay));
-            return;
-        }
+        // 같은 노래면 굳이 다시 틀지 않음
+        if (_activeBgmSource.clip == clip && _activeBgmSource.isPlaying) return;
 
-        if (_bgmSource.clip == clip && _bgmSource.isPlaying) return;
+        if (_crossfadeCoroutine != null) StopCoroutine(_crossfadeCoroutine);
 
-        SoundCategorySetting setting = GetCategorySetting(SoundCategory.BGM);
-
-        _bgmSource.clip = clip;
-        _bgmSource.volume = baseVolume * setting.volumeMultiplier; // 그룹 볼륨 적용!
-        _bgmSource.Play();
+        _crossfadeCoroutine = StartCoroutine(CrossfadeRoutine(clip, baseVolume, delay));
     }
 
-    private IEnumerator CoPlayBGM(AudioClip clip, float baseVolume, float delay)
+    private IEnumerator CrossfadeRoutine(AudioClip newClip, float baseVolume, float delay)
     {
-        yield return new WaitForSeconds(delay);
-        PlayBGM(clip, baseVolume, 0f); // 시간 지나면 즉시 재생 함수 다시 호출
+        if (delay > 0f) yield return new WaitForSeconds(delay);
+
+        SoundCategorySetting setting = GetCategorySetting(SoundCategory.BGM);
+        float targetVolume = baseVolume * setting.volumeMultiplier;
+
+        // 교대할 스피커 지정
+        AudioSource fadeOutSource = _activeBgmSource;
+        AudioSource fadeInSource = (_activeBgmSource == _bgmSourceA) ? _bgmSourceB : _bgmSourceA;
+
+        fadeInSource.clip = newClip;
+        fadeInSource.volume = 0f; // 볼륨 0부터 시작
+        fadeInSource.Play();
+
+        _activeBgmSource = fadeInSource; 
+
+        // 서서히 볼륨 교차
+        float timer = 0f;
+        float startVolumeFadeOut = fadeOutSource.volume;
+
+        while (timer < bgmCrossfadeDuration)
+        {
+            timer += Time.deltaTime;
+            float t = timer / bgmCrossfadeDuration;
+
+            fadeOutSource.volume = Mathf.Lerp(startVolumeFadeOut, 0f, t);
+            fadeInSource.volume = Mathf.Lerp(0f, targetVolume, t);
+
+            yield return null;
+        }
+
+        fadeOutSource.Stop();
+        fadeOutSource.volume = 0f;
+        fadeInSource.volume = targetVolume;
     }
 
     public void StopBGM()
     {
-        _bgmSource.Stop();
+        if (_crossfadeCoroutine != null) StopCoroutine(_crossfadeCoroutine);
+        _bgmSourceA.Stop();
+        _bgmSourceB.Stop();
     }
-
     // ==========================================
     // 🔊 2D 사운드 재생 (카테고리 필수 입력)
     // ==========================================

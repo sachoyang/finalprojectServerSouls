@@ -54,6 +54,12 @@ public class GameProgressionManager : MonoBehaviour // 런(Run) 동안 유지되
 
         Debug.Log($"=== [통제실] {CurrentLevel}층 진입! 출현 보스: {CurrentBossData.bossName}, 맵: {CurrentBossData.sceneName} ===");
 
+        // 🔥 [추가됨] 뽑힌 보스의 테마곡(BGM)을 SoundManager에게 재생하라고 넘겨줌!
+        if (CurrentBossData.stageMainBGM != null && SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlayBGM(CurrentBossData.stageMainBGM);
+        }
+
         // 2. 뽑힌 보스의 전용 맵(씬)으로 플레이어 전원 강제 이동!
         runner.LoadScene(CurrentBossData.sceneName, UnityEngine.SceneManagement.LoadSceneMode.Single);
     }
@@ -78,6 +84,12 @@ public class GameProgressionManager : MonoBehaviour // 런(Run) 동안 유지되
         CurrentLevel = level;
         CurrentBossData = bossData;
         Debug.Log($"[GameProgressionManager] (디버그) Level={level}, Boss={(bossData != null ? bossData.bossName : "없음")} 세팅");
+
+        // 디버그 모드로 바로 진입해도 해당 보스의 BGM을 틀어줍니다!
+        if (CurrentBossData != null && CurrentBossData.stageMainBGM != null && SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlayBGM(CurrentBossData.stageMainBGM);
+        }
     }
     // ▲▲▲ 디버그 전용 끝 ▲▲▲
 }
