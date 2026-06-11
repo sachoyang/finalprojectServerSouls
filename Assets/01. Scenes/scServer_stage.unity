@@ -1326,11 +1326,13 @@ MonoBehaviour:
   minDistance: 2
   maxDistance: 6
   zoomSpeed: 2
-  mouseSensitivity: 180
+  mouseSensitivity: 3
   minPitch: -20
   maxPitch: 65
-  positionSmoothTime: 0.08
-  lockCursorOnStart: 0
+  positionSmoothTime: 0
+  rotationSmoothTime: 0.04
+  lockOnRotationSharpness: 14
+  lockCursorOnStart: 1
   lockOnTargetOffset: {x: 0, y: 0.2, z: 0}
   lockOnHeight: 1.2
   lockOnTargetClearance: 2.5

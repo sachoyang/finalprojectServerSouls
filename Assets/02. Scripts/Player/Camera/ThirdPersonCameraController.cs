@@ -20,6 +20,8 @@ public class ThirdPersonCameraController : MonoBehaviour
 
     [Header("Smoothing")]
     [SerializeField] private float positionSmoothTime = 0.08f;
+    [SerializeField] private float rotationSmoothTime = 0.04f;
+    [SerializeField] private float lockOnRotationSharpness = 14f;
     [SerializeField] private bool lockCursorOnStart = true;
 
     [Header("Lock On")]
@@ -31,6 +33,10 @@ public class ThirdPersonCameraController : MonoBehaviour
 
     private float _yaw;
     private float _pitch = 15f;
+    private float _targetYaw;
+    private float _targetPitch = 15f;
+    private float _yawVelocity;
+    private float _pitchVelocity;
     private Vector3 _currentVelocity;
     private Transform _lockOnTarget;
 
@@ -48,6 +54,8 @@ public class ThirdPersonCameraController : MonoBehaviour
         Vector3 currentEuler = transform.eulerAngles;
         _yaw = currentEuler.y;
         _pitch = NormalizeAngle(currentEuler.x);
+        _targetYaw = _yaw;
+        _targetPitch = _pitch;
 
         SetCursorLock(lockCursorOnStart);
     }
@@ -93,6 +101,10 @@ public class ThirdPersonCameraController : MonoBehaviour
         Vector3 currentEuler = transform.eulerAngles;
         _yaw = currentEuler.y;
         _pitch = NormalizeAngle(currentEuler.x);
+        _targetYaw = _yaw;
+        _targetPitch = _pitch;
+        _yawVelocity = 0f;
+        _pitchVelocity = 0f;
     }
 
     private void UpdateRotation()
@@ -102,12 +114,12 @@ public class ThirdPersonCameraController : MonoBehaviour
             return;
         }
 
-        float mouseX = Input.GetAxis("Mouse X");
-        float mouseY = Input.GetAxis("Mouse Y");
+        float mouseX = Input.GetAxisRaw("Mouse X");
+        float mouseY = Input.GetAxisRaw("Mouse Y");
 
-        _yaw += mouseX * mouseSensitivity * Time.deltaTime;
-        _pitch -= mouseY * mouseSensitivity * Time.deltaTime;
-        _pitch = Mathf.Clamp(_pitch, minPitch, maxPitch);
+        _targetYaw += mouseX * mouseSensitivity;
+        _targetPitch -= mouseY * mouseSensitivity;
+        _targetPitch = Mathf.Clamp(_targetPitch, minPitch, maxPitch);
     }
 
     private void UpdateZoom()
@@ -124,6 +136,9 @@ public class ThirdPersonCameraController : MonoBehaviour
 
     private void UpdatePosition()
     {
+        _yaw = Mathf.SmoothDampAngle(_yaw, _targetYaw, ref _yawVelocity, rotationSmoothTime);
+        _pitch = Mathf.SmoothDampAngle(_pitch, _targetPitch, ref _pitchVelocity, rotationSmoothTime);
+
         Quaternion rotation = Quaternion.Euler(_pitch, _yaw, 0f);
         Vector3 focusPoint = target.position + targetOffset;
         Vector3 desiredPosition = focusPoint - rotation * Vector3.forward * distance;
@@ -166,10 +181,15 @@ public class ThirdPersonCameraController : MonoBehaviour
         Vector3 lookDirection = lockPoint - transform.position;
         if (lookDirection.sqrMagnitude > 0.0001f)
         {
-            transform.rotation = GetClampedLockOnRotation(lookDirection);
+            Quaternion targetRotation = GetClampedLockOnRotation(lookDirection);
+            float rotationLerp = 1f - Mathf.Exp(-lockOnRotationSharpness * Time.deltaTime);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationLerp);
+
             Vector3 currentEuler = transform.eulerAngles;
             _yaw = currentEuler.y;
             _pitch = NormalizeAngle(currentEuler.x);
+            _targetYaw = _yaw;
+            _targetPitch = _pitch;
         }
     }
 
