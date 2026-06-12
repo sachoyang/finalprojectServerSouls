@@ -21,8 +21,10 @@ public partial class NetworkPlayerController
         }
 
         Vector3 moveDirection = desiredMove.sqrMagnitude > 0.001f ? desiredMove.normalized : Vector3.zero;
+        CurrentMoveSpeed = moveDirection.sqrMagnitude > 0.001f ? crawlSpeed * GetMoveSpeedMultiplier() : 0f;
+        MoveSpeedBlendNetworked = 0f;
         ApplyMovement(moveDirection, crawlSpeed * GetMoveSpeedMultiplier(), Vector3.zero);
-        UpdateMovementState(moveDirection.sqrMagnitude > 0.001f, false, LockMoveIdle);
+        UpdateMovementState(moveDirection.sqrMagnitude > 0.001f, false, LockMoveIdle, 0f);
         WasShiftHeld = false;
         ShiftHoldTime = 0f;
     }
@@ -85,19 +87,24 @@ public partial class NetworkPlayerController
             return isRunning ? LockMoveRunRight : LockMoveRight;
         }
 
-        return forwardDot >= 0f ? LockMoveForward : LockMoveBack;
+        if (forwardDot >= 0f)
+        {
+            return isRunning ? LockMoveRunForward : LockMoveForward;
+        }
+
+        return isRunning ? LockMoveRunBack : LockMoveBack;
     }
 
     private void UpdateLockOnAnimatorParameters(bool lockOnMovement, byte lockMove)
     {
         // 락온 이동 코드를 2D 블렌드 트리 좌표로 넘긴다.
         Vector2 blend = lockOnMovement ? GetLockOnBlend(lockMove) : Vector2.zero;
-        float speed = lockOnMovement && (lockMove == LockMoveRunLeft || lockMove == LockMoveRunRight) ? 2f : blend.magnitude;
+        float speed = lockOnMovement ? blend.magnitude : 0f;
 
         animator.SetBool(IsLockOn, lockOnMovement);
-        animator.SetFloat(LockMoveX, blend.x);
-        animator.SetFloat(LockMoveY, blend.y);
-        animator.SetFloat(LockMoveSpeed, speed);
+        animator.SetFloat(LockMoveX, blend.x, 0.12f, Time.deltaTime);
+        animator.SetFloat(LockMoveY, blend.y, 0.12f, Time.deltaTime);
+        animator.SetFloat(LockMoveSpeed, speed, 0.12f, Time.deltaTime);
     }
 
     private static Vector2 GetLockOnBlend(byte lockMove)
@@ -110,8 +117,104 @@ public partial class NetworkPlayerController
             LockMoveRight => new Vector2(1f, 0f),
             LockMoveRunLeft => new Vector2(-2f, 0f),
             LockMoveRunRight => new Vector2(2f, 0f),
+            LockMoveRunForward => new Vector2(0f, 2f),
+            LockMoveRunBack => new Vector2(0f, -2f),
             _ => Vector2.zero
         };
+    }
+
+    private bool TryStartTurnAnimation(Vector3 moveDirection, Vector3 facingDirection, bool isRunning, bool isBusy, float currentSpeed, float moveSpeedMultiplier)
+    {
+        if (isBusy ||
+            IsTurnAnimationActive() ||
+            moveDirection.sqrMagnitude <= 0.001f ||
+            !TurnAnimationCooldown.ExpiredOrNotRunning(Runner))
+        {
+            return false;
+        }
+
+        float requiredSpeed = (isRunning ? runSpeed : walkSpeed) * moveSpeedMultiplier * turnStartSpeedRatio;
+        if (currentSpeed < requiredSpeed)
+        {
+            return false;
+        }
+
+        Vector3 targetDirection = IsLockOnNetworked ? facingDirection : moveDirection;
+        if (targetDirection.sqrMagnitude <= 0.001f)
+        {
+            return false;
+        }
+
+        Vector3 currentForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
+        if (currentForward.sqrMagnitude <= 0.001f)
+        {
+            return false;
+        }
+
+        Vector3 flatTargetDirection = Vector3.ProjectOnPlane(targetDirection, Vector3.up).normalized;
+        float turnDot = Vector3.Dot(currentForward.normalized, flatTargetDirection);
+        if (turnDot > -0.72f)
+        {
+            return false;
+        }
+
+        bool fastTurn = isRunning && !IsLockOnNetworked;
+        TurnAnimationFast = fastTurn;
+        TurnTargetDirection = flatTargetDirection;
+        TurnNeedsFinalRotation = true;
+        UpdateTurnResumeState(moveDirection, isRunning);
+        TurnAnimationSequence++;
+        float turnDuration = fastTurn ? 0.52f : 0.72f;
+        TurnAnimationTimer = TickTimer.CreateFromSeconds(Runner, turnDuration);
+        TurnAnimationCooldown = TickTimer.CreateFromSeconds(Runner, turnDuration + turnAnimationCooldownPadding);
+        CurrentMoveSpeed = 0f;
+        MoveSpeedBlendNetworked = 0f;
+        _turnUsedRootMotionRotation = false;
+        ClearQueuedRootMotion();
+        return true;
+    }
+
+    private bool IsTurnAnimationActive()
+    {
+        return !TurnAnimationTimer.ExpiredOrNotRunning(Runner);
+    }
+
+    private void CompleteTurnAnimationIfNeeded()
+    {
+        if (!HasStateAuthority || !TurnNeedsFinalRotation || IsTurnAnimationActive())
+        {
+            return;
+        }
+
+        if (!_turnUsedRootMotionRotation && TurnTargetDirection.sqrMagnitude > 0.001f)
+        {
+            RotateTurnTowardsTarget(turnRootMotionFallbackRotationSpeed * Runner.DeltaTime);
+        }
+
+        ClearQueuedRootMotion();
+        _turnUsedRootMotionRotation = false;
+        TurnNeedsFinalRotation = false;
+        TurnTargetDirection = Vector3.zero;
+        CurrentMoveSpeed = TurnResumeCurrentSpeed;
+        MoveSpeedBlendNetworked = TurnResumeMoveSpeedBlend;
+        LockOnMoveNetworked = TurnResumeLockMove;
+    }
+
+    private void UpdateTurnResumeState(Vector3 desiredMove, bool isRunning)
+    {
+        if (desiredMove.sqrMagnitude <= 0.001f)
+        {
+            TurnResumeCurrentSpeed = 0f;
+            TurnResumeMoveSpeedBlend = 0f;
+            TurnResumeLockMove = LockMoveIdle;
+            return;
+        }
+
+        Vector3 moveDirection = desiredMove.normalized;
+        float moveSpeedMultiplier = GetMoveSpeedMultiplier();
+        TurnResumeCurrentSpeed = (isRunning ? runSpeed : walkSpeed) * moveSpeedMultiplier;
+        TurnResumeMoveSpeedBlend = IsLockOnNetworked ? 0f : GetNormalMoveBlendFromSpeed(TurnResumeCurrentSpeed, moveSpeedMultiplier);
+        TurnResumeLockMove = IsLockOnNetworked ? GetLockOnMoveCode(moveDirection, isRunning) : LockMoveIdle;
     }
 
     private bool IsInActionAnimation()
@@ -129,6 +232,36 @@ public partial class NetworkPlayerController
     private float GetMoveSpeedMultiplier()
     {
         return _statusController != null ? _statusController.GetMoveSpeedMultiplier() : 1f;
+    }
+
+    private float UpdateCurrentMoveSpeed(float targetSpeed, bool snap)
+    {
+        if (snap)
+        {
+            CurrentMoveSpeed = targetSpeed;
+            return CurrentMoveSpeed;
+        }
+
+        float rate = targetSpeed > CurrentMoveSpeed ? moveSpeedAcceleration : moveSpeedDeceleration;
+        CurrentMoveSpeed = Mathf.MoveTowards(CurrentMoveSpeed, targetSpeed, rate * Runner.DeltaTime);
+        return CurrentMoveSpeed;
+    }
+
+    private float GetNormalMoveBlendFromSpeed(float currentSpeed, float moveSpeedMultiplier)
+    {
+        if (currentSpeed <= 0.001f)
+        {
+            return 0f;
+        }
+
+        float scaledWalkSpeed = Mathf.Max(0.001f, walkSpeed * moveSpeedMultiplier);
+        float scaledRunSpeed = Mathf.Max(scaledWalkSpeed + 0.001f, runSpeed * moveSpeedMultiplier);
+        if (currentSpeed <= scaledWalkSpeed)
+        {
+            return Mathf.Lerp(0f, 0.5f, currentSpeed / scaledWalkSpeed);
+        }
+
+        return Mathf.Lerp(0.5f, 1f, Mathf.InverseLerp(scaledWalkSpeed, scaledRunSpeed, currentSpeed));
     }
 
     private void StartRoll(Vector3 desiredMove)
@@ -192,8 +325,16 @@ public partial class NetworkPlayerController
         // 이동 잠금 중에는 입력이 들어와도 서버 시뮬레이션에서 이동과 달리기 상태를 즉시 멈춘다.
         ClearComboRequests();
         StopHorizontalVelocity();
-        ApplyMovement(Vector3.zero, walkSpeed, Vector3.zero);
-        UpdateMovementState(false, false, LockMoveIdle);
+        CurrentMoveSpeed = 0f;
+        MoveSpeedBlendNetworked = 0f;
+        TurnNeedsFinalRotation = false;
+        TurnResumeCurrentSpeed = 0f;
+        TurnResumeMoveSpeedBlend = 0f;
+        TurnResumeLockMove = LockMoveIdle;
+        _turnUsedRootMotionRotation = false;
+        ClearQueuedRootMotion();
+        ApplyMovement(Vector3.zero, 0f, Vector3.zero);
+        UpdateMovementState(false, false, LockMoveIdle, 0f);
         WasShiftHeld = false;
         ShiftHoldTime = 0f;
     }
@@ -214,11 +355,12 @@ public partial class NetworkPlayerController
             rotateSpeed * Runner.DeltaTime);
     }
 
-    private void UpdateMovementState(bool isMoving, bool isRunning, byte lockMove)
+    private void UpdateMovementState(bool isMoving, bool isRunning, byte lockMove, float moveSpeedBlend)
     {
         IsMovingNetworked = isMoving;
         IsRunningNetworked = isRunning;
         LockOnMoveNetworked = lockMove;
+        MoveSpeedBlendNetworked = moveSpeedBlend;
     }
 
 }

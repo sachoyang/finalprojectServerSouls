@@ -21,6 +21,8 @@ public partial class NetworkPlayerController
 
     public override void FixedUpdateNetwork()
     {
+        CompleteTurnAnimationIfNeeded();
+
         if (HasControlLock(PlayerControlLockFlags.Movement))
         {
             StopForControlLock();
@@ -34,11 +36,53 @@ public partial class NetworkPlayerController
             return;
         }
 
+        if (IsTurnAnimationActive())
+        {
+            if (GetInput(out NetworkInputData turnData))
+            {
+                Vector3 turnDesiredMove = turnData.direction;
+                if (turnDesiredMove.sqrMagnitude > 1f)
+                {
+                    turnDesiredMove.Normalize();
+                }
+
+                bool turnShiftHeld = turnData.buttons.IsSet(NetworkInputData.SHIFT);
+                if (turnShiftHeld)
+                {
+                    ShiftHoldTime = WasShiftHeld ? ShiftHoldTime + Runner.DeltaTime : shiftHoldThreshold;
+                }
+                else
+                {
+                    ShiftHoldTime = 0f;
+                }
+
+                float turnRunStaminaCost = _playerStats != null ? _playerStats.RunStaminaPerSecond * Runner.DeltaTime : 0f;
+                bool resumeRun = turnDesiredMove.sqrMagnitude > 0.001f &&
+                                 turnShiftHeld &&
+                                 ShiftHoldTime >= shiftHoldThreshold &&
+                                 (_playerStats == null || _playerStats.HasStamina(turnRunStaminaCost));
+                UpdateTurnResumeState(turnDesiredMove, resumeRun);
+                WasShiftHeld = turnShiftHeld;
+            }
+            else
+            {
+                UpdateTurnResumeState(Vector3.zero, false);
+                WasShiftHeld = false;
+                ShiftHoldTime = 0f;
+            }
+
+            CurrentMoveSpeed = UpdateCurrentMoveSpeed(0f, true);
+            ApplyTurnRootMotion();
+            UpdateMovementState(false, false, LockMoveIdle, 0f);
+            return;
+        }
+
         if (!GetInput(out NetworkInputData data))
         {
             // 입력을 못 받는 틱에는 이동 상태를 정리해 보간 잔상을 줄인다.
-            ApplyMovement(Vector3.zero, walkSpeed, GetLockOnFacingDirection());
-            UpdateMovementState(false, false, LockMoveIdle);
+            float speed = UpdateCurrentMoveSpeed(0f, false);
+            ApplyMovement(Vector3.zero, speed, GetLockOnFacingDirection());
+            UpdateMovementState(false, false, LockMoveIdle, GetNormalMoveBlendFromSpeed(speed, GetMoveSpeedMultiplier()));
             WasShiftHeld = false;
             ShiftHoldTime = 0f;
             return;
@@ -173,29 +217,43 @@ public partial class NetworkPlayerController
                          !actionBlocksMovement &&
                          (_playerStats == null || _playerStats.HasStamina(runStaminaCost));
 
-        float currentSpeed = walkSpeed;
+        float targetSpeed = 0f;
         Vector3 moveDirection = Vector3.zero;
         Vector3 facingDirection = IsLockOnNetworked ? GetLockOnFacingDirection() : Vector3.zero;
+        bool snapMoveSpeed = false;
 
         // 구르기는 입력 방향이 아니라 시작 순간 저장한 방향으로 끝까지 민다.
         if (isRolling)
         {
-            currentSpeed = rollSpeed;
+            targetSpeed = rollSpeed;
             moveDirection = RollDirection;
             facingDirection = Vector3.zero;
+            snapMoveSpeed = true;
         }
         else if (!actionBlocksMovement && desiredMove.sqrMagnitude > 0.001f)
         {
-            currentSpeed = shouldRun ? runSpeed : walkSpeed;
+            targetSpeed = shouldRun ? runSpeed : walkSpeed;
             moveDirection = desiredMove.normalized;
         }
 
-        currentSpeed *= GetMoveSpeedMultiplier();
+        float moveSpeedMultiplier = GetMoveSpeedMultiplier();
+        targetSpeed *= moveSpeedMultiplier;
+        float currentSpeed = UpdateCurrentMoveSpeed(targetSpeed, snapMoveSpeed);
 
         if (actionBlocksMovement)
         {
             // 제자리 액션 중에는 이전 틱의 수평 속도가 남아 미끄러지지 않게 지운다.
             StopHorizontalVelocity();
+            currentSpeed = UpdateCurrentMoveSpeed(0f, true);
+        }
+
+        if (TryStartTurnAnimation(moveDirection, facingDirection, shouldRun, isBusy, currentSpeed, moveSpeedMultiplier))
+        {
+            currentSpeed = UpdateCurrentMoveSpeed(0f, true);
+            ApplyTurnRootMotion();
+            UpdateMovementState(false, false, LockMoveIdle, 0f);
+            WasShiftHeld = shiftHeld;
+            return;
         }
 
         ApplyMovement(moveDirection, currentSpeed, facingDirection);
@@ -205,7 +263,7 @@ public partial class NetworkPlayerController
         }
 
         byte lockMove = IsLockOnNetworked && !isBusy ? GetLockOnMoveCode(moveDirection, shouldRun) : LockMoveIdle;
-        UpdateMovementState(moveDirection.sqrMagnitude > 0.001f, shouldRun, lockMove);
+        UpdateMovementState(moveDirection.sqrMagnitude > 0.001f, shouldRun, lockMove, GetNormalMoveBlendFromSpeed(currentSpeed, moveSpeedMultiplier));
         WasShiftHeld = shiftHeld;
 
         if (!shiftHeld)

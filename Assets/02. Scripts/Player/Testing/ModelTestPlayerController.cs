@@ -4,9 +4,8 @@ using UnityEngine;
 public class ModelTestPlayerController : MonoBehaviour
 {
     // Animator 파라미터 이름을 매번 문자열로 찾지 않도록 해시 값으로 미리 캐싱한다.
-    // 이렇게 해두면 매 프레임 SetBool/SetTrigger를 호출해도 불필요한 문자열 비교를 줄일 수 있다.
-    private static readonly int IsMoving = Animator.StringToHash("IsMoving");
-    private static readonly int IsRunning = Animator.StringToHash("IsRunning");
+    // 이렇게 해두면 매 프레임 SetFloat/SetTrigger를 호출해도 불필요한 문자열 비교를 줄일 수 있다.
+    private static readonly int MoveSpeed = Animator.StringToHash("MoveSpeed");
     private static readonly int Attack = Animator.StringToHash("Attack");
     private static readonly int Parry = Animator.StringToHash("Parry");
     private static readonly int Roll = Animator.StringToHash("Roll");
@@ -221,14 +220,9 @@ public class ModelTestPlayerController : MonoBehaviour
 
     private void UpdateAnimatorParameters(Vector2 moveInput)
     {
-        // 이동 입력이 있으면 걷기 계열 애니메이션으로 전환할 수 있게 IsMoving을 켠다.
         bool isMoving = moveInput.sqrMagnitude > 0.01f;
-
-        // 실제 달리기 판정은 Shift 홀드 시간이 임계값을 넘었는지까지 포함해서 계산한다.
-        bool isRunning = ShouldRun(moveInput);
-
-        animator.SetBool(IsMoving, isMoving);
-        animator.SetBool(IsRunning, isRunning);
+        float moveSpeed = isMoving ? (ShouldRun(moveInput) ? 1f : 0.5f) : 0f;
+        animator.SetFloat(MoveSpeed, moveSpeed, 0.12f, Time.deltaTime);
     }
 
     private void UpdateShiftState(float deltaTime, Vector3 desiredMove, bool isBusy)

@@ -91,7 +91,7 @@ public partial class NetworkPlayerController
 
         AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
         builder.AppendLine($"Animator : {GetAnimatorStateName(stateInfo.shortNameHash)} / t={stateInfo.normalizedTime:0.00} / actionTag={stateInfo.IsTag("Action")}");
-        builder.AppendLine($"Move Params : moving={animator.GetBool(IsMoving)}, running={animator.GetBool(IsRunning)}, lockOn={animator.GetBool(IsLockOn)}");
+        builder.AppendLine($"Move Params : speed={animator.GetFloat(MoveSpeed):0.00}, lockOn={animator.GetBool(IsLockOn)}");
     }
 
     private static string GetActionName(byte actionType)
@@ -112,8 +112,6 @@ public partial class NetworkPlayerController
     private static string GetAnimatorStateName(int shortNameHash)
     {
         if (shortNameHash == IdleState) return "idle1";
-        if (shortNameHash == WalkState) return "walk1";
-        if (shortNameHash == RunState) return "run1";
         if (shortNameHash == Slash2State) return "slash2";
         if (shortNameHash == Slash3State) return "slash3";
         if (shortNameHash == Slash4State) return "slash4";

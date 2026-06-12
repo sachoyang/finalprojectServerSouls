@@ -684,6 +684,7 @@ public partial class NetworkPlayerController
         animator.ResetTrigger(Impact);
         animator.ResetTrigger(Impact2);
         animator.ResetTrigger(Death);
+        ResetTurnTriggers();
     }
 
     private int GetBasicAttackTrigger()
