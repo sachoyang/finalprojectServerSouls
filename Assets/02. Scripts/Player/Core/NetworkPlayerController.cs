@@ -19,8 +19,7 @@ public enum PlayerControlLockFlags
 public partial class NetworkPlayerController : NetworkBehaviour
 {
     // Animator 파라미터 이름은 매 프레임 문자열로 찾지 않도록 해시로 캐싱한다.
-    private static readonly int IsMoving = Animator.StringToHash("IsMoving");
-    private static readonly int IsRunning = Animator.StringToHash("IsRunning");
+    private static readonly int MoveSpeed = Animator.StringToHash("MoveSpeed");
     private static readonly int Attack = Animator.StringToHash("Attack");
     private static readonly int Attack2 = Animator.StringToHash("Attack2");
     private static readonly int Attack3 = Animator.StringToHash("Attack3");
@@ -36,9 +35,9 @@ public partial class NetworkPlayerController : NetworkBehaviour
     private static readonly int LockMoveX = Animator.StringToHash("LockMoveX");
     private static readonly int LockMoveY = Animator.StringToHash("LockMoveY");
     private static readonly int LockMoveSpeed = Animator.StringToHash("LockMoveSpeed");
+    private static readonly int Turn180 = Animator.StringToHash("Turn180");
+    private static readonly int Turn180Fast = Animator.StringToHash("Turn180Fast");
     private static readonly int IdleState = Animator.StringToHash("idle1");
-    private static readonly int WalkState = Animator.StringToHash("walk1");
-    private static readonly int RunState = Animator.StringToHash("run1");
     private static readonly int Slash2State = Animator.StringToHash("slash2");
     private static readonly int Slash3State = Animator.StringToHash("slash3");
     private static readonly int Slash4State = Animator.StringToHash("slash4");
@@ -59,6 +58,8 @@ public partial class NetworkPlayerController : NetworkBehaviour
     private const byte LockMoveRight = 4;
     private const byte LockMoveRunLeft = 5;
     private const byte LockMoveRunRight = 6;
+    private const byte LockMoveRunForward = 7;
+    private const byte LockMoveRunBack = 8;
     private const byte BasicAttackComboLastIndex = 2;
 
     private const string AlivePlayerTag = "Player";
@@ -86,6 +87,12 @@ public partial class NetworkPlayerController : NetworkBehaviour
     [SerializeField] private float shiftHoldThreshold = 0.25f;
     [SerializeField] private float movementAcceleration = 80f;
     [SerializeField] private float movementBraking = 30f;
+    [SerializeField] private float moveSpeedAcceleration = 7f;
+    [SerializeField] private float moveSpeedDeceleration = 10f;
+    [SerializeField] private float turnRootMotionFallbackRotationSpeed = 360f;
+    [SerializeField] private float turnAnimationYawDirection = 1f;
+    [SerializeField, Range(0.5f, 1f)] private float turnStartSpeedRatio = 0.75f;
+    [SerializeField] private float turnAnimationCooldownPadding = 0f;
 
     [Header("Action Locks")]
     // 액션 중 다른 입력을 잠깐 막는 시간과 점프 애니메이션 보정값.
@@ -131,6 +138,17 @@ public partial class NetworkPlayerController : NetworkBehaviour
     [Networked] private byte ActionLockType { get; set; }
     [Networked] private NetworkBool ComboInputWindowOpen { get; set; }
     [Networked] private int ControlLockMask { get; set; }
+    [Networked] private float CurrentMoveSpeed { get; set; }
+    [Networked] private float MoveSpeedBlendNetworked { get; set; }
+    [Networked] private int TurnAnimationSequence { get; set; }
+    [Networked] private NetworkBool TurnAnimationFast { get; set; }
+    [Networked] private TickTimer TurnAnimationCooldown { get; set; }
+    [Networked] private TickTimer TurnAnimationTimer { get; set; }
+    [Networked] private Vector3 TurnTargetDirection { get; set; }
+    [Networked] private NetworkBool TurnNeedsFinalRotation { get; set; }
+    [Networked] private float TurnResumeCurrentSpeed { get; set; }
+    [Networked] private float TurnResumeMoveSpeedBlend { get; set; }
+    [Networked] private byte TurnResumeLockMove { get; set; }
 
     private NetworkCharacterController _networkCharacterController;
     private PlayerStats _playerStats;
@@ -147,6 +165,10 @@ public partial class NetworkPlayerController : NetworkBehaviour
     private float _networkControllerRotationSpeed;
     // 점프 직후 락온 블렌드 트리가 점프 모션을 덮어쓰지 않도록 잠깐 억제하는 시간.
     private float _suppressLockOnAnimatorUntil;
+    private Vector3 _queuedRootMotionDeltaPosition;
+    private Quaternion _queuedRootMotionDeltaRotation = Quaternion.identity;
+    private bool _hasQueuedRootMotion;
+    private bool _turnUsedRootMotionRotation;
     // 공격 판정은 매번 새 배열을 만들지 않고 재사용해 GC 할당을 줄인다.
     private readonly Collider[] _attackHits = new Collider[16];
     // 한 번의 공격에 같은 보스의 여러 히트박스가 들어오면 가장 높은 배율 부위만 남긴다.
@@ -204,7 +226,7 @@ public partial class NetworkPlayerController : NetworkBehaviour
             return;
         }
 
-        animator.applyRootMotion = false;
+        animator.applyRootMotion = true;
         _lastMoveDirection = transform.forward;
     }
 

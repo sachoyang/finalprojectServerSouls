@@ -9,6 +9,9 @@ public static class PlayerAnimatorSetupTool
     // 기본 전투/락온 세팅과 액티브 스킬 모듈 동기화를 분리해, 새 스킬 추가 시 기본 Animator 구성이 불필요하게 덮이지 않도록 한다.
     private const string ControllerPath = "Assets/07. Animations/PlayerCtrl.controller";
 
+    private const string IsMoving = "IsMoving";
+    private const string IsRunning = "IsRunning";
+    private const string MoveSpeed = "MoveSpeed";
     private const string IsLockOn = "IsLockOn";
     private const string LockMoveX = "LockMoveX";
     private const string LockMoveY = "LockMoveY";
@@ -20,14 +23,22 @@ public static class PlayerAnimatorSetupTool
     private const string Parry = "Parry";
     private const string Roll = "Roll";
     private const string Jump = "Jump";
+    private const string Turn180 = "Turn180";
+    private const string Turn180Fast = "Turn180Fast";
     private const string Attack2 = "Attack2";
     private const string Attack3 = "Attack3";
     private const string Attack4 = "Attack4";
 
     private const string LockOnMachineName = "LockOn Movement";
+    private const string LegacyLockOnLayerName = "LockOn";
     private const string LockOnBlendStateName = "LockOn Blend Tree";
+    private const string NormalLocomotionBlendStateName = "Locomotion Blend Tree";
+    private const string CombatMachineName = "Combat Actions";
+    private const string TurnMachineName = "Turn Actions";
+    private const string HitAndDeathMachineName = "Hit & Death";
     private const string SkillMachineName = "Skill Actions";
     private const string SkillModuleFolder = "Assets/02. Scripts/Player/Abilities/SkillModule";
+    private const float TurnExitBlendDuration = 0.15f;
 
     [MenuItem("Tools/ServerSouls/Setup Player Base Animator")]
     public static void SetupPlayerBaseAnimator()
@@ -40,7 +51,9 @@ public static class PlayerAnimatorSetupTool
         }
 
         AddBaseParameters(controller);
+        RemoveLegacyLockOnLayer(controller);
         AnimatorStateMachine root = controller.layers[0].stateMachine;
+        ConfigureNormalLocomotion(controller, root);
         AnimatorStateMachine lockOnMachine = FindStateMachine(root, LockOnMachineName)
             ?? root.AddStateMachine(LockOnMachineName, new Vector3(640f, 40f, 0f));
 
@@ -64,7 +77,13 @@ public static class PlayerAnimatorSetupTool
         EnsureAnyStateTransition(root, lockOnState);
         EnsureExitTransition(lockOnState, FindState(root, "idle1"));
         SetupDamageAndDownStates(root);
-        SetupBuiltInActionStates(root);
+        RemoveOldTurnStates(root);
+        RemoveOldTurnParameters(controller, root);
+        SetupBuiltInActionStates(root, lockOnState);
+        RemoveMovementBoolTransitions(root);
+        RemoveParameter(controller, IsMoving);
+        RemoveParameter(controller, IsRunning);
+        RemoveOldNormalMovementStates(root);
         RemoveOldLockOnStates(root);
 
         SaveController(controller);
@@ -110,6 +129,7 @@ public static class PlayerAnimatorSetupTool
     {
         // 코드가 SetTrigger/SetBool/SetFloat로 접근하는 기본 파라미터를 보장한다.
         // 이미 있는 파라미터는 AddParameter에서 건너뛰므로 여러 번 실행해도 중복 생성되지 않는다.
+        AddParameter(controller, MoveSpeed, AnimatorControllerParameterType.Float);
         AddParameter(controller, IsLockOn, AnimatorControllerParameterType.Bool);
         AddParameter(controller, LockMoveX, AnimatorControllerParameterType.Float);
         AddParameter(controller, LockMoveY, AnimatorControllerParameterType.Float);
@@ -121,6 +141,8 @@ public static class PlayerAnimatorSetupTool
         AddParameter(controller, Parry, AnimatorControllerParameterType.Trigger);
         AddParameter(controller, Roll, AnimatorControllerParameterType.Trigger);
         AddParameter(controller, Jump, AnimatorControllerParameterType.Trigger);
+        AddParameter(controller, Turn180, AnimatorControllerParameterType.Trigger);
+        AddParameter(controller, Turn180Fast, AnimatorControllerParameterType.Trigger);
         AddParameter(controller, Attack2, AnimatorControllerParameterType.Trigger);
         AddParameter(controller, Attack3, AnimatorControllerParameterType.Trigger);
         AddParameter(controller, Attack4, AnimatorControllerParameterType.Trigger);
@@ -137,6 +159,17 @@ public static class PlayerAnimatorSetupTool
         }
 
         controller.AddParameter(name, type);
+    }
+
+    private static void RemoveLegacyLockOnLayer(AnimatorController controller)
+    {
+        for (int i = controller.layers.Length - 1; i >= 1; i--)
+        {
+            if (controller.layers[i].name == LegacyLockOnLayerName)
+            {
+                controller.RemoveLayer(i);
+            }
+        }
     }
 
     private static void SetupSkillActionsFromModules(AnimatorController controller, AnimatorStateMachine root)
@@ -336,13 +369,18 @@ public static class PlayerAnimatorSetupTool
     {
         // 피격 상태도 액션락 대상이다.
         // 공격/스킬 중 맞았을 때 이전 State의 Exit가 피격 락을 풀지 못하도록 Impact 타입 Behaviour를 붙인다.
+        AnimatorStateMachine hitAndDeathMachine = FindStateMachine(root, HitAndDeathMachineName)
+            ?? root.AddStateMachine(HitAndDeathMachineName, new Vector3(360f, 300f, 0f));
+        RemoveDirectStates(root, Impact, Impact2, Death, "Crawling");
+
         AnimatorState idleState = FindState(root, "idle1");
-        AnimatorState impactState = EnsureState(root, Impact, "Assets/04. Images/Animation/Great Sword Impact.fbx", new Vector3(80f, 420f, 0f), "Action");
-        AnimatorState parryImpactState = EnsureState(root, Impact2, "Assets/04. Images/Animation/Great Sword Impact2.fbx", new Vector3(300f, 420f, 0f), "Action");
-        AnimatorState deathState = EnsureState(root, Death, "Assets/04. Images/Animation/Great Sword Death.fbx", new Vector3(520f, 420f, 0f), "Action");
-        AnimatorState crawlingState = EnsureState(root, "Crawling", "Assets/04. Images/Animation/Crawling.fbx", new Vector3(740f, 420f, 0f), string.Empty);
+        AnimatorState impactState = EnsureState(hitAndDeathMachine, Impact, "Assets/04. Images/Animation/Great Sword Impact.fbx", new Vector3(80f, 80f, 0f), "Action");
+        AnimatorState parryImpactState = EnsureState(hitAndDeathMachine, Impact2, "Assets/04. Images/Animation/Great Sword Impact2.fbx", new Vector3(300f, 80f, 0f), "Action");
+        AnimatorState deathState = EnsureState(hitAndDeathMachine, Death, "Assets/04. Images/Animation/Great Sword Death.fbx", new Vector3(520f, 80f, 0f), "Action");
+        AnimatorState crawlingState = EnsureState(hitAndDeathMachine, "Crawling", "Assets/04. Images/Animation/Crawling.fbx", new Vector3(740f, 80f, 0f), string.Empty);
         EnsureActionBehaviour(impactState, PlayerActionLockType.Impact, false);
         EnsureActionBehaviour(parryImpactState, PlayerActionLockType.Impact, false);
+        hitAndDeathMachine.defaultState = impactState;
 
         EnsureAnyStateTriggerTransition(root, impactState, Impact);
         EnsureAnyStateTriggerTransition(root, parryImpactState, Impact2);
@@ -391,9 +429,43 @@ public static class PlayerAnimatorSetupTool
         return null;
     }
 
+    private static void ConfigureNormalLocomotion(AnimatorController controller, AnimatorStateMachine root)
+    {
+        AnimatorState locomotionState = FindState(root, "idle1");
+        if (locomotionState == null)
+        {
+            locomotionState = root.AddState("idle1", new Vector3(80f, 80f, 0f));
+        }
+
+        BlendTree tree = locomotionState.motion as BlendTree;
+        if (tree == null)
+        {
+            tree = new BlendTree { name = NormalLocomotionBlendStateName };
+            AssetDatabase.AddObjectToAsset(tree, controller);
+            locomotionState.motion = tree;
+        }
+
+        tree.name = NormalLocomotionBlendStateName;
+        tree.blendType = BlendTreeType.Simple1D;
+        tree.blendParameter = MoveSpeed;
+        tree.useAutomaticThresholds = false;
+        tree.children = new[]
+        {
+            CreateThresholdChild("Assets/04. Images/Animation/Great Sword Idle.fbx", 0f),
+            CreateThresholdChild("Assets/04. Images/Animation/Great Sword Walk.fbx", 0.5f),
+            CreateThresholdChild("Assets/04. Images/Animation/Great Sword Run.fbx", 1f),
+        };
+
+        locomotionState.tag = string.Empty;
+        if (root.defaultState == null)
+        {
+            root.defaultState = locomotionState;
+        }
+    }
+
     private static void ConfigureBlendTree(BlendTree tree)
     {
-        tree.blendType = BlendTreeType.FreeformDirectional2D;
+        tree.blendType = BlendTreeType.FreeformCartesian2D;
         tree.blendParameter = LockMoveX;
         tree.blendParameterY = LockMoveY;
         tree.useAutomaticThresholds = false;
@@ -403,6 +475,8 @@ public static class PlayerAnimatorSetupTool
             CreateChild("Assets/04. Images/Animation/Great Sword Idle.fbx", new Vector2(0f, 0f)),
             CreateChild("Assets/04. Images/Animation/Great Sword Walk.fbx", new Vector2(0f, 1f)),
             CreateChild("Assets/04. Images/Animation/Great Sword Walk2.fbx", new Vector2(0f, -1f)),
+            CreateChild("Assets/04. Images/Animation/Great Sword Run.fbx", new Vector2(0f, 2f)),
+            CreateChild("Assets/04. Images/Animation/Great Sword Run2.fbx", new Vector2(0f, -2f)),
             CreateChild("Assets/04. Images/Animation/Great Sword Strafe.fbx", new Vector2(-1f, 0f)),
             CreateChild("Assets/04. Images/Animation/Great Sword Strafe2.fbx", new Vector2(1f, 0f)),
             CreateChild("Assets/04. Images/Animation/Great Sword Strafe3.fbx", new Vector2(-2f, 0f)),
@@ -417,6 +491,20 @@ public static class PlayerAnimatorSetupTool
             motion = AssetDatabase.LoadAssetAtPath<AnimationClip>(clipPath),
             position = position,
             threshold = 0f,
+            timeScale = 1f,
+            cycleOffset = 0f,
+            directBlendParameter = string.Empty,
+            mirror = false
+        };
+    }
+
+    private static ChildMotion CreateThresholdChild(string clipPath, float threshold)
+    {
+        return new ChildMotion
+        {
+            motion = AssetDatabase.LoadAssetAtPath<AnimationClip>(clipPath),
+            position = Vector2.zero,
+            threshold = threshold,
             timeScale = 1f,
             cycleOffset = 0f,
             directBlendParameter = string.Empty,
@@ -474,6 +562,45 @@ public static class PlayerAnimatorSetupTool
         return triggerName == Attack2 || triggerName == Attack3 || triggerName == Attack4;
     }
 
+    private static void EnsureStateTriggerTransition(AnimatorState source, AnimatorState destination, string triggerName, float duration)
+    {
+        if (source == null || destination == null)
+        {
+            return;
+        }
+
+        foreach (AnimatorStateTransition transition in source.transitions)
+        {
+            if (transition.destinationState != destination)
+            {
+                continue;
+            }
+
+            foreach (AnimatorCondition condition in transition.conditions)
+            {
+                if (condition.parameter == triggerName)
+                {
+                    transition.hasExitTime = false;
+                    transition.hasFixedDuration = true;
+                    transition.duration = duration;
+                    transition.canTransitionToSelf = false;
+                    transition.interruptionSource = TransitionInterruptionSource.None;
+                    transition.orderedInterruption = true;
+                    return;
+                }
+            }
+        }
+
+        AnimatorStateTransition stateTransition = source.AddTransition(destination);
+        stateTransition.hasExitTime = false;
+        stateTransition.hasFixedDuration = true;
+        stateTransition.duration = duration;
+        stateTransition.canTransitionToSelf = false;
+        stateTransition.interruptionSource = TransitionInterruptionSource.None;
+        stateTransition.orderedInterruption = true;
+        stateTransition.AddCondition(AnimatorConditionMode.If, 0f, triggerName);
+    }
+
     private static void EnsureExitTransition(AnimatorState lockOnState, AnimatorState idleState)
     {
         if (idleState == null)
@@ -495,28 +622,125 @@ public static class PlayerAnimatorSetupTool
         lockOnToIdle.AddCondition(AnimatorConditionMode.IfNot, 0f, IsLockOn);
     }
 
-    private static void SetupBuiltInActionStates(AnimatorStateMachine root)
+    private static void EnsureTurnExitTransitions(AnimatorState turnState, AnimatorState idleState, AnimatorState lockOnState)
+    {
+        if (turnState == null)
+        {
+            return;
+        }
+
+        if (lockOnState != null)
+        {
+            EnsureTimedConditionalExitTransition(turnState, lockOnState, IsLockOn, true);
+        }
+
+        EnsureTimedConditionalExitTransition(turnState, idleState, IsLockOn, false);
+    }
+
+    private static void EnsureTimedConditionalExitTransition(AnimatorState source, AnimatorState destination, string conditionName, bool conditionValue)
+    {
+        if (source == null || destination == null)
+        {
+            return;
+        }
+
+        foreach (AnimatorStateTransition transition in source.transitions)
+        {
+            if (transition.destinationState != destination || !transition.hasExitTime)
+            {
+                continue;
+            }
+
+            foreach (AnimatorCondition condition in transition.conditions)
+            {
+                if (condition.parameter == conditionName)
+                {
+                    transition.exitTime = 1f;
+                    transition.hasFixedDuration = true;
+                    transition.duration = TurnExitBlendDuration;
+                    transition.interruptionSource = TransitionInterruptionSource.None;
+                    transition.orderedInterruption = true;
+                    return;
+                }
+            }
+        }
+
+        AnimatorStateTransition exitTransition = source.AddTransition(destination);
+        exitTransition.hasExitTime = true;
+        exitTransition.hasFixedDuration = true;
+        exitTransition.exitTime = 1f;
+        exitTransition.duration = TurnExitBlendDuration;
+        exitTransition.interruptionSource = TransitionInterruptionSource.None;
+        exitTransition.orderedInterruption = true;
+        exitTransition.AddCondition(conditionValue ? AnimatorConditionMode.If : AnimatorConditionMode.IfNot, 0f, conditionName);
+    }
+
+    private static void SetupBuiltInActionStates(AnimatorStateMachine root, AnimatorState lockOnState)
     {
         // 기본 공격 콤보는 slash2 -> slash3 -> slash4 순서로 사용한다.
         // slash2, slash3만 애니메이션 중반 이후 다음 콤보 선입력을 열어준다.
+        AnimatorStateMachine combatMachine = FindStateMachine(root, CombatMachineName)
+            ?? root.AddStateMachine(CombatMachineName, new Vector3(360f, 160f, 0f));
+        RemoveDirectStates(root, "slash2", "slash3", "slash4", "Jump", "blocking1", "Sprinting Forward Roll");
+
         AnimatorState idleState = FindState(root, "idle1");
-        AnimatorState slash2 = EnsureState(root, "slash2", "Assets/04. Images/Animation/Great Sword Slash2.fbx", new Vector3(280f, 20f, 0f), "Action");
-        AnimatorState slash3 = EnsureState(root, "slash3", "Assets/04. Images/Animation/Great Sword Slash3.fbx", new Vector3(500f, 20f, 0f), "Action");
-        AnimatorState slash4 = EnsureState(root, "slash4", "Assets/04. Images/Animation/Great Sword Slash4.fbx", new Vector3(720f, 20f, 0f), "Action");
+        AnimatorState slash2 = EnsureState(combatMachine, "slash2", "Assets/04. Images/Animation/Great Sword Slash2.fbx", new Vector3(80f, 80f, 0f), "Action");
+        AnimatorState slash3 = EnsureState(combatMachine, "slash3", "Assets/04. Images/Animation/Great Sword Slash3.fbx", new Vector3(300f, 80f, 0f), "Action");
+        AnimatorState slash4 = EnsureState(combatMachine, "slash4", "Assets/04. Images/Animation/Great Sword Slash4.fbx", new Vector3(520f, 80f, 0f), "Action");
+        AnimatorState jumpState = EnsureState(combatMachine, "Jump", "Assets/04. Images/Animation/Great Sword Jump.fbx", new Vector3(80f, 220f, 0f), "Action");
+        AnimatorState parryState = EnsureState(combatMachine, "blocking1", "Assets/04. Images/Animation/Great Sword Blocking.fbx", new Vector3(300f, 220f, 0f), "Action");
+        AnimatorState rollState = EnsureState(combatMachine, "Sprinting Forward Roll", "Assets/04. Images/Animation/Sprinting Forward Roll.fbx", new Vector3(520f, 220f, 0f), "Action");
+        combatMachine.defaultState = slash2;
 
         EnsureAnyStateTriggerTransition(root, slash2, Attack2);
         EnsureAnyStateTriggerTransition(root, slash3, Attack3);
         EnsureAnyStateTriggerTransition(root, slash4, Attack4);
+        EnsureAnyStateTriggerTransition(root, jumpState, Jump);
+        EnsureAnyStateTriggerTransition(root, parryState, Parry);
+        EnsureAnyStateTriggerTransition(root, rollState, Roll);
         EnsureActionBehaviour(slash2, PlayerActionLockType.Attack, true);
         EnsureActionBehaviour(slash3, PlayerActionLockType.Attack, true);
         EnsureActionBehaviour(slash4, PlayerActionLockType.Attack, false);
+        EnsureActionBehaviour(jumpState, PlayerActionLockType.Jump, false);
+        EnsureActionBehaviour(parryState, PlayerActionLockType.Parry, false);
+        EnsureActionBehaviour(rollState, PlayerActionLockType.Roll, false);
         EnsureTimedExitTransition(slash2, idleState);
         EnsureTimedExitTransition(slash3, idleState);
         EnsureTimedExitTransition(slash4, idleState);
-        SetActionTag(root, "Jump");
-        EnsureActionBehaviour(FindState(root, "Jump"), PlayerActionLockType.Jump, false);
-        EnsureActionBehaviour(FindState(root, "blocking1"), PlayerActionLockType.Parry, false);
-        EnsureActionBehaviour(FindState(root, "Sprinting Forward Roll"), PlayerActionLockType.Roll, false);
+        EnsureTimedExitTransition(jumpState, idleState);
+        EnsureTimedExitTransition(parryState, idleState);
+        EnsureTimedExitTransition(rollState, idleState);
+        SetupTurnStates(root, idleState, lockOnState);
+    }
+
+    private static void SetupTurnStates(AnimatorStateMachine root, AnimatorState idleState, AnimatorState lockOnState)
+    {
+        AnimatorStateMachine turnMachine = FindStateMachine(root, TurnMachineName)
+            ?? root.AddStateMachine(TurnMachineName, new Vector3(360f, 40f, 0f));
+        RemoveDirectStates(root, "Great Sword 180 Turn", "Great Sword 180 Turn Fast");
+
+        AnimatorState turn180 = EnsureState(turnMachine, "Great Sword 180 Turn", "Assets/04. Images/Animation/Great Sword 180 Turn.fbx", new Vector3(80f, 80f, 0f), string.Empty);
+        AnimatorState turn180Fast = EnsureState(turnMachine, "Great Sword 180 Turn Fast", "Assets/04. Images/Animation/Great Sword 180 Turn Fast.fbx", new Vector3(300f, 80f, 0f), string.Empty);
+
+        turn180.mirror = false;
+        turn180Fast.mirror = false;
+        turnMachine.defaultState = turn180;
+        RemoveAllStateTransitions(turn180);
+        RemoveAllStateTransitions(turn180Fast);
+
+        RemoveAnyStateTransitionsWithParameter(root, Turn180);
+        RemoveAnyStateTransitionsWithParameter(root, Turn180Fast);
+
+        EnsureStateTriggerTransition(idleState, turn180, Turn180, 0f);
+        EnsureStateTriggerTransition(idleState, turn180Fast, Turn180Fast, 0f);
+
+        if (lockOnState != null)
+        {
+            EnsureStateTriggerTransition(lockOnState, turn180, Turn180, 0f);
+        }
+
+        EnsureTurnExitTransitions(turn180, idleState, lockOnState);
+        EnsureTurnExitTransitions(turn180Fast, idleState, lockOnState);
     }
 
     private static void EnsureActionBehaviour(AnimatorState state, PlayerActionLockType lockType, bool opensComboInput)
@@ -588,7 +812,8 @@ public static class PlayerAnimatorSetupTool
             "Great Sword Strafe",
             "Great Sword Strafe2",
             "Great Sword Strafe3",
-            "Great Sword Strafe4"
+            "Great Sword Strafe4",
+            "Great Sword Run2"
         };
 
         foreach (string stateName in oldStateNames)
@@ -598,6 +823,188 @@ public static class PlayerAnimatorSetupTool
             {
                 root.RemoveState(state);
             }
+        }
+    }
+
+    private static void RemoveMovementBoolTransitions(AnimatorStateMachine machine)
+    {
+        RemoveAnyStateTransitionsWithParameter(machine, IsMoving);
+        RemoveAnyStateTransitionsWithParameter(machine, IsRunning);
+
+        foreach (ChildAnimatorState child in machine.states)
+        {
+            RemoveStateTransitionsWithParameter(child.state, IsMoving);
+            RemoveStateTransitionsWithParameter(child.state, IsRunning);
+        }
+
+        foreach (ChildAnimatorStateMachine child in machine.stateMachines)
+        {
+            RemoveMovementBoolTransitions(child.stateMachine);
+        }
+    }
+
+    private static void RemoveAnyStateTransitionsWithParameter(AnimatorStateMachine machine, string parameterName)
+    {
+        foreach (AnimatorStateTransition transition in machine.anyStateTransitions)
+        {
+            if (HasCondition(transition, parameterName))
+            {
+                machine.RemoveAnyStateTransition(transition);
+            }
+        }
+    }
+
+    private static void RemoveStateTransitionsWithParameter(AnimatorState state, string parameterName)
+    {
+        foreach (AnimatorStateTransition transition in state.transitions)
+        {
+            if (HasCondition(transition, parameterName))
+            {
+                state.RemoveTransition(transition);
+            }
+        }
+    }
+
+    private static void RemoveAllStateTransitions(AnimatorState state)
+    {
+        if (state == null)
+        {
+            return;
+        }
+
+        foreach (AnimatorStateTransition transition in state.transitions)
+        {
+            state.RemoveTransition(transition);
+        }
+    }
+
+    private static bool HasCondition(AnimatorStateTransition transition, string parameterName)
+    {
+        foreach (AnimatorCondition condition in transition.conditions)
+        {
+            if (condition.parameter == parameterName)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static void RemoveOldNormalMovementStates(AnimatorStateMachine root)
+    {
+        string[] oldStateNames =
+        {
+            "walk1",
+            "run1"
+        };
+
+        foreach (string stateName in oldStateNames)
+        {
+            AnimatorState state = FindState(root, stateName);
+            if (state == null)
+            {
+                continue;
+            }
+
+            RemoveTransitionsToState(root, state);
+            root.RemoveState(state);
+        }
+    }
+
+    private static void RemoveDirectStates(AnimatorStateMachine root, params string[] stateNames)
+    {
+        foreach (string stateName in stateNames)
+        {
+            AnimatorState state = FindState(root, stateName);
+            if (state == null)
+            {
+                continue;
+            }
+
+            RemoveTransitionsToState(root, state);
+            root.RemoveState(state);
+        }
+    }
+
+    private static void RemoveOldTurnStates(AnimatorStateMachine root)
+    {
+        string[] oldStateNames =
+        {
+            "Great Sword 180 Turn Left",
+            "Great Sword 180 Turn Right",
+            "Great Sword 180 Turn Fast Left",
+            "Great Sword 180 Turn Fast Right"
+        };
+
+        foreach (string stateName in oldStateNames)
+        {
+            AnimatorState state = FindState(root, stateName);
+            if (state == null)
+            {
+                continue;
+            }
+
+            RemoveTransitionsToState(root, state);
+            root.RemoveState(state);
+        }
+    }
+
+    private static void RemoveOldTurnParameters(AnimatorController controller, AnimatorStateMachine root)
+    {
+        string[] oldParameterNames =
+        {
+            "Turn180Left",
+            "Turn180Right",
+            "Turn180FastLeft",
+            "Turn180FastRight"
+        };
+
+        foreach (string parameterName in oldParameterNames)
+        {
+            RemoveAnyStateTransitionsWithParameter(root, parameterName);
+            RemoveStateTransitionsWithParameterRecursive(root, parameterName);
+            RemoveParameter(controller, parameterName);
+        }
+    }
+
+    private static void RemoveStateTransitionsWithParameterRecursive(AnimatorStateMachine machine, string parameterName)
+    {
+        foreach (ChildAnimatorState child in machine.states)
+        {
+            RemoveStateTransitionsWithParameter(child.state, parameterName);
+        }
+
+        foreach (ChildAnimatorStateMachine child in machine.stateMachines)
+        {
+            RemoveStateTransitionsWithParameterRecursive(child.stateMachine, parameterName);
+        }
+    }
+
+    private static void RemoveTransitionsToState(AnimatorStateMachine machine, AnimatorState destination)
+    {
+        foreach (AnimatorStateTransition transition in machine.anyStateTransitions)
+        {
+            if (transition.destinationState == destination)
+            {
+                machine.RemoveAnyStateTransition(transition);
+            }
+        }
+
+        foreach (ChildAnimatorState child in machine.states)
+        {
+            foreach (AnimatorStateTransition transition in child.state.transitions)
+            {
+                if (transition.destinationState == destination)
+                {
+                    child.state.RemoveTransition(transition);
+                }
+            }
+        }
+
+        foreach (ChildAnimatorStateMachine child in machine.stateMachines)
+        {
+            RemoveTransitionsToState(child.stateMachine, destination);
         }
     }
 }
