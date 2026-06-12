@@ -27,6 +27,7 @@ public partial class NetworkPlayerController : NetworkBehaviour
     private static readonly int Parry = Animator.StringToHash("Parry");
     private static readonly int Roll = Animator.StringToHash("Roll");
     private static readonly int Jump = Animator.StringToHash("Jump");
+    private static readonly int Jump2 = Animator.StringToHash("Jump2");
     private static readonly int Impact = Animator.StringToHash("Impact");
     private static readonly int Impact2 = Animator.StringToHash("Impact2");
     private static readonly int Death = Animator.StringToHash("Death");
@@ -50,6 +51,7 @@ public partial class NetworkPlayerController : NetworkBehaviour
     private const byte ActionImpact = 5;
     private const byte ActionParryImpact = 6;
     private const byte ActionDeath = 7;
+    private const byte ActionJumpForward = 10;
 
     private const byte LockMoveIdle = 0;
     private const byte LockMoveForward = 1;
@@ -95,9 +97,13 @@ public partial class NetworkPlayerController : NetworkBehaviour
     [SerializeField] private float turnAnimationCooldownPadding = 0f;
 
     [Header("Action Locks")]
-    // 액션 중 다른 입력을 잠깐 막는 시간과 점프 애니메이션 보정값.
-    [SerializeField] private float jumpImpulse = 8f;
+    // 점프 높이와 전체 체공 시간을 기준으로 초기 속도와 중력을 계산해 애니메이션 타이밍에 맞춘다.
+    [SerializeField] private float jumpHeight = 1.15f;
+    [SerializeField] private float jumpAirTime = 0.68f;
+    [SerializeField] private float forwardJumpHeight = 1.15f;
+    [SerializeField] private float forwardJumpAirTime = 0.68f;
     [SerializeField] private float jumpAnimationLockDuration = 0.45f;
+    [SerializeField, Range(0.5f, 1f)] private float runJumpSpeedRatio = 0.75f;
 
     [Header("Basic Attack Combo")]
     [SerializeField] private float comboGraceSeconds = 0.5f;
@@ -149,6 +155,7 @@ public partial class NetworkPlayerController : NetworkBehaviour
     [Networked] private float TurnResumeCurrentSpeed { get; set; }
     [Networked] private float TurnResumeMoveSpeedBlend { get; set; }
     [Networked] private byte TurnResumeLockMove { get; set; }
+    [Networked] private Vector3 ForwardJumpDirection { get; set; }
 
     private NetworkCharacterController _networkCharacterController;
     private PlayerStats _playerStats;
@@ -163,6 +170,7 @@ public partial class NetworkPlayerController : NetworkBehaviour
     private CameraManager _cameraManager;
     // NetworkCharacterController의 기본 회전 속도를 저장해 락온/구르기 처리 후 다시 기준값으로 돌린다.
     private float _networkControllerRotationSpeed;
+    private float _networkControllerGravity;
     // 점프 직후 락온 블렌드 트리가 점프 모션을 덮어쓰지 않도록 잠깐 억제하는 시간.
     private float _suppressLockOnAnimatorUntil;
     private Vector3 _queuedRootMotionDeltaPosition;
@@ -219,6 +227,7 @@ public partial class NetworkPlayerController : NetworkBehaviour
         lockOnTargetSelector.SetSearchRadius(lockOnSearchRadius);
         viewCamera ??= Camera.main;
         _networkControllerRotationSpeed = _networkCharacterController != null ? _networkCharacterController.rotationSpeed : 0f;
+        _networkControllerGravity = _networkCharacterController != null ? _networkCharacterController.gravity : -20f;
 
         if (animator == null || _networkCharacterController == null)
         {

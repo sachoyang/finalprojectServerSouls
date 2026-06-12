@@ -102,6 +102,7 @@ public partial class NetworkPlayerController
             ActionParry => "Parry",
             ActionRoll => "Roll",
             ActionJump => "Jump",
+            ActionJumpForward => "Jump2",
             ActionImpact => "Impact",
             ActionParryImpact => "ParryImpact",
             ActionDeath => "Death",
