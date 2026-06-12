@@ -498,7 +498,7 @@ public partial class NetworkPlayerController
             ActionAttack => PlayerActionLockType.Attack,
             ActionParry => PlayerActionLockType.Parry,
             ActionRoll => PlayerActionLockType.Roll,
-            ActionJump => PlayerActionLockType.Jump,
+            ActionJump or ActionJumpForward => PlayerActionLockType.Jump,
             ActionImpact or ActionParryImpact => PlayerActionLockType.Impact,
             _ => PlayerActionLockType.None
         };
@@ -657,6 +657,11 @@ public partial class NetworkPlayerController
                 animator.SetBool(IsLockOn, false);
                 animator.SetTrigger(Jump);
                 break;
+            case ActionJumpForward:
+                _suppressLockOnAnimatorUntil = Time.time + jumpAnimationLockDuration;
+                animator.SetBool(IsLockOn, false);
+                animator.SetTrigger(Jump2);
+                break;
             case ActionImpact:
                 animator.SetTrigger(Impact);
                 break;
@@ -681,10 +686,27 @@ public partial class NetworkPlayerController
         animator.ResetTrigger(Parry);
         animator.ResetTrigger(Roll);
         animator.ResetTrigger(Jump);
+        animator.ResetTrigger(Jump2);
         animator.ResetTrigger(Impact);
         animator.ResetTrigger(Impact2);
         animator.ResetTrigger(Death);
         ResetTurnTriggers();
+    }
+
+    private bool IsJumpAction(byte actionType)
+    {
+        return actionType == ActionJump || actionType == ActionJumpForward;
+    }
+
+    private bool ShouldUseForwardJumpAnimation()
+    {
+        float requiredRunSpeed = runSpeed * GetMoveSpeedMultiplier() * runJumpSpeedRatio;
+        return CurrentMoveSpeed >= requiredRunSpeed;
+    }
+
+    private bool IsForwardJumpRootMotionActive()
+    {
+        return LastAction == ActionJumpForward && IsActionAnimationLocked;
     }
 
     private int GetBasicAttackTrigger()

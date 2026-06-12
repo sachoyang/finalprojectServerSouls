@@ -21,6 +21,7 @@ public partial class NetworkPlayerController
 
     public override void FixedUpdateNetwork()
     {
+        RestoreDefaultGravityIfGrounded();
         CompleteTurnAnimationIfNeeded();
 
         if (HasControlLock(PlayerControlLockFlags.Movement))
@@ -159,7 +160,7 @@ public partial class NetworkPlayerController
             }
         }
 
-        bool isJumpAction = isActing && LastAction == ActionJump;
+        bool isJumpAction = isActing && IsJumpAction(LastAction);
         // 공격/패링은 제자리 고정, 점프/구르기는 자체 이동을 허용한다.
         bool actionBlocksMovement = isActing && !isJumpAction && !isRolling;
         bool isBusy = isRolling || isActing;
@@ -175,8 +176,20 @@ public partial class NetworkPlayerController
             // 비호스트 클라이언트는 입력만 보내고, 애니메이션은 ActionSequence 수신 후 재생한다.
             if (jumpPressed && _networkCharacterController.Grounded)
             {
-                _networkCharacterController.Jump(false, jumpImpulse);
-                StartAction(ActionJump, data.actionId);
+                bool useForwardJump = ShouldUseForwardJumpAnimation();
+                if (useForwardJump)
+                {
+                    ForwardJumpDirection = desiredMove.sqrMagnitude > 0.001f
+                        ? desiredMove.normalized
+                        : Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
+                }
+                else
+                {
+                    ForwardJumpDirection = Vector3.zero;
+                }
+
+                ApplyJumpPhysics(useForwardJump);
+                StartAction(useForwardJump ? ActionJumpForward : ActionJump, data.actionId);
                 isActing = true;
                 isBusy = true;
             }
@@ -245,6 +258,14 @@ public partial class NetworkPlayerController
             // 제자리 액션 중에는 이전 틱의 수평 속도가 남아 미끄러지지 않게 지운다.
             StopHorizontalVelocity();
             currentSpeed = UpdateCurrentMoveSpeed(0f, true);
+        }
+
+        if (IsForwardJumpRootMotionActive())
+        {
+            ApplyJumpRootMotion();
+            UpdateMovementState(false, false, LockMoveIdle, 0f);
+            WasShiftHeld = shiftHeld;
+            return;
         }
 
         if (TryStartTurnAnimation(moveDirection, facingDirection, shouldRun, isBusy, currentSpeed, moveSpeedMultiplier))

@@ -3411,7 +3411,10 @@ MonoBehaviour:
   shiftHoldThreshold: 0.25
   movementAcceleration: 80
   movementBraking: 30
-  jumpImpulse: 8
+  jumpHeight: 1.15
+  jumpAirTime: 0.68
+  forwardJumpHeight: 1.15
+  forwardJumpAirTime: 0.68
   jumpAnimationLockDuration: 0.45
   comboGraceSeconds: 0.5
   comboInputBufferSeconds: 0.2

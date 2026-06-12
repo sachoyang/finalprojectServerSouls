@@ -224,6 +224,29 @@ public partial class NetworkPlayerController
         return stateInfo.IsTag("Action") && stateInfo.normalizedTime < 0.98f;
     }
 
+    private void ApplyJumpPhysics(bool forwardJump)
+    {
+        float height = Mathf.Max(0.01f, forwardJump ? forwardJumpHeight : jumpHeight);
+        float airTime = Mathf.Max(0.1f, forwardJump ? forwardJumpAirTime : jumpAirTime);
+        float gravityMagnitude = 8f * height / (airTime * airTime);
+        float impulse = 4f * height / airTime;
+
+        _networkCharacterController.gravity = -gravityMagnitude;
+        _networkCharacterController.Jump(false, impulse);
+    }
+
+    private void RestoreDefaultGravityIfGrounded()
+    {
+        if (_networkCharacterController == null ||
+            !_networkCharacterController.Grounded ||
+            IsActionAnimationLocked)
+        {
+            return;
+        }
+
+        _networkCharacterController.gravity = _networkControllerGravity;
+    }
+
     private bool IsLockOnAnimatorSuppressed()
     {
         return Time.time < _suppressLockOnAnimatorUntil;
@@ -333,6 +356,7 @@ public partial class NetworkPlayerController
         TurnResumeLockMove = LockMoveIdle;
         _turnUsedRootMotionRotation = false;
         ClearQueuedRootMotion();
+        _networkCharacterController.gravity = _networkControllerGravity;
         ApplyMovement(Vector3.zero, 0f, Vector3.zero);
         UpdateMovementState(false, false, LockMoveIdle, 0f);
         WasShiftHeld = false;

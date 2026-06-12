@@ -67,6 +67,11 @@ public partial class NetworkPlayerController
             TurnResumeCurrentSpeed = 0f;
             TurnResumeMoveSpeedBlend = 0f;
             TurnResumeLockMove = LockMoveIdle;
+            ForwardJumpDirection = Vector3.zero;
+            if (_networkCharacterController != null)
+            {
+                _networkCharacterController.gravity = _networkControllerGravity;
+            }
             ActionAnimationLocked = false;
             ActionLockType = (byte)PlayerActionLockType.None;
             ComboInputWindowOpen = false;

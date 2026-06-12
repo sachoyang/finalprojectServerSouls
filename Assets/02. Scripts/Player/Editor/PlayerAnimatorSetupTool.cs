@@ -23,6 +23,7 @@ public static class PlayerAnimatorSetupTool
     private const string Parry = "Parry";
     private const string Roll = "Roll";
     private const string Jump = "Jump";
+    private const string Jump2 = "Jump2";
     private const string Turn180 = "Turn180";
     private const string Turn180Fast = "Turn180Fast";
     private const string Attack2 = "Attack2";
@@ -141,6 +142,7 @@ public static class PlayerAnimatorSetupTool
         AddParameter(controller, Parry, AnimatorControllerParameterType.Trigger);
         AddParameter(controller, Roll, AnimatorControllerParameterType.Trigger);
         AddParameter(controller, Jump, AnimatorControllerParameterType.Trigger);
+        AddParameter(controller, Jump2, AnimatorControllerParameterType.Trigger);
         AddParameter(controller, Turn180, AnimatorControllerParameterType.Trigger);
         AddParameter(controller, Turn180Fast, AnimatorControllerParameterType.Trigger);
         AddParameter(controller, Attack2, AnimatorControllerParameterType.Trigger);
@@ -681,33 +683,37 @@ public static class PlayerAnimatorSetupTool
         // slash2, slash3만 애니메이션 중반 이후 다음 콤보 선입력을 열어준다.
         AnimatorStateMachine combatMachine = FindStateMachine(root, CombatMachineName)
             ?? root.AddStateMachine(CombatMachineName, new Vector3(360f, 160f, 0f));
-        RemoveDirectStates(root, "slash2", "slash3", "slash4", "Jump", "blocking1", "Sprinting Forward Roll");
+        RemoveDirectStates(root, "slash2", "slash3", "slash4", "Jump", "Jump2", "blocking1", "Sprinting Forward Roll");
 
         AnimatorState idleState = FindState(root, "idle1");
         AnimatorState slash2 = EnsureState(combatMachine, "slash2", "Assets/04. Images/Animation/Great Sword Slash2.fbx", new Vector3(80f, 80f, 0f), "Action");
         AnimatorState slash3 = EnsureState(combatMachine, "slash3", "Assets/04. Images/Animation/Great Sword Slash3.fbx", new Vector3(300f, 80f, 0f), "Action");
         AnimatorState slash4 = EnsureState(combatMachine, "slash4", "Assets/04. Images/Animation/Great Sword Slash4.fbx", new Vector3(520f, 80f, 0f), "Action");
         AnimatorState jumpState = EnsureState(combatMachine, "Jump", "Assets/04. Images/Animation/Great Sword Jump.fbx", new Vector3(80f, 220f, 0f), "Action");
-        AnimatorState parryState = EnsureState(combatMachine, "blocking1", "Assets/04. Images/Animation/Great Sword Blocking.fbx", new Vector3(300f, 220f, 0f), "Action");
-        AnimatorState rollState = EnsureState(combatMachine, "Sprinting Forward Roll", "Assets/04. Images/Animation/Sprinting Forward Roll.fbx", new Vector3(520f, 220f, 0f), "Action");
+        AnimatorState jump2State = EnsureState(combatMachine, "Jump2", "Assets/04. Images/Animation/Great Sword Jump2.fbx", new Vector3(300f, 220f, 0f), "Action");
+        AnimatorState parryState = EnsureState(combatMachine, "blocking1", "Assets/04. Images/Animation/Great Sword Blocking.fbx", new Vector3(520f, 220f, 0f), "Action");
+        AnimatorState rollState = EnsureState(combatMachine, "Sprinting Forward Roll", "Assets/04. Images/Animation/Sprinting Forward Roll.fbx", new Vector3(740f, 220f, 0f), "Action");
         combatMachine.defaultState = slash2;
 
         EnsureAnyStateTriggerTransition(root, slash2, Attack2);
         EnsureAnyStateTriggerTransition(root, slash3, Attack3);
         EnsureAnyStateTriggerTransition(root, slash4, Attack4);
         EnsureAnyStateTriggerTransition(root, jumpState, Jump);
+        EnsureAnyStateTriggerTransition(root, jump2State, Jump2);
         EnsureAnyStateTriggerTransition(root, parryState, Parry);
         EnsureAnyStateTriggerTransition(root, rollState, Roll);
         EnsureActionBehaviour(slash2, PlayerActionLockType.Attack, true);
         EnsureActionBehaviour(slash3, PlayerActionLockType.Attack, true);
         EnsureActionBehaviour(slash4, PlayerActionLockType.Attack, false);
         EnsureActionBehaviour(jumpState, PlayerActionLockType.Jump, false);
+        EnsureActionBehaviour(jump2State, PlayerActionLockType.Jump, false);
         EnsureActionBehaviour(parryState, PlayerActionLockType.Parry, false);
         EnsureActionBehaviour(rollState, PlayerActionLockType.Roll, false);
         EnsureTimedExitTransition(slash2, idleState);
         EnsureTimedExitTransition(slash3, idleState);
         EnsureTimedExitTransition(slash4, idleState);
         EnsureTimedExitTransition(jumpState, idleState);
+        EnsureTimedExitTransition(jump2State, idleState);
         EnsureTimedExitTransition(parryState, idleState);
         EnsureTimedExitTransition(rollState, idleState);
         SetupTurnStates(root, idleState, lockOnState);

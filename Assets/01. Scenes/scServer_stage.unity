@@ -1835,6 +1835,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Main Camera
       objectReference: {fileID: 0}
+    - target: {fileID: 7407937258704617196, guid: 6d20a782034a2b54cb58bd21837c95bb, type: 3}
+      propertyPath: mouseSensitivity
+      value: 20
+      objectReference: {fileID: 0}
     - target: {fileID: 7825816007320001631, guid: 6d20a782034a2b54cb58bd21837c95bb, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -2029,6 +2033,18 @@ PrefabInstance:
     - target: {fileID: 4140409565801963752, guid: 498a1e0793c42d14889f361fb5357a2c, type: 3}
       propertyPath: SortKey
       value: 3883456462
+      objectReference: {fileID: 0}
+    - target: {fileID: 4577438740616291225, guid: 498a1e0793c42d14889f361fb5357a2c, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4577438740616291225, guid: 498a1e0793c42d14889f361fb5357a2c, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4577438740616291225, guid: 498a1e0793c42d14889f361fb5357a2c, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7505802865968707474, guid: 498a1e0793c42d14889f361fb5357a2c, type: 3}
       propertyPath: m_AnchorMax.y
