@@ -104,6 +104,7 @@ public partial class NetworkPlayerController : NetworkBehaviour
     [SerializeField] private float forwardJumpAirTime = 0.68f;
     [SerializeField] private float jumpAnimationLockDuration = 0.45f;
     [SerializeField, Range(0.5f, 1f)] private float runJumpSpeedRatio = 0.75f;
+    [SerializeField] private bool useForwardJumpRootMotion = false;
 
     [Header("Basic Attack Combo")]
     [SerializeField] private float comboGraceSeconds = 0.5f;
@@ -143,6 +144,7 @@ public partial class NetworkPlayerController : NetworkBehaviour
     [Networked] private NetworkBool ActionAnimationLocked { get; set; }
     [Networked] private byte ActionLockType { get; set; }
     [Networked] private NetworkBool ComboInputWindowOpen { get; set; }
+    [Networked] private NetworkBool ParryGuardActive { get; set; }
     [Networked] private int ControlLockMask { get; set; }
     [Networked] private float CurrentMoveSpeed { get; set; }
     [Networked] private float MoveSpeedBlendNetworked { get; set; }
@@ -189,6 +191,7 @@ public partial class NetworkPlayerController : NetworkBehaviour
     private bool _localActionAnimationLocked;
     private byte _localActionLockType;
     private bool _localComboInputWindowOpen;
+    private bool _localParryGuardActive;
     private int _localControlLockMask;
     // buffer는 아직 입력창이 열리기 전의 짧은 선입력, queue는 다음 공격으로 확정된 선입력이다.
     private bool _bufferedComboAttack;

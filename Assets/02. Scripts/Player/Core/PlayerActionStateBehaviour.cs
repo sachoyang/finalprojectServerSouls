@@ -25,16 +25,18 @@ public class PlayerActionStateBehaviour : StateMachineBehaviour
     // normalized time이 아니라 실제 남은 초 단위다.
     // 클립 길이가 달라도 "끝나기 0.2초 전" 같은 체감 기준을 유지하기 위해 초 단위로 계산한다.
     [SerializeField, Min(0f)] private float comboInputOpenSecondsBeforeEnd = 0.2f;
+    [SerializeField] private bool enablesParryGuard;
 
     private bool _comboInputOpened;
 
-    public void Configure(PlayerActionLockType lockType, bool shouldOpenComboInput, float openSecondsBeforeEnd)
+    public void Configure(PlayerActionLockType lockType, bool shouldOpenComboInput, float openSecondsBeforeEnd, bool shouldEnableParryGuard = false)
     {
         // Editor Setup Tool에서 State를 만들거나 갱신할 때 호출된다.
         // 수동 입력 대신 도구가 타입/콤보 입력 시점을 일관되게 세팅하게 하기 위한 진입점이다.
         actionLockType = lockType;
         opensComboInput = shouldOpenComboInput;
         comboInputOpenSecondsBeforeEnd = Mathf.Max(0f, openSecondsBeforeEnd);
+        enablesParryGuard = shouldEnableParryGuard;
     }
 
     public override void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
@@ -42,7 +44,12 @@ public class PlayerActionStateBehaviour : StateMachineBehaviour
         // State에 실제로 진입한 순간 액션락을 켠다.
         // StartAction에서 이미 잠갔더라도 Animator 기준 상태 진입을 다시 확인하는 보강 역할을 한다.
         _comboInputOpened = false;
-        GetController(animator)?.BeginActionAnimation(actionLockType);
+        NetworkPlayerController controller = GetController(animator);
+        controller?.BeginActionAnimation(actionLockType);
+        if (enablesParryGuard)
+        {
+            controller?.SetParryGuardActive(true);
+        }
     }
 
     public override void OnStateUpdate(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
@@ -68,7 +75,13 @@ public class PlayerActionStateBehaviour : StateMachineBehaviour
         // State가 끝났다고 무조건 락을 풀면, 피격으로 넘어간 직후 이전 공격 State가 새 Impact 락을 풀어버릴 수 있다.
         // 그래서 자신의 actionLockType을 넘기고, 컨트롤러가 현재 락 타입과 맞을 때만 해제한다.
         _comboInputOpened = false;
-        GetController(animator)?.EndActionAnimation(actionLockType);
+        NetworkPlayerController controller = GetController(animator);
+        if (enablesParryGuard)
+        {
+            controller?.SetParryGuardActive(false);
+        }
+
+        controller?.EndActionAnimation(actionLockType);
     }
 
     private static NetworkPlayerController GetController(Animator animator)

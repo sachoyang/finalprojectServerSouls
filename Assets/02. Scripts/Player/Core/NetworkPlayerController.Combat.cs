@@ -450,11 +450,28 @@ public partial class NetworkPlayerController
         ClearComboRequests();
     }
 
+    public void NotifyParryGuardBlocked()
+    {
+        if (!HasStateAuthority || !IsParryGuardActive)
+        {
+            return;
+        }
+
+        SetParryGuardActive(false);
+        LastAction = ActionParryImpact;
+        LastActionId = 0;
+        ActionSequence++;
+        SetActionAnimationLocked(true, PlayerActionLockType.Impact);
+        SetComboInputWindowOpen(false);
+        ClearComboRequests();
+    }
+
     public void NotifyRevived()
     {
         _localActionAnimationLocked = false;
         _localActionLockType = (byte)PlayerActionLockType.None;
         _localComboInputWindowOpen = false;
+        _localParryGuardActive = false;
         ClearComboRequests();
         _lastLocalConsumedActionId = 0;
 
@@ -468,6 +485,7 @@ public partial class NetworkPlayerController
             ActionAnimationLocked = false;
             ActionLockType = (byte)PlayerActionLockType.None;
             ComboInputWindowOpen = false;
+            ParryGuardActive = false;
             ActionSequence++;
         }
     }
@@ -487,6 +505,19 @@ public partial class NetworkPlayerController
     private bool IsParryActive()
     {
         return LastAction == ActionParry && IsActionAnimationLocked;
+    }
+
+    public bool IsParryGuardActive => ParryGuardActive || _localParryGuardActive;
+
+    public void SetParryGuardActive(bool isActive)
+    {
+        _localParryGuardActive = isActive;
+        _playerStats?.SetAnimationInvincible(isActive);
+
+        if (Object != null && HasStateAuthority)
+        {
+            ParryGuardActive = isActive;
+        }
     }
 
     private static PlayerActionLockType GetActionLockType(byte actionType)
@@ -706,7 +737,7 @@ public partial class NetworkPlayerController
 
     private bool IsForwardJumpRootMotionActive()
     {
-        return LastAction == ActionJumpForward && IsActionAnimationLocked;
+        return useForwardJumpRootMotion && LastAction == ActionJumpForward && IsActionAnimationLocked;
     }
 
     private int GetBasicAttackTrigger()
