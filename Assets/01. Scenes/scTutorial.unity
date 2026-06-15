@@ -1722,7 +1722,7 @@ Transform:
   m_GameObject: {fileID: 797029454}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.99985355, z: -0, w: 0.017117318}
-  m_LocalPosition: {x: -0.53, y: 1.02, z: 3.55}
+  m_LocalPosition: {x: -0.53, y: 1.261, z: 3.55}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2705,7 +2705,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   debugBossPool:
-  - {fileID: 11400000, guid: 432313c7e5a2784449402e68430f6540, type: 2}
+  - {fileID: 11400000, guid: ad6568c9a99aefb4d8821e3c31f42f1d, type: 2}
   useRandomBoss: 0
   debugUserId: 
   guiPosition: {x: 10, y: 10}

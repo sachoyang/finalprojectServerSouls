@@ -18,6 +18,13 @@ public class BossActionModule
     [Tooltip("이 동작을 유지할 시간 (초). \n애니메이션 원본 길이와 다르게 설정하여 엇박자나 후딜레이를 마음대로 조절할 수 있습니다.")]
     public float duration = 1.0f;
 
+    [Header("Movement Mode")]
+    [Tooltip("ON  : 이 클립의 실제 루트모션(animator.deltaPosition)으로 이동. moveOffset/moveCurve 는 무시.\n" +
+             "       → 해당 클립은 Root Transform Position(XZ) 의 Bake Into Pose 를 OFF 로 임포트해야 함(루트모션 추출).\n" +
+             "OFF : 아래 moveOffset + moveCurve 로 코드가 이동을 만든다.\n" +
+             "       → 해당 클립은 Bake Into Pose 를 ON(제자리) 으로 임포트.")]
+    public bool useRootMotion = false;
+
     [Header("Curve-Driven Movement")]
     [Tooltip("이 동작 동안 보스가 자신의 로컬 앞/옆으로 얼마나 이동할 것인가? (예: Z축 5 = 앞으로 5m 돌진)")]
     public Vector3 moveOffset;

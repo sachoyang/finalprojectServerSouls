@@ -18,23 +18,11 @@ MonoBehaviour:
   maxRange: 10
   weight: 10
   actions:
-  - animationClip: {fileID: 0}
-    animationStateName: 
-    animationHash: 0
-    duration: 0
-    moveOffset: {x: 0, y: 0, z: 0}
-    moveCurve:
-      serializedVersion: 2
-      m_Curve: []
-      m_PreInfinity: 0
-      m_PostInfinity: 0
-      m_RotationOrder: 0
-    hitboxIndex: 0
-    hasSuperArmor: 0
-  - animationClip: {fileID: 0}
-    animationStateName: 
-    animationHash: 0
-    duration: 0
+  - animationClip: {fileID: 7400000, guid: bc8c5404c00f19a4a883b859216a0bb1, type: 3}
+    animationStateName: attack8_root1
+    animationHash: -1125546663
+    duration: 2
+    useRootMotion: 1
     moveOffset: {x: 0, y: 0, z: 0}
     moveCurve:
       serializedVersion: 2

@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c59d7f1eb5aaa8f4d8a74afffdb18621, type: 3}
+  m_Name: OrcAssassin_Tutorial
+  m_EditorClassIdentifier: 
+  bossName: TurorialBoss
+  bossPrefab: {fileID: 2173268840119496611, guid: 619843c36e21b504fa49b8d4ea53862e, type: 3}
+  sceneName: scTutorial
+  stageMainBGM: {fileID: 8300000, guid: e7fd840bb89d7e74babb8b569744346c, type: 3}

@@ -106,6 +106,15 @@ public class DragonVisual : MonoBehaviour, IBossVisual
         anim.CrossFade("Locomotion", 0.1f);
     }
 
+    public void SetRootMotionCapture(bool enabled)
+    {
+    }
+ 
+    public Vector3 ConsumeRootMotionDelta()
+    {
+        return Vector3.zero;
+    }
+
     // ==========================================
     // [애니메이션 이벤트용 함수] 
     // ==========================================

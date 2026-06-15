@@ -216,6 +216,19 @@ public class NetworkBossCore : NetworkBehaviour
         BossPatternModule pattern = CurrentAvailablePatterns[CurrentPatternIndex];
         BossActionModule action = pattern.GetAction(CurrentStepIndex);
 
+        // ★ 루트모션 모드: 비주얼이 모아둔 실제 이동량을 가져와 적용 (커브 무시)
+        if (action.useRootMotion)
+        {
+            if (_visual != null)
+            {
+                Vector3 rmDelta = _visual.ConsumeRootMotionDelta();
+                rmDelta.y = 0f; // 수직은 기존 지형/중력 로직에 맡김
+                if (rmDelta.sqrMagnitude > 0.0000001f)
+                    _movement.MoveWithWallSlide(transform, rmDelta, Runner.DeltaTime);
+            }
+            return;
+        }
+
         // 현재 애니메이션이 몇 퍼센트(0~1) 진행되었는지 계산
         float duration = action.duration;
         float remaining = StateTimer.RemainingTime(Runner) ?? 0f;
@@ -275,7 +288,7 @@ public class NetworkBossCore : NetworkBehaviour
                 ChangeState(BossState.Idle);
                 AggroTimer = TickTimer.CreateFromSeconds(Runner, aggroRefreshTime);
             }
-            return; 
+            return;
         }
 
         if (CurrentState == BossState.PhaseTransition)
@@ -285,7 +298,7 @@ public class NetworkBossCore : NetworkBehaviour
                 AttackCooldown = TickTimer.CreateFromSeconds(Runner, patternCooldown);
                 ChangeState(BossState.Idle);
             }
-            return; 
+            return;
         }
 
         // 3. 🔥 [수정 핵심 1] 패턴 진행 중일 때 타겟이 죽더라도 하던 공격은 끝내도록 순서 변경!
@@ -324,10 +337,10 @@ public class NetworkBossCore : NetworkBehaviour
         if (AggroTarget == null) FindClosestTarget();
 
         // 맵에 살아있는 플레이어가 단 한 명도 없다면?
-        if (AggroTarget == null) 
+        if (AggroTarget == null)
         {
             // 걷기를 멈추고 제자리에 서서 숨 고르기 (제자리 걷기 버그 완벽 해결!)
-            if (CurrentState == BossState.Walk) 
+            if (CurrentState == BossState.Walk)
             {
                 ChangeState(BossState.Idle);
             }
@@ -383,6 +396,9 @@ public class NetworkBossCore : NetworkBehaviour
     {
         StateTimer = TickTimer.CreateFromSeconds(Runner, action.duration);
         PreviousCurveValue = 0f; // 이동량 계산 초기화
+
+        // ★ 이 액션이 루트모션이면 캡처 ON(누적 리셋), 아니면 OFF
+        _visual?.SetRootMotionCapture(action.useRootMotion);
     }
 
     // ==========================================
@@ -390,6 +406,10 @@ public class NetworkBossCore : NetworkBehaviour
     // ==========================================
     protected void ChangeState(BossState newState)
     {
+        // ★ 패턴 실행 상태를 벗어나면 루트모션 캡처를 끈다
+        if (newState != BossState.ExecutingPattern)
+            _visual?.SetRootMotionCapture(false);
+
         CurrentState = newState;
     }
 
@@ -447,7 +467,7 @@ public class NetworkBossCore : NetworkBehaviour
                 }
                 else if (CurrentState == BossState.Idle || CurrentState == BossState.Walk)
                 {
-                    _visual.DoLocomotion(); 
+                    _visual.DoLocomotion();
                 }
                 else if (CurrentState == BossState.Die)
                 {
@@ -553,7 +573,7 @@ public class NetworkBossCore : NetworkBehaviour
 
             // 3초 동안 무적 & 포효 연출 진행
             StateTimer = TickTimer.CreateFromSeconds(Runner, 3.0f);
-            Debug.Log("[보스] 체력 50% 이하! 2페이즈 광폭화 돌입!");
+            Debug.Log("[보스] 체력 50% 이하! 2페이즈 돌입!");
 
             //ApplyStatus(1); // 광폭화 SO 만들어둔 거 부여
 
@@ -680,7 +700,7 @@ public class NetworkBossCore : NetworkBehaviour
         // 없다면 빈자리(0)를 찾아서 새로 넣기
         for (int i = 0; i < ActiveStatuses.Length; i++)
         {
-            if (ActiveStatuses[i].StatusId == 0) 
+            if (ActiveStatuses[i].StatusId == 0)
             {
                 ActiveStatuses.Set(i, new BossStatusData
                 {
