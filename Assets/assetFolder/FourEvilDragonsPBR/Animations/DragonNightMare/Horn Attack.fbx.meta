@@ -513,14 +513,14 @@ ModelImporter:
       bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
       curves: []
       events:
-      - time: 0.26815644
+      - time: 0.40821245
         functionName: EnableHornAttackHitbox
         data: 
         objectReferenceParameter: {instanceID: 0}
         floatParameter: 0
         intParameter: 0
         messageOptions: 0
-      - time: 0.7235772
+      - time: 0.6815604
         functionName: DisableHornAttackHitbox
         data: 
         objectReferenceParameter: {instanceID: 0}
