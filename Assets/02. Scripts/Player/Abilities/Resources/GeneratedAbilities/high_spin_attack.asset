@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cbc39ac0e5f95d14fbd17eac508de1c4, type: 3}
-  m_Name: HighSpinAttack
+  m_Name: high_spin_attack
   m_EditorClassIdentifier: 
   bitIndex: 3
   abilityId: high_spin_attack
@@ -32,7 +32,7 @@ MonoBehaviour:
   attackDamageBonusPercent: 0
   animationClip: {fileID: -203655887218126122, guid: 6e2e5d6f257b702419afdb91532e3d2e, type: 3}
   animationStateName: 
-  animationTrigger: HighSpinAttack
+  animationTrigger: 
   effectPrefab: {fileID: 0}
   effectLocalOffset: {x: 0, y: 0, z: 0}
   parentEffectToPlayer: 0

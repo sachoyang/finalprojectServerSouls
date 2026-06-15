@@ -7,7 +7,7 @@ using System.IO;
 public class AbilityBakeWindow : EditorWindow
 {
     private string serverUrl = "http://127.0.0.1:8080/soulrush_api/get_abilities.php"; // 기본 URL
-    private const string SAVE_PATH = "Assets/Resources/GeneratedAbilities";
+    private const string SAVE_PATH = "Assets/02. Scripts/Player/Abilities/Resources/GeneratedAbilities";
 
     [MenuItem("Soul Rush/⚔️ 스킬 DB 동기화 (Bake)")]
     public static void ShowWindow()

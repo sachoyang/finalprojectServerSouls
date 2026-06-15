@@ -10,29 +10,29 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cbc39ac0e5f95d14fbd17eac508de1c4, type: 3}
-  m_Name: HighSpinAttack
+  m_Name: basic_attack_combo
   m_EditorClassIdentifier: 
-  bitIndex: 3
-  abilityId: high_spin_attack
-  displayName: High Spin Attack
-  description: Performs a wide spinning great sword attack.
-  icon: {fileID: -1116392742, guid: 602013fcc1a5c4a48ad04a33a93cf811, type: 3}
+  bitIndex: 1
+  abilityId: basic_attack_combo
+  displayName: "\uCF64\uBCF4 \uACF5\uACA9 \uCD94\uAC00"
+  description: Unlocks the slash4, slash2, slash3 basic attack combo
+  icon: {fileID: -1062722195, guid: 602013fcc1a5c4a48ad04a33a93cf811, type: 3}
   abilityType: 1
   minBossStage: 1
   maxBossStage: 8
   includeInRewardPool: 1
-  staminaCost: 400
-  cooldownSeconds: 8
+  staminaCost: 0
+  cooldownSeconds: 0
   healthRestoreAmount: 0
   staminaRestoreAmount: 0
-  specialEffect: 0
+  specialEffect: 1
   maxHealthBonus: 0
   maxStaminaBonus: 0
   defenseRateBonus: 0
   attackDamageBonusPercent: 0
-  animationClip: {fileID: -203655887218126122, guid: 6e2e5d6f257b702419afdb91532e3d2e, type: 3}
+  animationClip: {fileID: -203655887218126122, guid: f1d1bf1bca092184498421e5bb785168, type: 3}
   animationStateName: 
-  animationTrigger: HighSpinAttack
+  animationTrigger: 
   effectPrefab: {fileID: 0}
   effectLocalOffset: {x: 0, y: 0, z: 0}
   parentEffectToPlayer: 0

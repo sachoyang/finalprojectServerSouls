@@ -10,18 +10,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cbc39ac0e5f95d14fbd17eac508de1c4, type: 3}
-  m_Name: asdf
+  m_Name: stamina_up
   m_EditorClassIdentifier: 
-  abilityId: asdf
-  displayName: asdf
-  description: 
+  bitIndex: 8
+  abilityId: stamina_up
+  displayName: Stamina Up
+  description: Restores stamina with a power-up animation.
   icon: {fileID: 0}
   abilityType: 0
   minBossStage: 1
   maxBossStage: 8
   includeInRewardPool: 1
-  staminaCost: 0
-  cooldownSeconds: 0
+  staminaCost: 500
+  cooldownSeconds: 12
   healthRestoreAmount: 0
   staminaRestoreAmount: 0
   specialEffect: 0
@@ -29,7 +30,7 @@ MonoBehaviour:
   maxStaminaBonus: 0
   defenseRateBonus: 0
   attackDamageBonusPercent: 0
-  animationClip: {fileID: 0}
+  animationClip: {fileID: -203655887218126122, guid: f91d1ffc181042e45bdcbe560e4be586, type: 3}
   animationStateName: 
   animationTrigger: 
   effectPrefab: {fileID: 0}
@@ -37,7 +38,10 @@ MonoBehaviour:
   parentEffectToPlayer: 0
   hitboxPrefab: {fileID: 0}
   hitboxLocalOffset: {x: 0, y: 0, z: 0}
-  hitboxDamage: 1
+  hitboxDamage: 0
   hitboxRevivePower: 34
   hitboxDelay: 0
-  hitboxLifetime: 0
+  hitboxLifetime: 0.3
+  soundClip: {fileID: 0}
+  soundVolume: 1
+  soundDelay: 0

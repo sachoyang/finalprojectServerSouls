@@ -19,6 +19,8 @@ public enum PlayerAbilitySpecialEffect
 public class PlayerAbilityModule : ScriptableObject
 {
     [Header("Reward")]
+    // DB 업로드 및 비트마스트 관리를 위한 고유 비트 번호 (0~63)
+    [SerializeField] private int bitIndex;
     // 같은 능력인지 비교할 때 쓰는 고유 ID. 비워두면 에셋 이름을 ID처럼 사용한다.
     [SerializeField] private string abilityId;
 
@@ -109,6 +111,15 @@ public class PlayerAbilityModule : ScriptableObject
 
     [SerializeField] private float hitboxLifetime = 0.3f;
 
+    [Header("Sound")]
+    [Tooltip("능력 사용 시 재생할 사운드 클립 (에셋 DB의 Key로 연동됨)")]
+    [SerializeField] private AudioClip soundClip;
+    [Tooltip("사운드 재생 볼륨 (0.0 ~ 1.0)")]
+    [SerializeField, Range(0f, 1f)] private float soundVolume = 1.0f;
+    [Tooltip("능력 발동 후 사운드가 재생되기까지의 지연 시간(초)")]
+    [SerializeField] private float soundDelay = 0.0f;
+
+    public int BitIndex => bitIndex;
     public string AbilityId => string.IsNullOrWhiteSpace(abilityId) ? name : abilityId;
     public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? name : displayName;
     public string Description => description;
@@ -138,6 +149,10 @@ public class PlayerAbilityModule : ScriptableObject
     public float HitboxDelay => hitboxDelay;
     public float HitboxLifetime => hitboxLifetime;
 
+    public AudioClip SoundClip => soundClip;
+    public float SoundVolume => soundVolume;
+    public float SoundDelay => soundDelay;
+
     public bool CanAppearAtStage(int bossStage)
     {
         return bossStage >= minBossStage && bossStage <= maxBossStage;
@@ -149,16 +164,21 @@ public class PlayerAbilityModule : ScriptableObject
     public void InitializeFromDB(AbilityDBData dbData, AbilityAssetDatabase assetDB)
     {
         this.name = dbData.ability_id; // 메모리 상의 에셋 이름
-        
+
+        this.bitIndex = dbData.bit_index;
+
         this.abilityId = dbData.ability_id;
         this.displayName = dbData.display_name;
         this.description = dbData.description;
-        
+
         this.abilityType = (dbData.ability_type == "Active") ? AbilityType.Active : AbilityType.Passive;
         this.staminaCost = dbData.stamina_cost;
         this.cooldownSeconds = dbData.cooldown_seconds;
         this.hitboxDamage = dbData.damage_multiplier; // 데미지 매핑
         this.hitboxLifetime = dbData.duration; // 지속시간 매핑
+
+        this.soundVolume = dbData.sound_volume;
+        this.soundDelay = dbData.sound_delay;
 
         // 특수 효과 Enum 매핑
         if (System.Enum.TryParse(dbData.special_effect, out PlayerAbilitySpecialEffect effect))
@@ -171,5 +191,7 @@ public class PlayerAbilityModule : ScriptableObject
         if (!string.IsNullOrEmpty(dbData.animation_key)) this.animationClip = assetDB.GetAnim(dbData.animation_key);
         if (!string.IsNullOrEmpty(dbData.vfx_key)) this.effectPrefab = assetDB.GetPrefab(dbData.vfx_key);
         if (!string.IsNullOrEmpty(dbData.hitbox_key)) this.hitboxPrefab = assetDB.GetPrefab(dbData.hitbox_key);
+
+        if (!string.IsNullOrEmpty(dbData.sound_key)) this.soundClip = assetDB.GetSound(dbData.sound_key);
     }
 }

@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cbc39ac0e5f95d14fbd17eac508de1c4, type: 3}
   m_Name: Heal
   m_EditorClassIdentifier: 
+  bitIndex: 2
   abilityId: heal
   displayName: Heal
   description: Restores player health.
@@ -38,5 +39,9 @@ MonoBehaviour:
   hitboxPrefab: {fileID: 0}
   hitboxLocalOffset: {x: 0, y: 0, z: 0}
   hitboxDamage: 0
+  hitboxRevivePower: 34
   hitboxDelay: 0
   hitboxLifetime: 0.3
+  soundClip: {fileID: 0}
+  soundVolume: 1
+  soundDelay: 0

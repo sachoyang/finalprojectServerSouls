@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cbc39ac0e5f95d14fbd17eac508de1c4, type: 3}
   m_Name: JumpAttack
   m_EditorClassIdentifier: 
+  bitIndex: 6
   abilityId: jump_attack
   displayName: Jump Attack
   description: Leaps into a great sword attack.
@@ -41,3 +42,6 @@ MonoBehaviour:
   hitboxRevivePower: 34
   hitboxDelay: 0
   hitboxLifetime: 0.3
+  soundClip: {fileID: 0}
+  soundVolume: 1
+  soundDelay: 0

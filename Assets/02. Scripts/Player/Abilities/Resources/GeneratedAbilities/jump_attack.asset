@@ -10,18 +10,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cbc39ac0e5f95d14fbd17eac508de1c4, type: 3}
-  m_Name: ex
+  m_Name: jump_attack
   m_EditorClassIdentifier: 
-  abilityId: ex
-  displayName: ex
-  description: 
+  bitIndex: 6
+  abilityId: jump_attack
+  displayName: Jump Attack
+  description: Leaps into a great sword attack.
   icon: {fileID: 0}
   abilityType: 1
   minBossStage: 1
   maxBossStage: 8
   includeInRewardPool: 1
-  staminaCost: 100
-  cooldownSeconds: 5
+  staminaCost: 400
+  cooldownSeconds: 8
   healthRestoreAmount: 0
   staminaRestoreAmount: 0
   specialEffect: 0
@@ -29,7 +30,7 @@ MonoBehaviour:
   maxStaminaBonus: 0
   defenseRateBonus: 0
   attackDamageBonusPercent: 0
-  animationClip: {fileID: 0}
+  animationClip: {fileID: -203655887218126122, guid: 2e360ce02ed05d04faec51172d19bb6d, type: 3}
   animationStateName: 
   animationTrigger: 
   effectPrefab: {fileID: 0}
@@ -37,7 +38,10 @@ MonoBehaviour:
   parentEffectToPlayer: 0
   hitboxPrefab: {fileID: 0}
   hitboxLocalOffset: {x: 0, y: 0, z: 0}
-  hitboxDamage: 2
+  hitboxDamage: 0
   hitboxRevivePower: 34
   hitboxDelay: 0
-  hitboxLifetime: 2
+  hitboxLifetime: 0.3
+  soundClip: {fileID: 0}
+  soundVolume: 1
+  soundDelay: 0

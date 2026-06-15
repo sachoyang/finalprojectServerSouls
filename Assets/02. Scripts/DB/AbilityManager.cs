@@ -22,6 +22,10 @@ public class AbilityDBData
     public string animation_key;
     public string vfx_key;
     public string hitbox_key;
+
+    public string sound_key;
+    public float sound_volume;
+    public float sound_delay;
 }
 
 [Serializable]

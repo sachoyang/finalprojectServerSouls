@@ -15,6 +15,7 @@ public class PlayerAbilityModuleEditor : Editor
     private static bool _vfxOpen = true;
     private static bool _hitboxOpen = true;
     private static bool _previewOpen = true;
+    private static bool _soundOpen = true;
 
     private SerializedProperty _abilityId;
     private SerializedProperty _displayName;
@@ -45,6 +46,14 @@ public class PlayerAbilityModuleEditor : Editor
     private SerializedProperty _hitboxRevivePower;
     private SerializedProperty _hitboxDelay;
     private SerializedProperty _hitboxLifetime;
+    private SerializedProperty _bitIndex;
+    private SerializedProperty _soundClip;
+    private SerializedProperty _soundVolume;
+    private SerializedProperty _soundDelay;
+
+
+
+
 
     private PreviewRenderUtility _previewUtility;
     private GameObject _previewPlayerPrefab;
@@ -65,6 +74,7 @@ public class PlayerAbilityModuleEditor : Editor
 
     private void OnEnable()
     {
+        _bitIndex = serializedObject.FindProperty("bitIndex");
         _abilityId = serializedObject.FindProperty("abilityId");
         _displayName = serializedObject.FindProperty("displayName");
         _description = serializedObject.FindProperty("description");
@@ -94,6 +104,10 @@ public class PlayerAbilityModuleEditor : Editor
         _hitboxRevivePower = serializedObject.FindProperty("hitboxRevivePower");
         _hitboxDelay = serializedObject.FindProperty("hitboxDelay");
         _hitboxLifetime = serializedObject.FindProperty("hitboxLifetime");
+        _bitIndex = serializedObject.FindProperty("bitIndex");
+        _soundClip = serializedObject.FindProperty("soundClip");
+        _soundVolume = serializedObject.FindProperty("soundVolume");
+        _soundDelay = serializedObject.FindProperty("soundDelay");
 
         string prefabGuid = EditorPrefs.GetString(PreviewPlayerPrefsKey, string.Empty);
         string prefabPath = AssetDatabase.GUIDToAssetPath(prefabGuid);
@@ -130,6 +144,7 @@ public class PlayerAbilityModuleEditor : Editor
 
         DrawSection(isActive ? "Presentation" : "Acquisition Presentation", ref _presentationOpen, DrawPresentation);
         DrawSection(isActive ? "VFX" : "Acquisition VFX", ref _vfxOpen, DrawVfx);
+        DrawSection("Sound", ref _soundOpen, DrawSound); 
 
         if (isActive)
         {
@@ -143,6 +158,7 @@ public class PlayerAbilityModuleEditor : Editor
 
     private void DrawReward()
     {
+        EditorGUILayout.PropertyField(_bitIndex);
         EditorGUILayout.PropertyField(_abilityId);
         EditorGUILayout.PropertyField(_displayName);
         EditorGUILayout.PropertyField(_description);
@@ -195,6 +211,13 @@ public class PlayerAbilityModuleEditor : Editor
         EditorGUILayout.PropertyField(_hitboxRevivePower);
         EditorGUILayout.PropertyField(_hitboxDelay);
         EditorGUILayout.PropertyField(_hitboxLifetime);
+    }
+
+    private void DrawSound()
+    {
+        EditorGUILayout.PropertyField(_soundClip);
+        EditorGUILayout.PropertyField(_soundVolume);
+        EditorGUILayout.PropertyField(_soundDelay);
     }
 
     private void DrawEmbeddedPreview()
