@@ -90,6 +90,8 @@ public partial class NetworkPlayerController : NetworkBehaviour
     [SerializeField] private Camera viewCamera;
 
     [Header("Movement")]
+    //루트 모션 용 플레이어 스케일 비율 추가
+    [SerializeField] private float rootMotionDistanceMultiplier = 1.8f;
     // 일반 이동, 달리기, 구르기, 다운 후 기어가기 속도.
     [SerializeField] private float walkSpeed = 2.6f;
     [SerializeField] private float runSpeed = 4.8f;
@@ -165,6 +167,7 @@ public partial class NetworkPlayerController : NetworkBehaviour
     [Networked] private Vector3 ForwardJumpDirection { get; set; }
 
     private NetworkCharacterController _networkCharacterController;
+    private CharacterController _characterController;
     private PlayerStats _playerStats;
     private PlayerStatusController _statusController;
     private PlayerAbilityInventory _abilityInventory;
@@ -217,6 +220,7 @@ public partial class NetworkPlayerController : NetworkBehaviour
         // 같은 오브젝트에 붙은 필수 컴포넌트를 잡고, 없으면 컨트롤러를 비활성화한다.
         animator ??= GetComponent<Animator>();
         _networkCharacterController = GetComponent<NetworkCharacterController>();
+        _characterController = GetComponent<CharacterController>();
         _playerStats = GetComponent<PlayerStats>();
         _statusController = GetComponent<PlayerStatusController>();
         _abilityInventory = GetComponent<PlayerAbilityInventory>();

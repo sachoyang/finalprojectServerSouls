@@ -55,11 +55,11 @@ PlayerSessionStore
 주요 Networked 값:
 - IsMovingNetworked, IsRunningNetworked: 원격 이동 애니메이션용.
 - IsLockOnNetworked, LockOnMoveNetworked, LockOnPointPosition: 락온 상태.
-- RollDirection: 구르기 시작 방향. 실제 이동은 Sprinting Forward Roll root motion delta를 NetworkCharacterController에 적용한다.
+- RollDirection: 구르기 시작 방향. 실제 이동은 Sprinting Forward Roll root motion delta를 CharacterController에 적용하고 NetworkCharacterController 상태에 반영한다.
 - LastAction, LastActionId, LastConsumedActionId, ActionSequence: 액션 애니메이션과 입력 중복 방지.
 - BasicAttackComboUnlocked, BasicAttackComboIndex: 기본 공격 콤보 해금/단계.
 - ActionAnimationLocked, ActionLockType, ComboInputWindowOpen: 애니메이션 중 입력/이동 잠금.
-- SlideAttack, HighSpinAttack, JumpAttack 스킬 State는 Animator root motion delta를 NetworkCharacterController 이동으로 적용한다.
+- SlideAttack, HighSpinAttack, JumpAttack 스킬 State는 Animator root motion delta를 CharacterController에 적용하고 NetworkCharacterController 상태에 반영한다.
 
 외부에서 호출할 함수:
 - UnlockBasicAttackCombo(): 패시브 보상으로 기본 공격 콤보 해금.
