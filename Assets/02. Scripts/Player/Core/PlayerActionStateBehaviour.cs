@@ -26,17 +26,31 @@ public class PlayerActionStateBehaviour : StateMachineBehaviour
     // 애니메이션 속도를 바꿔도 같은 포즈 구간에서 콤보 입력을 받기 위한 값이다.
     [SerializeField, Range(0f, 1f)] private float comboInputOpenNormalizedTime = 0.72f;
     [SerializeField] private bool enablesParryGuard;
+    [SerializeField] private bool enablesInvincibility;
 
     private bool _comboInputOpened;
 
-    public void Configure(PlayerActionLockType lockType, bool shouldOpenComboInput, float openNormalizedTime, bool shouldEnableParryGuard = false)
+    public bool EnablesParryGuard => enablesParryGuard;
+
+    public void Configure(
+        PlayerActionLockType lockType,
+        bool shouldOpenComboInput,
+        float openNormalizedTime,
+        bool shouldEnableParryGuard = false,
+        bool preserveParryGuard = false,
+        bool shouldEnableInvincibility = false)
     {
         // Editor Setup Tool에서 State를 만들거나 갱신할 때 호출된다.
-        // 수동 입력 대신 도구가 타입/콤보 입력 시점을 일관되게 세팅하게 하기 위한 진입점이다.
+        // 수동 체크한 parry guard 옵션은 preserveParryGuard로 보호할 수 있다.
         actionLockType = lockType;
         opensComboInput = shouldOpenComboInput;
         comboInputOpenNormalizedTime = Mathf.Clamp01(openNormalizedTime);
-        enablesParryGuard = shouldEnableParryGuard;
+        if (!preserveParryGuard)
+        {
+            enablesParryGuard = shouldEnableParryGuard;
+        }
+
+        enablesInvincibility = shouldEnableInvincibility;
     }
 
     public override void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
@@ -49,6 +63,11 @@ public class PlayerActionStateBehaviour : StateMachineBehaviour
         if (enablesParryGuard)
         {
             controller?.SetParryGuardActive(true);
+        }
+
+        if (enablesInvincibility)
+        {
+            controller?.SetActionInvincible(true);
         }
     }
 
@@ -78,7 +97,12 @@ public class PlayerActionStateBehaviour : StateMachineBehaviour
         NetworkPlayerController controller = GetController(animator);
         if (enablesParryGuard)
         {
-            controller?.SetParryGuardActive(false);
+            controller?.EndParryGuardState();
+        }
+
+        if (enablesInvincibility)
+        {
+            controller?.SetActionInvincible(false);
         }
 
         controller?.EndActionAnimation(actionLockType);

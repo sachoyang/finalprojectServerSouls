@@ -381,6 +381,13 @@ public partial class NetworkPlayerController
         _playerStats?.SetAnimationInvincible(false);
     }
 
+    public void SetActionInvincible(bool isInvincible)
+    {
+        // StateMachineBehaviour에서 제어하는 순수 무적이다.
+        // ParryGuard와 달리 피해를 막아도 Impact2 같은 반격 리액션은 발생시키지 않는다.
+        _playerStats?.SetAnimationInvincible(isInvincible);
+    }
+
     private bool IsParryActive()
     {
         return LastAction == ActionParry && (IsActionAnimationLocked || IsParryAnimatorStateActive());
@@ -399,6 +406,18 @@ public partial class NetworkPlayerController
         {
             ParryGuardActive = isActive;
         }
+    }
+
+    public void EndParryGuardState()
+    {
+        // blocking1 -> blocking2 -> blocking3처럼 guard가 켜진 패링 State끼리 이어질 때,
+        // 이전 State의 Exit가 다음 State의 guard를 꺼버리면 전환 중 공격이 뚫릴 수 있다.
+        if (IsTransitioningToParryState())
+        {
+            return;
+        }
+
+        SetParryGuardActive(false);
     }
 
     private static PlayerActionLockType GetActionLockType(byte actionType)
