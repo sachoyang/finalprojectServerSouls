@@ -2,19 +2,43 @@ using UnityEngine;
 
 public partial class NetworkPlayerController
 {
+    private void LateUpdate()
+    {
+        UpdateAnimatorRootMotionMode();
+    }
+
     private void OnAnimatorMove()
     {
+        UpdateAnimatorRootMotionMode();
         if (animator == null ||
             Object == null ||
             !Object.HasStateAuthority ||
-            (!IsTurnAnimationActive() && !IsForwardJumpRootMotionActive()))
+            !ShouldUseAnimatorRootMotion())
         {
+            ClearQueuedRootMotion();
             return;
         }
 
         _queuedRootMotionDeltaPosition += animator.deltaPosition;
         _queuedRootMotionDeltaRotation = animator.deltaRotation * _queuedRootMotionDeltaRotation;
         _hasQueuedRootMotion = true;
+    }
+
+    private bool ShouldUseAnimatorRootMotion()
+    {
+        return Object != null &&
+               Object.HasStateAuthority &&
+               (IsTurnAnimationActive() || IsForwardJumpRootMotionActive());
+    }
+
+    private void UpdateAnimatorRootMotionMode()
+    {
+        if (animator == null)
+        {
+            return;
+        }
+
+        animator.applyRootMotion = ShouldUseAnimatorRootMotion();
     }
 
     private void ApplyTurnRootMotion()

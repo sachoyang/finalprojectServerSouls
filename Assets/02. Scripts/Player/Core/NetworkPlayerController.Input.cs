@@ -21,6 +21,7 @@ public partial class NetworkPlayerController
 
     public override void FixedUpdateNetwork()
     {
+        UpdateAnimatorRootMotionMode();
         RestoreDefaultGravityIfGrounded();
         CompleteTurnAnimationIfNeeded();
 
@@ -110,7 +111,7 @@ public partial class NetworkPlayerController
 
         bool shiftReleased = WasShiftHeld && !shiftHeld;
         bool isRolling = !RollTimer.ExpiredOrNotRunning(Runner);
-        bool isActing = IsActionAnimationLocked;
+        bool isActing = IsActionAnimationLocked || IsParryAnimatorStateActive();
         bool rawAttackPressed = data.buttons.IsSet(NetworkInputData.MOUSEBUTTON0);
         bool rawParryPressed = data.buttons.IsSet(NetworkInputData.MOUSEBUTTON1);
         bool rawJumpPressed = data.buttons.IsSet(NetworkInputData.JUMP);
@@ -176,22 +177,25 @@ public partial class NetworkPlayerController
             // 비호스트 클라이언트는 입력만 보내고, 애니메이션은 ActionSequence 수신 후 재생한다.
             if (jumpPressed && _networkCharacterController.Grounded)
             {
-                bool useForwardJump = ShouldUseForwardJumpAnimation();
-                if (useForwardJump)
+                if (TrySpendJumpStamina())
                 {
-                    ForwardJumpDirection = desiredMove.sqrMagnitude > 0.001f
-                        ? desiredMove.normalized
-                        : Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
-                }
-                else
-                {
-                    ForwardJumpDirection = Vector3.zero;
-                }
+                    bool useForwardJump = ShouldUseForwardJumpAnimation();
+                    if (useForwardJump)
+                    {
+                        ForwardJumpDirection = desiredMove.sqrMagnitude > 0.001f
+                            ? desiredMove.normalized
+                            : Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
+                    }
+                    else
+                    {
+                        ForwardJumpDirection = Vector3.zero;
+                    }
 
-                ApplyJumpPhysics(useForwardJump);
-                StartAction(useForwardJump ? ActionJumpForward : ActionJump, data.actionId);
-                isActing = true;
-                isBusy = true;
+                    ApplyJumpPhysics(useForwardJump);
+                    StartAction(useForwardJump ? ActionJumpForward : ActionJump, data.actionId);
+                    isActing = true;
+                    isBusy = true;
+                }
             }
             else if (attackPressed)
             {
@@ -206,9 +210,12 @@ public partial class NetworkPlayerController
             else if (parryPressed)
             {
                 // 패링 중 피격되면 PlayerStats가 Impact2 액션을 요청한다.
-                StartAction(ActionParry, data.actionId);
-                isActing = true;
-                isBusy = true;
+                if (TrySpendParryStamina())
+                {
+                    StartAction(ActionParry, data.actionId);
+                    isActing = true;
+                    isBusy = true;
+                }
             }
             else if (shiftReleased && ShiftHoldTime < shiftHoldThreshold)
             {
