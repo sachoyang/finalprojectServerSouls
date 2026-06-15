@@ -67,9 +67,9 @@ public class AbilityUploadWindow : EditorWindow
 
             WWWForm form = new WWWForm();
             form.AddField("bit_index", module.BitIndex);
-            form.AddField("ability_id", module.AbilityId);
-            form.AddField("display_name", module.DisplayName);
-            form.AddField("description", module.Description);
+            form.AddField("ability_id", module.AbilityId ?? "");
+            form.AddField("display_name", module.DisplayName ?? "");
+            form.AddField("description", module.Description ?? "");
             form.AddField("ability_type", module.AbilityType.ToString());
             
             form.AddField("stamina_cost", module.StaminaCost.ToString());
