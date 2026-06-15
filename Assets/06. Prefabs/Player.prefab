@@ -3402,30 +3402,28 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   animator: {fileID: 1933266387917589360}
   viewCamera: {fileID: 0}
+  rootMotionDistanceMultiplier: 1.8
   walkSpeed: 2.6
   runSpeed: 4.8
-  rollSpeed: 6.5
   rotationSpeed: 720
-  rollDuration: 0.9
   crawlSpeed: 0.9
   shiftHoldThreshold: 0.25
   movementAcceleration: 80
   movementBraking: 30
   moveSpeedAcceleration: 7
   moveSpeedDeceleration: 10
+  moveStartSpeed: 1.2
+  moveStopSpeed: 0.18
+  minimumMoveAnimationBlend: 0.5
   turnRootMotionFallbackRotationSpeed: 360
   turnAnimationYawDirection: 1
   turnStartSpeedRatio: 0.75
-  turnAnimationCooldownPadding: 0
   jumpHeight: 1.15
   jumpAirTime: 0.68
   forwardJumpHeight: 1.15
   forwardJumpAirTime: 0.68
-  jumpAnimationLockDuration: 0.45
   runJumpSpeedRatio: 0.75
   useForwardJumpRootMotion: 0
-  comboGraceSeconds: 0.5
-  comboInputBufferSeconds: 0.2
   attackHitRadius: 1.4
   attackHitDistance: 1.8
   attackHitHeight: 1.1
@@ -3450,8 +3448,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxHealth: 10000
   maxStamina: 1000
-  staminaRegenPerSecond: 100
-  staminaRegenDelay: 1
+  staminaRegenPerSecond: 200
+  staminaRegenDelay: 0.5
   hitInvincibleDuration: 0.25
   baseReviveGaugePerSegment: 100
   reviveGaugeIncreasePerDeathAfterMaxSegments: 100
@@ -3466,7 +3464,7 @@ MonoBehaviour:
   jumpStaminaCost: 100
   parryStaminaCost: 300
   rollStaminaCost: 200
-  runStaminaPerSecond: 40
+  runStaminaPerSecond: 80
   spinSlashStaminaCost: 400
   jumpSlashStaminaCost: 400
   powerUpStaminaCost: 500

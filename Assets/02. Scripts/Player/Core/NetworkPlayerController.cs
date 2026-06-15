@@ -38,6 +38,8 @@ public partial class NetworkPlayerController : NetworkBehaviour
     private static readonly int LockMoveSpeed = Animator.StringToHash("LockMoveSpeed");
     private static readonly int Turn180 = Animator.StringToHash("Turn180");
     private static readonly int Turn180Fast = Animator.StringToHash("Turn180Fast");
+    private static readonly int Turn180State = Animator.StringToHash("Great Sword 180 Turn");
+    private static readonly int Turn180FastState = Animator.StringToHash("Great Sword 180 Turn Fast");
     private static readonly int IdleState = Animator.StringToHash("idle1");
     private static readonly int Slash2State = Animator.StringToHash("slash2");
     private static readonly int Slash3State = Animator.StringToHash("slash3");
@@ -45,6 +47,12 @@ public partial class NetworkPlayerController : NetworkBehaviour
     private static readonly int Blocking1State = Animator.StringToHash("blocking1");
     private static readonly int Blocking2State = Animator.StringToHash("blocking2");
     private static readonly int Blocking3State = Animator.StringToHash("blocking3");
+    private static readonly int SlideAttackState = Animator.StringToHash("SlideAttack");
+    private static readonly int HighSpinAttackState = Animator.StringToHash("HighSpinAttack");
+    private static readonly int JumpAttackState = Animator.StringToHash("JumpAttack");
+    private static readonly int GreatSwordSlideAttackState = Animator.StringToHash("Great Sword Slide Attack");
+    private static readonly int GreatSwordHighSpinAttackState = Animator.StringToHash("Great Sword High Spin Attack");
+    private static readonly int GreatSwordJumpAttackState = Animator.StringToHash("Great Sword Jump Attack");
 
     private const byte ActionNone = 0;
     private const byte ActionAttack = 1;
@@ -82,22 +90,24 @@ public partial class NetworkPlayerController : NetworkBehaviour
     [SerializeField] private Camera viewCamera;
 
     [Header("Movement")]
+    //루트 모션 용 플레이어 스케일 비율 추가
+    [SerializeField] private float rootMotionDistanceMultiplier = 1.8f;
     // 일반 이동, 달리기, 구르기, 다운 후 기어가기 속도.
     [SerializeField] private float walkSpeed = 2.6f;
     [SerializeField] private float runSpeed = 4.8f;
-    [SerializeField] private float rollSpeed = 6.5f;
     [SerializeField] private float rotationSpeed = 720f;
-    [SerializeField] private float rollDuration = 0.9f;
     [SerializeField] private float crawlSpeed = 0.9f;
     [SerializeField] private float shiftHoldThreshold = 0.25f;
     [SerializeField] private float movementAcceleration = 80f;
     [SerializeField] private float movementBraking = 30f;
     [SerializeField] private float moveSpeedAcceleration = 7f;
     [SerializeField] private float moveSpeedDeceleration = 10f;
+    [SerializeField] private float moveStartSpeed = 1.2f;
+    [SerializeField] private float moveStopSpeed = 0.18f;
+    [SerializeField, Range(0f, 0.5f)] private float minimumMoveAnimationBlend = 0.5f;
     [SerializeField] private float turnRootMotionFallbackRotationSpeed = 360f;
     [SerializeField] private float turnAnimationYawDirection = 1f;
     [SerializeField, Range(0.5f, 1f)] private float turnStartSpeedRatio = 0.75f;
-    [SerializeField] private float turnAnimationCooldownPadding = 0f;
 
     [Header("Action Locks")]
     // 점프 높이와 전체 체공 시간을 기준으로 초기 속도와 중력을 계산해 애니메이션 타이밍에 맞춘다.
@@ -105,13 +115,8 @@ public partial class NetworkPlayerController : NetworkBehaviour
     [SerializeField] private float jumpAirTime = 0.68f;
     [SerializeField] private float forwardJumpHeight = 1.15f;
     [SerializeField] private float forwardJumpAirTime = 0.68f;
-    [SerializeField] private float jumpAnimationLockDuration = 0.45f;
     [SerializeField, Range(0.5f, 1f)] private float runJumpSpeedRatio = 0.75f;
     [SerializeField] private bool useForwardJumpRootMotion = false;
-
-    [Header("Basic Attack Combo")]
-    [SerializeField] private float comboGraceSeconds = 0.5f;
-    [SerializeField] private float comboInputBufferSeconds = 0.2f;
 
     [Header("Combat")]
     // 기본 공격 판정 구체의 위치와 크기. Gizmo도 이 값을 사용한다.
@@ -135,7 +140,6 @@ public partial class NetworkPlayerController : NetworkBehaviour
     [Networked] private Vector3 LockOnPointPosition { get; set; }
     [Networked] private bool WasShiftHeld { get; set; }
     [Networked] private float ShiftHoldTime { get; set; }
-    [Networked] private TickTimer RollTimer { get; set; }
     [Networked] private Vector3 RollDirection { get; set; }
     [Networked] private byte LastAction { get; set; }
     [Networked] private int LastActionId { get; set; }
@@ -143,7 +147,6 @@ public partial class NetworkPlayerController : NetworkBehaviour
     [Networked] private int ActionSequence { get; set; }
     [Networked] private NetworkBool BasicAttackComboUnlocked { get; set; }
     [Networked] private byte BasicAttackComboIndex { get; set; }
-    [Networked] private float BasicAttackComboExpiresAt { get; set; }
     [Networked] private NetworkBool ActionAnimationLocked { get; set; }
     [Networked] private byte ActionLockType { get; set; }
     [Networked] private NetworkBool ComboInputWindowOpen { get; set; }
@@ -153,16 +156,18 @@ public partial class NetworkPlayerController : NetworkBehaviour
     [Networked] private float MoveSpeedBlendNetworked { get; set; }
     [Networked] private int TurnAnimationSequence { get; set; }
     [Networked] private NetworkBool TurnAnimationFast { get; set; }
-    [Networked] private TickTimer TurnAnimationCooldown { get; set; }
-    [Networked] private TickTimer TurnAnimationTimer { get; set; }
+    [Networked] private NetworkBool TurnAnimationActive { get; set; }
+    [Networked] private NetworkBool TurnAnimationStateEntered { get; set; }
     [Networked] private Vector3 TurnTargetDirection { get; set; }
     [Networked] private NetworkBool TurnNeedsFinalRotation { get; set; }
+    [Networked] private NetworkBool TurnResumeSpeedPending { get; set; }
     [Networked] private float TurnResumeCurrentSpeed { get; set; }
     [Networked] private float TurnResumeMoveSpeedBlend { get; set; }
     [Networked] private byte TurnResumeLockMove { get; set; }
     [Networked] private Vector3 ForwardJumpDirection { get; set; }
 
     private NetworkCharacterController _networkCharacterController;
+    private CharacterController _characterController;
     private PlayerStats _playerStats;
     private PlayerStatusController _statusController;
     private PlayerAbilityInventory _abilityInventory;
@@ -176,8 +181,6 @@ public partial class NetworkPlayerController : NetworkBehaviour
     // NetworkCharacterController의 기본 회전 속도를 저장해 락온/구르기 처리 후 다시 기준값으로 돌린다.
     private float _networkControllerRotationSpeed;
     private float _networkControllerGravity;
-    // 점프 직후 락온 블렌드 트리가 점프 모션을 덮어쓰지 않도록 잠깐 억제하는 시간.
-    private float _suppressLockOnAnimatorUntil;
     private Vector3 _queuedRootMotionDeltaPosition;
     private Quaternion _queuedRootMotionDeltaRotation = Quaternion.identity;
     private bool _hasQueuedRootMotion;
@@ -196,10 +199,7 @@ public partial class NetworkPlayerController : NetworkBehaviour
     private bool _localComboInputWindowOpen;
     private bool _localParryGuardActive;
     private int _localControlLockMask;
-    // buffer는 아직 입력창이 열리기 전의 짧은 선입력, queue는 다음 공격으로 확정된 선입력이다.
-    private bool _bufferedComboAttack;
-    private int _bufferedComboActionId;
-    private float _bufferedComboExpiresAt;
+    // queue는 Animator StateBehaviour가 연 입력 가능 구간에서 다음 공격으로 확정된 선입력이다.
     private bool _queuedComboAttack;
     private int _queuedComboActionId;
     private int _lastLocalConsumedActionId;
@@ -220,6 +220,7 @@ public partial class NetworkPlayerController : NetworkBehaviour
         // 같은 오브젝트에 붙은 필수 컴포넌트를 잡고, 없으면 컨트롤러를 비활성화한다.
         animator ??= GetComponent<Animator>();
         _networkCharacterController = GetComponent<NetworkCharacterController>();
+        _characterController = GetComponent<CharacterController>();
         _playerStats = GetComponent<PlayerStats>();
         _statusController = GetComponent<PlayerStatusController>();
         _abilityInventory = GetComponent<PlayerAbilityInventory>();

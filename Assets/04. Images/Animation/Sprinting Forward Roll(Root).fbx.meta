@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 6e2e5d6f257b702419afdb91532e3d2e
+guid: 14e73e4cdc3863847a3841036696b0e0
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
@@ -33,11 +33,11 @@ ModelImporter:
     extraUserProperties: []
     clipAnimations:
     - serializedVersion: 16
-      name: Great Sword High Spin Attack
+      name: Sprinting Forward Roll(Root)
       takeName: mixamo.com
       internalID: -203655887218126122
       firstFrame: 0
-      lastFrame: 56
+      lastFrame: 35
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -51,7 +51,7 @@ ModelImporter:
       loopBlendPositionXZ: 0
       keepOriginalOrientation: 1
       keepOriginalPositionY: 1
-      keepOriginalPositionXZ: 0
+      keepOriginalPositionXZ: 1
       heightFromFeet: 0
       mirror: 0
       bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
@@ -672,7 +672,7 @@ ModelImporter:
       parentName: mixamorig:RightFoot
       position: {x: 2.4635236e-10, y: 0.09442573, z: 5.9457894e-10}
       rotation: {x: 0.33893988, y: -0.05883988, z: 0.021244913, w: 0.93872595}
-      scale: {x: 1, y: 1, z: 1}
+      scale: {x: 1, y: 0.97263294, z: 1}
     - name: mixamorig:RightToe_End
       parentName: mixamorig:RightToeBase
       position: {x: -1.0533089e-10, y: 0.033877157, z: 2.032023e-11}
@@ -985,7 +985,7 @@ ModelImporter:
     hasTranslationDoF: 0
     hasExtraRoot: 1
     skeletonHasParents: 1
-  lastHumanDescriptionAvatarSource: {fileID: 9000000, guid: 56824fb30e9fb094fa52975d8c0313d1, type: 3}
+  lastHumanDescriptionAvatarSource: {fileID: 9000000, guid: 2246a7fd82f82934190c59d2721e3697, type: 3}
   autoGenerateAvatarMappingIfUnspecified: 1
   animationType: 3
   humanoidOversampling: 1

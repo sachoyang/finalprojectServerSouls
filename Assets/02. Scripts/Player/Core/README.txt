@@ -40,14 +40,14 @@ PlayerSessionStore
 주요 SerializeField:
 - animator: 플레이어 Animator.
 - viewCamera: 이동 방향 계산용 카메라.
-- walkSpeed/runSpeed/rollSpeed/crawlSpeed: 이동 속도.
+- walkSpeed/runSpeed/crawlSpeed: 이동 속도.
 - rotationSpeed/lockOnRotationSpeed: 일반/락온 회전 속도.
-- rollDuration: 구르기 지속 시간.
+- 구르기 지속 시간과 이동 거리는 Animator State와 root motion delta를 기준으로 처리한다.
 - shiftHoldThreshold: Shift 짧게 누름/길게 누름 구분.
 - movementAcceleration/movementBraking: 수평 이동 보간.
-- jumpImpulse/jumpAnimationLockDuration: 점프 힘과 점프 액션 잠금 시간.
-- comboGraceSeconds: 기본 공격 콤보 유예 시간.
-- comboInputBufferSeconds: 다음 콤보 입력을 미리 받을 수 있는 시간.
+- moveSpeedAcceleration/moveSpeedDeceleration, moveStartSpeed/moveStopSpeed, minimumMoveAnimationBlend: 이동 애니메이션 속도 보간, 출발 최소 속도, 정지 스냅 기준, 이동 중 최소 Walk 블렌드.
+- jumpHeight/jumpAirTime, forwardJumpHeight/forwardJumpAirTime: 점프 최고 높이와 체공 시간.
+- 기본 공격 콤보 입력 가능 구간은 PlayerActionStateBehaviour가 Animator State 진행률 기준으로 연다.
 - attackHitRadius/attackHitDistance/attackHitHeight/attackTargetLayers: 기본 공격 판정 범위.
 - basicAttackRevivePower: 죽은 플레이어를 기본 공격으로 도울 때 줄어드는 부활 게이지.
 - lockOnTargetSelector/lockOnSearchRadius: 락온 대상 탐색.
@@ -55,15 +55,16 @@ PlayerSessionStore
 주요 Networked 값:
 - IsMovingNetworked, IsRunningNetworked: 원격 이동 애니메이션용.
 - IsLockOnNetworked, LockOnMoveNetworked, LockOnPointPosition: 락온 상태.
-- RollTimer, RollDirection: 구르기 진행 상태.
+- RollDirection: 구르기 시작 방향. 실제 이동은 Sprinting Forward Roll root motion delta를 CharacterController에 적용하고 NetworkCharacterController 상태에 반영한다.
 - LastAction, LastActionId, LastConsumedActionId, ActionSequence: 액션 애니메이션과 입력 중복 방지.
-- BasicAttackComboUnlocked, BasicAttackComboIndex, BasicAttackComboExpiresAt: 기본 공격 콤보.
+- BasicAttackComboUnlocked, BasicAttackComboIndex: 기본 공격 콤보 해금/단계.
 - ActionAnimationLocked, ActionLockType, ComboInputWindowOpen: 애니메이션 중 입력/이동 잠금.
+- SlideAttack, HighSpinAttack, JumpAttack 스킬 State는 Animator root motion delta를 CharacterController에 적용하고 NetworkCharacterController 상태에 반영한다.
 
 외부에서 호출할 함수:
 - UnlockBasicAttackCombo(): 패시브 보상으로 기본 공격 콤보 해금.
 - BeginActionAnimation(PlayerActionLockType): Animator State 진입 시 호출.
-- OpenComboInputWindow(): Animator State 중 콤보 입력 가능 구간에서 호출.
+- OpenComboInputWindow(): Animator StateBehaviour가 정한 콤보 입력 가능 진행률 이후 호출.
 - EndActionAnimation(PlayerActionLockType): Animator State 종료 시 호출.
 - NotifyDamageReaction(bool becameDead): PlayerStats가 피해/사망 판정 후 호출.
 - NotifyRevived(): PlayerStats가 부활 완료 후 호출.

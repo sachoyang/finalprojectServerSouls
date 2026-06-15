@@ -23,7 +23,7 @@ public partial class NetworkPlayerController
     {
         UpdateAnimatorRootMotionMode();
         RestoreDefaultGravityIfGrounded();
-        CompleteTurnAnimationIfNeeded();
+        CompleteTurnAnimationIfAnimatorExited();
 
         if (HasControlLock(PlayerControlLockFlags.Movement))
         {
@@ -75,7 +75,7 @@ public partial class NetworkPlayerController
 
             CurrentMoveSpeed = UpdateCurrentMoveSpeed(0f, true);
             ApplyTurnRootMotion();
-            UpdateMovementState(false, false, LockMoveIdle, 0f);
+            UpdateTurnAnimatorResumeParameters();
             return;
         }
 
@@ -110,7 +110,7 @@ public partial class NetworkPlayerController
         }
 
         bool shiftReleased = WasShiftHeld && !shiftHeld;
-        bool isRolling = !RollTimer.ExpiredOrNotRunning(Runner);
+        bool isRolling = IsRollRootMotionActive();
         bool isActing = IsActionAnimationLocked || IsParryAnimatorStateActive();
         bool rawAttackPressed = data.buttons.IsSet(NetworkInputData.MOUSEBUTTON0);
         bool rawParryPressed = data.buttons.IsSet(NetworkInputData.MOUSEBUTTON1);
@@ -132,11 +132,6 @@ public partial class NetworkPlayerController
             ClearComboRequests();
         }
 
-        // 매 틱마다 오래된 선입력을 정리하고, Animator가 입력 가능 구간을 열었으면 큐로 승격한다.
-        // 이 순서를 먼저 처리해야 "이전 틱에 눌러둔 공격"이 현재 틱에서 자연스럽게 이어진다.
-        PruneExpiredBufferedComboAttack(isActing);
-        TryPromoteBufferedComboAttack(isActing);
-
         if (CanStartQueuedComboAttack(isActing))
         {
             // 이미 큐에 들어간 후속 공격은 현재 액션락이 풀린 첫 틱에 실행한다.
@@ -153,12 +148,8 @@ public partial class NetworkPlayerController
         }
         else if (attackPressed)
         {
-            // 공격 중 입력이면 우선 "즉시 큐"를 시도한다.
-            // 아직 Animator가 입력 가능 구간을 열지 않았지만 끝 0.2초 안이라면 buffer에 보관한다.
-            if (!TryQueueBasicAttackCombo(isActing, data.actionId))
-            {
-                TryBufferBasicAttackCombo(isActing, data.actionId);
-            }
+            // 공격 중 입력은 Animator StateBehaviour가 연 입력 가능 구간에서만 다음 콤보로 queue된다.
+            TryQueueBasicAttackCombo(isActing, data.actionId);
         }
 
         bool isJumpAction = isActing && IsJumpAction(LastAction);
@@ -220,7 +211,7 @@ public partial class NetworkPlayerController
             else if (shiftReleased && ShiftHoldTime < shiftHoldThreshold)
             {
                 // Shift를 짧게 뗐을 때 구르기, 오래 누르면 달리기로 처리한다.
-                if (_playerStats == null || _playerStats.TryUseStamina(_playerStats.RollStaminaCost))
+                if (_playerStats == null || _playerStats.TryUseActionStamina(_playerStats.RollStaminaCost))
                 {
                     StartRoll(desiredMove);
                     isRolling = true;
@@ -242,15 +233,7 @@ public partial class NetworkPlayerController
         Vector3 facingDirection = IsLockOnNetworked ? GetLockOnFacingDirection() : Vector3.zero;
         bool snapMoveSpeed = false;
 
-        // 구르기는 입력 방향이 아니라 시작 순간 저장한 방향으로 끝까지 민다.
-        if (isRolling)
-        {
-            targetSpeed = rollSpeed;
-            moveDirection = RollDirection;
-            facingDirection = Vector3.zero;
-            snapMoveSpeed = true;
-        }
-        else if (!actionBlocksMovement && desiredMove.sqrMagnitude > 0.001f)
+        if (!actionBlocksMovement && desiredMove.sqrMagnitude > 0.001f)
         {
             targetSpeed = shouldRun ? runSpeed : walkSpeed;
             moveDirection = desiredMove.normalized;
@@ -258,6 +241,7 @@ public partial class NetworkPlayerController
 
         float moveSpeedMultiplier = GetMoveSpeedMultiplier();
         targetSpeed *= moveSpeedMultiplier;
+        snapMoveSpeed = ConsumeTurnResumeSpeedSnap(targetSpeed, moveDirection);
         float currentSpeed = UpdateCurrentMoveSpeed(targetSpeed, snapMoveSpeed);
 
         if (actionBlocksMovement)
@@ -270,6 +254,22 @@ public partial class NetworkPlayerController
         if (IsForwardJumpRootMotionActive())
         {
             ApplyJumpRootMotion();
+            UpdateMovementState(false, false, LockMoveIdle, 0f);
+            WasShiftHeld = shiftHeld;
+            return;
+        }
+
+        if (IsRollRootMotionActive())
+        {
+            ApplyRollRootMotion();
+            UpdateMovementState(false, false, LockMoveIdle, 0f);
+            WasShiftHeld = shiftHeld;
+            return;
+        }
+
+        if (IsSkillRootMotionActive())
+        {
+            ApplySkillRootMotion();
             UpdateMovementState(false, false, LockMoveIdle, 0f);
             WasShiftHeld = shiftHeld;
             return;

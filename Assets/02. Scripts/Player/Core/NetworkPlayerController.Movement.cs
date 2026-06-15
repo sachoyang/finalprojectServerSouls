@@ -127,8 +127,7 @@ public partial class NetworkPlayerController
     {
         if (isBusy ||
             IsTurnAnimationActive() ||
-            moveDirection.sqrMagnitude <= 0.001f ||
-            !TurnAnimationCooldown.ExpiredOrNotRunning(Runner))
+            moveDirection.sqrMagnitude <= 0.001f)
         {
             return false;
         }
@@ -161,14 +160,14 @@ public partial class NetworkPlayerController
         bool fastTurn = isRunning && !IsLockOnNetworked;
         TurnAnimationFast = fastTurn;
         TurnTargetDirection = flatTargetDirection;
+        TurnAnimationActive = true;
+        TurnAnimationStateEntered = false;
         TurnNeedsFinalRotation = true;
         UpdateTurnResumeState(moveDirection, isRunning);
         TurnAnimationSequence++;
-        float turnDuration = fastTurn ? 0.52f : 0.72f;
-        TurnAnimationTimer = TickTimer.CreateFromSeconds(Runner, turnDuration);
-        TurnAnimationCooldown = TickTimer.CreateFromSeconds(Runner, turnDuration + turnAnimationCooldownPadding);
         CurrentMoveSpeed = 0f;
-        MoveSpeedBlendNetworked = 0f;
+        MoveSpeedBlendNetworked = TurnResumeMoveSpeedBlend;
+        LockOnMoveNetworked = TurnResumeLockMove;
         _turnUsedRootMotionRotation = false;
         ClearQueuedRootMotion();
         UpdateAnimatorRootMotionMode();
@@ -177,28 +176,88 @@ public partial class NetworkPlayerController
 
     private bool IsTurnAnimationActive()
     {
-        return !TurnAnimationTimer.ExpiredOrNotRunning(Runner);
+        return TurnAnimationActive;
     }
 
-    private void CompleteTurnAnimationIfNeeded()
+    public void BeginTurnAnimationState()
     {
-        if (!HasStateAuthority || !TurnNeedsFinalRotation || IsTurnAnimationActive())
+        if (!HasStateAuthority || !TurnAnimationActive)
         {
             return;
         }
 
-        if (!_turnUsedRootMotionRotation && TurnTargetDirection.sqrMagnitude > 0.001f)
+        TurnAnimationStateEntered = true;
+    }
+
+    public void EndTurnAnimationState()
+    {
+        if (!HasStateAuthority || !TurnAnimationActive)
         {
-            RotateTurnTowardsTarget(turnRootMotionFallbackRotationSpeed * Runner.DeltaTime);
+            return;
+        }
+
+        CompleteTurnAnimation();
+    }
+
+    private void CompleteTurnAnimationIfAnimatorExited()
+    {
+        if (!HasStateAuthority ||
+            !TurnAnimationActive ||
+            !TurnAnimationStateEntered ||
+            IsAnimatorInTurnState())
+        {
+            return;
+        }
+
+        CompleteTurnAnimation();
+    }
+
+    private void CompleteTurnAnimation()
+    {
+        if (TurnNeedsFinalRotation && !_turnUsedRootMotionRotation && TurnTargetDirection.sqrMagnitude > 0.001f)
+        {
+            transform.rotation = Quaternion.LookRotation(TurnTargetDirection.normalized, Vector3.up);
+            _lastMoveDirection = TurnTargetDirection.normalized;
         }
 
         ClearQueuedRootMotion();
         _turnUsedRootMotionRotation = false;
+        TurnAnimationActive = false;
+        TurnAnimationStateEntered = false;
         TurnNeedsFinalRotation = false;
+        TurnResumeSpeedPending = TurnResumeCurrentSpeed > 0.001f;
         TurnTargetDirection = Vector3.zero;
         CurrentMoveSpeed = TurnResumeCurrentSpeed;
         MoveSpeedBlendNetworked = TurnResumeMoveSpeedBlend;
         LockOnMoveNetworked = TurnResumeLockMove;
+    }
+
+    private bool IsAnimatorInTurnState()
+    {
+        if (animator == null)
+        {
+            return false;
+        }
+
+        AnimatorStateInfo currentState = animator.GetCurrentAnimatorStateInfo(0);
+        if (IsTurnState(currentState.shortNameHash))
+        {
+            return true;
+        }
+
+        if (!animator.IsInTransition(0))
+        {
+            return false;
+        }
+
+        AnimatorStateInfo nextState = animator.GetNextAnimatorStateInfo(0);
+        return IsTurnState(nextState.shortNameHash);
+    }
+
+    private static bool IsTurnState(int stateHash)
+    {
+        return stateHash == Turn180State ||
+               stateHash == Turn180FastState;
     }
 
     private void UpdateTurnResumeState(Vector3 desiredMove, bool isRunning)
@@ -216,6 +275,37 @@ public partial class NetworkPlayerController
         TurnResumeCurrentSpeed = (isRunning ? runSpeed : walkSpeed) * moveSpeedMultiplier;
         TurnResumeMoveSpeedBlend = IsLockOnNetworked ? 0f : GetNormalMoveBlendFromSpeed(TurnResumeCurrentSpeed, moveSpeedMultiplier);
         TurnResumeLockMove = IsLockOnNetworked ? GetLockOnMoveCode(moveDirection, isRunning) : LockMoveIdle;
+    }
+
+    private void UpdateTurnAnimatorResumeParameters()
+    {
+        // 턴 중 실제 이동 속도는 0으로 고정하지만, Animator 파라미터는 복귀할 이동 상태를 미리 유지한다.
+        // 그래야 TurnFast -> Run 전이 구간이 idle/walk 값에서 다시 올라오며 느려져 보이지 않는다.
+        IsMovingNetworked = false;
+        IsRunningNetworked = false;
+        MoveSpeedBlendNetworked = TurnResumeMoveSpeedBlend;
+        LockOnMoveNetworked = TurnResumeLockMove;
+    }
+
+    private bool ConsumeTurnResumeSpeedSnap(float targetSpeed, Vector3 moveDirection)
+    {
+        if (!TurnResumeSpeedPending)
+        {
+            return false;
+        }
+
+        TurnResumeSpeedPending = false;
+        if (targetSpeed <= 0.001f || moveDirection.sqrMagnitude <= 0.001f)
+        {
+            return false;
+        }
+
+        // 턴 직후 첫 이동 틱은 가속 보간을 타지 않고, 턴 진입 전 속도를 즉시 이어받는다.
+        // 이후 틱부터는 일반 가속/감속 규칙으로 돌아간다.
+        CurrentMoveSpeed = Mathf.Max(targetSpeed, TurnResumeCurrentSpeed);
+        MoveSpeedBlendNetworked = TurnResumeMoveSpeedBlend;
+        LockOnMoveNetworked = TurnResumeLockMove;
+        return true;
     }
 
     private bool IsInActionAnimation()
@@ -248,11 +338,6 @@ public partial class NetworkPlayerController
         _networkCharacterController.gravity = _networkControllerGravity;
     }
 
-    private bool IsLockOnAnimatorSuppressed()
-    {
-        return Time.time < _suppressLockOnAnimatorUntil;
-    }
-
     private float GetMoveSpeedMultiplier()
     {
         return _statusController != null ? _statusController.GetMoveSpeedMultiplier() : 1f;
@@ -266,8 +351,20 @@ public partial class NetworkPlayerController
             return CurrentMoveSpeed;
         }
 
+        if (targetSpeed > 0.001f && CurrentMoveSpeed <= 0.001f)
+        {
+            // 입력이 시작된 첫 틱은 0에서 천천히 끌어올리지 않고 최소 출발 속도로 바로 반응시킨다.
+            CurrentMoveSpeed = Mathf.Min(targetSpeed, Mathf.Max(0f, moveStartSpeed));
+        }
+
         float rate = targetSpeed > CurrentMoveSpeed ? moveSpeedAcceleration : moveSpeedDeceleration;
         CurrentMoveSpeed = Mathf.MoveTowards(CurrentMoveSpeed, targetSpeed, rate * Runner.DeltaTime);
+        if (targetSpeed <= 0.001f && CurrentMoveSpeed <= moveStopSpeed)
+        {
+            // 아주 낮은 속도로 남아 미끄러지는 구간은 정지로 간주한다.
+            CurrentMoveSpeed = 0f;
+        }
+
         return CurrentMoveSpeed;
     }
 
@@ -282,7 +379,9 @@ public partial class NetworkPlayerController
         float scaledRunSpeed = Mathf.Max(scaledWalkSpeed + 0.001f, runSpeed * moveSpeedMultiplier);
         if (currentSpeed <= scaledWalkSpeed)
         {
-            return Mathf.Lerp(0f, 0.5f, currentSpeed / scaledWalkSpeed);
+            // 이동 중에는 Idle과 Walk가 애매하게 섞이는 구간을 피한다.
+            // 그 구간이 길면 발을 내딛다 제자리에서 바꾸는 느낌이 강해진다.
+            return Mathf.Max(minimumMoveAnimationBlend, Mathf.Lerp(0f, 0.5f, currentSpeed / scaledWalkSpeed));
         }
 
         return Mathf.Lerp(0.5f, 1f, Mathf.InverseLerp(scaledWalkSpeed, scaledRunSpeed, currentSpeed));
@@ -290,7 +389,7 @@ public partial class NetworkPlayerController
 
     private void StartRoll(Vector3 desiredMove)
     {
-        // 구르기도 이동성 액션이므로 방향과 지속 시간을 서버 권한에서 확정한다.
+        // 구르기는 시작 방향만 서버 권한에서 확정하고, 실제 이동 거리는 애니메이션 root delta를 사용한다.
         if (!HasStateAuthority)
         {
             return;
@@ -309,8 +408,11 @@ public partial class NetworkPlayerController
             RollDirection = transform.forward;
         }
 
+        transform.rotation = Quaternion.LookRotation(RollDirection, Vector3.up);
+        _lastMoveDirection = RollDirection;
         StartAction(ActionRoll);
-        RollTimer = TickTimer.CreateFromSeconds(Runner, rollDuration);
+        ClearQueuedRootMotion();
+        UpdateAnimatorRootMotionMode();
     }
 
     private void ApplyMovement(Vector3 moveDirection, float moveSpeed, Vector3 facingDirection)
@@ -351,10 +453,14 @@ public partial class NetworkPlayerController
         StopHorizontalVelocity();
         CurrentMoveSpeed = 0f;
         MoveSpeedBlendNetworked = 0f;
+        TurnAnimationActive = false;
+        TurnAnimationStateEntered = false;
         TurnNeedsFinalRotation = false;
+        TurnResumeSpeedPending = false;
         TurnResumeCurrentSpeed = 0f;
         TurnResumeMoveSpeedBlend = 0f;
         TurnResumeLockMove = LockMoveIdle;
+        RollDirection = Vector3.zero;
         if (!IsParryActive())
         {
             ParryGuardActive = false;
