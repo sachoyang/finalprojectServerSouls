@@ -491,8 +491,31 @@ public partial class NetworkPlayerController
         {
             // 최종적으로 보스별 대표 히트박스 하나에만 데미지를 전달한다.
             bossHitbox.OnHitByPlayer(damage, Object);
+            //피 이펙트를 스폰한다
+            SpawnBloodOnHit(bossHitbox.GetComponent<Collider>());
         }
     }
+
+    private void SpawnBloodOnHit(Collider hitCollider)
+{
+    if (bloodEffectSpawner == null || hitCollider == null)
+    {
+        return;
+    }
+
+    Vector3 hitCenter = transform.TransformPoint(AttackHitLocalCenter);
+    Vector3 hitPoint = hitCollider.ClosestPoint(hitCenter);
+
+    Vector3 direction = hitPoint - transform.position;
+    direction.y = 0f;
+
+    if (direction.sqrMagnitude <= 0.001f)
+    {
+        direction = transform.forward;
+    }
+
+    bloodEffectSpawner.SpawnBlood(hitPoint, direction.normalized);
+}
 
     private float GetBasicAttackDamage()
     {
