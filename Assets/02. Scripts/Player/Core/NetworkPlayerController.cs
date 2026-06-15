@@ -125,6 +125,8 @@ public partial class NetworkPlayerController : NetworkBehaviour
     [SerializeField] private float attackHitHeight = 1.1f;
     [SerializeField] private LayerMask attackTargetLayers = ~0;
     [SerializeField] private float basicAttackRevivePower = 34f;
+    //피 이펙트 스포너 변수
+    [SerializeField] private BloodEffectSpawner bloodEffectSpawner;
 
     [Header("Lock On")]
     // 락온 가능한 보스 포인트 탐색 범위와 락온 중 회전 속도.
@@ -230,7 +232,10 @@ public partial class NetworkPlayerController : NetworkBehaviour
         {
             lockOnTargetSelector = gameObject.AddComponent<LockOnTargetSelector>();
         }
-
+        if (bloodEffectSpawner == null)
+        {
+            bloodEffectSpawner = FindFirstObjectByType<BloodEffectSpawner>();
+        }
         lockOnTargetSelector.SetSearchRadius(lockOnSearchRadius);
         viewCamera ??= Camera.main;
         _networkControllerRotationSpeed = _networkCharacterController != null ? _networkCharacterController.rotationSpeed : 0f;

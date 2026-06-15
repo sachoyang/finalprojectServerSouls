@@ -3405,7 +3405,7 @@ MonoBehaviour:
   rootMotionDistanceMultiplier: 1.8
   walkSpeed: 2.6
   runSpeed: 4.8
-  rotationSpeed: 720
+  rotationSpeed: 360
   crawlSpeed: 0.9
   shiftHoldThreshold: 0.25
   movementAcceleration: 80
@@ -3431,6 +3431,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967295
   basicAttackRevivePower: 34
+  bloodEffectSpawner: {fileID: 0}
   lockOnTargetSelector: {fileID: 0}
   lockOnSearchRadius: 80
   lockOnRotationSpeed: 900
@@ -3462,9 +3463,9 @@ MonoBehaviour:
   thirdAttackDamage: 11000
   attackStaminaCost: 100
   jumpStaminaCost: 100
-  parryStaminaCost: 300
+  parryStaminaCost: 100
   rollStaminaCost: 200
-  runStaminaPerSecond: 80
+  runStaminaPerSecond: 40
   spinSlashStaminaCost: 400
   jumpSlashStaminaCost: 400
   powerUpStaminaCost: 500

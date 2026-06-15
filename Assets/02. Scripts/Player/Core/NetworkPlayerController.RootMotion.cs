@@ -132,45 +132,44 @@ public partial class NetworkPlayerController
     }
 
     private void ApplyPlanarRootMotionDelta(Vector3 planarDelta, Vector3 moveDirection, float rotationSpeedOverride, bool applyGravity)
+{
+    planarDelta *= rootMotionDistanceMultiplier;
+
+    if (Runner == null || Runner.DeltaTime <= 0f || planarDelta.sqrMagnitude <= 0.000001f)
     {
-        // 모든 루트모션 이동 거리 1.8배 보정
-        planarDelta *= 1.8f;
-
-        if (Runner == null || Runner.DeltaTime <= 0f || planarDelta.sqrMagnitude <= 0.000001f)
-        {
-            return;
-        }
-
-        Vector3 flatDirection = Vector3.ProjectOnPlane(moveDirection, Vector3.up);
-        if (flatDirection.sqrMagnitude <= 0.001f)
-        {
-            flatDirection = planarDelta;
-        }
-
-        flatDirection.Normalize();
-        Vector3 requestedDelta = flatDirection * planarDelta.magnitude;
-
-        if (!TryMoveCharacterByRootDelta(requestedDelta, applyGravity))
-        {
-            float rootSpeed = planarDelta.magnitude / Runner.DeltaTime;
-            Vector3 velocity = _networkCharacterController.Velocity;
-            velocity.x = flatDirection.x * rootSpeed;
-            velocity.z = flatDirection.z * rootSpeed;
-            _networkCharacterController.Velocity = velocity;
-
-            _networkCharacterController.maxSpeed = rootSpeed;
-            _networkCharacterController.acceleration = 0f;
-            _networkCharacterController.braking = movementBraking;
-            _networkCharacterController.rotationSpeed = rotationSpeedOverride;
-            _networkCharacterController.Move(flatDirection);
-            return;
-        }
-
-        if (rotationSpeedOverride > 0f)
-        {
-            RotateTowards(flatDirection, rotationSpeedOverride);
-        }
+        return;
     }
+
+    Vector3 flatDirection = Vector3.ProjectOnPlane(moveDirection, Vector3.up);
+    if (flatDirection.sqrMagnitude <= 0.001f)
+    {
+        flatDirection = planarDelta;
+    }
+
+    flatDirection.Normalize();
+    Vector3 requestedDelta = flatDirection * planarDelta.magnitude;
+
+    if (!TryMoveCharacterByRootDelta(requestedDelta, applyGravity))
+    {
+        float rootSpeed = planarDelta.magnitude / Runner.DeltaTime;
+        Vector3 velocity = _networkCharacterController.Velocity;
+        velocity.x = flatDirection.x * rootSpeed;
+        velocity.z = flatDirection.z * rootSpeed;
+        _networkCharacterController.Velocity = velocity;
+
+        _networkCharacterController.maxSpeed = rootSpeed;
+        _networkCharacterController.acceleration = 0f;
+        _networkCharacterController.braking = movementBraking;
+        _networkCharacterController.rotationSpeed = rotationSpeedOverride;
+        _networkCharacterController.Move(flatDirection);
+        return;
+    }
+
+    if (rotationSpeedOverride > 0f)
+    {
+        RotateTowards(flatDirection, rotationSpeedOverride);
+    }
+}
 
     private bool TryMoveCharacterByRootDelta(Vector3 planarDelta, bool applyGravity)
     {
