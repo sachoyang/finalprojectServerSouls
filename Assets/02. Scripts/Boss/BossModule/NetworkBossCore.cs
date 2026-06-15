@@ -426,7 +426,7 @@ public class NetworkBossCore : NetworkBehaviour
 
                 // 해시값으로 애니메이션 실행
                 // 해시값이 비어있으면 실시간으로 문자열을 찾아 해시로 변환하는 안전장치
-                int targetHash = action.animationHash != 0 ? action.animationHash : Animator.StringToHash(action.animationStateName);
+                int targetHash = Animator.StringToHash(action.animationStateName);
                 _visual.PlayAction(targetHash);
 
                 // (원본 클립 길이 / 기획자가 설정한 시간)으로 정확한 배속 도출

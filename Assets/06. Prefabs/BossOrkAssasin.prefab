@@ -105,11 +105,11 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 128
   bodyRadius: 1
-  castHeightOffset: 1
+  castHeightOffset: 0.7
   groundLayerMask:
     serializedVersion: 2
     m_Bits: 512
-  stepHeight: 1
+  stepHeight: 0.7
   gravitySpeed: 15
   phase1Patterns:
   - {fileID: 11400000, guid: c544f4be25e30d8408555209ed05d6d3, type: 2}
@@ -187,7 +187,7 @@ Rigidbody:
   m_UseGravity: 1
   m_IsKinematic: 1
   m_Interpolate: 0
-  m_Constraints: 112
+  m_Constraints: 0
   m_CollisionDetection: 0
 --- !u!136 &4821096759326688838
 CapsuleCollider:
@@ -349,8 +349,53 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 4464173461272234, guid: f32f6d542cd744a408b8da872db675ae, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6183364415858489691}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1637584495559616, guid: f32f6d542cd744a408b8da872db675ae, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5953306889013167073}
+    - targetCorrespondingSourceObject: {fileID: 1637584495559616, guid: f32f6d542cd744a408b8da872db675ae, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3182802028150265065}
   m_SourcePrefab: {fileID: 100100000, guid: f32f6d542cd744a408b8da872db675ae, type: 3}
+--- !u!1 &5802303037623645147 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1637584495559616, guid: f32f6d542cd744a408b8da872db675ae, type: 3}
+  m_PrefabInstance: {fileID: 5800700646694842395}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &5953306889013167073
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5802303037623645147}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43c966561ea81f243b783dfeed53a95d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  anim: {fileID: 0}
+  poisonDaggerPrefab: {fileID: 0}
+  daggerSpawnPoint: {fileID: 0}
+  smokeBombEffect: {fileID: 0}
+  leftDaggerHitbox: {fileID: 0}
+  rightDaggerHitbox: {fileID: 0}
+  walkSound: {fileID: 0}
+  attackSound: {fileID: 0}
+  vanishSound: {fileID: 0}
+  rootMotionCapture: {fileID: 3182802028150265065}
+--- !u!114 &3182802028150265065
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5802303037623645147}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 25e4e7f8094ae5840b31cde4c06dc10a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!4 &5805112042520053425 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4464173461272234, guid: f32f6d542cd744a408b8da872db675ae, type: 3}
