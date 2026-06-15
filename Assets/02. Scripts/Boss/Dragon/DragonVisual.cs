@@ -182,7 +182,7 @@ public class DragonVisual : MonoBehaviour, IBossVisual
         if (leftClawHitbox != null) leftClawHitbox.StartAttack();
         if (rightClawHitbox != null) rightClawHitbox.StartAttack();
         if (mouthHitbox != null) mouthHitbox.StartAttack();
-        if (bodyHitbox != null) bodyHitbox.StartAttack();
+        //if (bodyHitbox != null) bodyHitbox.StartAttack();
     }
 
     public void DisableHornAttackHitbox()
@@ -190,6 +190,6 @@ public class DragonVisual : MonoBehaviour, IBossVisual
         if (leftClawHitbox != null) leftClawHitbox.StopAttack();
         if (rightClawHitbox != null) rightClawHitbox.StopAttack();
         if (mouthHitbox != null) mouthHitbox.StopAttack();
-        if (bodyHitbox != null) bodyHitbox.StopAttack();
+        //if (bodyHitbox != null) bodyHitbox.StopAttack();
     }
 }
