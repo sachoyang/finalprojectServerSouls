@@ -624,6 +624,12 @@ public partial class NetworkPlayerController
         return LastAction == ActionRoll && IsActionAnimationLocked;
     }
 
+    private bool IsSkillRootMotionActive()
+    {
+        return GetCurrentActionLockType() == PlayerActionLockType.Skill &&
+               IsSkillRootMotionAnimatorStateActive();
+    }
+
     private bool IsParryAnimatorStateActive()
     {
         return IsAnimatorInState(Blocking1State) ||
@@ -647,6 +653,38 @@ public partial class NetworkPlayerController
         return stateHash == Blocking1State ||
                stateHash == Blocking2State ||
                stateHash == Blocking3State;
+    }
+
+    private bool IsSkillRootMotionAnimatorStateActive()
+    {
+        if (animator == null)
+        {
+            return false;
+        }
+
+        AnimatorStateInfo currentState = animator.GetCurrentAnimatorStateInfo(0);
+        if (IsRootMotionSkillState(currentState.shortNameHash))
+        {
+            return true;
+        }
+
+        if (!animator.IsInTransition(0))
+        {
+            return false;
+        }
+
+        AnimatorStateInfo nextState = animator.GetNextAnimatorStateInfo(0);
+        return IsRootMotionSkillState(nextState.shortNameHash);
+    }
+
+    private static bool IsRootMotionSkillState(int stateHash)
+    {
+        return stateHash == SlideAttackState ||
+               stateHash == HighSpinAttackState ||
+               stateHash == JumpAttackState ||
+               stateHash == GreatSwordSlideAttackState ||
+               stateHash == GreatSwordHighSpinAttackState ||
+               stateHash == GreatSwordJumpAttackState;
     }
 
     private int GetBasicAttackTrigger()

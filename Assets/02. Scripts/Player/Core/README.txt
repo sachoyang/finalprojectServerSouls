@@ -45,6 +45,7 @@ PlayerSessionStore
 - 구르기 지속 시간과 이동 거리는 Animator State와 root motion delta를 기준으로 처리한다.
 - shiftHoldThreshold: Shift 짧게 누름/길게 누름 구분.
 - movementAcceleration/movementBraking: 수평 이동 보간.
+- moveSpeedAcceleration/moveSpeedDeceleration, moveStartSpeed/moveStopSpeed, minimumMoveAnimationBlend: 이동 애니메이션 속도 보간, 출발 최소 속도, 정지 스냅 기준, 이동 중 최소 Walk 블렌드.
 - jumpHeight/jumpAirTime, forwardJumpHeight/forwardJumpAirTime: 점프 최고 높이와 체공 시간.
 - 기본 공격 콤보 입력 가능 구간은 PlayerActionStateBehaviour가 Animator State 진행률 기준으로 연다.
 - attackHitRadius/attackHitDistance/attackHitHeight/attackTargetLayers: 기본 공격 판정 범위.
@@ -58,6 +59,7 @@ PlayerSessionStore
 - LastAction, LastActionId, LastConsumedActionId, ActionSequence: 액션 애니메이션과 입력 중복 방지.
 - BasicAttackComboUnlocked, BasicAttackComboIndex: 기본 공격 콤보 해금/단계.
 - ActionAnimationLocked, ActionLockType, ComboInputWindowOpen: 애니메이션 중 입력/이동 잠금.
+- SlideAttack, HighSpinAttack, JumpAttack 스킬 State는 Animator root motion delta를 NetworkCharacterController 이동으로 적용한다.
 
 외부에서 호출할 함수:
 - UnlockBasicAttackCombo(): 패시브 보상으로 기본 공격 콤보 해금.

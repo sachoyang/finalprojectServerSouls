@@ -267,6 +267,14 @@ public partial class NetworkPlayerController
             return;
         }
 
+        if (IsSkillRootMotionActive())
+        {
+            ApplySkillRootMotion();
+            UpdateMovementState(false, false, LockMoveIdle, 0f);
+            WasShiftHeld = shiftHeld;
+            return;
+        }
+
         if (TryStartTurnAnimation(moveDirection, facingDirection, shouldRun, isBusy, currentSpeed, moveSpeedMultiplier))
         {
             currentSpeed = UpdateCurrentMoveSpeed(0f, true);

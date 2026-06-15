@@ -351,8 +351,20 @@ public partial class NetworkPlayerController
             return CurrentMoveSpeed;
         }
 
+        if (targetSpeed > 0.001f && CurrentMoveSpeed <= 0.001f)
+        {
+            // 입력이 시작된 첫 틱은 0에서 천천히 끌어올리지 않고 최소 출발 속도로 바로 반응시킨다.
+            CurrentMoveSpeed = Mathf.Min(targetSpeed, Mathf.Max(0f, moveStartSpeed));
+        }
+
         float rate = targetSpeed > CurrentMoveSpeed ? moveSpeedAcceleration : moveSpeedDeceleration;
         CurrentMoveSpeed = Mathf.MoveTowards(CurrentMoveSpeed, targetSpeed, rate * Runner.DeltaTime);
+        if (targetSpeed <= 0.001f && CurrentMoveSpeed <= moveStopSpeed)
+        {
+            // 아주 낮은 속도로 남아 미끄러지는 구간은 정지로 간주한다.
+            CurrentMoveSpeed = 0f;
+        }
+
         return CurrentMoveSpeed;
     }
 
@@ -367,7 +379,9 @@ public partial class NetworkPlayerController
         float scaledRunSpeed = Mathf.Max(scaledWalkSpeed + 0.001f, runSpeed * moveSpeedMultiplier);
         if (currentSpeed <= scaledWalkSpeed)
         {
-            return Mathf.Lerp(0f, 0.5f, currentSpeed / scaledWalkSpeed);
+            // 이동 중에는 Idle과 Walk가 애매하게 섞이는 구간을 피한다.
+            // 그 구간이 길면 발을 내딛다 제자리에서 바꾸는 느낌이 강해진다.
+            return Mathf.Max(minimumMoveAnimationBlend, Mathf.Lerp(0f, 0.5f, currentSpeed / scaledWalkSpeed));
         }
 
         return Mathf.Lerp(0.5f, 1f, Mathf.InverseLerp(scaledWalkSpeed, scaledRunSpeed, currentSpeed));

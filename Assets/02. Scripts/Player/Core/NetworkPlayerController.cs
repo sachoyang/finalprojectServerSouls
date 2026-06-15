@@ -47,6 +47,12 @@ public partial class NetworkPlayerController : NetworkBehaviour
     private static readonly int Blocking1State = Animator.StringToHash("blocking1");
     private static readonly int Blocking2State = Animator.StringToHash("blocking2");
     private static readonly int Blocking3State = Animator.StringToHash("blocking3");
+    private static readonly int SlideAttackState = Animator.StringToHash("SlideAttack");
+    private static readonly int HighSpinAttackState = Animator.StringToHash("HighSpinAttack");
+    private static readonly int JumpAttackState = Animator.StringToHash("JumpAttack");
+    private static readonly int GreatSwordSlideAttackState = Animator.StringToHash("Great Sword Slide Attack");
+    private static readonly int GreatSwordHighSpinAttackState = Animator.StringToHash("Great Sword High Spin Attack");
+    private static readonly int GreatSwordJumpAttackState = Animator.StringToHash("Great Sword Jump Attack");
 
     private const byte ActionNone = 0;
     private const byte ActionAttack = 1;
@@ -94,6 +100,9 @@ public partial class NetworkPlayerController : NetworkBehaviour
     [SerializeField] private float movementBraking = 30f;
     [SerializeField] private float moveSpeedAcceleration = 7f;
     [SerializeField] private float moveSpeedDeceleration = 10f;
+    [SerializeField] private float moveStartSpeed = 1.2f;
+    [SerializeField] private float moveStopSpeed = 0.18f;
+    [SerializeField, Range(0f, 0.5f)] private float minimumMoveAnimationBlend = 0.5f;
     [SerializeField] private float turnRootMotionFallbackRotationSpeed = 360f;
     [SerializeField] private float turnAnimationYawDirection = 1f;
     [SerializeField, Range(0.5f, 1f)] private float turnStartSpeedRatio = 0.75f;
