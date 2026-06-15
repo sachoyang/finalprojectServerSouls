@@ -241,7 +241,17 @@ public partial class NetworkPlayerController
     {
         // PlayerStats가 없으면 테스트 오브젝트로 보고 공격을 허용한다.
         // 실제 플레이어에서는 PlayerStats가 스태미나 차감 성공 여부를 돌려준다.
-        return _playerStats == null || _playerStats.TryUseStamina(_playerStats.AttackStaminaCost);
+        return _playerStats == null || _playerStats.TryUseActionStamina(_playerStats.AttackStaminaCost);
+    }
+
+    private bool TrySpendJumpStamina()
+    {
+        return _playerStats == null || _playerStats.TryUseActionStamina(_playerStats.JumpStaminaCost);
+    }
+
+    private bool TrySpendParryStamina()
+    {
+        return _playerStats == null || _playerStats.TryUseActionStamina(_playerStats.ParryStaminaCost);
     }
 
     private bool TryConsumeInputAction(int actionId)
@@ -306,6 +316,8 @@ public partial class NetworkPlayerController
 
     public void EndActionAnimation(PlayerActionLockType lockType)
     {
+        DelayStaminaRegenAfterAction(lockType);
+
         // 나가는 State가 현재 락을 소유한 타입일 때만 해제한다.
         // 예: 공격 중 피격되면 현재 타입은 Impact가 되므로, 늦게 호출된 Attack Exit는 락을 풀 수 없다.
         if (lockType == PlayerActionLockType.None || GetCurrentActionLockType() != lockType)
@@ -334,6 +346,22 @@ public partial class NetworkPlayerController
         ClearComboRequests();
     }
 
+    private void DelayStaminaRegenAfterAction(PlayerActionLockType lockType)
+    {
+        if (lockType == PlayerActionLockType.Parry && IsTransitioningToParryState())
+        {
+            return;
+        }
+
+        if (lockType == PlayerActionLockType.Attack ||
+            lockType == PlayerActionLockType.Parry ||
+            lockType == PlayerActionLockType.Jump ||
+            lockType == PlayerActionLockType.Skill)
+        {
+            _playerStats?.DelayStaminaRegen();
+        }
+    }
+
     private bool IsComboInputWindowOpen()
     {
         return ComboInputWindowOpen || _localComboInputWindowOpen;
@@ -354,11 +382,13 @@ public partial class NetworkPlayerController
         // 이렇게 해야 애니메이션/입력 지연 때문에 공격, 패링, 스킬이 늦게 끼어드는 상황을 줄일 수 있다.
         _localActionAnimationLocked = isLocked;
         _localActionLockType = isLocked ? (byte)lockType : (byte)PlayerActionLockType.None;
+        UpdateAnimatorRootMotionMode();
 
         if (Object != null && HasStateAuthority)
         {
             ActionAnimationLocked = isLocked;
             ActionLockType = _localActionLockType;
+            UpdateAnimatorRootMotionMode();
         }
     }
 
@@ -438,11 +468,7 @@ public partial class NetworkPlayerController
             return;
         }
 
-        LastAction = becameDead
-            ? ActionDeath
-            : IsParryActive()
-                ? ActionParryImpact
-                : ActionImpact;
+        LastAction = becameDead ? ActionDeath : ActionImpact;
         LastActionId = 0;
         ActionSequence++;
         SetActionAnimationLocked(true, GetActionLockType(LastAction));
@@ -504,8 +530,10 @@ public partial class NetworkPlayerController
 
     private bool IsParryActive()
     {
-        return LastAction == ActionParry && IsActionAnimationLocked;
+        return LastAction == ActionParry && (IsActionAnimationLocked || IsParryAnimatorStateActive());
     }
+
+    public bool IsParryActionActive => IsParryActive();
 
     public bool IsParryGuardActive => ParryGuardActive || _localParryGuardActive;
 
@@ -738,6 +766,31 @@ public partial class NetworkPlayerController
     private bool IsForwardJumpRootMotionActive()
     {
         return useForwardJumpRootMotion && LastAction == ActionJumpForward && IsActionAnimationLocked;
+    }
+
+    private bool IsParryAnimatorStateActive()
+    {
+        return IsAnimatorInState(Blocking1State) ||
+               IsAnimatorInState(Blocking2State) ||
+               IsAnimatorInState(Blocking3State);
+    }
+
+    private bool IsTransitioningToParryState()
+    {
+        if (animator == null || !animator.IsInTransition(0))
+        {
+            return false;
+        }
+
+        AnimatorStateInfo nextState = animator.GetNextAnimatorStateInfo(0);
+        return IsParryState(nextState.shortNameHash);
+    }
+
+    private static bool IsParryState(int stateHash)
+    {
+        return stateHash == Blocking1State ||
+               stateHash == Blocking2State ||
+               stateHash == Blocking3State;
     }
 
     private int GetBasicAttackTrigger()

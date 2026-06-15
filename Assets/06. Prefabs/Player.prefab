@@ -3411,11 +3411,19 @@ MonoBehaviour:
   shiftHoldThreshold: 0.25
   movementAcceleration: 80
   movementBraking: 30
+  moveSpeedAcceleration: 7
+  moveSpeedDeceleration: 10
+  turnRootMotionFallbackRotationSpeed: 360
+  turnAnimationYawDirection: 1
+  turnStartSpeedRatio: 0.75
+  turnAnimationCooldownPadding: 0
   jumpHeight: 1.15
   jumpAirTime: 0.68
   forwardJumpHeight: 1.15
   forwardJumpAirTime: 0.68
   jumpAnimationLockDuration: 0.45
+  runJumpSpeedRatio: 0.75
+  useForwardJumpRootMotion: 0
   comboGraceSeconds: 0.5
   comboInputBufferSeconds: 0.2
   attackHitRadius: 1.4
@@ -3443,7 +3451,7 @@ MonoBehaviour:
   maxHealth: 10000
   maxStamina: 1000
   staminaRegenPerSecond: 100
-  staminaRegenDelay: 0.8
+  staminaRegenDelay: 1
   hitInvincibleDuration: 0.25
   baseReviveGaugePerSegment: 100
   reviveGaugeIncreasePerDeathAfterMaxSegments: 100
@@ -3454,7 +3462,9 @@ MonoBehaviour:
   firstAttackDamage: 7000
   secondAttackDamage: 9000
   thirdAttackDamage: 11000
-  attackStaminaCost: 0
+  attackStaminaCost: 100
+  jumpStaminaCost: 100
+  parryStaminaCost: 300
   rollStaminaCost: 200
   runStaminaPerSecond: 40
   spinSlashStaminaCost: 400

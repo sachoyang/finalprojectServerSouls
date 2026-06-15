@@ -171,6 +171,7 @@ public partial class NetworkPlayerController
         MoveSpeedBlendNetworked = 0f;
         _turnUsedRootMotionRotation = false;
         ClearQueuedRootMotion();
+        UpdateAnimatorRootMotionMode();
         return true;
     }
 
@@ -354,8 +355,11 @@ public partial class NetworkPlayerController
         TurnResumeCurrentSpeed = 0f;
         TurnResumeMoveSpeedBlend = 0f;
         TurnResumeLockMove = LockMoveIdle;
-        ParryGuardActive = false;
-        _localParryGuardActive = false;
+        if (!IsParryActive())
+        {
+            ParryGuardActive = false;
+            _localParryGuardActive = false;
+        }
         _turnUsedRootMotionRotation = false;
         ClearQueuedRootMotion();
         _networkCharacterController.gravity = _networkControllerGravity;

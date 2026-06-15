@@ -42,6 +42,9 @@ public partial class NetworkPlayerController : NetworkBehaviour
     private static readonly int Slash2State = Animator.StringToHash("slash2");
     private static readonly int Slash3State = Animator.StringToHash("slash3");
     private static readonly int Slash4State = Animator.StringToHash("slash4");
+    private static readonly int Blocking1State = Animator.StringToHash("blocking1");
+    private static readonly int Blocking2State = Animator.StringToHash("blocking2");
+    private static readonly int Blocking3State = Animator.StringToHash("blocking3");
 
     private const byte ActionNone = 0;
     private const byte ActionAttack = 1;
@@ -238,7 +241,7 @@ public partial class NetworkPlayerController : NetworkBehaviour
             return;
         }
 
-        animator.applyRootMotion = true;
+        animator.applyRootMotion = false;
         _lastMoveDirection = transform.forward;
     }
 

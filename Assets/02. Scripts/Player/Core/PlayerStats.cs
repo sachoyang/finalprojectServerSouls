@@ -46,8 +46,8 @@ public class PlayerStats : NetworkBehaviour
     [SerializeField] private float maxStamina = 1000f;
     // 기력 회복 지연 시간이 끝난 뒤 초당 회복되는 기력량.
     [SerializeField] private float staminaRegenPerSecond = 100f;
-    // 기력을 사용한 직후 바로 회복되지 않도록 막는 시간.
-    [SerializeField] private float staminaRegenDelay = 0.8f;
+    // 액션 모션이 끝난 뒤 기력 회복이 다시 시작되기까지의 시간.
+    [SerializeField] private float staminaRegenDelay = 1f;
     // 연속 충돌로 한 공격이 여러 번 들어가는 것을 막기 위한 짧은 피격 무적 시간.
     [SerializeField] private float hitInvincibleDuration = 0.25f;
 
@@ -67,8 +67,12 @@ public class PlayerStats : NetworkBehaviour
     [SerializeField] private float secondAttackDamage = 9000f;
     // 평타 3타 데미지. 콤보 시스템이 연결되면 세 번째 공격 판정에 사용한다.
     [SerializeField] private float thirdAttackDamage = 11000f;
-    // 현재 기본 공격은 기획표에 별도 코스트가 없어 0으로 둔다.
-    [SerializeField] private float attackStaminaCost = 0f;
+    // 기본 공격 1회에 소모되는 기력.
+    [SerializeField] private float attackStaminaCost = 100f;
+    // 점프 1회에 소모되는 기력.
+    [SerializeField] private float jumpStaminaCost = 100f;
+    // 패링 1회에 소모되는 기력.
+    [SerializeField] private float parryStaminaCost = 100f;
     // Shift 짧은 탭 구르기 1회에 소모되는 기력.
     [SerializeField] private float rollStaminaCost = 200f;
     // Shift 길게 누르기 달리기 중 초당 소모되는 기력.
@@ -101,6 +105,8 @@ public class PlayerStats : NetworkBehaviour
     [Networked] private float BonusMaxStamina { get; set; }
     [Networked] private float BonusDefenseRate { get; set; }
     [Networked] private float BonusAttackDamageRate { get; set; }
+    // 공격/점프/패링처럼 애니메이션 종료 시점부터 회복 딜레이를 재야 하는 액션 중에는 회복 자체를 보류한다.
+    [Networked] private NetworkBool StaminaRegenHeld { get; set; }
     [Networked] public int DeathCount { get; private set; }
     [Networked] public int ReviveSegmentCount { get; private set; }
     [Networked] public float ReviveGaugePerSegment { get; private set; }
@@ -116,6 +122,8 @@ public class PlayerStats : NetworkBehaviour
     public float SecondAttackDamage => ApplyAttackBonus(secondAttackDamage);
     public float ThirdAttackDamage => ApplyAttackBonus(thirdAttackDamage);
     public float AttackStaminaCost => attackStaminaCost;
+    public float JumpStaminaCost => jumpStaminaCost;
+    public float ParryStaminaCost => parryStaminaCost;
     public float RollStaminaCost => rollStaminaCost;
     public float RunStaminaPerSecond => runStaminaPerSecond;
     public float SpinSlashStaminaCost => spinSlashStaminaCost;
@@ -126,6 +134,7 @@ public class PlayerStats : NetworkBehaviour
     public float ReviveNormalizedProgress => IsDead ? Mathf.Clamp01(1f - ReviveProgress / ReviveRequiredGauge) : 0f;
     public float ReviveRemainingNormalized => IsDead ? Mathf.Clamp01(ReviveProgress / ReviveRequiredGauge) : 0f;
     public event Action<PlayerStats> ReviveStateChanged;
+    public event Action<PlayerStats, float, float> StaminaUseFailed;
 
     private ChangeDetector _changeDetector;
     private PlayerStatusController _statusController;
@@ -172,6 +181,7 @@ public class PlayerStats : NetworkBehaviour
         IsDead = snapshot.IsDead || CurrentHealth <= 0f;
         IsAnimationInvincible = false;
         StaminaRegenDelayTimer = default;
+        StaminaRegenHeld = false;
         HitInvincibleTimer = default;
         if (IsDead)
         {
@@ -206,6 +216,7 @@ public class PlayerStats : NetworkBehaviour
         CurrentStamina = MaxStamina;
         IsDead = false;
         IsAnimationInvincible = false;
+        StaminaRegenHeld = false;
         ClearReviveProgress();
     }
 
@@ -245,6 +256,11 @@ public class PlayerStats : NetworkBehaviour
         }
 
         // 최근에 기력을 썼다면 회복 지연 타이머가 끝날 때까지 기다린다.
+        if (StaminaRegenHeld)
+        {
+            return;
+        }
+
         if (!StaminaRegenDelayTimer.ExpiredOrNotRunning(Runner))
         {
             return;
@@ -262,7 +278,12 @@ public class PlayerStats : NetworkBehaviour
 
     public bool TryUseStamina(float amount)
     {
-        // 0 이하 코스트는 항상 성공 처리한다. 기본 공격처럼 무료 액션에 사용된다.
+        return TryUseStamina(amount, true);
+    }
+
+    public bool TryUseStamina(float amount, bool startRegenDelay)
+    {
+        // 0 이하 코스트는 항상 성공 처리한다.
         if (amount <= 0f)
         {
             return true;
@@ -272,19 +293,72 @@ public class PlayerStats : NetworkBehaviour
         // 실제 차감은 상태 권한이 있는 쪽에서만 수행된다.
         if (!HasStateAuthority)
         {
-            return CurrentStamina >= amount;
+            bool hasEnoughStamina = CurrentStamina >= amount;
+            if (!hasEnoughStamina)
+            {
+                NotifyStaminaUseFailed(amount);
+            }
+
+            return hasEnoughStamina;
         }
 
         // 죽었거나 기력이 부족하면 액션을 시작하지 못한다.
         if (IsDead || CurrentStamina < amount)
         {
+            if (!IsDead)
+            {
+                NotifyStaminaUseFailed(amount);
+            }
+
             return false;
         }
 
-        // 기력을 차감하고 회복 지연 타이머를 새로 시작한다.
+        // 기력을 차감한다. 액션 애니메이션은 StateMachineBehaviour의 OnStateExit에서 회복 지연을 시작한다.
         CurrentStamina = Mathf.Max(0f, CurrentStamina - amount);
-        StaminaRegenDelayTimer = TickTimer.CreateFromSeconds(Runner, staminaRegenDelay);
+        if (startRegenDelay)
+        {
+            DelayStaminaRegen(staminaRegenDelay);
+        }
+
         return true;
+    }
+
+    public bool TryUseActionStamina(float amount)
+    {
+        if (!TryUseStamina(amount, false))
+        {
+            return false;
+        }
+
+        HoldStaminaRegen();
+        return true;
+    }
+
+    public void HoldStaminaRegen()
+    {
+        if (!HasStateAuthority || IsDead)
+        {
+            return;
+        }
+
+        StaminaRegenHeld = true;
+        StaminaRegenDelayTimer = default;
+    }
+
+    public void DelayStaminaRegen(float seconds = -1f)
+    {
+        if (!HasStateAuthority || IsDead)
+        {
+            return;
+        }
+
+        StaminaRegenHeld = false;
+        StaminaRegenDelayTimer = TickTimer.CreateFromSeconds(Runner, seconds >= 0f ? seconds : staminaRegenDelay);
+    }
+
+    private void NotifyStaminaUseFailed(float requiredStamina)
+    {
+        StaminaUseFailed?.Invoke(this, requiredStamina, CurrentStamina);
     }
 
     public void TakeDamage(float damage)
@@ -436,17 +510,21 @@ public class PlayerStats : NetworkBehaviour
     private void ApplyDamage(float damage)
     {
         NetworkPlayerController controller = GetComponent<NetworkPlayerController>();
-        if (!IsDead && IsAnimationInvincible && controller != null && controller.IsParryGuardActive)
+        bool isParryGuardActive = controller != null && controller.IsParryGuardActive;
+        if (!IsDead && IsAnimationInvincible && isParryGuardActive)
         {
             Debug.Log("[Player Damage Blocked] parry guard");
             controller.NotifyParryGuardBlocked();
             return;
         }
 
+        bool ignoresDamageByAnimationInvincible = IsAnimationInvincible &&
+            (controller == null || !controller.IsParryActionActive);
+
         // 이미 죽었거나 짧은 피격 무적 중이면 데미지를 무시한다.
-        if (IsDead || IsAnimationInvincible || !HitInvincibleTimer.ExpiredOrNotRunning(Runner))
+        if (IsDead || ignoresDamageByAnimationInvincible || !HitInvincibleTimer.ExpiredOrNotRunning(Runner))
         {
-            Debug.Log($"[Player Damage Ignored] dead:{IsDead}, animationInvincible:{IsAnimationInvincible}, hitInvincible:{!HitInvincibleTimer.ExpiredOrNotRunning(Runner)}");
+            Debug.Log($"[Player Damage Ignored] dead:{IsDead}, animationInvincible:{ignoresDamageByAnimationInvincible}, hitInvincible:{!HitInvincibleTimer.ExpiredOrNotRunning(Runner)}");
             return;
         }
 
@@ -468,6 +546,7 @@ public class PlayerStats : NetworkBehaviour
             // 사망 상태는 NetworkPlayerController에서 입력/이동 제한에 사용된다.
             IsDead = true;
             IsAnimationInvincible = false;
+            StaminaRegenHeld = false;
             BeginReviveState();
             Debug.Log("[Player Dead]");
         }
@@ -555,6 +634,7 @@ public class PlayerStats : NetworkBehaviour
         CurrentHealth = MaxHealth;
         CurrentStamina = MaxStamina;
         StaminaRegenDelayTimer = default;
+        StaminaRegenHeld = false;
         HitInvincibleTimer = default;
         ClearReviveProgress();
         GetComponent<NetworkPlayerController>()?.NotifyRevived();

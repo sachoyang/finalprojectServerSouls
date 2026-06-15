@@ -40,7 +40,6 @@ public static class PlayerAnimatorSetupTool
     private const string SkillMachineName = "Skill Actions";
     private const string SkillModuleFolder = "Assets/02. Scripts/Player/Abilities/SkillModule";
     private const float TurnExitBlendDuration = 0.15f;
-    private const float ParryTransitionStateSpeed = 2f;
 
     [MenuItem("Tools/ServerSouls/Setup Player Base Animator")]
     public static void SetupPlayerBaseAnimator()
@@ -691,15 +690,12 @@ public static class PlayerAnimatorSetupTool
         AnimatorState slash3 = EnsureState(combatMachine, "slash3", "Assets/04. Images/Animation/Great Sword Slash3.fbx", new Vector3(300f, 80f, 0f), "Action");
         AnimatorState slash4 = EnsureState(combatMachine, "slash4", "Assets/04. Images/Animation/Great Sword Slash4.fbx", new Vector3(520f, 80f, 0f), "Action");
         AnimatorState jumpState = EnsureState(combatMachine, "Jump", "Assets/04. Images/Animation/Great Sword Jump.fbx", new Vector3(80f, 220f, 0f), "Action");
-        AnimatorState jump2State = EnsureState(combatMachine, "Jump2", "Assets/04. Images/Animation/Great Sword Jump2.fbx", new Vector3(300f, 220f, 0f), "Action");
+        AnimatorState jump2State = EnsureState(combatMachine, "Jump2", "Assets/04. Images/Animation/Great Sword Jump2Fix.fbx", new Vector3(300f, 220f, 0f), "Action");
         AnimatorState parryRaiseState = EnsureState(combatMachine, "blocking1", "Assets/04. Images/Animation/Great Sword Blocking1.fbx", new Vector3(520f, 220f, 0f), "Action");
         AnimatorState parryGuardState = EnsureState(combatMachine, "blocking2", "Assets/04. Images/Animation/Great Sword Blocking2.fbx", new Vector3(740f, 220f, 0f), "Action");
         AnimatorState parryLowerState = EnsureState(combatMachine, "blocking3", "Assets/04. Images/Animation/Great Sword Blocking3.fbx", new Vector3(960f, 220f, 0f), "Action");
         AnimatorState rollState = EnsureState(combatMachine, "Sprinting Forward Roll", "Assets/04. Images/Animation/Sprinting Forward Roll.fbx", new Vector3(1180f, 220f, 0f), "Action");
         combatMachine.defaultState = slash2;
-        parryRaiseState.speed = ParryTransitionStateSpeed;
-        parryGuardState.speed = 1f;
-        parryLowerState.speed = ParryTransitionStateSpeed;
 
         EnsureAnyStateTriggerTransition(root, slash2, Attack2);
         EnsureAnyStateTriggerTransition(root, slash3, Attack3);

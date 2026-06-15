@@ -19,7 +19,6 @@ public class HUDManager : MonoBehaviour
     [SerializeField] private float referenceSearchInterval = 0.25f;
 
     [Header("Player Data")]
-    [SerializeField] private PlayerStats playerStats;
     [SerializeField] private PlayerAbilityInventory abilityInventory;
     [SerializeField] private PlayerStatusController playerStatusController;
 
@@ -27,6 +26,7 @@ public class HUDManager : MonoBehaviour
     [SerializeField] private NetworkBossCore boss;
 
     private NetworkPlayerController localPlayerController;
+    private PlayerStats subscribedStaminaStats;
     private float nextPartyRefreshTime;
     private float nextReferenceSearchTime;
     private Coroutine bindCoroutine;
@@ -40,6 +40,7 @@ public class HUDManager : MonoBehaviour
     private void Update()
     {
         TryFindRuntimeReferences();
+        BindLocalStaminaEvents();
         UpdateHUD();
 
         if (Time.time >= nextPartyRefreshTime)
@@ -57,13 +58,10 @@ public class HUDManager : MonoBehaviour
         nextReferenceSearchTime = Time.time + referenceSearchInterval;
 
         if (localPlayerController == null)
-            localPlayerController = FindLocalPlayerController();
+            localPlayerController = PlayerRegistry.LocalPlayer;
 
         if (localPlayerController != null)
         {
-            if (playerStats == null)
-                playerStats = localPlayerController.GetComponent<PlayerStats>();
-
             if (abilityInventory == null)
                 abilityInventory = localPlayerController.GetComponent<PlayerAbilityInventory>();
 
@@ -78,7 +76,6 @@ public class HUDManager : MonoBehaviour
     private void TryFindRuntimeReferences()
     {
         if (localPlayerController != null &&
-            playerStats != null &&
             abilityInventory != null &&
             playerStatusController != null &&
             boss != null &&
@@ -93,9 +90,10 @@ public class HUDManager : MonoBehaviour
 
     private IEnumerator BindRuntimeReferencesRoutine()
     {
-        while (localPlayerController == null || playerStats == null || abilityInventory == null)
+        while (localPlayerController == null || abilityInventory == null)
         {
             FindRuntimeReferences();
+            BindLocalStaminaEvents();
             yield return new WaitForSeconds(referenceSearchInterval);
         }
 
@@ -113,10 +111,11 @@ public class HUDManager : MonoBehaviour
 
     private void UpdatePlayerHUD()
     {
-        if (playerHUDView == null || playerStats == null || !playerStats.IsSpawnedReady)
+        PlayerStats stats = localPlayerController != null ? localPlayerController.GetComponent<PlayerStats>() : null;
+        if (playerHUDView == null || stats == null || !stats.IsSpawnedReady)
             return;
 
-        PlayerHUDData hudData = playerStats.GetHUDData();
+        PlayerHUDData hudData = stats.GetHUDData();
 
         playerHUDView.SetHp(hudData.CurrentHealth, hudData.MaxHealth);
         playerHUDView.SetSp(hudData.CurrentStamina, hudData.MaxStamina);
@@ -369,9 +368,38 @@ public class HUDManager : MonoBehaviour
         }
     }
 
-    private NetworkPlayerController FindLocalPlayerController()
+    private void BindLocalStaminaEvents()
     {
-        return PlayerRegistry.LocalPlayer;
+        PlayerStats stats = localPlayerController != null ? localPlayerController.GetComponent<PlayerStats>() : null;
+        if (subscribedStaminaStats == stats)
+        {
+            return;
+        }
+
+        if (subscribedStaminaStats != null)
+        {
+            subscribedStaminaStats.StaminaUseFailed -= OnLocalStaminaUseFailed;
+        }
+
+        subscribedStaminaStats = stats;
+        if (subscribedStaminaStats != null)
+        {
+            subscribedStaminaStats.StaminaUseFailed += OnLocalStaminaUseFailed;
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (subscribedStaminaStats != null)
+        {
+            subscribedStaminaStats.StaminaUseFailed -= OnLocalStaminaUseFailed;
+            subscribedStaminaStats = null;
+        }
+    }
+
+    private void OnLocalStaminaUseFailed(PlayerStats stats, float requiredStamina, float currentStamina)
+    {
+        playerHUDView?.ShowStaminaUseFailed();
     }
 
     private readonly struct PartyMemberRuntimeData
