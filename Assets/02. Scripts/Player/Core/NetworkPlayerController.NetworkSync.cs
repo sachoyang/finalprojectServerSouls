@@ -44,6 +44,7 @@ public partial class NetworkPlayerController
         _localActionAnimationLocked = false;
         _localActionLockType = (byte)PlayerActionLockType.None;
         _localComboInputWindowOpen = false;
+        _localParryGuardActive = false;
         ClearComboRequests();
         _lastLocalConsumedActionId = 0;
         if (animator != null)
@@ -68,6 +69,7 @@ public partial class NetworkPlayerController
             TurnResumeMoveSpeedBlend = 0f;
             TurnResumeLockMove = LockMoveIdle;
             ForwardJumpDirection = Vector3.zero;
+            ParryGuardActive = false;
             if (_networkCharacterController != null)
             {
                 _networkCharacterController.gravity = _networkControllerGravity;

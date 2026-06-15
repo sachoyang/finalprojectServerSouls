@@ -354,6 +354,8 @@ public partial class NetworkPlayerController
         TurnResumeCurrentSpeed = 0f;
         TurnResumeMoveSpeedBlend = 0f;
         TurnResumeLockMove = LockMoveIdle;
+        ParryGuardActive = false;
+        _localParryGuardActive = false;
         _turnUsedRootMotionRotation = false;
         ClearQueuedRootMotion();
         _networkCharacterController.gravity = _networkControllerGravity;

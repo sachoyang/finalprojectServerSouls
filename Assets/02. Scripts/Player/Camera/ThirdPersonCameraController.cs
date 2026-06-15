@@ -26,6 +26,8 @@ public class ThirdPersonCameraController : MonoBehaviour
 
     [Header("Rotation")]
     [SerializeField] private float mouseSensitivity = 4f;
+    [SerializeField] private bool normalizeMouseDeltaByScreenSize = true;
+    [SerializeField] private Vector2 referenceMouseScreenSize = new Vector2(1920f, 1080f);
     [SerializeField] private float maxMouseDelta = 8f;
     [SerializeField] private float startPitch = 15f;
     [SerializeField] private float minPitch = -20f;
@@ -143,6 +145,7 @@ public class ThirdPersonCameraController : MonoBehaviour
 
         float mouseX = Input.GetAxisRaw("Mouse X");
         float mouseY = Input.GetAxisRaw("Mouse Y");
+        NormalizeMouseDeltaByScreenSize(ref mouseX, ref mouseY);
         mouseX = Mathf.Clamp(mouseX, -maxMouseDelta, maxMouseDelta);
         mouseY = Mathf.Clamp(mouseY, -maxMouseDelta, maxMouseDelta);
         float sensitivityScale = GetObstructedRotationScale();
@@ -150,6 +153,22 @@ public class ThirdPersonCameraController : MonoBehaviour
         _targetYaw += mouseX * mouseSensitivity * sensitivityScale;
         _targetPitch -= mouseY * mouseSensitivity * sensitivityScale;
         _targetPitch = Mathf.Clamp(_targetPitch, minPitch, maxPitch);
+    }
+
+    private void NormalizeMouseDeltaByScreenSize(ref float mouseX, ref float mouseY)
+    {
+        if (!normalizeMouseDeltaByScreenSize)
+        {
+            return;
+        }
+
+        float screenWidth = Mathf.Max(1f, Screen.width);
+        float screenHeight = Mathf.Max(1f, Screen.height);
+        float referenceWidth = Mathf.Max(1f, referenceMouseScreenSize.x);
+        float referenceHeight = Mathf.Max(1f, referenceMouseScreenSize.y);
+
+        mouseX *= referenceWidth / screenWidth;
+        mouseY *= referenceHeight / screenHeight;
     }
 
     private float GetObstructedRotationScale()

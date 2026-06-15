@@ -435,6 +435,14 @@ public class PlayerStats : NetworkBehaviour
 
     private void ApplyDamage(float damage)
     {
+        NetworkPlayerController controller = GetComponent<NetworkPlayerController>();
+        if (!IsDead && IsAnimationInvincible && controller != null && controller.IsParryGuardActive)
+        {
+            Debug.Log("[Player Damage Blocked] parry guard");
+            controller.NotifyParryGuardBlocked();
+            return;
+        }
+
         // 이미 죽었거나 짧은 피격 무적 중이면 데미지를 무시한다.
         if (IsDead || IsAnimationInvincible || !HitInvincibleTimer.ExpiredOrNotRunning(Runner))
         {
@@ -464,7 +472,7 @@ public class PlayerStats : NetworkBehaviour
             Debug.Log("[Player Dead]");
         }
 
-        GetComponent<NetworkPlayerController>()?.NotifyDamageReaction(becameDead);
+        controller?.NotifyDamageReaction(becameDead);
     }
 
     private void ApplyAnimationInvincible(bool isInvincible)
