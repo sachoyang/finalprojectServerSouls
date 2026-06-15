@@ -64,10 +64,14 @@ public partial class NetworkPlayerController
             LastConsumedActionId = 0;
             CurrentMoveSpeed = 0f;
             MoveSpeedBlendNetworked = 0f;
+            TurnAnimationActive = false;
+            TurnAnimationStateEntered = false;
             TurnNeedsFinalRotation = false;
+            TurnResumeSpeedPending = false;
             TurnResumeCurrentSpeed = 0f;
             TurnResumeMoveSpeedBlend = 0f;
             TurnResumeLockMove = LockMoveIdle;
+            RollDirection = Vector3.zero;
             ForwardJumpDirection = Vector3.zero;
             ParryGuardActive = false;
             if (_networkCharacterController != null)
@@ -162,12 +166,10 @@ public partial class NetworkPlayerController
             }
         }
 
-        bool lockOnMovement = IsLockOnNetworked && !IsLockOnAnimatorSuppressed() && !IsInActionAnimation();
+        bool lockOnMovement = IsLockOnNetworked && !IsTurnAnimationActive() && !IsInActionAnimation();
         // 락온 이동 블렌드 트리와 일반 이동 파라미터가 서로 섞이지 않게 분리한다.
         animator.SetBool(IsCrawling, _playerStats != null && _playerStats.IsDead);
-        float normalMoveBlend = IsTurnAnimationActive()
-            ? 0f
-            : (lockOnMovement ? 0f : MoveSpeedBlendNetworked);
+        float normalMoveBlend = lockOnMovement ? 0f : MoveSpeedBlendNetworked;
         animator.SetFloat(MoveSpeed, normalMoveBlend, 0.12f, Time.deltaTime);
         UpdateLockOnAnimatorParameters(lockOnMovement, LockOnMoveNetworked);
     }

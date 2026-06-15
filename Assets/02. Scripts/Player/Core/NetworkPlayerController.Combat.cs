@@ -51,8 +51,7 @@ public partial class NetworkPlayerController
                _queuedComboAttack &&
                _queuedComboActionId != 0 &&
                LastAction == ActionAttack &&
-               CanStartBasicAttackFollowUp() &&
-               Runner.SimulationTime <= BasicAttackComboExpiresAt;
+               CanStartBasicAttackFollowUp();
     }
 
     private bool TryQueueBasicAttackCombo(bool isActing, int actionId)
@@ -64,74 +63,9 @@ public partial class NetworkPlayerController
             return false;
         }
 
-        // queue가 잡히면 buffer는 더 이상 필요 없다.
-        // 하나의 입력이 buffer와 queue 양쪽에 남아 있으면 다음 공격이 중복으로 나갈 수 있다.
         _queuedComboAttack = true;
         _queuedComboActionId = actionId;
-        ClearBufferedComboAttack();
         return true;
-    }
-
-    private bool TryBufferBasicAttackCombo(bool isActing, int actionId)
-    {
-        // buffer는 "입력 가능 창은 아직 닫혀 있지만, 공격 종료 0.2초 전"에 눌린 입력을 짧게 보관한다.
-        // Animator StateBehaviour가 OpenComboInputWindow를 호출하면 TryPromoteBufferedComboAttack에서 queue로 승격된다.
-        if (!CanBufferBasicAttackCombo(isActing) || actionId == 0)
-        {
-            return false;
-        }
-
-        _bufferedComboAttack = true;
-        _bufferedComboActionId = actionId;
-        _bufferedComboExpiresAt = GetSimulationTime() + Mathf.Max(0.01f, comboInputBufferSeconds);
-        return true;
-    }
-
-    private bool CanBufferBasicAttackCombo(bool isActing)
-    {
-        // 미해금 기본 공격도 slash2 반복 선입력이 필요하므로 콤보 해금 여부로 막지 않는다.
-        // 단, 너무 이른 입력은 무시하고 현재 공격의 마지막 comboInputBufferSeconds 구간만 허용한다.
-        return isActing &&
-               LastAction == ActionAttack &&
-               CanStartBasicAttackFollowUp() &&
-               !_queuedComboAttack &&
-               !IsComboInputWindowOpen() &&
-               IsInBasicAttackComboBufferWindow();
-    }
-
-    private void TryPromoteBufferedComboAttack(bool isActing)
-    {
-        if (!_bufferedComboAttack)
-        {
-            return;
-        }
-
-        if (IsComboInputWindowOpen())
-        {
-            // Animator가 입력 창을 열었으면 buffer에 있던 클릭을 queue로 옮긴다.
-            // 이 시점에도 조건이 안 맞으면 오래된 입력이므로 버린다.
-            if (!TryQueueBasicAttackCombo(isActing, _bufferedComboActionId))
-            {
-                ClearBufferedComboAttack();
-            }
-
-            return;
-        }
-
-        if (!CanKeepBufferedBasicAttackCombo(isActing))
-        {
-            ClearBufferedComboAttack();
-        }
-    }
-
-    private bool CanKeepBufferedBasicAttackCombo(bool isActing)
-    {
-        // 아직 입력 창이 열리지 않았더라도, 현재 공격이 계속 재생 중이면 buffer를 유지한다.
-        // 피격/구르기/점프 등으로 LastAction이 바뀌면 더 이상 후속 기본공격으로 쓰면 안 된다.
-        return isActing &&
-               LastAction == ActionAttack &&
-               CanStartBasicAttackFollowUp() &&
-               !_queuedComboAttack;
     }
 
     private bool CanStartBasicAttackFollowUp()
@@ -141,100 +75,23 @@ public partial class NetworkPlayerController
         return !IsBasicAttackComboUnlocked || BasicAttackComboIndex < BasicAttackComboLastIndex;
     }
 
-    private void PruneExpiredBufferedComboAttack(bool isActing)
-    {
-        if (!_bufferedComboAttack || GetSimulationTime() <= _bufferedComboExpiresAt)
-        {
-            return;
-        }
-
-        // 만료 시간이 지나도 현재 공격이 아직 유효하면 유지한다.
-        // 서버 틱/Animator 업데이트 타이밍 차이로 OpenComboInputWindow가 한 틱 늦게 올 수 있기 때문이다.
-        if (CanKeepBufferedBasicAttackCombo(isActing))
-        {
-            return;
-        }
-
-        ClearBufferedComboAttack();
-    }
-
     private void ClearComboRequests()
     {
-        // 공격 흐름이 끊기면 buffer와 queue를 모두 비운다.
-        // 하나만 남기면 이전 클릭이 다음 액션 뒤에 늦게 실행될 수 있다.
-        ClearBufferedComboAttack();
+        // 공격 흐름이 끊기면 이전 클릭이 다음 액션 뒤에 늦게 실행되지 않도록 queue를 비운다.
         _queuedComboAttack = false;
         _queuedComboActionId = 0;
     }
 
-    private void ClearBufferedComboAttack()
-    {
-        _bufferedComboAttack = false;
-        _bufferedComboActionId = 0;
-        _bufferedComboExpiresAt = 0f;
-    }
-
     private byte GetOpeningBasicAttackComboIndex()
     {
-        // idle 상태에서 새 공격을 시작할 때, 직전 공격 종료 grace 안이면 다음 콤보 단계로 시작한다.
-        // 콤보가 해금되지 않았거나 grace가 끝났으면 항상 첫 기본공격(slash2)부터 시작한다.
-        if (!IsBasicAttackComboUnlocked ||
-            LastAction != ActionAttack ||
-            BasicAttackComboIndex >= BasicAttackComboLastIndex ||
-            Runner.SimulationTime > BasicAttackComboExpiresAt)
-        {
-            return 0;
-        }
-
-        return GetNextBasicAttackComboIndex();
+        // StateMachineBehaviour가 입력창을 연 동안 queue된 입력만 다음 콤보로 이어진다.
+        // idle에서 새로 누른 공격은 항상 첫 기본공격으로 시작한다.
+        return 0;
     }
 
     private byte GetNextBasicAttackComboIndex()
     {
         return (byte)Mathf.Min(BasicAttackComboIndex + 1, BasicAttackComboLastIndex);
-    }
-
-    private float GetSimulationTime()
-    {
-        // 네트워크 러너가 있으면 시뮬레이션 시간을 기준으로 사용해 호스트/클라이언트 판단을 맞춘다.
-        // 에디터 단독 테스트처럼 Runner가 없는 경우만 Unity Time으로 대체한다.
-        return Runner != null ? Runner.SimulationTime : Time.time;
-    }
-
-    private bool IsInBasicAttackComboBufferWindow()
-    {
-        if (animator == null)
-        {
-            return false;
-        }
-
-        AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
-        if (!IsCurrentBasicAttackState(stateInfo))
-        {
-            return false;
-        }
-
-        // 현재 공격 클립의 남은 시간이 설정값 이하일 때만 선입력 buffer를 허용한다.
-        return GetRemainingStateSeconds(stateInfo) <= comboInputBufferSeconds;
-    }
-
-    private bool IsCurrentBasicAttackState(AnimatorStateInfo stateInfo)
-    {
-        return stateInfo.shortNameHash == Slash2State ||
-               stateInfo.shortNameHash == Slash3State ||
-               stateInfo.shortNameHash == Slash4State;
-    }
-
-    private static float GetRemainingStateSeconds(AnimatorStateInfo stateInfo)
-    {
-        // loop 상태는 normalizedTime이 계속 증가하므로 소수부만 사용한다.
-        float normalizedTime = stateInfo.loop
-            ? stateInfo.normalizedTime - Mathf.Floor(stateInfo.normalizedTime)
-            : Mathf.Clamp01(stateInfo.normalizedTime);
-
-        // 클립 길이가 비정상적으로 0이면 계산 안정성을 위해 아주 작은 값으로 보정한다.
-        float stateLength = Mathf.Max(0.01f, stateInfo.length);
-        return Mathf.Max(0f, (1f - normalizedTime) * stateLength);
     }
 
     private bool TrySpendBasicAttackStamina()
@@ -311,7 +168,6 @@ public partial class NetworkPlayerController
         }
 
         SetComboInputWindowOpen(true);
-        TryPromoteBufferedComboAttack(true);
     }
 
     public void EndActionAnimation(PlayerActionLockType lockType)
@@ -328,18 +184,18 @@ public partial class NetworkPlayerController
         SetActionAnimationLocked(false);
         SetComboInputWindowOpen(false);
 
+        if (lockType == PlayerActionLockType.Roll)
+        {
+            RollDirection = Vector3.zero;
+        }
+
         if (LastAction == ActionAttack)
         {
             if (BasicAttackComboIndex >= BasicAttackComboLastIndex)
             {
-                BasicAttackComboExpiresAt = Runner != null ? Runner.SimulationTime : Time.time;
                 ClearComboRequests();
-                return;
             }
 
-            BasicAttackComboExpiresAt = Runner != null
-                ? Runner.SimulationTime + Mathf.Max(0f, comboGraceSeconds)
-                : Time.time + Mathf.Max(0f, comboGraceSeconds);
             return;
         }
 
@@ -356,6 +212,7 @@ public partial class NetworkPlayerController
         if (lockType == PlayerActionLockType.Attack ||
             lockType == PlayerActionLockType.Parry ||
             lockType == PlayerActionLockType.Jump ||
+            lockType == PlayerActionLockType.Roll ||
             lockType == PlayerActionLockType.Skill)
         {
             _playerStats?.DelayStaminaRegen();
@@ -418,9 +275,6 @@ public partial class NetworkPlayerController
             ? (byte)Mathf.Clamp(comboIndex, 0, BasicAttackComboLastIndex)
             : (byte)0;
 
-        // EndActionAnimation의 grace 계산과 CanStartQueuedComboAttack의 만료 검사에서 쓰는 기준 시간이다.
-        // 공격이 실제로 서버에서 확정된 순간을 기록해야 클라이언트별 프레임 차이에 덜 흔들린다.
-        BasicAttackComboExpiresAt = Runner != null ? Runner.SimulationTime : Time.time;
         StartAction(ActionAttack, actionId);
     }
 
@@ -507,7 +361,6 @@ public partial class NetworkPlayerController
             LastActionId = 0;
             LastConsumedActionId = 0;
             BasicAttackComboIndex = 0;
-            BasicAttackComboExpiresAt = Runner != null ? Runner.SimulationTime : Time.time;
             ActionAnimationLocked = false;
             ActionLockType = (byte)PlayerActionLockType.None;
             ComboInputWindowOpen = false;
@@ -712,12 +565,10 @@ public partial class NetworkPlayerController
                 animator.SetTrigger(Roll);
                 break;
             case ActionJump:
-                _suppressLockOnAnimatorUntil = Time.time + jumpAnimationLockDuration;
                 animator.SetBool(IsLockOn, false);
                 animator.SetTrigger(Jump);
                 break;
             case ActionJumpForward:
-                _suppressLockOnAnimatorUntil = Time.time + jumpAnimationLockDuration;
                 animator.SetBool(IsLockOn, false);
                 animator.SetTrigger(Jump2);
                 break;
@@ -766,6 +617,11 @@ public partial class NetworkPlayerController
     private bool IsForwardJumpRootMotionActive()
     {
         return useForwardJumpRootMotion && LastAction == ActionJumpForward && IsActionAnimationLocked;
+    }
+
+    private bool IsRollRootMotionActive()
+    {
+        return LastAction == ActionRoll && IsActionAnimationLocked;
     }
 
     private bool IsParryAnimatorStateActive()

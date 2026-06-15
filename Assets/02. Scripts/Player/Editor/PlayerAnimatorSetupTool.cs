@@ -40,6 +40,7 @@ public static class PlayerAnimatorSetupTool
     private const string SkillMachineName = "Skill Actions";
     private const string SkillModuleFolder = "Assets/02. Scripts/Player/Abilities/SkillModule";
     private const float TurnExitBlendDuration = 0.15f;
+    private const float ComboInputOpenNormalizedTime = 0.72f;
 
     [MenuItem("Tools/ServerSouls/Setup Player Base Animator")]
     public static void SetupPlayerBaseAnimator()
@@ -57,6 +58,7 @@ public static class PlayerAnimatorSetupTool
         ConfigureNormalLocomotion(controller, root);
         AnimatorStateMachine lockOnMachine = FindStateMachine(root, LockOnMachineName)
             ?? root.AddStateMachine(LockOnMachineName, new Vector3(640f, 40f, 0f));
+        RemoveDirectStates(lockOnMachine, "slash2", "slash3", "slash4", "Jump", "Jump2", "blocking1", "blocking2", "blocking3", "Sprinting Forward Roll");
 
         AnimatorState lockOnState = FindState(lockOnMachine, LockOnBlendStateName);
         if (lockOnState == null)
@@ -694,7 +696,7 @@ public static class PlayerAnimatorSetupTool
         AnimatorState parryRaiseState = EnsureState(combatMachine, "blocking1", "Assets/04. Images/Animation/Great Sword Blocking1.fbx", new Vector3(520f, 220f, 0f), "Action");
         AnimatorState parryGuardState = EnsureState(combatMachine, "blocking2", "Assets/04. Images/Animation/Great Sword Blocking2.fbx", new Vector3(740f, 220f, 0f), "Action");
         AnimatorState parryLowerState = EnsureState(combatMachine, "blocking3", "Assets/04. Images/Animation/Great Sword Blocking3.fbx", new Vector3(960f, 220f, 0f), "Action");
-        AnimatorState rollState = EnsureState(combatMachine, "Sprinting Forward Roll", "Assets/04. Images/Animation/Sprinting Forward Roll.fbx", new Vector3(1180f, 220f, 0f), "Action");
+        AnimatorState rollState = EnsureState(combatMachine, "Sprinting Forward Roll", "Assets/04. Images/Animation/Sprinting Forward Roll(Root).fbx", new Vector3(1180f, 220f, 0f), "Action");
         combatMachine.defaultState = slash2;
 
         EnsureAnyStateTriggerTransition(root, slash2, Attack2);
@@ -740,6 +742,8 @@ public static class PlayerAnimatorSetupTool
 
         turn180.mirror = false;
         turn180Fast.mirror = false;
+        EnsureTurnBehaviour(turn180);
+        EnsureTurnBehaviour(turn180Fast);
         turnMachine.defaultState = turn180;
         RemoveAllStateTransitions(turn180);
         RemoveAllStateTransitions(turn180Fast);
@@ -783,7 +787,32 @@ public static class PlayerAnimatorSetupTool
             behaviour = state.AddStateMachineBehaviour<PlayerActionStateBehaviour>();
         }
 
-        behaviour.Configure(lockType, opensComboInput, 0.2f, enablesParryGuard);
+        behaviour.Configure(lockType, opensComboInput, ComboInputOpenNormalizedTime, enablesParryGuard);
+        EditorUtility.SetDirty(behaviour);
+    }
+
+    private static void EnsureTurnBehaviour(AnimatorState state)
+    {
+        if (state == null)
+        {
+            return;
+        }
+
+        PlayerTurnStateBehaviour behaviour = null;
+        foreach (StateMachineBehaviour existing in state.behaviours)
+        {
+            behaviour = existing as PlayerTurnStateBehaviour;
+            if (behaviour != null)
+            {
+                break;
+            }
+        }
+
+        if (behaviour == null)
+        {
+            behaviour = state.AddStateMachineBehaviour<PlayerTurnStateBehaviour>();
+        }
+
         EditorUtility.SetDirty(behaviour);
     }
 

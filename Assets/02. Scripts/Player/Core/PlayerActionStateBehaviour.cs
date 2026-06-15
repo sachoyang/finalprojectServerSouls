@@ -22,20 +22,20 @@ public class PlayerActionStateBehaviour : StateMachineBehaviour
     // 기본 공격 선입력용 옵션.
     // slash2/slash3처럼 다음 기본 공격 입력을 허용해야 하는 State에서만 켠다.
     [SerializeField] private bool opensComboInput;
-    // normalized time이 아니라 실제 남은 초 단위다.
-    // 클립 길이가 달라도 "끝나기 0.2초 전" 같은 체감 기준을 유지하기 위해 초 단위로 계산한다.
-    [SerializeField, Min(0f)] private float comboInputOpenSecondsBeforeEnd = 0.2f;
+    // 입력 가능 창은 클립 초가 아니라 Animator State 진행률로 연다.
+    // 애니메이션 속도를 바꿔도 같은 포즈 구간에서 콤보 입력을 받기 위한 값이다.
+    [SerializeField, Range(0f, 1f)] private float comboInputOpenNormalizedTime = 0.72f;
     [SerializeField] private bool enablesParryGuard;
 
     private bool _comboInputOpened;
 
-    public void Configure(PlayerActionLockType lockType, bool shouldOpenComboInput, float openSecondsBeforeEnd, bool shouldEnableParryGuard = false)
+    public void Configure(PlayerActionLockType lockType, bool shouldOpenComboInput, float openNormalizedTime, bool shouldEnableParryGuard = false)
     {
         // Editor Setup Tool에서 State를 만들거나 갱신할 때 호출된다.
         // 수동 입력 대신 도구가 타입/콤보 입력 시점을 일관되게 세팅하게 하기 위한 진입점이다.
         actionLockType = lockType;
         opensComboInput = shouldOpenComboInput;
-        comboInputOpenSecondsBeforeEnd = Mathf.Max(0f, openSecondsBeforeEnd);
+        comboInputOpenNormalizedTime = Mathf.Clamp01(openNormalizedTime);
         enablesParryGuard = shouldEnableParryGuard;
     }
 
@@ -54,14 +54,14 @@ public class PlayerActionStateBehaviour : StateMachineBehaviour
 
     public override void OnStateUpdate(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
-        // 콤보 입력은 애니메이션 초반에는 막고, 남은 시간이 설정값 이하가 되었을 때 한 번만 연다.
+        // 콤보 입력은 애니메이션 초반에는 막고, 지정한 State 진행률 이후에 한 번만 연다.
         // 실제 입력 저장/실행은 NetworkPlayerController가 담당하고, 이 Behaviour는 "지금부터 받아도 된다"는 신호만 보낸다.
         if (!opensComboInput || _comboInputOpened)
         {
             return;
         }
 
-        if (GetRemainingStateSeconds(stateInfo) > comboInputOpenSecondsBeforeEnd)
+        if (GetStateNormalizedTime(stateInfo) < comboInputOpenNormalizedTime)
         {
             return;
         }
@@ -89,16 +89,12 @@ public class PlayerActionStateBehaviour : StateMachineBehaviour
         return animator != null ? animator.GetComponentInParent<NetworkPlayerController>() : null;
     }
 
-    private static float GetRemainingStateSeconds(AnimatorStateInfo stateInfo)
+    private static float GetStateNormalizedTime(AnimatorStateInfo stateInfo)
     {
         // 루프 State는 normalizedTime이 1을 넘어 계속 증가하므로 소수부만 사용한다.
-        // 일반 액션 State는 0~1로 고정해 남은 시간을 계산한다.
-        float normalizedTime = stateInfo.loop
+        // 일반 액션 State는 0~1로 고정해 진행률로 사용한다.
+        return stateInfo.loop
             ? stateInfo.normalizedTime - Mathf.Floor(stateInfo.normalizedTime)
             : Mathf.Clamp01(stateInfo.normalizedTime);
-
-        // length가 0으로 들어오는 예외 상황에서는 0.01초로 보정해 나눗셈/계산 오류를 피한다.
-        float stateLength = Mathf.Max(0.01f, stateInfo.length);
-        return Mathf.Max(0f, (1f - normalizedTime) * stateLength);
     }
 }

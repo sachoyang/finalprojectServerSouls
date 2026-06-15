@@ -28,7 +28,7 @@ public partial class NetworkPlayerController
     {
         return Object != null &&
                Object.HasStateAuthority &&
-               (IsTurnAnimationActive() || IsForwardJumpRootMotionActive());
+               (IsTurnAnimationActive() || IsForwardJumpRootMotionActive() || IsRollRootMotionActive());
     }
 
     private void UpdateAnimatorRootMotionMode()
@@ -96,6 +96,29 @@ public partial class NetworkPlayerController
         _networkCharacterController.braking = movementBraking;
         _networkCharacterController.rotationSpeed = _networkControllerRotationSpeed;
         _networkCharacterController.Move(jumpDirection);
+    }
+
+    private void ApplyRollRootMotion()
+    {
+        StopHorizontalVelocity();
+
+        if (!_hasQueuedRootMotion)
+        {
+            return;
+        }
+
+        Vector3 planarDelta = Vector3.ProjectOnPlane(_queuedRootMotionDeltaPosition, Vector3.up);
+        ClearQueuedRootMotion();
+        if (planarDelta.sqrMagnitude <= 0.000001f || Runner == null || Runner.DeltaTime <= 0f)
+        {
+            return;
+        }
+
+        _networkCharacterController.maxSpeed = planarDelta.magnitude / Runner.DeltaTime;
+        _networkCharacterController.acceleration = movementAcceleration;
+        _networkCharacterController.braking = movementBraking;
+        _networkCharacterController.rotationSpeed = 0f;
+        _networkCharacterController.Move(planarDelta.normalized);
     }
 
     private bool ApplyRootMotionYaw(Quaternion deltaRotation)
