@@ -25,7 +25,7 @@ public class NetworkPlayerData : NetworkBehaviour
 
     private void SyncUnlockedSkillsBitmask()
     {
-        long localBitmask = BackendManager.HasInstance ? BackendManager.Instance.CurrentSkillsBitmask : 0L;
+        long localBitmask = GetLocalUnlockedSkillsBitmask();
         if (HasStateAuthority && Object != null && Object.HasInputAuthority)
         {
             UnlockedSkillsBitmask = localBitmask;
@@ -36,6 +36,18 @@ public class NetworkPlayerData : NetworkBehaviour
         {
             RPC_SetUnlockedSkillsBitmask(localBitmask);
         }
+    }
+
+    private long GetLocalUnlockedSkillsBitmask()
+    {
+        long bitmask = BackendManager.HasInstance ? BackendManager.Instance.CurrentSkillsBitmask : 0L;
+        if (bitmask != 0L)
+        {
+            return bitmask;
+        }
+
+        AbilityManager abilityManager = AbilityManager.HasInstance ? AbilityManager.Instance : null;
+        return abilityManager != null && abilityManager.IsLoaded ? abilityManager.GetDefaultUnlockedSkillsBitmask() : 0L;
     }
 
     public void RecordAbility(PlayerAbilityModule module)

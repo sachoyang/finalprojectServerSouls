@@ -41,6 +41,7 @@ public class BackendManager : MonoSingleton<BackendManager> // 제네릭 모노�
     public string CurrentLoginID { get; private set; }
     public string CurrentNickname { get; private set; }
     public long CurrentSkillsBitmask { get; private set; }
+    public bool HasUnlockedSkills => CurrentSkillsBitmask != 0L;
 
     public Action OnSessionExpired; // 세션이 만료되었을 때 호출될 이벤트
     private Coroutine _heartbeatCoroutine;
@@ -179,10 +180,39 @@ public class BackendManager : MonoSingleton<BackendManager> // 제네릭 모노�
         if (string.IsNullOrEmpty(CurrentLoginID))
         {
             Debug.LogError("로그인된 유저가 없습니다!");
+            onComplete?.Invoke(false, "로그인된 유저가 없습니다.");
             return;
         }
 
         StartCoroutine(UpdateSkillsRoutine(CurrentLoginID, newSkillsBitmask, onComplete));
+    }
+
+    public void EnsureUnlockedSkillsInitialized(long defaultSkillsBitmask, Action<bool, string> onComplete = null)
+    {
+        if (CurrentSkillsBitmask != 0L)
+        {
+            onComplete?.Invoke(true, "이미 해금 스킬 데이터가 있습니다.");
+            return;
+        }
+
+        if (defaultSkillsBitmask == 0L)
+        {
+            onComplete?.Invoke(true, "기본 해금 스킬이 없습니다.");
+            return;
+        }
+
+        Debug.Log($"[BackendManager] 해금 스킬 데이터가 0이라 기본 비트마스크로 초기화합니다: {defaultSkillsBitmask}");
+        UpdateSkills(defaultSkillsBitmask, onComplete);
+    }
+
+    public bool IsSkillUnlocked(int bitIndex)
+    {
+        if (bitIndex < 0 || bitIndex >= 63)
+        {
+            return false;
+        }
+
+        return (CurrentSkillsBitmask & (1L << bitIndex)) != 0L;
     }
 
     private IEnumerator UpdateSkillsRoutine(string id, long newSkillsBitmask, Action<bool, string> onComplete)

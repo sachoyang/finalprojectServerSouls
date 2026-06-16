@@ -22,6 +22,7 @@ public class AbilityDBData
     public string animation_key;
     public string vfx_key;
     public string hitbox_key;
+    public string include_in_reward_pool;
 
     public string sound_key;
     public float sound_volume;
@@ -155,5 +156,21 @@ public class AbilityManager : MonoSingleton<AbilityManager>
         return AllAbilitiesById.TryGetValue(abilityId, out PlayerAbilityModule module)
             ? module
             : null;
+    }
+
+    public long GetDefaultUnlockedSkillsBitmask()
+    {
+        long bitmask = 0L;
+        foreach (PlayerAbilityModule module in AllAbilitiesDict.Values)
+        {
+            if (module == null || !module.IncludeInRewardPool || module.BitIndex < 0 || module.BitIndex >= 63)
+            {
+                continue;
+            }
+
+            bitmask |= 1L << module.BitIndex;
+        }
+
+        return bitmask;
     }
 }

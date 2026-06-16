@@ -172,6 +172,12 @@ public class PlayerAbilityModule : ScriptableObject
         this.description = dbData.description;
 
         this.abilityType = (dbData.ability_type == "Active") ? AbilityType.Active : AbilityType.Passive;
+        if (!string.IsNullOrWhiteSpace(dbData.include_in_reward_pool))
+        {
+            this.includeInRewardPool = dbData.include_in_reward_pool == "1" ||
+                                       dbData.include_in_reward_pool.Equals("true", System.StringComparison.OrdinalIgnoreCase);
+        }
+
         this.staminaCost = dbData.stamina_cost;
         this.cooldownSeconds = dbData.cooldown_seconds;
         this.hitboxDamage = dbData.damage_multiplier; // 데미지 매핑

@@ -296,7 +296,14 @@ public class PlayerAbilityInventory : MonoBehaviour
 
         if (_playerData == null || (_playerData.Object != null && _playerData.Object.HasInputAuthority))
         {
-            return BackendManager.HasInstance ? BackendManager.Instance.CurrentSkillsBitmask : 0L;
+            long localBitmask = BackendManager.HasInstance ? BackendManager.Instance.CurrentSkillsBitmask : 0L;
+            if (localBitmask != 0L)
+            {
+                return localBitmask;
+            }
+
+            AbilityManager abilityManager = AbilityManager.HasInstance ? AbilityManager.Instance : null;
+            return abilityManager != null && abilityManager.IsLoaded ? abilityManager.GetDefaultUnlockedSkillsBitmask() : 0L;
         }
 
         return 0L;

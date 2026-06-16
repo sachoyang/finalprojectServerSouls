@@ -28,6 +28,7 @@ public class AbilityUploadWindow : EditorWindow
         EditorGUILayout.Space();
         EditorGUILayout.HelpBox(
             "선택한 PlayerAbilityModule(SO) 데이터를 DB로 덮어씌웁니다.\n" +
+            "Include In Reward Pool이 켜진 스킬은 Bit Index를 합산해 기본 해금 비트마스크로 함께 전송합니다.\n" +
             "업로드 전, SO 파일의 'Bit Index'가 제대로 설정되어 있는지 꼭 확인하세요!", MessageType.Warning);
         EditorGUILayout.Space();
 
@@ -59,6 +60,7 @@ public class AbilityUploadWindow : EditorWindow
         }
 
         int successCount = 0;
+        long defaultUnlockedBitmask = CalculateDefaultUnlockedBitmask(selectedObjects);
 
         // 3. 선택된 SO들을 하나씩 서버로 전송
         foreach (Object obj in selectedObjects)
@@ -67,6 +69,8 @@ public class AbilityUploadWindow : EditorWindow
 
             WWWForm form = new WWWForm();
             form.AddField("bit_index", module.BitIndex);
+            form.AddField("reward_pool_bitmask", defaultUnlockedBitmask.ToString());
+            form.AddField("default_unlocked_skills", defaultUnlockedBitmask.ToString());
             form.AddField("ability_id", module.AbilityId ?? "");
             form.AddField("display_name", module.DisplayName ?? "");
             form.AddField("description", module.Description ?? "");
@@ -77,6 +81,7 @@ public class AbilityUploadWindow : EditorWindow
             form.AddField("damage_multiplier", module.HitboxDamage.ToString());
             form.AddField("duration", module.HitboxLifetime.ToString());
             form.AddField("special_effect", module.SpecialEffect.ToString());
+            form.AddField("include_in_reward_pool", module.IncludeInRewardPool ? "1" : "0");
 
             // 🔥 핵심: 오브젝트를 Key 문자열로 변환 (역추적)
             form.AddField("icon_key", GetKey(module.Icon));
@@ -106,6 +111,29 @@ public class AbilityUploadWindow : EditorWindow
         }
 
         Debug.Log($"✨ <b>총 {successCount}개의 스킬이 서버 DB에 업데이트 되었습니다.</b> 웹 관리자 페이지를 확인하세요!");
+        Debug.Log($"[AbilityUploadWindow] Include In Reward Pool 기준 기본 해금 비트마스크: {defaultUnlockedBitmask}");
+    }
+
+    private static long CalculateDefaultUnlockedBitmask(Object[] selectedObjects)
+    {
+        long bitmask = 0L;
+        foreach (Object obj in selectedObjects)
+        {
+            if (obj is not PlayerAbilityModule module || !module.IncludeInRewardPool)
+            {
+                continue;
+            }
+
+            if (module.BitIndex < 0 || module.BitIndex >= 63)
+            {
+                Debug.LogWarning($"[AbilityUploadWindow] {module.name}의 Bit Index가 범위를 벗어나 기본 해금 비트마스크에서 제외됩니다: {module.BitIndex}");
+                continue;
+            }
+
+            bitmask |= 1L << module.BitIndex;
+        }
+
+        return bitmask;
     }
 
     // ==========================================
