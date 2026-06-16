@@ -40,8 +40,9 @@ public class PartyMemberSkillBarView : MonoBehaviour
             if (skillIconImages[i] == null)
                 continue;
 
+            skillIconImages[i].gameObject.SetActive(true);
             skillIconImages[i].sprite = null;
-            skillIconImages[i].gameObject.SetActive(false);
+            skillIconImages[i].color = Color.clear;
         }
     }
 }
