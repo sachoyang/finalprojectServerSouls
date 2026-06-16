@@ -19,7 +19,8 @@ public class PlayerAbilityInventory : MonoBehaviour
     [Header("Default Active Keys")]
     // 액티브 능력을 처음 획득했을 때 자동으로 배정되는 기본 키 목록.
     // 첫 번째 액티브는 Alpha1, 두 번째 액티브는 Alpha2처럼 획득 순서대로 배정된다.
-    [SerializeField] private KeyCode[] defaultActiveKeys =
+    [SerializeField]
+    private KeyCode[] defaultActiveKeys =
     {
         KeyCode.Alpha1,
         KeyCode.Alpha2,
@@ -288,22 +289,17 @@ public class PlayerAbilityInventory : MonoBehaviour
 
     private long GetUnlockedSkillsBitmask()
     {
+        // 1. 네트워크로 동기화된 플레이어 데이터가 있으면 그 값을 최우선으로 사용
         _playerData ??= GetComponent<NetworkPlayerData>();
         if (_playerData != null && _playerData.UnlockedSkillsBitmask != 0)
         {
             return _playerData.UnlockedSkillsBitmask;
         }
 
+        // 2. 내 로컬 플레이어(InputAuthority)라면, 서버 로그인 시 받아둔 값을 바로 사용!
         if (_playerData == null || (_playerData.Object != null && _playerData.Object.HasInputAuthority))
         {
-            long localBitmask = BackendManager.HasInstance ? BackendManager.Instance.CurrentSkillsBitmask : 0L;
-            if (localBitmask != 0L)
-            {
-                return localBitmask;
-            }
-
-            AbilityManager abilityManager = AbilityManager.HasInstance ? AbilityManager.Instance : null;
-            return abilityManager != null && abilityManager.IsLoaded ? abilityManager.GetDefaultUnlockedSkillsBitmask() : 0L;
+            return BackendManager.HasInstance ? BackendManager.Instance.CurrentSkillsBitmask : 0L;
         }
 
         return 0L;

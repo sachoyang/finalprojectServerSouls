@@ -86,20 +86,8 @@ public class LoginSceneController : MonoBehaviour
                 {
                     if (isLoaded)
                     {
-                        long defaultSkillsBitmask = abilityManager.GetDefaultUnlockedSkillsBitmask();
-                        backendManager.EnsureUnlockedSkillsInitialized(defaultSkillsBitmask, (isInitialized, initMessage) =>
-                        {
-                            if (isInitialized)
-                            {
-                                // 스킬 조립과 플레이어별 해금 데이터 준비가 끝났으면 메인 씬으로 이동!
-                                ChangeScene(titleSceneName);
-                            }
-                            else
-                            {
-                                Debug.LogWarning($"해금 스킬 데이터 초기화 실패: {initMessage}");
-                                ShowSystemMessage(initMessage);
-                            }
-                        });
+                        // 스킬 조립까지 완벽하게 끝났으면 메인 씬으로 이동!
+                        ChangeScene(titleSceneName);
                     }
                     else
                     {

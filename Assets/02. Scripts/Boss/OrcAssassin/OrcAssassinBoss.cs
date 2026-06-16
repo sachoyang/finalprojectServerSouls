@@ -51,4 +51,36 @@ public class OrcAssassinBoss : NetworkBossCore
         // 예: 이동 속도 1.5배 증가, 독 인챈트 등 상태이상(버프) SO 적용
         ApplyStatus(2); // 2번이 '가벼운 발걸음' 버프라고 가정
     }
+
+    private bool _localStealthActive = false; // 내 화면에 은신이 켜져있는지 확인용
+
+    // ==========================================
+    // [비주얼 클라이언트 동기화]
+    // ==========================================
+    public override void Render()
+    {
+        base.Render(); // 부모(NetworkBossCore)가 하는 기본 애니메이션 처리는 그대로 실행!
+
+        if (_visual == null) return;
+
+        // 1. 서버에서 은신 기믹을 켰는데, 내 화면은 아직 쌩얼이라면? -> 투명화 켜기!
+        if (IsGimmickActive && !_localStealthActive)
+        {
+            _localStealthActive = true;
+
+            // _visual을 OrcAssassinVisual로 형변환해서 전용 함수 호출
+            if (_visual is OrcAssassinVisual orcVisual)
+            {
+                orcVisual.EnableStealth();
+            }
+        }
+        // 2. 서버에서 은신이 꺼졌는데(사망 등), 내 화면엔 아직 켜져있다면? -> 원래대로 복구!
+        else if (!IsGimmickActive && _localStealthActive)
+        {
+            _localStealthActive = false;
+
+            // (선택사항) OrcAssassinVisual.cs에 DisableStealth() 함수를 만드셨다면 호출
+            // if (_visual is OrcAssassinVisual orcVisual) orcVisual.DisableStealth();
+        }
+    }
 }

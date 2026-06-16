@@ -187,22 +187,10 @@ public class BackendManager : MonoSingleton<BackendManager> // 제네릭 모노�
         StartCoroutine(UpdateSkillsRoutine(CurrentLoginID, newSkillsBitmask, onComplete));
     }
 
-    public void EnsureUnlockedSkillsInitialized(long defaultSkillsBitmask, Action<bool, string> onComplete = null)
+    // 런타임 신규 해금 시 AbilityManager가 OR 연산한 비트마스크를 즉시 반영하기 위한 내부 갱신용 Setter.
+    public void SetCurrentSkillsBitmask(long bitmask)
     {
-        if (CurrentSkillsBitmask != 0L)
-        {
-            onComplete?.Invoke(true, "이미 해금 스킬 데이터가 있습니다.");
-            return;
-        }
-
-        if (defaultSkillsBitmask == 0L)
-        {
-            onComplete?.Invoke(true, "기본 해금 스킬이 없습니다.");
-            return;
-        }
-
-        Debug.Log($"[BackendManager] 해금 스킬 데이터가 0이라 기본 비트마스크로 초기화합니다: {defaultSkillsBitmask}");
-        UpdateSkills(defaultSkillsBitmask, onComplete);
+        CurrentSkillsBitmask = bitmask;
     }
 
     public bool IsSkillUnlocked(int bitIndex)
