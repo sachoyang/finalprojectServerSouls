@@ -35,6 +35,7 @@ public class LoginSceneController : MonoBehaviour
 
     private void Start()
     {
+        GameManager.GetOrCreate()?.SetLoginMode();
         ShowLoginPanel();
 
         if (loginPwInput != null)
@@ -61,18 +62,27 @@ public class LoginSceneController : MonoBehaviour
             return;
         }
 
+        GameManager gameManager = GameManager.GetOrCreate();
+        BackendManager backendManager = gameManager != null ? gameManager.Backend : null;
+        AbilityManager abilityManager = gameManager != null ? gameManager.Ability : null;
+        if (backendManager == null || abilityManager == null)
+        {
+            ShowSystemMessage("필수 매니저 초기화에 실패했습니다.");
+            return;
+        }
+
         // [🔥 DB 연동 부분] BackendManager 호출
-        BackendManager.Instance.LoginUser(id, pw, (isSuccess, message) =>
+        backendManager.LoginUser(id, pw, (isSuccess, message) =>
         {
             if (isSuccess)
             {
-                Debug.Log($"DB 로그인 성공 ID: {id}, Nickname: {BackendManager.Instance.CurrentNickname}");
+                Debug.Log($"DB 로그인 성공 ID: {id}, Nickname: {backendManager.CurrentNickname}");
                 
                 // 씬을 넘기기 전에 로딩 메시지를 띄우고 스킬 데이터를 요청합니다.
                 ShowSystemMessage("서버에서 스킬 데이터를 불러오는 중...");
 
                 // 스킬 모듈 데이터 패치!
-                AbilityManager.Instance.FetchAbilities((isLoaded) => 
+                abilityManager.FetchAbilities((isLoaded) => 
                 {
                     if (isLoaded)
                     {
@@ -111,8 +121,16 @@ public class LoginSceneController : MonoBehaviour
             return;
         }
 
+        GameManager gameManager = GameManager.GetOrCreate();
+        BackendManager backendManager = gameManager != null ? gameManager.Backend : null;
+        if (backendManager == null)
+        {
+            ShowSystemMessage("서버 매니저 초기화에 실패했습니다.");
+            return;
+        }
+
         // [🔥 DB 연동 부분] PlayerPrefs 대신 BackendManager로 가입 요청!
-        BackendManager.Instance.RegisterUser(id, pw, nickname, (isSuccess, message) =>
+        backendManager.RegisterUser(id, pw, nickname, (isSuccess, message) =>
         {
             if (isSuccess)
             {

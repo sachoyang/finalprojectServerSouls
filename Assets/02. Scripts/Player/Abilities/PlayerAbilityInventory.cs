@@ -6,17 +6,13 @@ using UnityEngine;
 [DisallowMultipleComponent]
 [RequireComponent(typeof(PlayerStats))]
 // 플레이어가 획득한 능력 목록과 액티브 키 매핑을 관리하는 컴포넌트.
-// 플레이어 프리팹에 붙이고, Inspector의 abilityPool에 보상으로 나올 ScriptableObject 모듈들을 넣으면 된다.
+// 스킬 원본 데이터는 로그인 후 AbilityManager가 DB에서 조립한 카탈로그를 사용한다.
 public class PlayerAbilityInventory : MonoBehaviour
 {
     // PlayerPrefs에 액티브 슬롯별 키 설정을 저장할 때 사용하는 접두어.
     private const string KeyPrefsPrefix = "PlayerAbilityKey.";
 
     [Header("Reward Pool")]
-    // 보스 처치 보상 후보 전체 목록.
-    // 이 리스트 안에서 현재 보스 단계에 맞는 모듈 3개를 랜덤으로 뽑는다.
-    [SerializeField] private List<PlayerAbilityModule> abilityPool = new List<PlayerAbilityModule>();
-
     // true면 이미 획득한 능력은 보상 후보에서 제외한다.
     [SerializeField] private bool preventDuplicateModules = true;
 
@@ -91,11 +87,20 @@ public class PlayerAbilityInventory : MonoBehaviour
     public List<PlayerAbilityModule> GenerateRewardOptions(int bossStage, int optionCount = 3)
     {
         EnsureRuntimeLists();
+        AbilityManager abilityManager = AbilityManager.HasInstance ? AbilityManager.Instance : null;
+        if (abilityManager == null || !abilityManager.IsLoaded)
+        {
+            Debug.LogWarning("[PlayerAbilityInventory] AbilityManager가 아직 DB 스킬 데이터를 준비하지 못했습니다.");
+            List<PlayerAbilityModule> emptyOptions = new List<PlayerAbilityModule>();
+            RewardOptionsGenerated?.Invoke(emptyOptions);
+            return emptyOptions;
+        }
+
         List<PlayerAbilityModule> candidates = new List<PlayerAbilityModule>();
-        foreach (PlayerAbilityModule module in abilityPool)
+        foreach (PlayerAbilityModule module in abilityManager.GetUnlockedAbilitiesList(GetUnlockedSkillsBitmask()))
         {
             // 빈 항목이거나 현재 보스 단계에 등장할 수 없는 능력은 제외한다.
-            if (module == null || !module.CanAppearAtStage(bossStage))
+            if (module == null || !module.IncludeInRewardPool || !module.CanAppearAtStage(bossStage))
             {
                 continue;
             }
@@ -262,15 +267,14 @@ public class PlayerAbilityInventory : MonoBehaviour
             return null;
         }
 
-        EnsureRuntimeLists();
-        foreach (PlayerAbilityModule module in abilityPool)
+        AbilityManager abilityManager = AbilityManager.HasInstance ? AbilityManager.Instance : null;
+        PlayerAbilityModule dbModule = abilityManager != null ? abilityManager.FindByAbilityId(abilityId) : null;
+        if (dbModule != null)
         {
-            if (module != null && module.AbilityId == abilityId)
-            {
-                return module;
-            }
+            return dbModule;
         }
 
+        EnsureRuntimeLists();
         foreach (PlayerAbilityModule module in equippedModules)
         {
             if (module != null && module.AbilityId == abilityId)
@@ -280,6 +284,22 @@ public class PlayerAbilityInventory : MonoBehaviour
         }
 
         return null;
+    }
+
+    private long GetUnlockedSkillsBitmask()
+    {
+        _playerData ??= GetComponent<NetworkPlayerData>();
+        if (_playerData != null && _playerData.UnlockedSkillsBitmask != 0)
+        {
+            return _playerData.UnlockedSkillsBitmask;
+        }
+
+        if (_playerData == null || (_playerData.Object != null && _playerData.Object.HasInputAuthority))
+        {
+            return BackendManager.HasInstance ? BackendManager.Instance.CurrentSkillsBitmask : 0L;
+        }
+
+        return 0L;
     }
 
     private bool HasModule(PlayerAbilityModule module)
@@ -328,7 +348,6 @@ public class PlayerAbilityInventory : MonoBehaviour
 
     private void EnsureRuntimeLists()
     {
-        abilityPool ??= new List<PlayerAbilityModule>();
         equippedModules ??= new List<PlayerAbilityModule>();
         activeSlots ??= new List<PlayerAbilitySlot>();
         defaultActiveKeys ??= Array.Empty<KeyCode>();

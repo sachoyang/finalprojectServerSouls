@@ -383,7 +383,7 @@ public static class PlayerAnimatorSetupTool
         AnimatorState deathState = EnsureState(hitAndDeathMachine, Death, "Assets/04. Images/Animation/Great Sword Death.fbx", new Vector3(520f, 80f, 0f), "Action");
         AnimatorState crawlingState = EnsureState(hitAndDeathMachine, "Crawling", "Assets/04. Images/Animation/Crawling.fbx", new Vector3(740f, 80f, 0f), string.Empty);
         EnsureActionBehaviour(impactState, PlayerActionLockType.Impact, false);
-        EnsureActionBehaviour(parryImpactState, PlayerActionLockType.Impact, false);
+        EnsureActionBehaviour(parryImpactState, PlayerActionLockType.Impact, false, enablesInvincibility: true);
         hitAndDeathMachine.defaultState = impactState;
 
         EnsureAnyStateTriggerTransition(root, impactState, Impact);
@@ -711,9 +711,9 @@ public static class PlayerAnimatorSetupTool
         EnsureActionBehaviour(slash4, PlayerActionLockType.Attack, false);
         EnsureActionBehaviour(jumpState, PlayerActionLockType.Jump, false);
         EnsureActionBehaviour(jump2State, PlayerActionLockType.Jump, false);
-        EnsureActionBehaviour(parryRaiseState, PlayerActionLockType.Parry, false);
+        EnsureActionBehaviour(parryRaiseState, PlayerActionLockType.Parry, false, true);
         EnsureActionBehaviour(parryGuardState, PlayerActionLockType.Parry, false, true);
-        EnsureActionBehaviour(parryLowerState, PlayerActionLockType.Parry, false);
+        EnsureActionBehaviour(parryLowerState, PlayerActionLockType.Parry, false, true);
         EnsureActionBehaviour(rollState, PlayerActionLockType.Roll, false);
         EnsureTimedExitTransition(slash2, idleState);
         EnsureTimedExitTransition(slash3, idleState);
@@ -763,7 +763,12 @@ public static class PlayerAnimatorSetupTool
         EnsureTurnExitTransitions(turn180Fast, idleState, lockOnState);
     }
 
-    private static void EnsureActionBehaviour(AnimatorState state, PlayerActionLockType lockType, bool opensComboInput, bool enablesParryGuard = false)
+    private static void EnsureActionBehaviour(
+        AnimatorState state,
+        PlayerActionLockType lockType,
+        bool opensComboInput,
+        bool enablesParryGuard = false,
+        bool enablesInvincibility = false)
     {
         // StateMachineBehaviour는 Animator State에 붙는 스크립트다.
         // 여기서 타입까지 자동 지정해두면 Inspector에서 문자열 이름을 직접 입력하지 않아도 액션락이 맞물린다.
@@ -773,6 +778,7 @@ public static class PlayerAnimatorSetupTool
         }
 
         PlayerActionStateBehaviour behaviour = null;
+        bool createdBehaviour = false;
         foreach (StateMachineBehaviour existing in state.behaviours)
         {
             if (existing is PlayerActionStateBehaviour actionBehaviour)
@@ -785,9 +791,16 @@ public static class PlayerAnimatorSetupTool
         if (behaviour == null)
         {
             behaviour = state.AddStateMachineBehaviour<PlayerActionStateBehaviour>();
+            createdBehaviour = true;
         }
 
-        behaviour.Configure(lockType, opensComboInput, ComboInputOpenNormalizedTime, enablesParryGuard);
+        behaviour.Configure(
+            lockType,
+            opensComboInput,
+            ComboInputOpenNormalizedTime,
+            enablesParryGuard,
+            preserveParryGuard: !createdBehaviour,
+            shouldEnableInvincibility: enablesInvincibility);
         EditorUtility.SetDirty(behaviour);
     }
 

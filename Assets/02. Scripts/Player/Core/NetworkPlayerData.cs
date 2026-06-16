@@ -7,6 +7,7 @@ public class NetworkPlayerData : NetworkBehaviour
     public const int MaxSavedAbilities = 16;
 
     [Networked] public PlayerRef Owner { get; private set; }
+    [Networked] public long UnlockedSkillsBitmask { get; private set; }
     [Networked] public int SavedAbilityCount { get; private set; }
     [Networked] public int LastSelectedRewardStage { get; private set; }
     [Networked, Capacity(MaxSavedAbilities)] public NetworkArray<NetworkString<_64>> SavedAbilityIds => default;
@@ -18,7 +19,23 @@ public class NetworkPlayerData : NetworkBehaviour
             Owner = Object.InputAuthority;
         }
 
+        SyncUnlockedSkillsBitmask();
         GetComponent<PlayerAbilityInventory>()?.RestoreFromSessionData(Object.InputAuthority);
+    }
+
+    private void SyncUnlockedSkillsBitmask()
+    {
+        long localBitmask = BackendManager.HasInstance ? BackendManager.Instance.CurrentSkillsBitmask : 0L;
+        if (HasStateAuthority && Object != null && Object.HasInputAuthority)
+        {
+            UnlockedSkillsBitmask = localBitmask;
+            return;
+        }
+
+        if (Object != null && Object.HasInputAuthority)
+        {
+            RPC_SetUnlockedSkillsBitmask(localBitmask);
+        }
     }
 
     public void RecordAbility(PlayerAbilityModule module)
@@ -105,6 +122,12 @@ public class NetworkPlayerData : NetworkBehaviour
     private void RPC_RecordAbilityId(string abilityId)
     {
         AddAbilityId(abilityId);
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    private void RPC_SetUnlockedSkillsBitmask(long unlockedSkillsBitmask)
+    {
+        UnlockedSkillsBitmask = unlockedSkillsBitmask;
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
