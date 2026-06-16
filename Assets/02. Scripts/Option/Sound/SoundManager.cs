@@ -34,6 +34,18 @@ public class SoundCategorySetting
     public float maxDistance = 30f;
 }
 
+#if UNITY_EDITOR
+// 🔥 에디터에서만 사용하는 클릭 전용 모니터링 구조체
+[System.Serializable]
+public struct SFXMonitorInfo
+{
+    [Tooltip("클릭하면 하이라키(Hierarchy)의 스피커 위치로 이동합니다.")]
+    public AudioSource speaker; 
+    [Tooltip("클릭하면 프로젝트(Project) 창의 원본 오디오 파일로 이동합니다.")]
+    public AudioClip clip;      
+}
+#endif
+
 public class SoundManager : MonoSingleton<SoundManager>
 {
     [Header("Audio Mixers")]
@@ -45,15 +57,23 @@ public class SoundManager : MonoSingleton<SoundManager>
     [Tooltip("여기에 카테고리를 추가하고 그룹별 볼륨/거리를 조절하세요.")]
     public List<SoundCategorySetting> categorySettings = new List<SoundCategorySetting>();
 
-    // 검색(탐색) 속도를 O(1)로 만들기 위한 딕셔너리
     private Dictionary<SoundCategory, SoundCategorySetting> _settingsDict = new Dictionary<SoundCategory, SoundCategorySetting>();
 
     [Header("오브젝트 풀 설정")]
     public int sfxPoolSize = 20;
 
     [Header("BGM 설정")]
-    [Tooltip("BGM이 자연스럽게 교차되는 시간(초)")]
     public float bgmCrossfadeDuration = 1.5f;
+
+#if UNITY_EDITOR
+    // 🔥 최적화: 빌드 시 완전히 삭제되는 모니터링 변수들
+    [Header("👀 모니터링 (에디터 전용, 빌드 시 삭제됨)")]
+    [SerializeField] private AudioClip currentBGM;
+    [SerializeField] private List<SFXMonitorInfo> activeSFX = new List<SFXMonitorInfo>();
+
+    private float _monitorTimer = 0f;
+    private const float MONITOR_INTERVAL = 0.2f; // 초당 5번만 검사하여 성능 최적화
+#endif
 
     private AudioSource _bgmSourceA;
     private AudioSource _bgmSourceB;
@@ -66,7 +86,6 @@ public class SoundManager : MonoSingleton<SoundManager>
     {
         base.Awake();
 
-        // 인스펙터에 등록된 리스트를 빠르게 찾을 수 있도록 딕셔너리로 변환
         foreach (var setting in categorySettings)
         {
             if (!_settingsDict.ContainsKey(setting.category))
@@ -80,7 +99,6 @@ public class SoundManager : MonoSingleton<SoundManager>
 
     private void InitializeSoundManager()
     {
-        // 🔥 BGM 스피커를 2개로 복제해서 달아줍니다.
         GameObject bgmObjectA = new GameObject("BGM_Player_A");
         bgmObjectA.transform.SetParent(transform);
         _bgmSourceA = bgmObjectA.AddComponent<AudioSource>();
@@ -113,6 +131,39 @@ public class SoundManager : MonoSingleton<SoundManager>
         }
     }
 
+#if UNITY_EDITOR
+    // 🔥 최적화: 타이머를 적용하여 0.2초마다 한 번씩만 갱신 (에디터 렉 방지)
+    private void Update()
+    {
+        _monitorTimer += Time.deltaTime;
+        if (_monitorTimer >= MONITOR_INTERVAL)
+        {
+            _monitorTimer = 0f;
+
+            // 1. BGM 모니터링 (오디오 클립 오브젝트 띄우기)
+            if (_activeBgmSource != null && _activeBgmSource.isPlaying)
+                currentBGM = _activeBgmSource.clip;
+            else
+                currentBGM = null;
+
+            // 2. SFX 모니터링 (가비지 컬렉션 최소화를 위해 List 재사용)
+            activeSFX.Clear();
+            for (int i = 0; i < _sfxSources.Count; i++)
+            {
+                AudioSource source = _sfxSources[i];
+                if (source.isPlaying && source.clip != null)
+                {
+                    activeSFX.Add(new SFXMonitorInfo 
+                    { 
+                        speaker = source, 
+                        clip = source.clip 
+                    });
+                }
+            }
+        }
+    }
+#endif
+
     // ==========================================
     // 🔍 카테고리 설정 가져오기 헬퍼 함수
     // ==========================================
@@ -122,20 +173,16 @@ public class SoundManager : MonoSingleton<SoundManager>
         {
             return setting;
         }
-        // 인스펙터에서 설정을 안 해뒀을 경우를 대비한 기본값
         return new SoundCategorySetting { category = category, volumeMultiplier = 1f, minDistance = 5f, maxDistance = 30f };
     }
 
     // ==========================================
-    // 🎵 BGM 재생 (크로스페이드 적용!)
+    // 🎵 BGM 재생
     // ==========================================
     public void PlayBGM(AudioClip clip, float baseVolume = 1.0f, float delay = 0f)
     {
         if (clip == null) return;
-
-        // 같은 노래면 굳이 다시 틀지 않음
         if (_activeBgmSource.clip == clip && _activeBgmSource.isPlaying) return;
-
         if (_crossfadeCoroutine != null) StopCoroutine(_crossfadeCoroutine);
 
         _crossfadeCoroutine = StartCoroutine(CrossfadeRoutine(clip, baseVolume, delay));
@@ -148,17 +195,15 @@ public class SoundManager : MonoSingleton<SoundManager>
         SoundCategorySetting setting = GetCategorySetting(SoundCategory.BGM);
         float targetVolume = baseVolume * setting.volumeMultiplier;
 
-        // 교대할 스피커 지정
         AudioSource fadeOutSource = _activeBgmSource;
         AudioSource fadeInSource = (_activeBgmSource == _bgmSourceA) ? _bgmSourceB : _bgmSourceA;
 
         fadeInSource.clip = newClip;
-        fadeInSource.volume = 0f; // 볼륨 0부터 시작
+        fadeInSource.volume = 0f; 
         fadeInSource.Play();
 
         _activeBgmSource = fadeInSource; 
 
-        // 서서히 볼륨 교차
         float timer = 0f;
         float startVolumeFadeOut = fadeOutSource.volume;
 
@@ -184,8 +229,9 @@ public class SoundManager : MonoSingleton<SoundManager>
         _bgmSourceA.Stop();
         _bgmSourceB.Stop();
     }
+    
     // ==========================================
-    // 🔊 2D 사운드 재생 (카테고리 필수 입력)
+    // 🔊 2D 사운드 재생
     // ==========================================
     public void PlaySFX_2D(AudioClip clip, SoundCategory category, float baseVolume = 1.0f, float delay = 0f)
     {
@@ -204,7 +250,7 @@ public class SoundManager : MonoSingleton<SoundManager>
 
             source.spatialBlend = 0f;
             source.clip = clip;
-            source.volume = baseVolume * setting.volumeMultiplier; // 그룹 볼륨 적용!
+            source.volume = baseVolume * setting.volumeMultiplier;
             source.Play();
         }
     }
@@ -216,7 +262,7 @@ public class SoundManager : MonoSingleton<SoundManager>
     }
 
     // ==========================================
-    // 🔊 3D 사운드 재생 (카테고리 필수 입력)
+    // 🔊 3D 사운드 재생
     // ==========================================
     public void PlaySFX_3D(AudioClip clip, Vector3 playPosition, SoundCategory category, float baseVolume = 1.0f, float delay = 0f)
     {
@@ -235,13 +281,11 @@ public class SoundManager : MonoSingleton<SoundManager>
 
             source.transform.position = playPosition;
             source.spatialBlend = 1f;
-
-            // 🔥 카테고리에 설정된 3D 거리 적용!
             source.minDistance = setting.minDistance;
             source.maxDistance = setting.maxDistance;
 
             source.clip = clip;
-            source.volume = baseVolume * setting.volumeMultiplier; // 그룹 볼륨 적용!
+            source.volume = baseVolume * setting.volumeMultiplier;
             source.Play();
         }
     }
@@ -264,31 +308,18 @@ public class SoundManager : MonoSingleton<SoundManager>
     // ==========================================
     // UI 연동용 볼륨 조절 API
     // ==========================================
-
-    /// <summary>
-    /// 마스터(전체) 볼륨 조절
-    /// </summary>
-    /// <param name="sliderValue">UI 슬라이더 값 (0.0001f ~ 1.0f)</param>
     public void SetMasterVolume(float sliderValue)
     {
-        // 슬라이더 값이 0이면 Log 연산 시 에러(-Infinity)가 나므로 최소값을 0.0001로 보정
         float value = Mathf.Max(0.0001f, sliderValue);
-        // 선형 값(0~1)을 오디오 믹서용 데시벨(dB)로 변환
         mainMixer.SetFloat("MasterVolume", Mathf.Log10(value) * 20);
     }
 
-    /// <summary>
-    /// BGM(배경음) 볼륨 조절
-    /// </summary>
     public void SetBGMVolume(float sliderValue)
     {
         float value = Mathf.Max(0.0001f, sliderValue);
         mainMixer.SetFloat("BgmVolume", Mathf.Log10(value) * 20);
     }
 
-    /// <summary>
-    /// SFX(효과음) 볼륨 조절
-    /// </summary>
     public void SetSFXVolume(float sliderValue)
     {
         float value = Mathf.Max(0.0001f, sliderValue);
