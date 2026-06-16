@@ -194,7 +194,11 @@ public class PlayerAbilityModule : ScriptableObject
 
         // 에셋 매핑 (데이터베이스에서 꺼내오기)
         if (!string.IsNullOrEmpty(dbData.icon_key)) this.icon = assetDB.GetIcon(dbData.icon_key);
-        if (!string.IsNullOrEmpty(dbData.animation_key)) this.animationClip = assetDB.GetAnim(dbData.animation_key);
+        if (!string.IsNullOrEmpty(dbData.animation_key))
+        {
+            this.animationClip = assetDB.GetAnim(dbData.animation_key);
+            this.animationTrigger = assetDB.GetAnimTrigger(dbData.animation_key);
+        }
         if (!string.IsNullOrEmpty(dbData.vfx_key)) this.effectPrefab = assetDB.GetPrefab(dbData.vfx_key);
         if (!string.IsNullOrEmpty(dbData.hitbox_key)) this.hitboxPrefab = assetDB.GetPrefab(dbData.hitbox_key);
 
