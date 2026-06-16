@@ -6,7 +6,7 @@ using System.IO;
 
 public class AbilityBakeWindow : EditorWindow
 {
-    private string serverUrl = "http://127.0.0.1:8080/soulrush_api/get_abilities.php"; // 기본 URL
+    private SoulRushApiSettings settings;
     private const string SAVE_PATH = "Assets/02. Scripts/Player/Abilities/Resources/GeneratedAbilities";
 
     [MenuItem("Soul Rush/⚔️ 스킬 DB 동기화 (Bake)")]
@@ -17,8 +17,8 @@ public class AbilityBakeWindow : EditorWindow
 
     private void OnEnable()
     {
-        // 이전에 입력했던 주소 기억하기
-        serverUrl = EditorPrefs.GetString("SoulRush_API_URL", serverUrl);
+        // 파일에서 세팅 값 불러오기 (없으면 자동 생성)
+        settings = SoulRushApiSettings.GetOrCreateSettings();
     }
 
     private void OnGUI()
@@ -26,7 +26,17 @@ public class AbilityBakeWindow : EditorWindow
         GUILayout.Label("DB 스킬 데이터 가져오기", EditorStyles.boldLabel);
         EditorGUILayout.Space();
 
-        serverUrl = EditorGUILayout.TextField("API 주소 (get_abilities.php)", serverUrl);
+        // 값이 변경되었는지 감지 시작
+        EditorGUI.BeginChangeCheck();
+        
+        settings.bakeUrl = EditorGUILayout.TextField("API 주소 (get_abilities.php)", settings.bakeUrl);
+
+        // 사용자가 타이핑해서 값이 바뀌었다면 에셋에 변경 사항을 저장 (Git 추적 가능)
+        if (EditorGUI.EndChangeCheck())
+        {
+            EditorUtility.SetDirty(settings);
+            AssetDatabase.SaveAssets();
+        }
 
         EditorGUILayout.Space();
         EditorGUILayout.HelpBox("버튼을 누르면 서버의 스킬 데이터를 가져와 Assets/Resources/GeneratedAbilities 폴더에 실제 파일(.asset)로 구워냅니다.\n\n팀원들은 이 폴더에 생성된 스킬들을 프리팹이나 인벤토리에 드래그해서 사용하면 됩니다.", MessageType.Info);
@@ -34,7 +44,6 @@ public class AbilityBakeWindow : EditorWindow
 
         if (GUILayout.Button("🚀 스킬 동기화 실행 (Bake)", GUILayout.Height(40)))
         {
-            EditorPrefs.SetString("SoulRush_API_URL", serverUrl); // 주소 저장
             BakeAbilities();
         }
     }
@@ -50,12 +59,12 @@ public class AbilityBakeWindow : EditorWindow
         }
         AbilityAssetDatabase assetDB = AssetDatabase.LoadAssetAtPath<AbilityAssetDatabase>(AssetDatabase.GUIDToAssetPath(guids[0]));
 
-        // 2. 서버 연결 및 JSON 받아오기
+        // 2. 서버 연결 및 JSON 받아오기 (세팅 파일의 주소 사용)
         Debug.Log("🌐 서버에서 스킬 데이터를 다운로드 중...");
-        UnityWebRequest req = UnityWebRequest.Get(serverUrl);
+        UnityWebRequest req = UnityWebRequest.Get(settings.bakeUrl);
         var operation = req.SendWebRequest();
 
-        while (!operation.isDone) await Task.Delay(10); // 에디터 프리징 방지
+        while (!operation.isDone) await Task.Delay(10); 
 
         if (req.result != UnityWebRequest.Result.Success)
         {
@@ -101,7 +110,7 @@ public class AbilityBakeWindow : EditorWindow
             }
             else
             {
-                EditorUtility.SetDirty(module); // 기존 파일 변경사항 저장
+                EditorUtility.SetDirty(module); 
             }
             count++;
         }

@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 public class AbilityUploadWindow : EditorWindow
 {
-    private string uploadUrl = "http://127.0.0.1:8080/soulrush_api/upload_ability.php";
+    private SoulRushApiSettings settings;
 
     [MenuItem("Soul Rush/🚀 스킬 DB로 업로드 (Upload)")]
     public static void ShowWindow()
@@ -15,7 +15,7 @@ public class AbilityUploadWindow : EditorWindow
 
     private void OnEnable()
     {
-        uploadUrl = EditorPrefs.GetString("SoulRush_Upload_URL", uploadUrl);
+        settings = SoulRushApiSettings.GetOrCreateSettings();
     }
 
     private void OnGUI()
@@ -23,7 +23,17 @@ public class AbilityUploadWindow : EditorWindow
         GUILayout.Label("유니티 ➔ DB 스킬 업로드", EditorStyles.boldLabel);
         EditorGUILayout.Space();
 
-        uploadUrl = EditorGUILayout.TextField("업로드 API 주소", uploadUrl);
+        // 값이 변경되었는지 감지 시작
+        EditorGUI.BeginChangeCheck();
+
+        settings.uploadUrl = EditorGUILayout.TextField("업로드 API 주소", settings.uploadUrl);
+
+        // 변경 사항이 있으면 에셋 저장 (Git 추적)
+        if (EditorGUI.EndChangeCheck())
+        {
+            EditorUtility.SetDirty(settings);
+            AssetDatabase.SaveAssets();
+        }
 
         EditorGUILayout.Space();
         EditorGUILayout.HelpBox(
@@ -34,14 +44,13 @@ public class AbilityUploadWindow : EditorWindow
 
         if (GUILayout.Button("🔥 선택한 스킬들 DB로 업로드", GUILayout.Height(40)))
         {
-            EditorPrefs.SetString("SoulRush_Upload_URL", uploadUrl);
             UploadSelectedAbilities();
         }
     }
 
     private async void UploadSelectedAbilities()
     {
-        // 1. 에셋 데이터베이스 찾기 (역추적용)
+        // 1. 에셋 데이터베이스 찾기
         string[] dbGuids = AssetDatabase.FindAssets("t:AbilityAssetDatabase");
         if (dbGuids.Length == 0)
         {
@@ -79,7 +88,6 @@ public class AbilityUploadWindow : EditorWindow
             form.AddField("duration", module.HitboxLifetime.ToString());
             form.AddField("special_effect", module.SpecialEffect.ToString());
 
-            // 🔥 핵심: 오브젝트를 Key 문자열로 변환 (역추적)
             form.AddField("icon_key", GetKey(module.Icon));
             form.AddField("animation_key", GetKey(module.AnimationClip));
             form.AddField("vfx_key", GetKey(module.EffectPrefab));
@@ -89,10 +97,11 @@ public class AbilityUploadWindow : EditorWindow
             form.AddField("sound_volume", module.SoundVolume.ToString());
             form.AddField("sound_delay", module.SoundDelay.ToString());
 
-            using (UnityWebRequest www = UnityWebRequest.Post(uploadUrl, form))
+            // 세팅 파일의 업로드 주소 사용
+            using (UnityWebRequest www = UnityWebRequest.Post(settings.uploadUrl, form))
             {
                 var operation = www.SendWebRequest();
-                while (!operation.isDone) await Task.Delay(10); // 프리징 방지
+                while (!operation.isDone) await Task.Delay(10); 
 
                 if (www.result == UnityWebRequest.Result.Success)
                 {
@@ -109,8 +118,5 @@ public class AbilityUploadWindow : EditorWindow
         Debug.Log($"✨ <b>총 {successCount}개의 스킬이 서버 DB에 업데이트 되었습니다.</b> 웹 관리자 페이지를 확인하세요!");
     }
 
-    // ==========================================
-    // 🔍 에셋을 넣으면 DB에 등록된 Key를 뽑아주는 헬퍼 함수
-    // ==========================================
     private string GetKey(UnityEngine.Object asset) => asset != null ? asset.name : "";
 }
