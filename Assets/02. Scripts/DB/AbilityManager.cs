@@ -44,6 +44,8 @@ public class AbilityManager : MonoSingleton<AbilityManager>
 
     // bit_index를 Key로 사용하는 전체 스킬 딕셔너리
     public Dictionary<int, PlayerAbilityModule> AllAbilitiesDict { get; private set; } = new Dictionary<int, PlayerAbilityModule>();
+    public Dictionary<string, PlayerAbilityModule> AllAbilitiesById { get; private set; } = new Dictionary<string, PlayerAbilityModule>();
+    public bool IsLoaded { get; private set; }
 
     [Header("디버그용: 현재 로드된 스킬 목록")]
     [SerializeField] private List<PlayerAbilityModule> _debugLoadedAbilities = new List<PlayerAbilityModule>();
@@ -58,6 +60,7 @@ public class AbilityManager : MonoSingleton<AbilityManager>
     // ==========================================
     public void FetchAbilities(Action<bool> onComplete = null)
     {
+        IsLoaded = false;
         StartCoroutine(FetchRoutine(onComplete));
     }
 
@@ -76,7 +79,9 @@ public class AbilityManager : MonoSingleton<AbilityManager>
                 if (res.status == "success")
                 {
                     AllAbilitiesDict.Clear();
+                    AllAbilitiesById.Clear();
                     _debugLoadedAbilities.Clear();
+                    IsLoaded = false;
 
                     foreach (AbilityDBData dbData in res.data)
                     {
@@ -89,6 +94,10 @@ public class AbilityManager : MonoSingleton<AbilityManager>
                             bakedModule.InitializeFromDB(dbData, assetDatabase);
                             
                             AllAbilitiesDict[dbData.bit_index] = bakedModule;
+                            if (!string.IsNullOrWhiteSpace(dbData.ability_id))
+                            {
+                                AllAbilitiesById[dbData.ability_id] = bakedModule;
+                            }
                             _debugLoadedAbilities.Add(bakedModule);
                         }
                         else
@@ -98,6 +107,7 @@ public class AbilityManager : MonoSingleton<AbilityManager>
                     }
 
                     Debug.Log($"<color=green>[AbilityManager] 서버 데이터 동기화 완료! {AllAbilitiesDict.Count}개 스킬 준비됨.</color>");
+                    IsLoaded = true;
                     onComplete?.Invoke(true);
                 }
                 else
@@ -133,5 +143,17 @@ public class AbilityManager : MonoSingleton<AbilityManager>
         }
 
         return unlockedList;
+    }
+
+    public PlayerAbilityModule FindByAbilityId(string abilityId)
+    {
+        if (string.IsNullOrWhiteSpace(abilityId))
+        {
+            return null;
+        }
+
+        return AllAbilitiesById.TryGetValue(abilityId, out PlayerAbilityModule module)
+            ? module
+            : null;
     }
 }
