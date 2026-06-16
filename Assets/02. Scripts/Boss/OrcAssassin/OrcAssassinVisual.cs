@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class OrcAssassinVisual : MonoBehaviour, IBossVisual
 {
@@ -8,6 +9,15 @@ public class OrcAssassinVisual : MonoBehaviour, IBossVisual
     public GameObject poisonDaggerPrefab;
     public Transform daggerSpawnPoint;
     public ParticleSystem smokeBombEffect; // 2페이즈 은신/이동용
+
+    [Header("투명화(다크 템플러) 연출")]
+    [Tooltip("보스의 피부, 옷, 무기 등을 렌더링하는 MeshRenderer들을 전부 넣어주세요.")]
+    public SkinnedMeshRenderer[] bossRenderers;
+    [Tooltip("에셋이나 쉐이더로 만든 다크 템플러(굴절) 머티리얼을 넣습니다.")]
+    public Material stealthMaterial;
+
+    // 원래 옷(머티리얼)을 기억해둘 백업 사전
+    private Dictionary<Renderer, Material[]> _originalMaterials = new Dictionary<Renderer, Material[]>();
 
     [Header("히트박스 연결")]
     public BossHitbox leftDaggerHitbox;
@@ -27,6 +37,32 @@ public class OrcAssassinVisual : MonoBehaviour, IBossVisual
         if (anim == null)
         {
             anim = GetComponent<Animator>();
+        }
+    }
+
+    // ==========================================
+    // 은신 켜기 / 끄기 함수 (애니메이션 이벤트나 Core에서 호출)
+    // ==========================================
+    public void EnableStealth()
+    {
+        // 펑! 하는 연막탄과 쉭~ 하는 소리 재생
+        if (smokeBombEffect != null) smokeBombEffect.Play();
+        if (vanishSound != null && SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlaySFX_3D(vanishSound, transform.position, SoundCategory.BossGimmick);
+        }
+
+        // 보스의 모든 부위를 투명화 머티리얼로 강제 스왑
+        foreach (var r in bossRenderers)
+        {
+            if (r == null) continue;
+
+            Material[] stealthMats = new Material[r.sharedMaterials.Length];
+            for (int i = 0; i < stealthMats.Length; i++)
+            {
+                stealthMats[i] = stealthMaterial; // 슬롯 개수만큼 투명 머티리얼 채워넣기
+            }
+            r.sharedMaterials = stealthMats;
         }
     }
 
@@ -75,8 +111,16 @@ public class OrcAssassinVisual : MonoBehaviour, IBossVisual
     // ==========================================
     // [애니메이션 이벤트용 함수] 애니메이션 클립에서 호출
     // ==========================================
-    public void EnableRightDagger() { rightDaggerHitbox.StartAttack(); }
-    public void DisableRightDagger() { rightDaggerHitbox.StopAttack(); }
+    public void EnableRightDagger()
+    {
+        rightDaggerHitbox.StartAttack();
+        leftDaggerHitbox.StartAttack();
+    }
+    public void DisableRightDagger()
+    {
+        rightDaggerHitbox.StopAttack(); 
+        leftDaggerHitbox.StopAttack();
+    }
 
     public void ThrowPoisonDagger()
     {
