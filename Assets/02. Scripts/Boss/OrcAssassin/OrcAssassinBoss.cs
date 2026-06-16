@@ -23,7 +23,7 @@ public class OrcAssassinBoss : NetworkBossCore
         if (currentDistance >= daggerThrowDistance)
         {
             // (선택사항) 쿨타임 등을 체크해서 매번 던지지 않게 조절 가능
-            return daggerThrowPatternIndex; 
+            return daggerThrowPatternIndex;
         }
 
         // 2. 특수 조건이 아니면 기존 부모의 거리+가중치 룰렛 시스템 사용
@@ -63,24 +63,25 @@ public class OrcAssassinBoss : NetworkBossCore
 
         if (_visual == null) return;
 
-        // 1. 서버에서 은신 기믹을 켰는데, 내 화면은 아직 쌩얼이라면? -> 투명화 켜기!
-        if (IsGimmickActive && !_localStealthActive)
+        bool hasStealthBuff = HasStatus(2);
+
+        // 1. 서버에 2번 버프가 있는데 내 화면에 안 켜졌다면? -> 켜기
+        if (hasStealthBuff && !_localStealthActive)
         {
             _localStealthActive = true;
-
-            // _visual을 OrcAssassinVisual로 형변환해서 전용 함수 호출
             if (_visual is OrcAssassinVisual orcVisual)
             {
                 orcVisual.EnableStealth();
             }
         }
-        // 2. 서버에서 은신이 꺼졌는데(사망 등), 내 화면엔 아직 켜져있다면? -> 원래대로 복구!
-        else if (!IsGimmickActive && _localStealthActive)
+        // 2. 60초가 지나서 서버에서 2번 버프가 사라졌는데, 내 화면엔 아직 켜져있다면? -> 끄기!
+        else if (!hasStealthBuff && _localStealthActive)
         {
             _localStealthActive = false;
-
-            // (선택사항) OrcAssassinVisual.cs에 DisableStealth() 함수를 만드셨다면 호출
-            // if (_visual is OrcAssassinVisual orcVisual) orcVisual.DisableStealth();
+            if (_visual is OrcAssassinVisual orcVisual)
+            {
+                orcVisual.DisableStealth(); // 아까 만든 복구 함수 호출!
+            }
         }
     }
 }

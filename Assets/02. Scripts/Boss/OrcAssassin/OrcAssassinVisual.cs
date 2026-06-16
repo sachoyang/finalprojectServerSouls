@@ -38,6 +38,14 @@ public class OrcAssassinVisual : MonoBehaviour, IBossVisual
         {
             anim = GetComponent<Animator>();
         }
+
+        foreach (var r in bossRenderers)
+        {
+            if (r != null)
+            {
+                _originalMaterials[r] = r.sharedMaterials;
+            }
+        }
     }
 
     // ==========================================
@@ -64,6 +72,21 @@ public class OrcAssassinVisual : MonoBehaviour, IBossVisual
             }
             r.sharedMaterials = stealthMats;
         }
+    }
+    
+    public void DisableStealth()
+    {
+        foreach (var r in bossRenderers)
+        {
+            if (r == null) continue;
+
+            // 기억해뒀던 원래 머티리얼을 꺼내서 다시 입혀줍니다.
+            if (_originalMaterials.TryGetValue(r, out Material[] origMats))
+            {
+                r.sharedMaterials = origMats;
+            }
+        }
+        Debug.Log("[Visual] 오크 어쌔신 투명화 해제! 원래 모습으로 돌아옵니다.");
     }
 
     // ==========================================
@@ -118,7 +141,7 @@ public class OrcAssassinVisual : MonoBehaviour, IBossVisual
     }
     public void DisableRightDagger()
     {
-        rightDaggerHitbox.StopAttack(); 
+        rightDaggerHitbox.StopAttack();
         leftDaggerHitbox.StopAttack();
     }
 

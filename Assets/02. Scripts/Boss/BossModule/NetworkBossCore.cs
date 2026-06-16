@@ -766,4 +766,19 @@ public class NetworkBossCore : NetworkBehaviour
     // ==========================================
     public List<ActiveStatusUIInfo> GetActiveStatusesForUI()
         => _statusResolver.BuildUIList(ActiveStatuses, Runner.SimulationTime);
+
+    // ==========================================
+    // UI 및 비주얼에서 특정 상태이상이 현재 켜져있는지 쉽게 확인하는 헬퍼 함수
+    // ==========================================
+    public bool HasStatus(int statusId)
+    {
+        for (int i = 0; i < ActiveStatuses.Length; i++)
+        {
+            if (ActiveStatuses[i].StatusId == statusId)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
 }
