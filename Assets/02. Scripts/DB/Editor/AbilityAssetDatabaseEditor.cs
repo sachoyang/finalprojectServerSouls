@@ -41,7 +41,10 @@ public class AbilityAssetDatabaseEditor : Editor
         EditorGUILayout.LabelField("FBX 애니메이션 자동 추출기", EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(_dropFbxHere, true);
 
-        serializedObject.ApplyModifiedProperties();
+        if (serializedObject.ApplyModifiedProperties())
+        {
+            EditorUtility.SetDirty(target);
+        }
     }
 
     private void DrawAnimationEntries()
@@ -53,12 +56,16 @@ public class AbilityAssetDatabaseEditor : Editor
         {
             if (GUILayout.Button("Sync From Animations"))
             {
-                SyncEntriesFromAnimations();
+                if (SyncEntriesFromAnimations())
+                {
+                    SaveDatabaseAsset();
+                }
             }
 
             if (GUILayout.Button("Add Entry"))
             {
                 _animationEntries.arraySize++;
+                SaveDatabaseAsset();
             }
         }
 
@@ -79,6 +86,7 @@ public class AbilityAssetDatabaseEditor : Editor
                     if (GUILayout.Button("Remove", GUILayout.Width(70f)))
                     {
                         _animationEntries.DeleteArrayElementAtIndex(i);
+                        SaveDatabaseAsset();
                         break;
                     }
                 }
@@ -139,8 +147,9 @@ public class AbilityAssetDatabaseEditor : Editor
         return options.ToArray();
     }
 
-    private void SyncEntriesFromAnimations()
+    private bool SyncEntriesFromAnimations()
     {
+        bool changed = false;
         for (int i = 0; i < _animations.arraySize; i++)
         {
             Object clip = _animations.GetArrayElementAtIndex(i).objectReferenceValue;
@@ -154,7 +163,10 @@ public class AbilityAssetDatabaseEditor : Editor
             SerializedProperty entry = _animationEntries.GetArrayElementAtIndex(newIndex);
             entry.FindPropertyRelative("clip").objectReferenceValue = clip;
             entry.FindPropertyRelative("trigger").stringValue = string.Empty;
+            changed = true;
         }
+
+        return changed;
     }
 
     private bool HasEntryForClip(Object clip)
@@ -172,5 +184,12 @@ public class AbilityAssetDatabaseEditor : Editor
         }
 
         return false;
+    }
+
+    private void SaveDatabaseAsset()
+    {
+        serializedObject.ApplyModifiedProperties();
+        EditorUtility.SetDirty(target);
+        AssetDatabase.SaveAssets();
     }
 }
