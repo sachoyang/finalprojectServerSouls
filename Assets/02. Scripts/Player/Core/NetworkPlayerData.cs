@@ -40,14 +40,9 @@ public class NetworkPlayerData : NetworkBehaviour
 
     private long GetLocalUnlockedSkillsBitmask()
     {
-        long bitmask = BackendManager.HasInstance ? BackendManager.Instance.CurrentSkillsBitmask : 0L;
-        if (bitmask != 0L)
-        {
-            return bitmask;
-        }
-
-        AbilityManager abilityManager = AbilityManager.HasInstance ? AbilityManager.Instance : null;
-        return abilityManager != null && abilityManager.IsLoaded ? abilityManager.GetDefaultUnlockedSkillsBitmask() : 0L;
+        // AbilityManager에게 기본 마스크를 물어볼 필요가 없습니다. 
+        // 그냥 BackendManager가 로그인 시 서버로부터 받은 값(0이 절대 아님)을 그대로 던져주면 끝납니다!
+        return BackendManager.HasInstance ? BackendManager.Instance.CurrentSkillsBitmask : 0L;
     }
 
     public void RecordAbility(PlayerAbilityModule module)

@@ -22,7 +22,6 @@ public class AbilityDBData
     public string animation_key;
     public string vfx_key;
     public string hitbox_key;
-    public string include_in_reward_pool;
 
     public string sound_key;
     public float sound_volume;
@@ -109,6 +108,10 @@ public class AbilityManager : MonoSingleton<AbilityManager>
 
                     Debug.Log($"<color=green>[AbilityManager] 서버 데이터 동기화 완료! {AllAbilitiesDict.Count}개 스킬 준비됨.</color>");
                     IsLoaded = true;
+
+                    // 🌟 조립이 끝나면 로그인 시 받아둔 유저 비트마스크를 해석해 각 SO의 보상 풀 포함 여부를 갱신
+                    ApplyRewardPoolFromBitmask();
+
                     onComplete?.Invoke(true);
                 }
                 else
@@ -146,6 +149,68 @@ public class AbilityManager : MonoSingleton<AbilityManager>
         return unlockedList;
     }
 
+    // ==========================================
+    // 🌟 [핵심] 유저 비트마스크 해석 → SO의 includeInRewardPool 런타임 갱신
+    // 서버는 "기본 해금 + 유저 추가 해금"이 합산된 단일 비트마스크 하나만 던져준다.
+    // ==========================================
+    public void ApplyRewardPoolFromBitmask()
+    {
+        long userBitmask = BackendManager.HasInstance ? BackendManager.Instance.CurrentSkillsBitmask : 0L;
+        ApplyRewardPoolFromBitmask(userBitmask);
+    }
+
+    public void ApplyRewardPoolFromBitmask(long userBitmask)
+    {
+        foreach (var kvp in AllAbilitiesDict)
+        {
+            PlayerAbilityModule module = kvp.Value;
+            if (module == null)
+            {
+                continue;
+            }
+
+            // 해당 비트가 켜져 있으면 true, 꺼져 있으면 false로 덮어쓴다.
+            bool unlocked = (userBitmask & (1L << module.BitIndex)) != 0L;
+            module.SetIncludeInRewardPool(unlocked);
+        }
+    }
+
+    // ==========================================
+    // 🌟 [핵심] 런타임 신규 해금 + 서버 영구 저장 통합 함수
+    // 1) 비트마스크에 OR 연산으로 추가  2) SO 즉시 갱신  3) 서버로 영구 저장
+    // ==========================================
+    public void UnlockAbilityAndSync(PlayerAbilityModule module)
+    {
+        if (module == null)
+        {
+            Debug.LogWarning("[AbilityManager] UnlockAbilityAndSync: module이 null입니다.");
+            return;
+        }
+
+        if (!BackendManager.HasInstance)
+        {
+            Debug.LogWarning("[AbilityManager] UnlockAbilityAndSync: BackendManager가 없어 서버 저장을 건너뜁니다.");
+            return;
+        }
+
+        int bitIndex = module.BitIndex;
+        if (bitIndex < 0 || bitIndex >= 63)
+        {
+            Debug.LogWarning($"[AbilityManager] {module.AbilityId}의 BitIndex({bitIndex})가 범위를 벗어나 동기화할 수 없습니다.");
+            return;
+        }
+
+        // 1. 로컬 비트마스크에 OR 연산으로 추가 (해당 비트 1로 켬)
+        long newBitmask = BackendManager.Instance.CurrentSkillsBitmask | (1L << bitIndex);
+        BackendManager.Instance.SetCurrentSkillsBitmask(newBitmask);
+
+        // 2. 해당 SO의 보상 풀 포함 여부 즉시 갱신
+        module.SetIncludeInRewardPool(true);
+
+        // 3. 변경된 비트마스크를 서버로 즉시 영구 저장
+        BackendManager.Instance.UpdateSkills(newBitmask);
+    }
+
     public PlayerAbilityModule FindByAbilityId(string abilityId)
     {
         if (string.IsNullOrWhiteSpace(abilityId))
@@ -156,21 +221,5 @@ public class AbilityManager : MonoSingleton<AbilityManager>
         return AllAbilitiesById.TryGetValue(abilityId, out PlayerAbilityModule module)
             ? module
             : null;
-    }
-
-    public long GetDefaultUnlockedSkillsBitmask()
-    {
-        long bitmask = 0L;
-        foreach (PlayerAbilityModule module in AllAbilitiesDict.Values)
-        {
-            if (module == null || !module.IncludeInRewardPool || module.BitIndex < 0 || module.BitIndex >= 63)
-            {
-                continue;
-            }
-
-            bitmask |= 1L << module.BitIndex;
-        }
-
-        return bitmask;
     }
 }

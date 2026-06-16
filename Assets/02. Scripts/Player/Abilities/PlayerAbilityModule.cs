@@ -43,7 +43,7 @@ public class PlayerAbilityModule : ScriptableObject
 
     // Player reward pool 동기화 도구가 이 값을 보고 Player.prefab의 abilityPool에 포함할지 결정한다.
     // 테스트용 또는 미완성 모듈은 체크를 끄면 보스 보상 후보에서 제외된다.
-    [SerializeField] private bool includeInRewardPool = true;
+    [SerializeField] private bool includeInRewardPool = false;
 
     [Header("Active Settings")]
     // 액티브 능력을 사용할 때 소모하는 스태미나. 0이면 무료다.
@@ -159,6 +159,15 @@ public class PlayerAbilityModule : ScriptableObject
     }
 
     // ==========================================
+    // 🌟 includeInRewardPool 런타임 Setter
+    // 서버 JSON으로 받지 않고, AbilityManager가 비트마스크를 해석해 이 값을 덮어쓴다.
+    // ==========================================
+    public void SetIncludeInRewardPool(bool value)
+    {
+        includeInRewardPool = value;
+    }
+
+    // ==========================================
     // 🔥 서버 데이터로 모듈을 조립하는 런타임 초기화 함수
     // ==========================================
     public void InitializeFromDB(AbilityDBData dbData, AbilityAssetDatabase assetDB)
@@ -172,11 +181,6 @@ public class PlayerAbilityModule : ScriptableObject
         this.description = dbData.description;
 
         this.abilityType = (dbData.ability_type == "Active") ? AbilityType.Active : AbilityType.Passive;
-        if (!string.IsNullOrWhiteSpace(dbData.include_in_reward_pool))
-        {
-            this.includeInRewardPool = dbData.include_in_reward_pool == "1" ||
-                                       dbData.include_in_reward_pool.Equals("true", System.StringComparison.OrdinalIgnoreCase);
-        }
 
         this.staminaCost = dbData.stamina_cost;
         this.cooldownSeconds = dbData.cooldown_seconds;
