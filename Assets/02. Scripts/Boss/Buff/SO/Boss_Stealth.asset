@@ -12,12 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: faabf821251e30048851ee44c83f006e, type: 3}
   m_Name: Boss_Stealth
   m_EditorClassIdentifier: 
-  statusId: 0
-  statusName: "\uC0C1\uD0DC\uC774\uC0C1 \uC774\uB984"
+  statusId: 2
+  statusName: "\uD22C\uBA85\uD654"
   Power: 0
   effectTarget: 0
   isInfinite: 0
-  defaultDuration: 10
-  description: "\uC0C1\uD0DC\uC774\uC0C1 \uC124\uBA85 (UI \uD234\uD301\uC6A9)"
-  icon: {fileID: 0}
-  isDebuff: 1
+  defaultDuration: 60
+  description: "\uBCF4\uC2A4 \uD22C\uBA85\uD654"
+  icon: {fileID: 21300000, guid: b8955557feeaeb341b20d616c34b6889, type: 3}
+  isDebuff: 0
