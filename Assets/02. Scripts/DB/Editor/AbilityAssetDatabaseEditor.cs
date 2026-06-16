@@ -23,11 +23,18 @@ public class AbilityAssetDatabaseEditor : Editor
         _prefabs = serializedObject.FindProperty("prefabs");
         _sounds = serializedObject.FindProperty("sounds");
         _dropFbxHere = serializedObject.FindProperty("dropFbxHere");
+        Undo.undoRedoPerformed += SaveDatabaseAsset;
+    }
+
+    private void OnDisable()
+    {
+        Undo.undoRedoPerformed -= SaveDatabaseAsset;
     }
 
     public override void OnInspectorGUI()
     {
         serializedObject.Update();
+        EditorGUI.BeginChangeCheck();
 
         EditorGUILayout.LabelField("에셋 등록소", EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(_icons, true);
@@ -41,9 +48,12 @@ public class AbilityAssetDatabaseEditor : Editor
         EditorGUILayout.LabelField("FBX 애니메이션 자동 추출기", EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(_dropFbxHere, true);
 
-        if (serializedObject.ApplyModifiedProperties())
+        bool guiChanged = EditorGUI.EndChangeCheck();
+        bool serializedChanged = serializedObject.ApplyModifiedProperties();
+        if (guiChanged || serializedChanged)
         {
             EditorUtility.SetDirty(target);
+            AssetDatabase.SaveAssets();
         }
     }
 
@@ -56,6 +66,7 @@ public class AbilityAssetDatabaseEditor : Editor
         {
             if (GUILayout.Button("Sync From Animations"))
             {
+                Undo.RecordObject(target, "Sync Ability Animation Entries");
                 if (SyncEntriesFromAnimations())
                 {
                     SaveDatabaseAsset();
@@ -64,6 +75,7 @@ public class AbilityAssetDatabaseEditor : Editor
 
             if (GUILayout.Button("Add Entry"))
             {
+                Undo.RecordObject(target, "Add Ability Animation Entry");
                 _animationEntries.arraySize++;
                 SaveDatabaseAsset();
             }
@@ -85,6 +97,7 @@ public class AbilityAssetDatabaseEditor : Editor
                     EditorGUILayout.LabelField($"Element {i}", EditorStyles.boldLabel);
                     if (GUILayout.Button("Remove", GUILayout.Width(70f)))
                     {
+                        Undo.RecordObject(target, "Remove Ability Animation Entry");
                         _animationEntries.DeleteArrayElementAtIndex(i);
                         SaveDatabaseAsset();
                         break;
@@ -124,8 +137,13 @@ public class AbilityAssetDatabaseEditor : Editor
             selectedIndex = triggerOptions.Length - 1;
         }
 
-        selectedIndex = EditorGUILayout.Popup("Trigger", selectedIndex, triggerOptions);
-        trigger.stringValue = selectedIndex <= 0 ? string.Empty : triggerOptions[selectedIndex];
+        EditorGUI.BeginChangeCheck();
+        int newIndex = EditorGUILayout.Popup("Trigger", selectedIndex, triggerOptions);
+        if (EditorGUI.EndChangeCheck())
+        {
+            Undo.RecordObject(target, "Change Ability Animation Trigger");
+            trigger.stringValue = newIndex <= 0 ? string.Empty : triggerOptions[newIndex];
+        }
     }
 
     private string[] GetTriggerOptions(AnimatorController controller)
