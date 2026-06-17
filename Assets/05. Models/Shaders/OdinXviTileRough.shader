@@ -1,4 +1,4 @@
-Shader "Odin XVI/Tile Rough URP"
+Shader "Odin XVI/Original Material URP"
 {
     Properties
     {
@@ -12,17 +12,23 @@ Shader "Odin XVI/Tile Rough URP"
         _RoughnessStrength("Roughness Strength", Range(0, 1)) = 1
         _SmoothnessBias("Smoothness Bias", Range(-1, 1)) = 0
         _Metallic("Metallic", Range(0, 1)) = 0
-
+        _BlenderMaterialStrength("Original Material Strength", Range(0, 1)) = 0
+        _MetalnessScale("Original Metalness Scale", Range(0, 1)) = 0.25
+        _BaseMetalnessStrength("Base Metalness Strength", Range(0, 30)) = 0
+        _Tile0MetalnessStrength("Tile 0 Metalness Strength", Range(0, 30)) = 0
+        _Tile1MetalnessStrength("Tile 1 Metalness Strength", Range(0, 30)) = 0
+        _Tile2MetalnessStrength("Tile 2 Metalness Strength", Range(0, 30)) = 0
+        _Tile3MetalnessStrength("Tile 3 Metalness Strength", Range(0, 30)) = 0
+        _BaseDetailAlpha("Base Detail Alpha", Range(0, 1)) = 0.5
+        _Tile0DetailAlpha("Tile 0 Detail Alpha", Range(0, 1)) = 0.5
+        _Tile1DetailAlpha("Tile 1 Detail Alpha", Range(0, 1)) = 0.5
+        _Tile2DetailAlpha("Tile 2 Detail Alpha", Range(0, 1)) = 0.5
+        _Tile3DetailAlpha("Tile 3 Detail Alpha", Range(0, 1)) = 0
+        _DetailRoughnessStrength("Detail Roughness Strength", Range(-1, 1)) = 0
         _Tile0Mask("Tile 0 Mask", 2D) = "black" {}
         _Tile1Mask("Tile 1 Mask", 2D) = "black" {}
         _Tile2Mask("Tile 2 Mask", 2D) = "black" {}
         _Tile3Mask("Tile 3 Mask", 2D) = "black" {}
-        _Tile0Color("Tile 0 Color", Color) = (1, 1, 1, 1)
-        _Tile1Color("Tile 1 Color", Color) = (1, 1, 1, 1)
-        _Tile2Color("Tile 2 Color", Color) = (1, 1, 1, 1)
-        _Tile3Color("Tile 3 Color", Color) = (1, 1, 1, 1)
-        _TileBlendStrength("Tile Blend Strength", Range(0, 1)) = 0.35
-        _TileRoughnessStrength("Tile Roughness Strength", Range(0, 1)) = 0.2
 
         _AlphaMap("Alpha Mask", 2D) = "white" {}
         _Cutoff("Alpha Cutoff", Range(0, 1)) = 0.5
@@ -41,6 +47,10 @@ Shader "Odin XVI/Tile Rough URP"
         _EyeDisplacementStrength("Eye Displacement Strength", Range(0, 0.05)) = 0
         _EyeReflectionStrength("Eye Reflection Strength", Range(0, 2)) = 0
         _EyeEmissionStrength("Eye Emission Strength", Range(0, 2)) = 0
+        _ScleraShellStrength("Sclera Front Shell Strength", Range(0, 1)) = 0
+        _ScleraRimPower("Sclera Front Rim Power", Range(0.5, 8)) = 2
+        _ScleraRimAlpha("Sclera Front Rim Alpha", Range(0, 0.5)) = 0.08
+        _ScleraRimColor("Sclera Front Rim Color", Color) = (0.55, 0.75, 0.9, 1)
 
         [Enum(UnityEngine.Rendering.CullMode)] _Cull("Cull", Float) = 2
         [Enum(Off,0,On,1)] _ZWrite("ZWrite", Float) = 1
@@ -62,7 +72,7 @@ Shader "Odin XVI/Tile Rough URP"
             Name "ForwardLit"
             Tags { "LightMode" = "UniversalForward" }
 
-            Blend One Zero
+            Blend SrcAlpha OneMinusSrcAlpha
             ZWrite[_ZWrite]
             Cull[_Cull]
 
@@ -88,17 +98,24 @@ Shader "Odin XVI/Tile Rough URP"
                 float4 _BaseMap_ST;
                 half4 _BaseColor;
                 half4 _EmissionColor;
-                half4 _Tile0Color;
-                half4 _Tile1Color;
-                half4 _Tile2Color;
-                half4 _Tile3Color;
                 half _BumpScale;
                 half _OcclusionStrength;
                 half _RoughnessStrength;
                 half _SmoothnessBias;
                 half _Metallic;
-                half _TileBlendStrength;
-                half _TileRoughnessStrength;
+                half _BlenderMaterialStrength;
+                half _MetalnessScale;
+                half _BaseMetalnessStrength;
+                half _Tile0MetalnessStrength;
+                half _Tile1MetalnessStrength;
+                half _Tile2MetalnessStrength;
+                half _Tile3MetalnessStrength;
+                half _BaseDetailAlpha;
+                half _Tile0DetailAlpha;
+                half _Tile1DetailAlpha;
+                half _Tile2DetailAlpha;
+                half _Tile3DetailAlpha;
+                half _DetailRoughnessStrength;
                 half _Cutoff;
                 half _AlphaClip;
                 half _Cull;
@@ -108,6 +125,10 @@ Shader "Odin XVI/Tile Rough URP"
                 half _EyeDisplacementStrength;
                 half _EyeReflectionStrength;
                 half _EyeEmissionStrength;
+                half _ScleraShellStrength;
+                half _ScleraRimPower;
+                half _ScleraRimAlpha;
+                half4 _ScleraRimColor;
             CBUFFER_END
 
             TEXTURE2D(_OcclusionMap);
@@ -174,12 +195,22 @@ Shader "Odin XVI/Tile Rough URP"
                 return saturate(max(maskSample.r, max(maskSample.g, maskSample.b)));
             }
 
-            half3 ApplyTileColor(half3 albedo, half mask, half3 color)
+            half BlenderLerpMetalness(half m0, half m1, half m2, half m3)
             {
-                return lerp(albedo, albedo * color, saturate(mask * _TileBlendStrength));
+                half baseMetal = _BaseDetailAlpha * _BaseMetalnessStrength;
+                half tile0Metal = _Tile0DetailAlpha * _Tile0MetalnessStrength;
+                half tile1Metal = _Tile1DetailAlpha * _Tile1MetalnessStrength;
+                half tile2Metal = _Tile2DetailAlpha * _Tile2MetalnessStrength;
+                half tile3Metal = _Tile3DetailAlpha * _Tile3MetalnessStrength;
+
+                half metal = lerp(baseMetal, tile0Metal, m0);
+                metal = lerp(metal, tile1Metal, m1);
+                metal = lerp(metal, tile2Metal, m2);
+                metal = lerp(metal, tile3Metal, m3);
+                return saturate(metal * _MetalnessScale);
             }
 
-            half4 OdinFragment(Varyings input) : SV_Target
+            half4 OdinFragment(Varyings input, FRONT_FACE_TYPE facing : FRONT_FACE_SEMANTIC) : SV_Target
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
@@ -204,16 +235,15 @@ Shader "Odin XVI/Tile Rough URP"
                 half irisMask = saturate(max(irisSample.a, max(irisSample.r, max(irisSample.g, irisSample.b))));
 
                 half3 albedo = baseSample.rgb * _BaseColor.rgb;
-                albedo = ApplyTileColor(albedo, m0, _Tile0Color.rgb);
-                albedo = ApplyTileColor(albedo, m1, _Tile1Color.rgb);
-                albedo = ApplyTileColor(albedo, m2, _Tile2Color.rgb);
-                albedo = ApplyTileColor(albedo, m3, _Tile3Color.rgb);
                 albedo = lerp(albedo, irisSample.rgb * _BaseColor.rgb, irisMask * _EyeIrisStrength);
 
-                half roughness = SAMPLE_TEXTURE2D(_RoughnessMap, sampler_BaseMap, input.uv).r;
+                half4 roughnessSample = SAMPLE_TEXTURE2D(_RoughnessMap, sampler_BaseMap, input.uv);
+                half roughness = roughnessSample.r;
+                half blenderRoughness = saturate(roughness + abs(roughnessSample.b - 0.5h) * _DetailRoughnessStrength);
                 roughness = lerp(0.5h, roughness, _RoughnessStrength);
-                roughness = saturate(roughness + (m0 + m1 + m2 + m3) * 0.25h * _TileRoughnessStrength);
+                roughness = lerp(roughness, blenderRoughness, _BlenderMaterialStrength);
                 half smoothness = saturate(1.0h - roughness + _SmoothnessBias);
+                half metallic = lerp(_Metallic, BlenderLerpMetalness(m0, m1, m2, m3), _BlenderMaterialStrength);
 
                 half occlusionSample = SAMPLE_TEXTURE2D(_OcclusionMap, sampler_BaseMap, input.uv).g;
                 half occlusion = lerp(1.0h, occlusionSample, _OcclusionStrength);
@@ -224,8 +254,10 @@ Shader "Odin XVI/Tile Rough URP"
                     half3 irisNormalTS = UnpackNormalScale(SAMPLE_TEXTURE2D(_EyeIrisNormalMap, sampler_BaseMap, eyeUv), _BumpScale);
                     normalTS = normalize(lerp(normalTS, irisNormalTS, irisMask * _EyeIrisNormalStrength));
                 #endif
-                half3 bitangentWS = input.tangentWS.w * cross(input.normalWS.xyz, input.tangentWS.xyz);
-                half3x3 tangentToWorld = half3x3(input.tangentWS.xyz, bitangentWS, input.normalWS.xyz);
+                half faceSign = IS_FRONT_VFACE(facing, 1.0h, -1.0h);
+                half3 normalWS = input.normalWS.xyz * faceSign;
+                half3 bitangentWS = input.tangentWS.w * faceSign * cross(normalWS, input.tangentWS.xyz);
+                half3x3 tangentToWorld = half3x3(input.tangentWS.xyz, bitangentWS, normalWS);
 
                 InputData inputData = (InputData)0;
                 inputData.positionWS = input.positionWS;
@@ -240,13 +272,24 @@ Shader "Odin XVI/Tile Rough URP"
                 inputData.shadowMask = half4(1, 1, 1, 1);
                 inputData.tangentToWorld = tangentToWorld;
 
+                half scleraShell = saturate(_ScleraShellStrength);
+                half frontFacing = saturate(dot(inputData.normalWS, inputData.viewDirectionWS));
+                half scleraRim = pow(saturate(1.0h - frontFacing), _ScleraRimPower);
+                half3 scleraAlbedo = lerp(_BaseColor.rgb, _ScleraRimColor.rgb, scleraRim * 0.35h);
+                albedo = lerp(albedo, scleraAlbedo, scleraShell);
+                alpha = lerp(alpha, saturate(_BaseColor.a + scleraRim * _ScleraRimAlpha), scleraShell);
+                smoothness = lerp(smoothness, 0.95h, scleraShell);
+                metallic = lerp(metallic, 0.0h, scleraShell);
+                occlusion = lerp(occlusion, 1.0h, scleraShell);
+
                 SurfaceData surfaceData = (SurfaceData)0;
                 surfaceData.albedo = albedo;
                 surfaceData.specular = half3(0, 0, 0);
-                surfaceData.metallic = _Metallic;
+                surfaceData.metallic = metallic;
                 surfaceData.smoothness = smoothness;
                 surfaceData.normalTS = normalTS;
                 half3 emission = SAMPLE_TEXTURE2D(_EmissionMap, sampler_EmissionMap, input.uv).rgb * _EmissionColor.rgb;
+                emission += _EmissionColor.rgb * _EyeEmissionStrength;
                 emission += SAMPLE_TEXTURE2D(_EyeYellowEmissionMap, sampler_BaseMap, eyeUv).rgb * _EyeEmissionStrength;
                 emission += SAMPLE_TEXTURE2D(_EyeBlueEmissionMap, sampler_BaseMap, eyeUv).rgb * _EyeEmissionStrength;
                 emission += SAMPLE_TEXTURE2D(_EyeFakeReflectionMap, sampler_BaseMap, eyeUv).rgb * _EyeReflectionStrength;

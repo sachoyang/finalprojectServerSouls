@@ -1,0 +1,97 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Name: m_c6008b0001_body_b
+  m_Shader: {fileID: 4800000, guid: b4f85168e1164fd4b94fbcb5d0f47ee2, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords:
+  - _NORMALMAP
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap:
+    RenderType: Opaque
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _AlphaMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BaseMap:
+        m_Texture: {fileID: 2800000, guid: 49fe94b0b8e7b3948adc7b8af2ea3f0e, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BumpMap:
+        m_Texture: {fileID: 2800000, guid: 3776233581c9fde4e9e6471cecceb0ee, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EmissionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _OcclusionMap:
+        m_Texture: {fileID: 2800000, guid: 4f2afb0537aa08a45a275d55d053fb21, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _RoughnessMap:
+        m_Texture: {fileID: 2800000, guid: a7f7bd8ff2499664590db54109a6442d, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Tile0Mask:
+        m_Texture: {fileID: 2800000, guid: 359b6b67b8c9a4945850e50ae0c9204b, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Tile1Mask:
+        m_Texture: {fileID: 2800000, guid: b131c985827bb14468ad28c2593846d6, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Tile2Mask:
+        m_Texture: {fileID: 2800000, guid: af1e3330c28ca6a49a1608682e9ca169, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Tile3Mask:
+        m_Texture: {fileID: 2800000, guid: dd9932dc68a45cf4589c4d63b96a5971, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _AlphaClip: 0
+    - _BumpScale: 1
+    - _Cull: 2
+    - _Cutoff: 0.5
+    - _Metallic: 0
+    - _BlenderMaterialStrength: 1
+    - _MetalnessScale: 0.03333333
+    - _BaseMetalnessStrength: 3.6
+    - _Tile0MetalnessStrength: 0
+    - _Tile1MetalnessStrength: 0
+    - _Tile2MetalnessStrength: 0
+    - _Tile3MetalnessStrength: 25.8
+    - _BaseDetailAlpha: 0.5
+    - _Tile0DetailAlpha: 0.5
+    - _Tile1DetailAlpha: 0.5
+    - _Tile2DetailAlpha: 0.5
+    - _Tile3DetailAlpha: 0
+    - _DetailRoughnessStrength: -0.1
+    - _OcclusionStrength: 1
+    - _RoughnessStrength: 1
+    - _SmoothnessBias: 0
+    - _ZWrite: 1
+    m_Colors:
+    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+  m_BuildTextureStacks: []
