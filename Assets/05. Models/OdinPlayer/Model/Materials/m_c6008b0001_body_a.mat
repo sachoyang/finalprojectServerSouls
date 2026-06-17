@@ -7,7 +7,6 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
   m_Name: m_c6008b0001_body_a
   m_Shader: {fileID: 4800000, guid: b4f85168e1164fd4b94fbcb5d0f47ee2, type: 3}
   m_Parent: {fileID: 0}
@@ -42,6 +41,34 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _EyeBlueEmissionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EyeDirectionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EyeDisplacementMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EyeFakeReflectionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EyeIrisMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EyeIrisNormalMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EyeYellowEmissionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _OcclusionMap:
         m_Texture: {fileID: 2800000, guid: 9b5bc84f4a96ce6439d6b5e5b9af683c, type: 3}
         m_Scale: {x: 1, y: 1}
@@ -69,29 +96,38 @@ Material:
     m_Ints: []
     m_Floats:
     - _AlphaClip: 0
+    - _BaseDetailAlpha: 0.5
+    - _BaseMetalnessStrength: 3.6
+    - _BlenderMaterialStrength: 1
     - _BumpScale: 1
     - _Cull: 2
     - _Cutoff: 0.5
-    - _Metallic: 0
-    - _BlenderMaterialStrength: 1
-    - _MetalnessScale: 0.03333333
-    - _BaseMetalnessStrength: 3.6
-    - _Tile0MetalnessStrength: 0
-    - _Tile1MetalnessStrength: 0
-    - _Tile2MetalnessStrength: 0
-    - _Tile3MetalnessStrength: 25.8
-    - _BaseDetailAlpha: 0.5
-    - _Tile0DetailAlpha: 0.5
-    - _Tile1DetailAlpha: 0.5
-    - _Tile2DetailAlpha: 0.5
-    - _Tile3DetailAlpha: 0
     - _DetailRoughnessStrength: -0.2
+    - _EyeDisplacementStrength: 0
+    - _EyeEmissionStrength: 0
+    - _EyeIrisNormalStrength: 0
+    - _EyeIrisStrength: 0
+    - _EyeReflectionStrength: 0
+    - _Metallic: 0
+    - _MetalnessScale: 0.03333333
     - _OcclusionStrength: 1
     - _RoughnessStrength: 1
+    - _ScleraRimAlpha: 0.08
+    - _ScleraRimPower: 2
+    - _ScleraShellStrength: 0
     - _SmoothnessBias: 0
+    - _Tile0DetailAlpha: 0.5
+    - _Tile0MetalnessStrength: 0
+    - _Tile1DetailAlpha: 0.5
+    - _Tile1MetalnessStrength: 0
+    - _Tile2DetailAlpha: 0.5
+    - _Tile2MetalnessStrength: 0
+    - _Tile3DetailAlpha: 0
+    - _Tile3MetalnessStrength: 0
     - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _ScleraRimColor: {r: 0.54999995, g: 0.75, b: 0.9, a: 1}
   m_BuildTextureStacks: []
