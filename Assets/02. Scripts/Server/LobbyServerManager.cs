@@ -12,20 +12,18 @@ public class LobbyServerManager : NetworkBehaviour
     public GameObject[] lobbyCharacters;
 
     [Header("Slot UI Arrays")]
-    [Tooltip("슬롯 1, 2, 3의 부모 패널 오브젝트")]
     public GameObject[] slotPanels;
 
-    [Tooltip("슬롯별 레디 버튼")]
     public Button[] readyButtons;
 
-    [Tooltip("슬롯별 레디 텍스트 (Ready / Ready!)")]
     public Text[] readyTexts;
 
-    [Tooltip("자신이 누구인지 알려주는 'YOU' 인디케이터 오브젝트")]
+    [Header("Ready Effect UI")]
+    public GameObject[] readyEffects;
+
     public GameObject[] youIndicators;
 
     [Header("Player Name UI")]
-    [Tooltip("모든 유저에게 보여질 닉네임 텍스트")]
     public Text[] nicknameTexts;
 
     [Header("Ready State UI (Global)")]
@@ -65,11 +63,12 @@ public class LobbyServerManager : NetworkBehaviour
     {
         ShowLobbyCharacters();
         HideWarningMessage();
+        HideAllReadyEffects();
     }
 
     public override void Spawned()
     {
-        Debug.Log("[Lobby] 포톤 로비 동기화 오브젝트 생성 완료.");
+        Debug.Log("[Lobby] 로비 대기 오브젝트 생성 완료.");
 
         _changeDetector = GetChangeDetector(ChangeDetector.Source.SimulationState);
         RefreshLobbyUI();
@@ -173,8 +172,14 @@ public class LobbyServerManager : NetworkBehaviour
                 readyButtons[0].interactable = Slot0_Owner == Runner.LocalPlayer;
             }
 
+            SetReadyEffect(0, Slot0_Ready);
+
             if (youIndicators != null && youIndicators.Length > 0 && youIndicators[0] != null)
                 youIndicators[0].SetActive(Slot0_Owner == Runner.LocalPlayer);
+        }
+        else
+        {
+            SetReadyEffect(0, false);
         }
 
         bool hasP1 = Slot1_Owner != PlayerRef.None;
@@ -200,8 +205,14 @@ public class LobbyServerManager : NetworkBehaviour
                 readyButtons[1].interactable = Slot1_Owner == Runner.LocalPlayer;
             }
 
+            SetReadyEffect(1, Slot1_Ready);
+
             if (youIndicators != null && youIndicators.Length > 1 && youIndicators[1] != null)
                 youIndicators[1].SetActive(Slot1_Owner == Runner.LocalPlayer);
+        }
+        else
+        {
+            SetReadyEffect(1, false);
         }
 
         bool hasP2 = Slot2_Owner != PlayerRef.None;
@@ -227,8 +238,14 @@ public class LobbyServerManager : NetworkBehaviour
                 readyButtons[2].interactable = Slot2_Owner == Runner.LocalPlayer;
             }
 
+            SetReadyEffect(2, Slot2_Ready);
+
             if (youIndicators != null && youIndicators.Length > 2 && youIndicators[2] != null)
                 youIndicators[2].SetActive(Slot2_Owner == Runner.LocalPlayer);
+        }
+        else
+        {
+            SetReadyEffect(2, false);
         }
     }
 
@@ -252,6 +269,29 @@ public class LobbyServerManager : NetworkBehaviour
         }
     }
 
+    private void SetReadyEffect(int slotIndex, bool isReady)
+    {
+        if (readyEffects == null || slotIndex < 0 || slotIndex >= readyEffects.Length)
+            return;
+
+        if (readyEffects[slotIndex] == null)
+            return;
+
+        readyEffects[slotIndex].SetActive(isReady);
+    }
+
+    private void HideAllReadyEffects()
+    {
+        if (readyEffects == null)
+            return;
+
+        for (int i = 0; i < readyEffects.Length; i++)
+        {
+            if (readyEffects[i] != null)
+                readyEffects[i].SetActive(false);
+        }
+    }
+
     private ColorBlock GetUpdatedButtonColors(bool isReady)
     {
         ColorBlock colors = ColorBlock.defaultColorBlock;
@@ -261,12 +301,11 @@ public class LobbyServerManager : NetworkBehaviour
             colors = readyButtons[0].colors;
         }
 
-        Color targetColor = isReady ? readyColor : notReadyColor;
-        colors.normalColor = targetColor;
-        colors.highlightedColor = targetColor;
-        colors.pressedColor = targetColor;
-        colors.selectedColor = targetColor;
-        colors.disabledColor = new Color(targetColor.r, targetColor.g, targetColor.b, 0.4f);
+        colors.normalColor = Color.white;
+        colors.highlightedColor = Color.white;
+        colors.pressedColor = new Color(0.85f, 0.85f, 0.85f, 1f);
+        colors.selectedColor = Color.white;
+        colors.disabledColor = new Color(1f, 1f, 1f, 0.4f);
 
         return colors;
     }
@@ -300,18 +339,14 @@ public class LobbyServerManager : NetworkBehaviour
 
         isChangingScene = true;
 
-        Debug.Log("모든 인원 준비 완료. 보스전 레벨로 전체 이동합니다.");
+        Debug.Log("모든 인원 준비 완료. 보스 씬으로 이동합니다.");
 
-        // 방 잠그기 (난입 방지)
         if (Runner != null && Runner.SessionInfo != null)
         {
-            // 1. IsVisible = false: 자동 매칭(랜덤) 리스트에서 이 방을 숨깁니다.
-            Runner.SessionInfo.IsVisible = false; 
-            
-            // 2. IsOpen = false: 방 코드를 직접 치고 들어오는 것조차 완벽하게 차단합니다.
-            Runner.SessionInfo.IsOpen = false; 
-            
-            Debug.Log("[Lobby] 방 문을 잠갔습니다. 더 이상 새로운 유저가 난입할 수 없습니다.");
+            Runner.SessionInfo.IsVisible = false;
+            Runner.SessionInfo.IsOpen = false;
+
+            Debug.Log("[Lobby] 방을 닫았습니다. 더 이상 새 유저가 진입할 수 없습니다.");
         }
 
         GameProgressionManager.Instance.StartFirstLevel(Runner);
