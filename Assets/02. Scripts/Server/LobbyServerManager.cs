@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 using Fusion;
 using UnityEngine;
@@ -11,28 +10,21 @@ public class LobbyServerManager : NetworkBehaviour
     [Header("Character Models")]
     public GameObject[] lobbyCharacters;
 
-    [Header("Slot UI Arrays")]
+    [Header("Slot UI")]
     public GameObject[] slotPanels;
-
-    public Button[] readyButtons;
-
-    public Text[] readyTexts;
-
-    [Header("Ready Effect UI")]
     public GameObject[] readyEffects;
-
     public GameObject[] youIndicators;
 
     [Header("Player Name UI")]
     public Text[] nicknameTexts;
 
-    [Header("Ready State UI (Global)")]
+    [Header("Local Ready Button")]
+    public Button localReadyButton;
+    public Text localReadyButtonText;
+
+    [Header("Global Buttons")]
     public Button battleButton;
     public Text warningMessageText;
-
-    [Header("Ready Button Color")]
-    public Color notReadyColor = Color.white;
-    public Color readyColor = new Color(0.4f, 1f, 0.4f);
 
     [Header("Scene Fade")]
     public SceneFadeManager fadeManager;
@@ -68,41 +60,86 @@ public class LobbyServerManager : NetworkBehaviour
 
     public override void Spawned()
     {
-        Debug.Log("[Lobby] 로비 대기 오브젝트 생성 완료.");
+        Debug.Log("[Lobby] Lobby UI spawned.");
 
-        _changeDetector = GetChangeDetector(ChangeDetector.Source.SimulationState);
+        _changeDetector =
+            GetChangeDetector(ChangeDetector.Source.SimulationState);
+
         RefreshLobbyUI();
     }
 
     public override void FixedUpdateNetwork()
     {
-        if (!HasStateAuthority) return;
+        if (!HasStateAuthority)
+            return;
 
-        if (Slot0_Owner != PlayerRef.None && !Runner.ActivePlayers.Contains(Slot0_Owner))
+        RemoveDisconnectedPlayers();
+        AssignNewPlayers();
+    }
+
+    public override void Render()
+    {
+        if (_changeDetector != null)
+        {
+            foreach (var change in _changeDetector.DetectChanges(this))
+            {
+                switch (change)
+                {
+                    case nameof(Slot0_Ready):
+                    case nameof(Slot1_Ready):
+                    case nameof(Slot2_Ready):
+                    case nameof(Slot0_Owner):
+                    case nameof(Slot1_Owner):
+                    case nameof(Slot2_Owner):
+                    case nameof(Slot0_Nickname):
+                    case nameof(Slot1_Nickname):
+                    case nameof(Slot2_Nickname):
+                        RefreshLobbyUI();
+                        break;
+                }
+            }
+        }
+
+        RefreshBattleButton();
+    }
+
+    private void RemoveDisconnectedPlayers()
+    {
+        if (Slot0_Owner != PlayerRef.None &&
+            !Runner.ActivePlayers.Contains(Slot0_Owner))
         {
             Slot0_Owner = PlayerRef.None;
             Slot0_Ready = false;
-            Slot0_Nickname = "";
+            Slot0_Nickname = string.Empty;
         }
 
-        if (Slot1_Owner != PlayerRef.None && !Runner.ActivePlayers.Contains(Slot1_Owner))
+        if (Slot1_Owner != PlayerRef.None &&
+            !Runner.ActivePlayers.Contains(Slot1_Owner))
         {
             Slot1_Owner = PlayerRef.None;
             Slot1_Ready = false;
-            Slot1_Nickname = "";
+            Slot1_Nickname = string.Empty;
         }
 
-        if (Slot2_Owner != PlayerRef.None && !Runner.ActivePlayers.Contains(Slot2_Owner))
+        if (Slot2_Owner != PlayerRef.None &&
+            !Runner.ActivePlayers.Contains(Slot2_Owner))
         {
             Slot2_Owner = PlayerRef.None;
             Slot2_Ready = false;
-            Slot2_Nickname = "";
+            Slot2_Nickname = string.Empty;
         }
+    }
 
+    private void AssignNewPlayers()
+    {
         foreach (var player in Runner.ActivePlayers)
         {
-            if (Slot0_Owner == player || Slot1_Owner == player || Slot2_Owner == player)
+            if (Slot0_Owner == player ||
+                Slot1_Owner == player ||
+                Slot2_Owner == player)
+            {
                 continue;
+            }
 
             if (Slot0_Owner == PlayerRef.None)
             {
@@ -122,162 +159,198 @@ public class LobbyServerManager : NetworkBehaviour
         }
     }
 
-    public override void Render()
+    private void RefreshLobbyUI()
     {
-        foreach (var change in _changeDetector.DetectChanges(this))
-        {
-            switch (change)
-            {
-                case nameof(Slot0_Ready):
-                case nameof(Slot1_Ready):
-                case nameof(Slot2_Ready):
-                case nameof(Slot0_Owner):
-                case nameof(Slot1_Owner):
-                case nameof(Slot2_Owner):
-                case nameof(Slot0_Nickname):
-                case nameof(Slot1_Nickname):
-                case nameof(Slot2_Nickname):
-                    RefreshLobbyUI();
-                    break;
-            }
-        }
+        if (Runner == null)
+            return;
 
+        RefreshSlotUI(
+            0,
+            Slot0_Owner,
+            Slot0_Ready,
+            Slot0_Nickname);
+
+        RefreshSlotUI(
+            1,
+            Slot1_Owner,
+            Slot1_Ready,
+            Slot1_Nickname);
+
+        RefreshSlotUI(
+            2,
+            Slot2_Owner,
+            Slot2_Ready,
+            Slot2_Nickname);
+
+        RefreshLocalReadyButton();
         RefreshBattleButton();
     }
 
-    private void RefreshLobbyUI()
+    private void RefreshSlotUI(
+        int slotIndex,
+        PlayerRef owner,
+        bool isReady,
+        string nickname)
     {
-        if (Runner == null) return;
+        bool hasPlayer = owner != PlayerRef.None;
 
-        bool hasP0 = Slot0_Owner != PlayerRef.None;
-        if (slotPanels != null && slotPanels.Length > 0 && slotPanels[0] != null)
-            slotPanels[0].SetActive(hasP0);
-
-        if (hasP0)
+        if (IsValidIndex(slotPanels, slotIndex))
         {
-            if (Slot0_Owner == Runner.LocalPlayer && Slot0_Nickname != BackendManager.Instance.CurrentNickname)
-            {
-                RPC_SetNickname(0, BackendManager.Instance.CurrentNickname);
-            }
-
-            if (nicknameTexts != null && nicknameTexts.Length > 0 && nicknameTexts[0] != null)
-                nicknameTexts[0].text = string.IsNullOrEmpty(Slot0_Nickname) ? "Loading..." : Slot0_Nickname;
-
-            if (readyTexts != null && readyTexts.Length > 0 && readyTexts[0] != null)
-                readyTexts[0].text = Slot0_Ready ? "Ready!" : "Ready";
-
-            if (readyButtons != null && readyButtons.Length > 0 && readyButtons[0] != null)
-            {
-                readyButtons[0].colors = GetUpdatedButtonColors(Slot0_Ready);
-                readyButtons[0].interactable = Slot0_Owner == Runner.LocalPlayer;
-            }
-
-            SetReadyEffect(0, Slot0_Ready);
-
-            if (youIndicators != null && youIndicators.Length > 0 && youIndicators[0] != null)
-                youIndicators[0].SetActive(Slot0_Owner == Runner.LocalPlayer);
-        }
-        else
-        {
-            SetReadyEffect(0, false);
+            slotPanels[slotIndex].SetActive(hasPlayer);
         }
 
-        bool hasP1 = Slot1_Owner != PlayerRef.None;
-        if (slotPanels != null && slotPanels.Length > 1 && slotPanels[1] != null)
-            slotPanels[1].SetActive(hasP1);
+        SetReadyEffect(slotIndex, hasPlayer && isReady);
 
-        if (hasP1)
+        if (!hasPlayer)
         {
-            if (Slot1_Owner == Runner.LocalPlayer && Slot1_Nickname != BackendManager.Instance.CurrentNickname)
-            {
-                RPC_SetNickname(1, BackendManager.Instance.CurrentNickname);
-            }
-
-            if (nicknameTexts != null && nicknameTexts.Length > 1 && nicknameTexts[1] != null)
-                nicknameTexts[1].text = string.IsNullOrEmpty(Slot1_Nickname) ? "Loading..." : Slot1_Nickname;
-
-            if (readyTexts != null && readyTexts.Length > 1 && readyTexts[1] != null)
-                readyTexts[1].text = Slot1_Ready ? "Ready!" : "Ready";
-
-            if (readyButtons != null && readyButtons.Length > 1 && readyButtons[1] != null)
-            {
-                readyButtons[1].colors = GetUpdatedButtonColors(Slot1_Ready);
-                readyButtons[1].interactable = Slot1_Owner == Runner.LocalPlayer;
-            }
-
-            SetReadyEffect(1, Slot1_Ready);
-
-            if (youIndicators != null && youIndicators.Length > 1 && youIndicators[1] != null)
-                youIndicators[1].SetActive(Slot1_Owner == Runner.LocalPlayer);
-        }
-        else
-        {
-            SetReadyEffect(1, false);
+            SetYouIndicator(slotIndex, false);
+            return;
         }
 
-        bool hasP2 = Slot2_Owner != PlayerRef.None;
-        if (slotPanels != null && slotPanels.Length > 2 && slotPanels[2] != null)
-            slotPanels[2].SetActive(hasP2);
+        bool isLocalPlayer = owner == Runner.LocalPlayer;
 
-        if (hasP2)
+        if (isLocalPlayer &&
+            BackendManager.HasInstance &&
+            nickname != BackendManager.Instance.CurrentNickname)
         {
-            if (Slot2_Owner == Runner.LocalPlayer && Slot2_Nickname != BackendManager.Instance.CurrentNickname)
-            {
-                RPC_SetNickname(2, BackendManager.Instance.CurrentNickname);
-            }
-
-            if (nicknameTexts != null && nicknameTexts.Length > 2 && nicknameTexts[2] != null)
-                nicknameTexts[2].text = string.IsNullOrEmpty(Slot2_Nickname) ? "Loading..." : Slot2_Nickname;
-
-            if (readyTexts != null && readyTexts.Length > 2 && readyTexts[2] != null)
-                readyTexts[2].text = Slot2_Ready ? "Ready!" : "Ready";
-
-            if (readyButtons != null && readyButtons.Length > 2 && readyButtons[2] != null)
-            {
-                readyButtons[2].colors = GetUpdatedButtonColors(Slot2_Ready);
-                readyButtons[2].interactable = Slot2_Owner == Runner.LocalPlayer;
-            }
-
-            SetReadyEffect(2, Slot2_Ready);
-
-            if (youIndicators != null && youIndicators.Length > 2 && youIndicators[2] != null)
-                youIndicators[2].SetActive(Slot2_Owner == Runner.LocalPlayer);
+            RPC_SetNickname(
+                slotIndex,
+                BackendManager.Instance.CurrentNickname);
         }
-        else
+
+        if (IsValidIndex(nicknameTexts, slotIndex))
         {
-            SetReadyEffect(2, false);
+            nicknameTexts[slotIndex].text =
+                string.IsNullOrEmpty(nickname)
+                    ? "Loading..."
+                    : nickname;
+        }
+
+        SetYouIndicator(slotIndex, isLocalPlayer);
+    }
+
+    private void RefreshLocalReadyButton()
+    {
+        int localSlotIndex = GetLocalPlayerSlotIndex();
+        bool hasLocalSlot = localSlotIndex >= 0;
+
+        if (localReadyButton != null)
+        {
+            localReadyButton.interactable = hasLocalSlot;
+        }
+
+        if (localReadyButtonText != null)
+        {
+            bool isReady =
+                hasLocalSlot && GetSlotReady(localSlotIndex);
+
+            localReadyButtonText.text =
+                isReady ? "Cancel" : "Ready";
         }
     }
 
     private void RefreshBattleButton()
     {
-        if (battleButton != null && Runner != null)
+        if (battleButton == null || Runner == null)
+            return;
+
+        battleButton.gameObject.SetActive(HasStateAuthority);
+
+        if (!HasStateAuthority)
+            return;
+
+        int totalActivePlayers = Runner.ActivePlayers.Count();
+        int totalReadyPlayers = 0;
+
+        if (Slot0_Owner != PlayerRef.None && Slot0_Ready)
+            totalReadyPlayers++;
+
+        if (Slot1_Owner != PlayerRef.None && Slot1_Ready)
+            totalReadyPlayers++;
+
+        if (Slot2_Owner != PlayerRef.None && Slot2_Ready)
+            totalReadyPlayers++;
+
+        battleButton.interactable =
+            totalActivePlayers > 0 &&
+            totalReadyPlayers >= totalActivePlayers;
+    }
+
+    public void OnClickLocalReadyButton()
+    {
+        if (Runner == null)
+            return;
+
+        int localSlotIndex = GetLocalPlayerSlotIndex();
+
+        if (localSlotIndex < 0)
         {
-            battleButton.gameObject.SetActive(HasStateAuthority);
+            Debug.LogWarning(
+                "[Lobby] Local player slot was not found.");
+            return;
+        }
 
-            if (HasStateAuthority)
-            {
-                int totalActivePlayers = Runner.ActivePlayers.Count();
-                int totalReadyPlayers = 0;
+        bool nextReadyState =
+            !GetSlotReady(localSlotIndex);
 
-                if (Slot0_Owner != PlayerRef.None && Slot0_Ready) totalReadyPlayers++;
-                if (Slot1_Owner != PlayerRef.None && Slot1_Ready) totalReadyPlayers++;
-                if (Slot2_Owner != PlayerRef.None && Slot2_Ready) totalReadyPlayers++;
+        RPC_ToggleReady(
+            localSlotIndex,
+            nextReadyState);
+    }
 
-                battleButton.interactable = totalReadyPlayers >= totalActivePlayers;
-            }
+    private int GetLocalPlayerSlotIndex()
+    {
+        if (Runner == null)
+            return -1;
+
+        if (Slot0_Owner == Runner.LocalPlayer)
+            return 0;
+
+        if (Slot1_Owner == Runner.LocalPlayer)
+            return 1;
+
+        if (Slot2_Owner == Runner.LocalPlayer)
+            return 2;
+
+        return -1;
+    }
+
+    private bool GetSlotReady(int slotIndex)
+    {
+        switch (slotIndex)
+        {
+            case 0:
+                return Slot0_Ready;
+
+            case 1:
+                return Slot1_Ready;
+
+            case 2:
+                return Slot2_Ready;
+
+            default:
+                return false;
         }
     }
 
-    private void SetReadyEffect(int slotIndex, bool isReady)
+    private void SetReadyEffect(
+        int slotIndex,
+        bool isReady)
     {
-        if (readyEffects == null || slotIndex < 0 || slotIndex >= readyEffects.Length)
-            return;
-
-        if (readyEffects[slotIndex] == null)
+        if (!IsValidIndex(readyEffects, slotIndex))
             return;
 
         readyEffects[slotIndex].SetActive(isReady);
+    }
+
+    private void SetYouIndicator(
+        int slotIndex,
+        bool isLocalPlayer)
+    {
+        if (!IsValidIndex(youIndicators, slotIndex))
+            return;
+
+        youIndicators[slotIndex].SetActive(isLocalPlayer);
     }
 
     private void HideAllReadyEffects()
@@ -288,68 +361,81 @@ public class LobbyServerManager : NetworkBehaviour
         for (int i = 0; i < readyEffects.Length; i++)
         {
             if (readyEffects[i] != null)
+            {
                 readyEffects[i].SetActive(false);
+            }
         }
     }
 
-    private ColorBlock GetUpdatedButtonColors(bool isReady)
+    private bool IsValidIndex(
+        GameObject[] array,
+        int index)
     {
-        ColorBlock colors = ColorBlock.defaultColorBlock;
-
-        if (readyButtons != null && readyButtons.Length > 0 && readyButtons[0] != null)
-        {
-            colors = readyButtons[0].colors;
-        }
-
-        colors.normalColor = Color.white;
-        colors.highlightedColor = Color.white;
-        colors.pressedColor = new Color(0.85f, 0.85f, 0.85f, 1f);
-        colors.selectedColor = Color.white;
-        colors.disabledColor = new Color(1f, 1f, 1f, 0.4f);
-
-        return colors;
+        return array != null &&
+               index >= 0 &&
+               index < array.Length &&
+               array[index] != null;
     }
 
-    public void OnClickReadySlotButton(int slotIndex)
+    private bool IsValidIndex(
+        Text[] array,
+        int index)
     {
-        if (slotIndex == 0 && Slot0_Owner == Runner.LocalPlayer) RPC_ToggleReady(0, !Slot0_Ready);
-        if (slotIndex == 1 && Slot1_Owner == Runner.LocalPlayer) RPC_ToggleReady(1, !Slot1_Ready);
-        if (slotIndex == 2 && Slot2_Owner == Runner.LocalPlayer) RPC_ToggleReady(2, !Slot2_Ready);
+        return array != null &&
+               index >= 0 &&
+               index < array.Length &&
+               array[index] != null;
     }
 
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    private void RPC_ToggleReady(int slotIndex, bool nextReadyState)
+    private void RPC_ToggleReady(
+        int slotIndex,
+        bool nextReadyState)
     {
-        if (slotIndex == 0) Slot0_Ready = nextReadyState;
-        if (slotIndex == 1) Slot1_Ready = nextReadyState;
-        if (slotIndex == 2) Slot2_Ready = nextReadyState;
+        if (slotIndex == 0)
+            Slot0_Ready = nextReadyState;
+
+        if (slotIndex == 1)
+            Slot1_Ready = nextReadyState;
+
+        if (slotIndex == 2)
+            Slot2_Ready = nextReadyState;
     }
 
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    private void RPC_SetNickname(int slotIndex, string nickname)
+    private void RPC_SetNickname(
+        int slotIndex,
+        string nickname)
     {
-        if (slotIndex == 0) Slot0_Nickname = nickname;
-        if (slotIndex == 1) Slot1_Nickname = nickname;
-        if (slotIndex == 2) Slot2_Nickname = nickname;
+        if (slotIndex == 0)
+            Slot0_Nickname = nickname;
+
+        if (slotIndex == 1)
+            Slot1_Nickname = nickname;
+
+        if (slotIndex == 2)
+            Slot2_Nickname = nickname;
     }
 
     public void OnClickBattleButton()
     {
-        if (!HasStateAuthority || isChangingScene) return;
+        if (!HasStateAuthority || isChangingScene)
+            return;
 
         isChangingScene = true;
 
-        Debug.Log("모든 인원 준비 완료. 보스 씬으로 이동합니다.");
+        Debug.Log(
+            "[Lobby] All players are ready. Starting battle.");
 
-        if (Runner != null && Runner.SessionInfo != null)
+        if (Runner != null &&
+            Runner.SessionInfo != null)
         {
             Runner.SessionInfo.IsVisible = false;
             Runner.SessionInfo.IsOpen = false;
-
-            Debug.Log("[Lobby] 방을 닫았습니다. 더 이상 새 유저가 진입할 수 없습니다.");
         }
 
-        GameProgressionManager.Instance.StartFirstLevel(Runner);
+        GameProgressionManager.Instance
+            .StartFirstLevel(Runner);
     }
 
     public async void OnClickBackButton()
@@ -361,52 +447,60 @@ public class LobbyServerManager : NetworkBehaviour
 
         string sceneName = titleSceneName;
 
-        Debug.Log("[Lobby] Back 버튼 클릭. 로비를 종료하고 타이틀로 이동합니다.");
-
         if (Runner != null)
         {
-            Debug.Log("[Lobby] Runner Shutdown 시작");
             await Runner.Shutdown();
-            Debug.Log("[Lobby] Runner Shutdown 완료");
         }
 
         if (string.IsNullOrEmpty(sceneName))
         {
-            Debug.LogError("[Lobby] Title Scene Name이 비어 있습니다.");
+            Debug.LogError(
+                "[Lobby] Title scene name is empty.");
             return;
         }
 
-        Debug.Log("[Lobby] 타이틀 씬 이동: " + sceneName);
         SceneManager.LoadScene(sceneName);
     }
 
     private void ShowLobbyCharacters()
     {
-        if (lobbyCharacters == null || lobbyCharacters.Length == 0) return;
+        if (lobbyCharacters == null)
+            return;
 
-        for (int i = 0; i < lobbyCharacters.Length; i++)
+        for (int i = 0;
+             i < lobbyCharacters.Length;
+             i++)
         {
             if (lobbyCharacters[i] != null)
+            {
                 lobbyCharacters[i].SetActive(true);
+            }
         }
     }
 
     private void ShowWarningMessage(string message)
     {
-        if (warningMessageText == null) return;
+        if (warningMessageText == null)
+            return;
 
         if (warningMessageCoroutine != null)
+        {
             StopCoroutine(warningMessageCoroutine);
+        }
 
-        warningMessageCoroutine = StartCoroutine(ShowWarningMessageRoutine(message));
+        warningMessageCoroutine =
+            StartCoroutine(
+                ShowWarningMessageRoutine(message));
     }
 
-    private IEnumerator ShowWarningMessageRoutine(string message)
+    private IEnumerator ShowWarningMessageRoutine(
+        string message)
     {
         warningMessageText.gameObject.SetActive(true);
         warningMessageText.text = message;
 
-        yield return new WaitForSeconds(warningMessageDuration);
+        yield return new WaitForSeconds(
+            warningMessageDuration);
 
         HideWarningMessage();
     }
@@ -414,6 +508,8 @@ public class LobbyServerManager : NetworkBehaviour
     private void HideWarningMessage()
     {
         if (warningMessageText != null)
+        {
             warningMessageText.gameObject.SetActive(false);
+        }
     }
 }
