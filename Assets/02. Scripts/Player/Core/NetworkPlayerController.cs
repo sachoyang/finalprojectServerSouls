@@ -90,8 +90,6 @@ public partial class NetworkPlayerController : NetworkBehaviour
     [SerializeField] private Camera viewCamera;
 
     [Header("Movement")]
-    //루트 모션 용 플레이어 스케일 비율 추가
-    [SerializeField] private float rootMotionDistanceMultiplier = 1.8f;
     // 일반 이동, 달리기, 구르기, 다운 후 기어가기 속도.
     [SerializeField] private float walkSpeed = 2.6f;
     [SerializeField] private float runSpeed = 4.8f;

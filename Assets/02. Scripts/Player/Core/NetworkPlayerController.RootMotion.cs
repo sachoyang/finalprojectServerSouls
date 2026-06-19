@@ -133,8 +133,6 @@ public partial class NetworkPlayerController
 
     private void ApplyPlanarRootMotionDelta(Vector3 planarDelta, Vector3 moveDirection, float rotationSpeedOverride, bool applyGravity)
 {
-    planarDelta *= rootMotionDistanceMultiplier;
-
     if (Runner == null || Runner.DeltaTime <= 0f || planarDelta.sqrMagnitude <= 0.000001f)
     {
         return;

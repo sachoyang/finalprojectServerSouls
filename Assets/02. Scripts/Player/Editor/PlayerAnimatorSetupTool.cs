@@ -384,6 +384,7 @@ public static class PlayerAnimatorSetupTool
         AnimatorState crawlingState = EnsureState(hitAndDeathMachine, "Crawling", "Assets/04. Images/Animation/Crawling.fbx", new Vector3(740f, 80f, 0f), string.Empty);
         EnsureActionBehaviour(impactState, PlayerActionLockType.Impact, false);
         EnsureActionBehaviour(parryImpactState, PlayerActionLockType.Impact, false, enablesInvincibility: true);
+        EnsureCrawlingCapeResetBehaviour(crawlingState);
         hitAndDeathMachine.defaultState = impactState;
 
         EnsureAnyStateTriggerTransition(root, impactState, Impact);
@@ -801,6 +802,26 @@ public static class PlayerAnimatorSetupTool
             enablesParryGuard,
             preserveParryGuard: !createdBehaviour,
             shouldEnableInvincibility: enablesInvincibility);
+        EditorUtility.SetDirty(behaviour);
+    }
+
+    private static void EnsureCrawlingCapeResetBehaviour(AnimatorState state)
+    {
+        if (state == null)
+        {
+            return;
+        }
+
+        foreach (StateMachineBehaviour existing in state.behaviours)
+        {
+            if (existing is CrawlingCapeResetStateBehaviour)
+            {
+                return;
+            }
+        }
+
+        CrawlingCapeResetStateBehaviour behaviour =
+            state.AddStateMachineBehaviour<CrawlingCapeResetStateBehaviour>();
         EditorUtility.SetDirty(behaviour);
     }
 

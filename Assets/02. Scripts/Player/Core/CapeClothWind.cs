@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -54,13 +55,8 @@ public sealed class CapeClothWind : MonoBehaviour
     [SerializeField] private float deadWorldVelocityScale;
     [Range(0f, 1f)]
     [SerializeField] private float deadWorldAccelerationScale;
-    [SerializeField] private bool resetInvertedCapeWhileDead = true;
-    [Min(0.05f)]
-    [SerializeField] private float deadFlipCheckInterval = 0.2f;
     [Min(0f)]
-    [SerializeField] private float deadFrontResetDistance = 0.05f;
-    [Min(0f)]
-    [SerializeField] private float deadFlipCheckDelay = 0.5f;
+    [SerializeField] private float crawlingResetDelay = 0.1f;
 
     private Vector3 _lastPosition;
     private Vector3 _currentAcceleration;
@@ -70,7 +66,9 @@ public sealed class CapeClothWind : MonoBehaviour
     private bool _wasDead;
     private float _aliveWorldVelocityScale;
     private float _aliveWorldAccelerationScale;
-    private float _nextDeadFlipCheckTime;
+    private bool _hasResetForCurrentDeath;
+    private Coroutine _crawlingResetRoutine;
+    private bool _clothDisabledForCrawlingReset;
 
     private void Reset()
     {
@@ -122,12 +120,17 @@ public sealed class CapeClothWind : MonoBehaviour
         bool isDead = playerStats != null && playerStats.IsDead;
         if (isDead != _wasDead)
         {
+            if (!isDead)
+            {
+                CancelCrawlingReset();
+            }
+
             _wasDead = isDead;
             _currentAcceleration = Vector3.zero;
             _smoothVelocity = Vector3.zero;
             ApplyWorldMotionTransfer(isDead);
             targetCloth.ClearTransformMotion();
-            _nextDeadFlipCheckTime = Time.time + deadFlipCheckDelay;
+            _hasResetForCurrentDeath = false;
         }
 
         if (isDead)
@@ -139,7 +142,6 @@ public sealed class CapeClothWind : MonoBehaviour
                 ? Mathf.Min(deadVelocity.magnitude, maximumMeasuredSpeed)
                 : 0f;
             ApplyDeadState(deltaTime, deadSpeed);
-            ResetInvertedDeadCape(currentPosition);
             return;
         }
 
@@ -218,6 +220,8 @@ public sealed class CapeClothWind : MonoBehaviour
 
     private void OnDisable()
     {
+        CancelCrawlingReset();
+
         if (targetCloth != null)
         {
             targetCloth.externalAcceleration = Vector3.zero;
@@ -289,66 +293,63 @@ public sealed class CapeClothWind : MonoBehaviour
             : _aliveWorldAccelerationScale;
     }
 
-    private void ResetInvertedDeadCape(Vector3 playerPosition)
+    public void ResetForCrawlingState()
     {
-        if (!resetInvertedCapeWhileDead || Time.time < _nextDeadFlipCheckTime)
+        if (_hasResetForCurrentDeath || playerStats == null || !playerStats.IsDead)
         {
             return;
         }
 
-        _nextDeadFlipCheckTime = Time.time + deadFlipCheckInterval;
-        Vector3 facingDirection = Vector3.ProjectOnPlane(movementRoot.forward, Vector3.up).normalized;
-        if (facingDirection.sqrMagnitude <= 0.0001f)
+        _hasResetForCurrentDeath = true;
+        if (_crawlingResetRoutine != null)
         {
-            return;
+            StopCoroutine(_crawlingResetRoutine);
+            _crawlingResetRoutine = null;
         }
 
-        Vector3[] vertices = targetCloth.vertices;
-        ClothSkinningCoefficient[] coefficients = targetCloth.coefficients;
-        Vector3 capeCenter = Vector3.zero;
-        int vertexCount = 0;
-        int count = Mathf.Min(vertices.Length, coefficients.Length);
-        for (int i = 0; i < count; i++)
-        {
-            if (coefficients[i].maxDistance <= 0.0001f)
-            {
-                continue;
-            }
-
-            Vector3 worldPosition = targetCloth.transform.TransformPoint(vertices[i]);
-            if (!IsFinite(worldPosition))
-            {
-                ResetClothSimulation();
-                return;
-            }
-
-            capeCenter += worldPosition;
-            vertexCount++;
-        }
-
-        if (vertexCount == 0)
-        {
-            return;
-        }
-
-        capeCenter /= vertexCount;
-        float distanceInFront = Vector3.Dot(capeCenter - playerPosition, facingDirection);
-        if (distanceInFront > deadFrontResetDistance)
-        {
-            ResetClothSimulation();
-        }
+        _crawlingResetRoutine = StartCoroutine(ResetClothForCrawlingPose());
     }
 
-    private void ResetClothSimulation()
+    private IEnumerator ResetClothForCrawlingPose()
     {
+        yield return new WaitForSeconds(crawlingResetDelay);
+
+        if (playerStats == null || !playerStats.IsDead)
+        {
+            _crawlingResetRoutine = null;
+            yield break;
+        }
+
+        _currentAcceleration = Vector3.zero;
+        _smoothVelocity = Vector3.zero;
+        targetCloth.externalAcceleration = Vector3.zero;
+
+        _clothDisabledForCrawlingReset = true;
         targetCloth.enabled = false;
+        yield return new WaitForEndOfFrame();
+
         targetCloth.enabled = true;
+        _clothDisabledForCrawlingReset = false;
         targetCloth.ClearTransformMotion();
         ApplyWorldMotionTransfer(true);
         targetCloth.externalAcceleration = Vector3.zero;
-        _currentAcceleration = Vector3.zero;
-        _smoothVelocity = Vector3.zero;
-        _nextDeadFlipCheckTime = Time.time + deadFlipCheckDelay;
+        _crawlingResetRoutine = null;
+    }
+
+    private void CancelCrawlingReset()
+    {
+        if (_crawlingResetRoutine != null)
+        {
+            StopCoroutine(_crawlingResetRoutine);
+            _crawlingResetRoutine = null;
+        }
+
+        if (_clothDisabledForCrawlingReset && targetCloth != null)
+        {
+            targetCloth.enabled = true;
+            targetCloth.ClearTransformMotion();
+            _clothDisabledForCrawlingReset = false;
+        }
     }
 
     private static bool IsFinite(float value)
