@@ -26,8 +26,6 @@ public class ThirdPersonCameraController : MonoBehaviour
 
     [Header("Rotation")]
     [SerializeField] private float mouseSensitivity = 4f;
-    [SerializeField] private bool normalizeMouseDeltaByScreenSize = true;
-    [SerializeField] private Vector2 referenceMouseScreenSize = new Vector2(1920f, 1080f);
     [SerializeField] private float maxMouseDelta = 8f;
     [SerializeField] private float startPitch = 15f;
     [SerializeField] private float minPitch = -20f;
@@ -145,7 +143,9 @@ public class ThirdPersonCameraController : MonoBehaviour
 
         float mouseX = Input.GetAxisRaw("Mouse X");
         float mouseY = Input.GetAxisRaw("Mouse Y");
-        NormalizeMouseDeltaByScreenSize(ref mouseX, ref mouseY);
+        float displayScale = GetGameViewDisplayScale();
+        mouseX *= displayScale;
+        mouseY *= displayScale;
         mouseX = Mathf.Clamp(mouseX, -maxMouseDelta, maxMouseDelta);
         mouseY = Mathf.Clamp(mouseY, -maxMouseDelta, maxMouseDelta);
         float sensitivityScale = GetObstructedRotationScale();
@@ -155,20 +155,29 @@ public class ThirdPersonCameraController : MonoBehaviour
         _targetPitch = Mathf.Clamp(_targetPitch, minPitch, maxPitch);
     }
 
-    private void NormalizeMouseDeltaByScreenSize(ref float mouseX, ref float mouseY)
+    private static float GetGameViewDisplayScale()
     {
-        if (!normalizeMouseDeltaByScreenSize)
+#if UNITY_EDITOR
+        UnityEditor.EditorWindow focusedWindow = UnityEditor.EditorWindow.focusedWindow;
+        if (focusedWindow == null || focusedWindow.GetType().Name != "GameView")
         {
-            return;
+            return 1f;
         }
 
-        float screenWidth = Mathf.Max(1f, Screen.width);
-        float screenHeight = Mathf.Max(1f, Screen.height);
-        float referenceWidth = Mathf.Max(1f, referenceMouseScreenSize.x);
-        float referenceHeight = Mathf.Max(1f, referenceMouseScreenSize.y);
+        Rect gameViewRect = focusedWindow.position;
+        float renderedWidth = Mathf.Max(1f, Screen.width);
+        float renderedHeight = Mathf.Max(1f, Screen.height);
+        float visibleWidth = Mathf.Max(1f, gameViewRect.width);
+        float visibleHeight = Mathf.Max(1f, gameViewRect.height - 22f);
 
-        mouseX *= referenceWidth / screenWidth;
-        mouseY *= referenceHeight / screenHeight;
+        // A fixed-resolution Game View remaps mouse movement through its display zoom.
+        return Mathf.Clamp(
+            Mathf.Min(visibleWidth / renderedWidth, visibleHeight / renderedHeight),
+            0.1f,
+            4f);
+#else
+        return 1f;
+#endif
     }
 
     private float GetObstructedRotationScale()
