@@ -329,13 +329,8 @@ public class ThirdPersonCameraController : MonoBehaviour
         float castDistance = Mathf.Max(0f, desiredDistance - collisionFocusOffset);
         float targetDistance = desiredDistance;
         RaycastHit hit = default;
-        bool hasObstruction = castDistance > 0.0001f && Physics.Raycast(
-                castOrigin,
-                direction,
-                out hit,
-                castDistance,
-                obstructionLayers,
-                QueryTriggerInteraction.Ignore);
+        bool hasObstruction = castDistance > 0.0001f &&
+            TryGetNearestCameraObstruction(castOrigin, direction, castDistance, out hit);
 
         if (hasObstruction)
         {
@@ -365,6 +360,48 @@ public class ThirdPersonCameraController : MonoBehaviour
             smoothTime);
 
         return focusPoint + direction * _currentCollisionDistance;
+    }
+
+    private bool TryGetNearestCameraObstruction(
+        Vector3 origin,
+        Vector3 direction,
+        float maxDistance,
+        out RaycastHit nearestHit)
+    {
+        nearestHit = default;
+        RaycastHit[] hits = Physics.RaycastAll(
+            origin,
+            direction,
+            maxDistance,
+            obstructionLayers,
+            QueryTriggerInteraction.Ignore);
+
+        float nearestDistance = float.MaxValue;
+        bool found = false;
+        for (int i = 0; i < hits.Length; i++)
+        {
+            RaycastHit candidate = hits[i];
+            if (candidate.collider == null || IsTargetCollider(candidate.collider))
+            {
+                continue;
+            }
+
+            if (candidate.distance >= nearestDistance)
+            {
+                continue;
+            }
+
+            nearestDistance = candidate.distance;
+            nearestHit = candidate;
+            found = true;
+        }
+
+        return found;
+    }
+
+    private bool IsTargetCollider(Collider candidate)
+    {
+        return target != null && candidate.transform.IsChildOf(target);
     }
 
     private Quaternion GetClampedLockOnRotation(Vector3 lookDirection)
