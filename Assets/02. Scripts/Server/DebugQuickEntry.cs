@@ -180,6 +180,13 @@ public class DebugQuickEntry : MonoBehaviour
             _status = $"접속 실패: {result.ShutdownReason}";
             Debug.LogError($"[DebugQuickEntry] 시작 실패: {result.ShutdownReason}");
             _isConnecting = false;
+
+            if (_runner != null && !_runner.IsShutdown)
+            {
+                await _runner.Shutdown();
+            }
+
+            _runner = null;
             Destroy(runnerGO);
             return;
         }
