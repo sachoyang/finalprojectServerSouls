@@ -179,6 +179,34 @@ public partial class NetworkPlayerController
         return TurnAnimationActive;
     }
 
+    private bool IsTurnActionCancelWindowOpen()
+    {
+        if (!TurnAnimationActive || !TurnAnimationStateEntered || animator == null)
+        {
+            return false;
+        }
+
+        AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
+        if (!IsTurnState(state.shortNameHash) && animator.IsInTransition(0))
+        {
+            AnimatorStateInfo nextState = animator.GetNextAnimatorStateInfo(0);
+            if (IsTurnState(nextState.shortNameHash))
+            {
+                state = nextState;
+            }
+        }
+
+        if (!IsTurnState(state.shortNameHash))
+        {
+            return false;
+        }
+
+        float cancelTime = TurnAnimationFast
+            ? fastTurnActionCancelNormalizedTime
+            : turnActionCancelNormalizedTime;
+        return state.normalizedTime >= cancelTime;
+    }
+
     public void BeginTurnAnimationState()
     {
         if (!HasStateAuthority || !TurnAnimationActive)
@@ -501,6 +529,7 @@ public partial class NetworkPlayerController
         TurnResumeCurrentSpeed = 0f;
         TurnResumeMoveSpeedBlend = 0f;
         TurnResumeLockMove = LockMoveIdle;
+        ClearTurnActionBuffer();
         RollDirection = Vector3.zero;
         if (!IsParryActive())
         {

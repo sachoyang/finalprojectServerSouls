@@ -110,6 +110,8 @@ public partial class NetworkPlayerController : NetworkBehaviour
     [SerializeField] private float turnInputRotationSpeed = 360f;
     [SerializeField, Range(0f, 1f)] private float fastTurnInputMoveRatio = 0.15f;
     [SerializeField] private float fastTurnInputRotationSpeed = 220f;
+    [SerializeField, Range(0f, 1f)] private float turnActionCancelNormalizedTime = 0.4f;
+    [SerializeField, Range(0f, 1f)] private float fastTurnActionCancelNormalizedTime = 0.25f;
 
     [Header("Action Locks")]
     // 점프 높이와 전체 체공 시간을 기준으로 초기 속도와 중력을 계산해 애니메이션 타이밍에 맞춘다.
@@ -168,6 +170,9 @@ public partial class NetworkPlayerController : NetworkBehaviour
     [Networked] private float TurnResumeCurrentSpeed { get; set; }
     [Networked] private float TurnResumeMoveSpeedBlend { get; set; }
     [Networked] private byte TurnResumeLockMove { get; set; }
+    [Networked] private byte TurnQueuedAction { get; set; }
+    [Networked] private int TurnQueuedActionId { get; set; }
+    [Networked] private Vector3 TurnQueuedDirection { get; set; }
     [Networked] private Vector3 ForwardJumpDirection { get; set; }
 
     private NetworkCharacterController _networkCharacterController;

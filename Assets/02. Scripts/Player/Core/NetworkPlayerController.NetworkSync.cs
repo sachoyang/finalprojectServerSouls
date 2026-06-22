@@ -71,6 +71,9 @@ public partial class NetworkPlayerController
             TurnResumeCurrentSpeed = 0f;
             TurnResumeMoveSpeedBlend = 0f;
             TurnResumeLockMove = LockMoveIdle;
+            TurnQueuedAction = ActionNone;
+            TurnQueuedActionId = 0;
+            TurnQueuedDirection = Vector3.zero;
             RollDirection = Vector3.zero;
             ForwardJumpDirection = Vector3.zero;
             ParryGuardActive = false;

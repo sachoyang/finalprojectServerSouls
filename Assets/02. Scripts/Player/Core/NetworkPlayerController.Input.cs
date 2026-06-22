@@ -34,6 +34,7 @@ public partial class NetworkPlayerController
         // HP가 0이 되면 전투 입력은 막고 느린 크롤링 이동만 허용한다.
         if (_playerStats != null && _playerStats.IsDead)
         {
+            ClearTurnActionBuffer();
             HandleCrawlingMovement();
             return;
         }
@@ -66,6 +67,7 @@ public partial class NetworkPlayerController
                             ShiftHoldTime >= shiftHoldThreshold &&
                             (_playerStats == null || _playerStats.HasStamina(turnRunStaminaCost));
                 UpdateTurnResumeState(turnDesiredMove, resumeRun);
+                TryBufferTurnAction(turnData, turnDesiredMove);
                 WasShiftHeld = turnShiftHeld;
             }
             else
@@ -75,12 +77,19 @@ public partial class NetworkPlayerController
                 ShiftHoldTime = 0f;
             }
 
+            if (IsTurnActionCancelWindowOpen())
+            {
+                TryExecuteTurnActionBuffer();
+            }
+
             CurrentMoveSpeed = UpdateCurrentMoveSpeed(0f, true);
             ApplyTurnRootMotion();
             ApplyTurnInputControl(turnDesiredMove, resumeRun);
             UpdateTurnAnimatorResumeParameters();
             return;
         }
+
+        TryExecuteTurnActionBuffer();
 
         if (!GetInput(out NetworkInputData data))
         {
@@ -301,6 +310,91 @@ public partial class NetworkPlayerController
         {
             ShiftHoldTime = 0f;
         }
+    }
+
+    private void TryBufferTurnAction(NetworkInputData data, Vector3 desiredMove)
+    {
+        bool jumpPressed = data.buttons.IsSet(NetworkInputData.JUMP);
+        bool attackPressed = data.buttons.IsSet(NetworkInputData.MOUSEBUTTON0);
+        bool parryPressed = data.buttons.IsSet(NetworkInputData.MOUSEBUTTON1);
+        if ((!jumpPressed && !attackPressed && !parryPressed) ||
+            HasControlLock(PlayerControlLockFlags.Action) ||
+            !TryConsumeInputAction(data.actionId))
+        {
+            return;
+        }
+
+        TurnQueuedAction = jumpPressed
+            ? ActionJump
+            : attackPressed
+                ? ActionAttack
+                : ActionParry;
+        TurnQueuedActionId = data.actionId;
+        TurnQueuedDirection = desiredMove;
+    }
+
+    private bool TryExecuteTurnActionBuffer()
+    {
+        byte queuedAction = TurnQueuedAction;
+        if (queuedAction == ActionNone)
+        {
+            return false;
+        }
+
+        int actionId = TurnQueuedActionId;
+        Vector3 direction = TurnQueuedDirection;
+        ClearTurnActionBuffer();
+
+        if (HasControlLock(PlayerControlLockFlags.Action) ||
+            IsActionAnimationLocked ||
+            IsRollRootMotionActive())
+        {
+            return false;
+        }
+
+        if (queuedAction == ActionJump)
+        {
+            if (!_networkCharacterController.Grounded || !TrySpendJumpStamina())
+            {
+                return false;
+            }
+
+            bool useForwardJump = ShouldUseForwardJumpAnimation();
+            ForwardJumpDirection = useForwardJump
+                ? (direction.sqrMagnitude > 0.001f
+                    ? direction.normalized
+                    : Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized)
+                : Vector3.zero;
+            ApplyJumpPhysics(useForwardJump);
+            StartAction(useForwardJump ? ActionJumpForward : ActionJump, actionId);
+            return true;
+        }
+
+        if (queuedAction == ActionAttack)
+        {
+            if (!TrySpendBasicAttackStamina())
+            {
+                return false;
+            }
+
+            StartBasicAttack(GetOpeningBasicAttackComboIndex(), actionId);
+            return true;
+        }
+
+        if (queuedAction == ActionParry && TrySpendParryStamina())
+        {
+            StartAction(ActionParry, actionId);
+            return true;
+        }
+
+        return false;
+    }
+
+    private void ClearTurnActionBuffer()
+    {
+        TurnQueuedAction = ActionNone;
+        TurnQueuedActionId = 0;
+        TurnQueuedDirection = Vector3.zero;
     }
 
     private void ProcessLockOnInput(NetworkInputData data)
