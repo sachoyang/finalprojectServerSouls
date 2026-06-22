@@ -2691,7 +2691,7 @@ MonoBehaviour:
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
   m_Interactable: 1
-  m_TargetGraphic: {fileID: 0}
+  m_TargetGraphic: {fileID: 1232998115}
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
@@ -3558,7 +3558,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   bossPool:
-  - {fileID: 11400000, guid: 1aae007690a8bfc49b560e4dd6f7b61d, type: 2}
+  - {fileID: 11400000, guid: d7e46c98e98aec845b9c6865f2dec211, type: 2}
   - {fileID: 11400000, guid: ad6568c9a99aefb4d8821e3c31f42f1d, type: 2}
 --- !u!4 &1683641379
 Transform:
