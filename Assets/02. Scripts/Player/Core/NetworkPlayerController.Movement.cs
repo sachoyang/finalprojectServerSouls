@@ -287,6 +287,47 @@ public partial class NetworkPlayerController
         LockOnMoveNetworked = TurnResumeLockMove;
     }
 
+    private void ApplyTurnInputControl(Vector3 desiredMove, bool isRunning)
+    {
+        if (desiredMove.sqrMagnitude <= 0.001f)
+        {
+            return;
+        }
+
+        Vector3 moveDirection = Vector3.ProjectOnPlane(desiredMove, Vector3.up).normalized;
+        if (moveDirection.sqrMagnitude <= 0.001f)
+        {
+            return;
+        }
+
+        float inputMoveRatio = TurnAnimationFast ? fastTurnInputMoveRatio : turnInputMoveRatio;
+        if (inputMoveRatio <= 0f)
+        {
+            return;
+        }
+
+        float baseSpeed = isRunning ? runSpeed : walkSpeed;
+        float controlledSpeed = baseSpeed * GetMoveSpeedMultiplier() * inputMoveRatio;
+        _networkCharacterController.maxSpeed = controlledSpeed;
+        _networkCharacterController.acceleration = movementAcceleration;
+        _networkCharacterController.braking = movementBraking;
+        _networkCharacterController.rotationSpeed = 0f;
+        _networkCharacterController.Move(moveDirection);
+
+        Vector3 steeringDirection = IsLockOnNetworked
+            ? GetLockOnFacingDirection()
+            : moveDirection;
+        float inputRotationSpeed = TurnAnimationFast
+            ? fastTurnInputRotationSpeed
+            : turnInputRotationSpeed;
+        RotateTowards(steeringDirection, inputRotationSpeed);
+
+        if (!IsLockOnNetworked)
+        {
+            TurnTargetDirection = moveDirection;
+        }
+    }
+
     private bool ConsumeTurnResumeSpeedSnap(float targetSpeed, Vector3 moveDirection)
     {
         if (!TurnResumeSpeedPending)

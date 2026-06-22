@@ -3417,6 +3417,10 @@ MonoBehaviour:
   turnRootMotionFallbackRotationSpeed: 360
   turnAnimationYawDirection: 1
   turnStartSpeedRatio: 0.75
+  turnInputMoveRatio: 0.35
+  turnInputRotationSpeed: 360
+  fastTurnInputMoveRatio: 0.15
+  fastTurnInputRotationSpeed: 220
   jumpHeight: 1.15
   jumpAirTime: 0.68
   forwardJumpHeight: 1.15
