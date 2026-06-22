@@ -1,5 +1,36 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &16310464616539291
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6070195392956614716}
+  m_Layer: 0
+  m_Name: LookAtGuide
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6070195392956614716
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 16310464616539291}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.32650557, y: -0.6272114, z: 0.32650557, w: 0.6272114}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7649782068898426539}
+  m_LocalEulerAnglesHint: {x: 55, y: -90, z: 0}
 --- !u!1 &171109292699178666
 GameObject:
   m_ObjectHideFlags: 0
@@ -804,6 +835,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   anim: {fileID: 2983007813633150964}
+  headBone: {fileID: 7649782068898426539}
+  lookAtGuide: {fileID: 6070195392956614716}
   fireBreath: {fileID: 0}
   mouthHitbox: {fileID: 2246489514440141446}
   leftClawHitbox: {fileID: 8621442443537035572}
@@ -2331,6 +2364,7 @@ Transform:
   - {fileID: 6413430424534395655}
   - {fileID: 40553781022966590}
   - {fileID: 3809209794358930184}
+  - {fileID: 6070195392956614716}
   m_Father: {fileID: 695492420836495950}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!135 &6322643896968092887

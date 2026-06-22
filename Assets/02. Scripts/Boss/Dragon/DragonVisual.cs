@@ -5,6 +5,14 @@ public class DragonVisual : MonoBehaviour, IBossVisual
 {
     public Animator anim;
 
+    private Vector3 _ikLookAtPosition;
+    private float _ikWeight = 0f;
+
+    [Header("수동 IK (Generic 몬스터용)")]
+    [Tooltip("드래곤의 머리(Head) 또는 목(Neck) 뼈 Transform을 하이라키에서 찾아 드래그하세요!")]
+    public Transform headBone;
+    public Transform lookAtGuide;
+
     [Header("이펙트")]
     public ParticleSystem fireBreath;
 
@@ -40,6 +48,28 @@ public class DragonVisual : MonoBehaviour, IBossVisual
         {
             anim = GetComponent<Animator>();
         }
+    }
+
+    private void LateUpdate()
+    {
+        // 뼈나 가이드가 없거나, 쳐다볼 필요가 없을 땐 무시
+        if (headBone == null || lookAtGuide == null || _ikWeight <= 0.01f) return;
+
+        // 1. 타겟을 향하는 '이상적인 방향' 계산
+        Vector3 targetDirection = (_ikLookAtPosition - headBone.position).normalized;
+
+        // 2. 드래곤이 애니메이션에 의해 '현재 실제로 쳐다보고 있는 방향' (가이드의 Z축)
+        Vector3 currentLookDirection = lookAtGuide.forward;
+
+        // 3. 현재 쳐다보는 방향에서 타겟 방향으로 '얼마나 회전해야 하는지(Delta)'를 계산합니다.
+        // 이 FromToRotation이 뼈가 꼬인 문제를 완벽하게 무시해줍니다.
+        Quaternion rotationDelta = Quaternion.FromToRotation(currentLookDirection, targetDirection);
+
+        // 4. 방금 애니메이터가 잡아놓은 원래 뼈 각도에, 계산한 회전 차이값(Delta)을 얹어줍니다.
+        Quaternion finalRotation = rotationDelta * headBone.rotation;
+
+        // 5. 부드럽게 블렌딩!
+        headBone.rotation = Quaternion.Lerp(headBone.rotation, finalRotation, _ikWeight);
     }
 
     // ==========================================
@@ -99,7 +129,28 @@ public class DragonVisual : MonoBehaviour, IBossVisual
         }
     }
 
-    public void SetSpeed(float speedValue) { anim.SetFloat("MoveSpeed", speedValue); }
+    public void SetDirection(float dirX, float dirY)
+    {
+        // Lerp를 사용하여 방향 전환이나 정지 시 뚝뚝 끊기지 않고 부드럽게 감속/가속되게 합니다.
+        float currentX = anim.GetFloat("DirX");
+        float currentY = anim.GetFloat("DirY");
+        anim.SetFloat("DirX", Mathf.Lerp(currentX, dirX, Time.deltaTime * 5f));
+        anim.SetFloat("DirY", Mathf.Lerp(currentY, dirY, Time.deltaTime * 5f));
+    }
+
+    // 2. 시선 처리 목표 위치 갱신
+    public void SetLookAtTarget(Vector3 targetPos)
+    {
+        _ikLookAtPosition = targetPos;
+        _ikWeight = Mathf.Lerp(_ikWeight, 1f, Time.deltaTime * 2f); // 서서히 쳐다봄
+    }
+
+    // 시선 처리 초기화 (타겟이 없거나 죽었을 때)
+    public void ResetLookAt()
+    {
+        _ikWeight = Mathf.Lerp(_ikWeight, 0f, Time.deltaTime * 3f);
+    }
+
     public void SetAnimSpeed(float multiplier) { anim.speed = multiplier; }
     public void DoLocomotion()
     {

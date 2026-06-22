@@ -5,6 +5,9 @@ public class OrcAssassinVisual : MonoBehaviour, IBossVisual
 {
     public Animator anim;
 
+    private Vector3 _ikLookAtPosition;
+    private float _ikWeight = 0f;
+
     [Header("이펙트 & 투사체")]
     public GameObject poisonDaggerPrefab;
     public Transform daggerSpawnPoint;
@@ -73,7 +76,7 @@ public class OrcAssassinVisual : MonoBehaviour, IBossVisual
             r.sharedMaterials = stealthMats;
         }
     }
-    
+
     public void DisableStealth()
     {
         foreach (var r in bossRenderers)
@@ -93,7 +96,48 @@ public class OrcAssassinVisual : MonoBehaviour, IBossVisual
     // [IBossVisual 구현부] 부모(Core)가 호출해 줄 함수들
     // ==========================================
     public void PlayAction(int stateHash, float crossFadeTime = 0.1f) => anim.CrossFade(stateHash, crossFadeTime, 0, 0f);
-    public void SetSpeed(float speedValue) => anim.SetFloat("MoveSpeed", speedValue);
+
+    public void SetDirection(float dirX, float dirY)
+    {
+        // 전달받은 방향(X, Y)의 크기를 구합니다. 
+        // 가만히 있으면 0, 어느 방향이든 움직이려 하면 1이 됩니다.
+        Vector2 dir = new Vector2(dirX, dirY);
+        float targetSpeed = dir.magnitude; 
+
+        // 기존에 쓰시던 MoveSpeed 파라미터를 그대로 사용합니다!
+        float currentSpeed = anim.GetFloat("MoveSpeed");
+        anim.SetFloat("MoveSpeed", Mathf.Lerp(currentSpeed, targetSpeed, Time.deltaTime * 5f));
+    }
+
+    // 타겟 주시 (LookAt)
+    public void SetLookAtTarget(Vector3 targetPos)
+    {
+        _ikLookAtPosition = targetPos;
+        _ikWeight = Mathf.Lerp(_ikWeight, 1f, Time.deltaTime * 2f); 
+    }
+
+    // 타겟 주시 해제
+    public void ResetLookAt()
+    {
+        _ikWeight = Mathf.Lerp(_ikWeight, 0f, Time.deltaTime * 3f);
+    }
+
+    // 애니메이터 IK (고개 돌리기)
+    private void OnAnimatorIK(int layerIndex)
+    {
+        if (anim == null) return;
+
+        if (_ikWeight > 0.01f)
+        {
+            anim.SetLookAtWeight(_ikWeight, 0.2f, 0.8f, 0f, 0.5f);
+            anim.SetLookAtPosition(_ikLookAtPosition);
+        }
+        else
+        {
+            anim.SetLookAtWeight(0);
+        }
+    }
+
     public void SetAnimSpeed(float multiplier) => anim.speed = multiplier;
     public void DoLocomotion() => anim.CrossFade("Locomotion", 0.1f);
 

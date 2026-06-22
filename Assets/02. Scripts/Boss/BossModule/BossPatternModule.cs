@@ -38,6 +38,17 @@ public class BossActionModule
     
     [Tooltip("이 동작 중 슈퍼아머(경직 면역)를 적용할 것인지 여부")]
     public bool hasSuperArmor = true;
+
+    [Header("Tracking 설정")]
+    [Tooltip("이 공격을 하는 동안 타겟을 쳐다보도록 몸을 틀 것인가?")]
+    public bool enableTracking = true;
+    
+    [Tooltip("트래킹을 멈출 시점 (0~1 퍼센트). 예: 0.5면 액션 절반까지만 타겟을 따라가고 그 후엔 고정됨")]
+    [Range(0f, 1f)]
+    public float trackingStopPercent = 0.5f; 
+    
+    [Tooltip("트래킹(회전) 속도")]
+    public float trackingSpeed = 3.0f;
 }
 
 [CreateAssetMenu(menuName = "ServerSouls/Boss Modules/Boss Pattern")]
