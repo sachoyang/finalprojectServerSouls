@@ -1044,7 +1044,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3575209008569727607, guid: 23b5baea9d0423047acddd3bec009cd9, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3728317436198385835, guid: 23b5baea9d0423047acddd3bec009cd9, type: 3}
       propertyPath: m_Color.b
@@ -1912,7 +1912,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   debugBossPool:
-  - {fileID: 11400000, guid: 1aae007690a8bfc49b560e4dd6f7b61d, type: 2}
+  - {fileID: 11400000, guid: d7e46c98e98aec845b9c6865f2dec211, type: 2}
   useRandomBoss: 0
   debugUserId: 
   guiPosition: {x: 10, y: 10}

@@ -192,13 +192,43 @@ public class NetworkBossCore : NetworkBehaviour
         }
 
         UpdateBossAI();
-        ProcessLocomotionAndLookAt();
+        ProcessLocomotionPhysics();
 
         // 패턴 실행 중일 때의 그래프 기반 이동 (Curve-Driven Movement) 연산
         if (CurrentState == BossState.ExecutingPattern)
         {
             ProcessPatternMovement();
             ProcessPatternTracking();
+        }
+    }
+
+    // [신규 추가] 모든 클라이언트가 각자의 화면에서 애니메이터를 갱신하는 함수
+    private void UpdateLocomotionVisuals()
+    {
+        if (AggroTarget == null || CurrentState == BossState.Sleep || CurrentState == BossState.Die)
+        {
+            _visual?.ResetLookAt();
+            _visual?.SetDirection(0f, 0f);
+            return;
+        }
+
+        // 1. 고개 돌리기 (네트워크로 넘어온 타겟 위치를 바라봄)
+        _visual?.SetLookAtTarget(AggroTarget.transform.position);
+
+        // 2. 애니메이션 방향 블렌딩 
+        if (CurrentState == BossState.Walk)
+        {
+            // 내 컴퓨터에서 보여지는 보스 위치 기준, 타겟이 어디있는지 방향 계산
+            Vector3 localTargetPos = transform.InverseTransformPoint(AggroTarget.transform.position);
+            localTargetPos.y = 0;
+            Vector3 animDir = localTargetPos.normalized;
+
+            // 모든 클라이언트가 각자의 애니메이터에 값을 집어넣어 다리를 움직임!
+            _visual?.SetDirection(animDir.x, animDir.z);
+        }
+        else
+        {
+            _visual?.SetDirection(0f, 0f);
         }
     }
 
@@ -246,53 +276,34 @@ public class NetworkBossCore : NetworkBehaviour
         }
     }
 
-    private void ProcessLocomotionAndLookAt()
-{
-    if (AggroTarget == null || CurrentState == BossState.Sleep || CurrentState == BossState.Die)
+    // [수정됨] 오직 방장(서버)만 실행하는 보스 이동 물리 처리
+    private void ProcessLocomotionPhysics()
     {
-        _visual?.ResetLookAt();
-        _visual?.SetDirection(0f, 0f);
-        return;
-    }
-
-    // 1. 고개는 항상 플레이어를 쳐다봄 (Head IK)
-    _visual?.SetLookAtTarget(AggroTarget.transform.position);
-
-    // 2. 걷기(Walk) 상태일 때 애니메이터 블렌드 트리를 통한 자연스러운 이동
-    if (CurrentState == BossState.Walk)
-    {
-        // 🔥 핵심: 몸통 회전 속도를 절반으로 낮춰서 Slerp 적용!
-        // 이렇게 하면 플레이어가 옆으로 빠르게 달릴 때 보스의 몸통 회전이 살짝 못 따라가게 되고,
-        // 그 각도 차이만큼 DirX 값이 생성되어 자연스럽게 게걸음(Strafe) 애니메이션이 섞여 나옵니다.
-        Vector3 targetDir = (AggroTarget.transform.position - transform.position).normalized;
-        targetDir.y = 0;
-        if (targetDir != Vector3.zero)
+        if (AggroTarget == null || CurrentState == BossState.Sleep || CurrentState == BossState.Die)
         {
-            Quaternion targetRot = Quaternion.LookRotation(targetDir);
-            // rotationSpeed * 0.3f ~ 0.5f 정도로 조절하면 턴테이블 현상이 사라집니다.
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, (rotationSpeed * 0.4f) * Runner.DeltaTime);
+            return;
         }
 
-        // 타겟의 월드 좌표를 내 보스의 '로컬 좌표'로 변환 (DirX, DirZ 산출)
-        Vector3 localTargetPos = transform.InverseTransformPoint(AggroTarget.transform.position);
-        localTargetPos.y = 0;
+        if (CurrentState == BossState.Walk)
+        {
+            // 몸통 회전 연산
+            Vector3 targetDir = (AggroTarget.transform.position - transform.position).normalized;
+            targetDir.y = 0;
+            if (targetDir != Vector3.zero)
+            {
+                Quaternion targetRot = Quaternion.LookRotation(targetDir);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, (rotationSpeed * 0.4f) * Runner.DeltaTime);
+            }
 
-        // 방향 정규화 (-1.0 ~ 1.0)
-        Vector3 animDir = localTargetPos.normalized;
+            // 이동 연산
+            Vector3 localTargetPos = transform.InverseTransformPoint(AggroTarget.transform.position);
+            localTargetPos.y = 0;
+            Vector3 animDir = localTargetPos.normalized;
 
-        // Visual에 X(좌우), Z(앞뒤) 방향을 넘겨주어 애니메이션 블렌딩
-        _visual?.SetDirection(animDir.x, animDir.z);
-
-        // 실제 물리적인 이동
-        Vector3 worldMoveOffset = transform.TransformDirection(new Vector3(animDir.x, 0, animDir.z)) * moveSpeed * Runner.DeltaTime;
-        _movement.MoveWithWallSlide(transform, worldMoveOffset, Runner.DeltaTime);
+            Vector3 worldMoveOffset = transform.TransformDirection(new Vector3(animDir.x, 0, animDir.z)) * moveSpeed * Runner.DeltaTime;
+            _movement.MoveWithWallSlide(transform, worldMoveOffset, Runner.DeltaTime);
+        }
     }
-    else
-    {
-        // Idle 상태일 때는 발을 멈춤 (0, 0)
-        _visual?.SetDirection(0f, 0f);
-    }
-}
 
     private void ProcessPatternTracking()
     {
@@ -554,6 +565,8 @@ public class NetworkBossCore : NetworkBehaviour
                 _lastState = CurrentState;
             }
         }
+
+        UpdateLocomotionVisuals();
 
         // ==========================================
         // 기믹 시각 효과(불 끄기/켜기) 클라이언트 동기화!

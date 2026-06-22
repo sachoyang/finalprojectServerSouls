@@ -452,8 +452,9 @@ public partial class NetworkPlayerController
             attackTargetLayers,
             QueryTriggerInteraction.Collide);
 
-        _bestBossHitboxes.Clear();
+        _bestBossHurtboxes.Clear(); // 🔥 이름 변경됨
         _reviveHitPlayers.Clear();
+        
         for (int i = 0; i < hitCount; i++)
         {
             // 한 번의 OverlapSphere 결과 안에는 보스, 제단, 죽은 플레이어가 섞여 들어올 수 있다.
@@ -485,56 +486,59 @@ public partial class NetworkPlayerController
                 continue;
             }
 
-            BossHitbox bossHitbox = hit.GetComponentInParent<BossHitbox>();
-            if (bossHitbox == null)
+            // 🔥 [수정 핵심] BossHitbox -> BossHurtbox 로 교체
+            BossHurtbox bossHurtbox = hit.GetComponentInParent<BossHurtbox>();
+            if (bossHurtbox == null)
             {
                 continue;
             }
 
-            NetworkBossCore boss = bossHitbox.GetComponentInParent<NetworkBossCore>();
+            NetworkBossCore boss = bossHurtbox.GetComponentInParent<NetworkBossCore>();
             if (boss == null)
             {
                 continue;
             }
 
-            if (!_bestBossHitboxes.TryGetValue(boss, out BossHitbox bestHitbox) ||
-                bossHitbox.damageMultiplier > bestHitbox.damageMultiplier)
+            if (!_bestBossHurtboxes.TryGetValue(boss, out BossHurtbox bestHurtbox) ||
+                bossHurtbox.damageMultiplier > bestHurtbox.damageMultiplier)
             {
                 // 같은 보스 안에서는 머리/몸통처럼 여러 부위가 동시에 잡힐 수 있다.
                 // 배율이 가장 높은 부위 하나만 남겨 한 공격이 같은 보스를 여러 번 때리지 않게 한다.
-                _bestBossHitboxes[boss] = bossHitbox;
+                _bestBossHurtboxes[boss] = bossHurtbox;
             }
         }
 
-        foreach (BossHitbox bossHitbox in _bestBossHitboxes.Values)
+        foreach (BossHurtbox bossHurtbox in _bestBossHurtboxes.Values)
         {
+            // 신형 파라미터 규격(데미지, 그로기 10f, 공격자) 적용
             // 최종적으로 보스별 대표 히트박스 하나에만 데미지를 전달한다.
-            bossHitbox.OnHitByPlayer(damage, Object);
-            //피 이펙트를 스폰한다
-            SpawnBloodOnHit(bossHitbox.GetComponent<Collider>());
+            bossHurtbox.OnHitByPlayer(damage, 10f, Object);
+
+            // 피 이펙트 스폰
+            SpawnBloodOnHit(bossHurtbox.GetComponent<Collider>());
         }
     }
 
     private void SpawnBloodOnHit(Collider hitCollider)
-{
-    if (bloodEffectSpawner == null || hitCollider == null)
     {
-        return;
+        if (bloodEffectSpawner == null || hitCollider == null)
+        {
+            return;
+        }
+
+        Vector3 hitCenter = transform.TransformPoint(AttackHitLocalCenter);
+        Vector3 hitPoint = hitCollider.ClosestPoint(hitCenter);
+
+        Vector3 direction = hitPoint - transform.position;
+        direction.y = 0f;
+
+        if (direction.sqrMagnitude <= 0.001f)
+        {
+            direction = transform.forward;
+        }
+
+        bloodEffectSpawner.SpawnBlood(hitPoint, direction.normalized);
     }
-
-    Vector3 hitCenter = transform.TransformPoint(AttackHitLocalCenter);
-    Vector3 hitPoint = hitCollider.ClosestPoint(hitCenter);
-
-    Vector3 direction = hitPoint - transform.position;
-    direction.y = 0f;
-
-    if (direction.sqrMagnitude <= 0.001f)
-    {
-        direction = transform.forward;
-    }
-
-    bloodEffectSpawner.SpawnBlood(hitPoint, direction.normalized);
-}
 
     private float GetBasicAttackDamage()
     {

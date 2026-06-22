@@ -16,11 +16,12 @@ public class DragonVisual : MonoBehaviour, IBossVisual
     [Header("이펙트")]
     public ParticleSystem fireBreath;
 
-    [Header("히트박스 연결")]
-    public BossHitbox mouthHitbox;
-    public BossHitbox leftClawHitbox;
-    public BossHitbox rightClawHitbox;
-    public BossHitbox bodyHitbox;
+    [Header("근접 공격 판정 (신형 Sweep)")]
+    // 기존의 BossHitbox 타입이었던 것을 BossMeleeAttack으로 바꿉니다!
+    public BossMeleeAttack leftClawAttack;
+    public BossMeleeAttack rightClawAttack;
+    public BossMeleeAttack bodyAttack;
+    public BossMeleeAttack mouthAttack;
 
     [Header("광역기 이펙트 프리팹")]
     public GameObject jumpSlamEffectPrefab;
@@ -180,36 +181,56 @@ public class DragonVisual : MonoBehaviour, IBossVisual
 
     public void EnableMouthHitbox()
     {
-        if (mouthHitbox != null) mouthHitbox.StartAttack();
+        if (mouthAttack != null) mouthAttack.StartAttack();
         if (audioClips[2] != null)//bite1
         {
             SoundManager.Instance.PlaySFX_3D(audioClips[2], transform.position, SoundCategory.BossGimmick);
         }
     }
-    public void DisableMouthHitbox() { if (mouthHitbox != null) mouthHitbox.StopAttack(); }
+    public void DisableMouthHitbox() { if (mouthAttack != null) mouthAttack.StopAttack(); }
+
+    // public void EnableClawHitbox()
+    // {
+    //     if (leftClawHitbox != null) leftClawHitbox.StartAttack();
+    //     if (rightClawHitbox != null) rightClawHitbox.StartAttack();
+    //     if (audioClips[0] != null)
+    //     {
+    //         SoundManager.Instance.PlaySFX_3D(audioClips[0], transform.position, SoundCategory.CombatHit);
+    //     }
+    // }
+    // public void DisableClawHitbox()
+    // {
+    //     if (leftClawHitbox != null) leftClawHitbox.StopAttack();
+    //     if (rightClawHitbox != null) rightClawHitbox.StopAttack();
+    // }
+
 
     public void EnableClawHitbox()
     {
-        if (leftClawHitbox != null) leftClawHitbox.StartAttack();
-        if (rightClawHitbox != null) rightClawHitbox.StartAttack();
+        // 신형 스윕 공격 시작!
+        if (leftClawAttack != null) leftClawAttack.StartAttack();
+        if (rightClawAttack != null) rightClawAttack.StartAttack();
+        
         if (audioClips[0] != null)
         {
             SoundManager.Instance.PlaySFX_3D(audioClips[0], transform.position, SoundCategory.CombatHit);
         }
     }
+
     public void DisableClawHitbox()
     {
-        if (leftClawHitbox != null) leftClawHitbox.StopAttack();
-        if (rightClawHitbox != null) rightClawHitbox.StopAttack();
+        // 신형 스윕 공격 종료!
+        if (leftClawAttack != null) leftClawAttack.StopAttack();
+        if (rightClawAttack != null) rightClawAttack.StopAttack();
     }
 
     public void EnableBodyHitbox()
     {
-        if (bodyHitbox != null) bodyHitbox.StartAttack();
+        if (bodyAttack != null) bodyAttack.StartAttack();
     }
     public void DisableBodyHitbox()
     {
-        if (bodyHitbox != null) bodyHitbox.StopAttack();
+        if (bodyAttack != null) bodyAttack.StopAttack();
     }
 
     public void SpawnJumpWarning()
@@ -230,17 +251,17 @@ public class DragonVisual : MonoBehaviour, IBossVisual
 
     public void EnableHornAttackHitbox()
     {
-        if (leftClawHitbox != null) leftClawHitbox.StartAttack();
-        if (rightClawHitbox != null) rightClawHitbox.StartAttack();
-        if (mouthHitbox != null) mouthHitbox.StartAttack();
+        if (leftClawAttack != null) leftClawAttack.StartAttack();
+        if (rightClawAttack != null) rightClawAttack.StartAttack();
+        if (mouthAttack != null) mouthAttack.StartAttack();
         //if (bodyHitbox != null) bodyHitbox.StartAttack();
     }
 
     public void DisableHornAttackHitbox()
     {
-        if (leftClawHitbox != null) leftClawHitbox.StopAttack();
-        if (rightClawHitbox != null) rightClawHitbox.StopAttack();
-        if (mouthHitbox != null) mouthHitbox.StopAttack();
+        if (leftClawAttack != null) leftClawAttack.StopAttack();
+        if (rightClawAttack != null) rightClawAttack.StopAttack();
+        if (mouthAttack != null) mouthAttack.StopAttack();
         //if (bodyHitbox != null) bodyHitbox.StopAttack();
     }
 }
