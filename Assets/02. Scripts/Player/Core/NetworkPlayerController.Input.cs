@@ -40,9 +40,11 @@ public partial class NetworkPlayerController
 
         if (IsTurnAnimationActive())
         {
+            Vector3 turnDesiredMove = Vector3.zero;
+            bool resumeRun = false;
             if (GetInput(out NetworkInputData turnData))
             {
-                Vector3 turnDesiredMove = turnData.direction;
+                turnDesiredMove = turnData.direction;
                 if (turnDesiredMove.sqrMagnitude > 1f)
                 {
                     turnDesiredMove.Normalize();
@@ -59,10 +61,10 @@ public partial class NetworkPlayerController
                 }
 
                 float turnRunStaminaCost = _playerStats != null ? _playerStats.RunStaminaPerSecond * Runner.DeltaTime : 0f;
-                bool resumeRun = turnDesiredMove.sqrMagnitude > 0.001f &&
-                                 turnShiftHeld &&
-                                 ShiftHoldTime >= shiftHoldThreshold &&
-                                 (_playerStats == null || _playerStats.HasStamina(turnRunStaminaCost));
+                resumeRun = turnDesiredMove.sqrMagnitude > 0.001f &&
+                            turnShiftHeld &&
+                            ShiftHoldTime >= shiftHoldThreshold &&
+                            (_playerStats == null || _playerStats.HasStamina(turnRunStaminaCost));
                 UpdateTurnResumeState(turnDesiredMove, resumeRun);
                 WasShiftHeld = turnShiftHeld;
             }
@@ -75,6 +77,7 @@ public partial class NetworkPlayerController
 
             CurrentMoveSpeed = UpdateCurrentMoveSpeed(0f, true);
             ApplyTurnRootMotion();
+            ApplyTurnInputControl(turnDesiredMove, resumeRun);
             UpdateTurnAnimatorResumeParameters();
             return;
         }

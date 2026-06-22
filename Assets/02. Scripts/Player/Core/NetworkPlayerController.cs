@@ -106,6 +106,10 @@ public partial class NetworkPlayerController : NetworkBehaviour
     [SerializeField] private float turnRootMotionFallbackRotationSpeed = 360f;
     [SerializeField] private float turnAnimationYawDirection = 1f;
     [SerializeField, Range(0.5f, 1f)] private float turnStartSpeedRatio = 0.75f;
+    [SerializeField, Range(0f, 1f)] private float turnInputMoveRatio = 0.35f;
+    [SerializeField] private float turnInputRotationSpeed = 360f;
+    [SerializeField, Range(0f, 1f)] private float fastTurnInputMoveRatio = 0.15f;
+    [SerializeField] private float fastTurnInputRotationSpeed = 220f;
 
     [Header("Action Locks")]
     // 점프 높이와 전체 체공 시간을 기준으로 초기 속도와 중력을 계산해 애니메이션 타이밍에 맞춘다.
