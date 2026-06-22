@@ -200,6 +200,7 @@ GameObject:
   m_Component:
   - component: {fileID: 630242593}
   - component: {fileID: 630242592}
+  - component: {fileID: 630242594}
   m_Layer: 0
   m_Name: Directional Light
   m_TagString: Untagged
@@ -284,6 +285,29 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
+--- !u!114 &630242594
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 630242591}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Version: 3
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_LightLayerMask: 1
+  m_RenderingLayers: 1
+  m_CustomShadowLayers: 0
+  m_ShadowLayerMask: 1
+  m_ShadowRenderingLayers: 1
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
 --- !u!1 &1000709542
 GameObject:
   m_ObjectHideFlags: 0
@@ -464,6 +488,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2064885886435470601, guid: 1980dd89f8fd9314f936f9d805925100, type: 3}
+      propertyPath: m_Value
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3337146920422973221, guid: 1980dd89f8fd9314f936f9d805925100, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
@@ -477,8 +505,12 @@ PrefabInstance:
       value: RewardSelectCanvas
       objectReference: {fileID: 0}
     - target: {fileID: 7313552842139431398, guid: 1980dd89f8fd9314f936f9d805925100, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7313552842139431398, guid: 1980dd89f8fd9314f936f9d805925100, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0.00004452467
+      value: 0.00004053116
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
