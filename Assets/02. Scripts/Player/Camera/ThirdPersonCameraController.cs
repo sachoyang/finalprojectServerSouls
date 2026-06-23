@@ -21,12 +21,13 @@ public class ThirdPersonCameraController : MonoBehaviour
     [SerializeField] private float collisionSmoothTime = 0.06f;
     [SerializeField] private float collisionReturnSmoothTime = 0.18f;
     [SerializeField] private float collisionReturnDelay = 0.12f;
-    [SerializeField] private bool boostRotationWhenObstructed = true;
+    [SerializeField] private bool boostRotationWhenObstructed = false;
     [SerializeField] private float maxObstructedRotationBoost = 1.8f;
 
     [Header("Rotation")]
     [SerializeField] private float mouseSensitivity = 4f;
     [SerializeField] private float maxMouseDelta = 8f;
+    [SerializeField] private float maxMouseRotationPerSecond = 720f;
     [SerializeField] private float startPitch = 15f;
     [SerializeField] private float minPitch = -20f;
     [SerializeField] private float maxPitch = 65f;
@@ -150,9 +151,27 @@ public class ThirdPersonCameraController : MonoBehaviour
         mouseY = Mathf.Clamp(mouseY, -maxMouseDelta, maxMouseDelta);
         float sensitivityScale = GetObstructedRotationScale();
 
-        _targetYaw += mouseX * mouseSensitivity * sensitivityScale;
-        _targetPitch -= mouseY * mouseSensitivity * sensitivityScale;
+        float yawDelta = mouseX * mouseSensitivity * sensitivityScale;
+        float pitchDelta = mouseY * mouseSensitivity * sensitivityScale;
+        ClampMouseRotationDelta(ref yawDelta, ref pitchDelta);
+
+        _targetYaw += yawDelta;
+        _targetPitch -= pitchDelta;
         _targetPitch = Mathf.Clamp(_targetPitch, minPitch, maxPitch);
+    }
+
+    private void ClampMouseRotationDelta(ref float yawDelta, ref float pitchDelta)
+    {
+        if (maxMouseRotationPerSecond <= 0f)
+        {
+            return;
+        }
+
+        float frameTime = Mathf.Clamp(Time.unscaledDeltaTime, 1f / 120f, 1f / 30f);
+        float maxDelta = maxMouseRotationPerSecond * frameTime;
+        Vector2 rotationDelta = Vector2.ClampMagnitude(new Vector2(yawDelta, pitchDelta), maxDelta);
+        yawDelta = rotationDelta.x;
+        pitchDelta = rotationDelta.y;
     }
 
     private static float GetGameViewDisplayScale()
