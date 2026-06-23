@@ -21,20 +21,16 @@ public class ThirdPersonCameraController : MonoBehaviour
     [SerializeField] private float collisionSmoothTime = 0.06f;
     [SerializeField] private float collisionReturnSmoothTime = 0.18f;
     [SerializeField] private float collisionReturnDelay = 0.12f;
-    [SerializeField] private bool boostRotationWhenObstructed = false;
-    [SerializeField] private float maxObstructedRotationBoost = 1.8f;
 
     [Header("Rotation")]
     [SerializeField] private float mouseSensitivity = 4f;
     [SerializeField] private float maxMouseDelta = 8f;
-    [SerializeField] private float maxMouseRotationPerSecond = 720f;
     [SerializeField] private float startPitch = 15f;
     [SerializeField] private float minPitch = -20f;
     [SerializeField] private float maxPitch = 65f;
 
     [Header("Smoothing")]
     [SerializeField] private float positionSmoothTime = 0.08f;
-    [SerializeField] private float rotationSmoothTime = 0.04f;
     [SerializeField] private float lockOnRotationSharpness = 14f;
     [SerializeField] private bool alignBehindTargetOnStart = true;
     [SerializeField] private bool lockCursorOnStart = true;
@@ -50,8 +46,6 @@ public class ThirdPersonCameraController : MonoBehaviour
     private float _pitch = 15f;
     private float _targetYaw;
     private float _targetPitch = 15f;
-    private float _yawVelocity;
-    private float _pitchVelocity;
     private Vector3 _currentVelocity;
     private Transform _lockOnTarget;
     private bool _hasAlignedToTarget;
@@ -131,8 +125,6 @@ public class ThirdPersonCameraController : MonoBehaviour
         _pitch = NormalizeAngle(currentEuler.x);
         _targetYaw = _yaw;
         _targetPitch = _pitch;
-        _yawVelocity = 0f;
-        _pitchVelocity = 0f;
     }
 
     private void UpdateRotation()
@@ -144,70 +136,17 @@ public class ThirdPersonCameraController : MonoBehaviour
 
         float mouseX = Input.GetAxisRaw("Mouse X");
         float mouseY = Input.GetAxisRaw("Mouse Y");
-        float displayScale = GetGameViewDisplayScale();
-        mouseX *= displayScale;
-        mouseY *= displayScale;
         mouseX = Mathf.Clamp(mouseX, -maxMouseDelta, maxMouseDelta);
         mouseY = Mathf.Clamp(mouseY, -maxMouseDelta, maxMouseDelta);
-        float sensitivityScale = GetObstructedRotationScale();
 
-        float yawDelta = mouseX * mouseSensitivity * sensitivityScale;
-        float pitchDelta = mouseY * mouseSensitivity * sensitivityScale;
-        ClampMouseRotationDelta(ref yawDelta, ref pitchDelta);
+        float yawDelta = mouseX * mouseSensitivity;
+        float pitchDelta = mouseY * mouseSensitivity;
 
         _targetYaw += yawDelta;
         _targetPitch -= pitchDelta;
         _targetPitch = Mathf.Clamp(_targetPitch, minPitch, maxPitch);
-    }
-
-    private void ClampMouseRotationDelta(ref float yawDelta, ref float pitchDelta)
-    {
-        if (maxMouseRotationPerSecond <= 0f)
-        {
-            return;
-        }
-
-        float frameTime = Mathf.Clamp(Time.unscaledDeltaTime, 1f / 120f, 1f / 30f);
-        float maxDelta = maxMouseRotationPerSecond * frameTime;
-        Vector2 rotationDelta = Vector2.ClampMagnitude(new Vector2(yawDelta, pitchDelta), maxDelta);
-        yawDelta = rotationDelta.x;
-        pitchDelta = rotationDelta.y;
-    }
-
-    private static float GetGameViewDisplayScale()
-    {
-#if UNITY_EDITOR
-        UnityEditor.EditorWindow focusedWindow = UnityEditor.EditorWindow.focusedWindow;
-        if (focusedWindow == null || focusedWindow.GetType().Name != "GameView")
-        {
-            return 1f;
-        }
-
-        Rect gameViewRect = focusedWindow.position;
-        float renderedWidth = Mathf.Max(1f, Screen.width);
-        float renderedHeight = Mathf.Max(1f, Screen.height);
-        float visibleWidth = Mathf.Max(1f, gameViewRect.width);
-        float visibleHeight = Mathf.Max(1f, gameViewRect.height - 22f);
-
-        // A fixed-resolution Game View remaps mouse movement through its display zoom.
-        return Mathf.Clamp(
-            Mathf.Min(visibleWidth / renderedWidth, visibleHeight / renderedHeight),
-            0.1f,
-            4f);
-#else
-        return 1f;
-#endif
-    }
-
-    private float GetObstructedRotationScale()
-    {
-        if (!boostRotationWhenObstructed || _currentCollisionDistance <= 0f || distance <= 0f)
-        {
-            return 1f;
-        }
-
-        float distanceRatio = distance / Mathf.Max(_currentCollisionDistance, minCollisionDistance);
-        return Mathf.Clamp(distanceRatio, 1f, maxObstructedRotationBoost);
+        _yaw = _targetYaw;
+        _pitch = _targetPitch;
     }
 
     private void AlignBehindTarget(bool snapPosition)
@@ -228,8 +167,6 @@ public class ThirdPersonCameraController : MonoBehaviour
         _pitch = Mathf.Clamp(startPitch, minPitch, maxPitch);
         _targetYaw = _yaw;
         _targetPitch = _pitch;
-        _yawVelocity = 0f;
-        _pitchVelocity = 0f;
         _currentVelocity = Vector3.zero;
         _hasAlignedToTarget = true;
 
@@ -259,9 +196,6 @@ public class ThirdPersonCameraController : MonoBehaviour
 
     private void UpdatePosition()
     {
-        _yaw = Mathf.SmoothDampAngle(_yaw, _targetYaw, ref _yawVelocity, rotationSmoothTime);
-        _pitch = Mathf.SmoothDampAngle(_pitch, _targetPitch, ref _pitchVelocity, rotationSmoothTime);
-
         Quaternion rotation = Quaternion.Euler(_pitch, _yaw, 0f);
         Vector3 focusPoint = target.position + targetOffset;
         Vector3 desiredPosition = focusPoint - rotation * Vector3.forward * distance;
