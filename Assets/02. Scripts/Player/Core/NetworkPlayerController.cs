@@ -197,7 +197,7 @@ public partial class NetworkPlayerController : NetworkBehaviour
     // 공격 판정은 매번 새 배열을 만들지 않고 재사용해 GC 할당을 줄인다.
     private readonly Collider[] _attackHits = new Collider[16];
     // 한 번의 공격에 같은 보스의 여러 히트박스가 들어오면 가장 높은 배율 부위만 남긴다.
-    private readonly Dictionary<NetworkBossCore, BossHitbox> _bestBossHitboxes = new Dictionary<NetworkBossCore, BossHitbox>();
+    private readonly Dictionary<NetworkBossCore, BossHurtbox> _bestBossHurtboxes = new Dictionary<NetworkBossCore, BossHurtbox>();
     // 죽은 팀원이 여러 Collider로 겹쳐 맞아도 부활 게이지가 한 번만 오르게 막는다.
     private readonly HashSet<PlayerStats> _reviveHitPlayers = new HashSet<PlayerStats>();
     // 보상 획득 직후 네트워크 값이 오기 전에도 내 입력/디버그에서 콤보 해금 상태를 즉시 반영한다.

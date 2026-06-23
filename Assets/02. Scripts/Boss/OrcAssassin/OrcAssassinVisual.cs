@@ -19,12 +19,12 @@ public class OrcAssassinVisual : MonoBehaviour, IBossVisual
     [Tooltip("에셋이나 쉐이더로 만든 다크 템플러(굴절) 머티리얼을 넣습니다.")]
     public Material stealthMaterial;
 
-    // 원래 옷(머티리얼)을 기억해둘 백업 사전
     private Dictionary<Renderer, Material[]> _originalMaterials = new Dictionary<Renderer, Material[]>();
 
-    [Header("히트박스 연결")]
-    public BossHitbox leftDaggerHitbox;
-    public BossHitbox rightDaggerHitbox;
+    [Header("근접 공격 판정 (신형 Sweep)")]
+    // BossHurtbox -> BossMeleeAttack으로 변경 및 이름 수정
+    public BossMeleeAttack leftDaggerAttack;
+    public BossMeleeAttack rightDaggerAttack;
 
     [Header("사운드")]
     public AudioClip walkSound;
@@ -52,18 +52,16 @@ public class OrcAssassinVisual : MonoBehaviour, IBossVisual
     }
 
     // ==========================================
-    // 은신 켜기 / 끄기 함수 (애니메이션 이벤트나 Core에서 호출)
+    // 은신 켜기 / 끄기 함수 
     // ==========================================
     public void EnableStealth()
     {
-        // 펑! 하는 연막탄과 쉭~ 하는 소리 재생
         if (smokeBombEffect != null) smokeBombEffect.Play();
         if (vanishSound != null && SoundManager.Instance != null)
         {
             SoundManager.Instance.PlaySFX_3D(vanishSound, transform.position, SoundCategory.BossGimmick);
         }
 
-        // 보스의 모든 부위를 투명화 머티리얼로 강제 스왑
         foreach (var r in bossRenderers)
         {
             if (r == null) continue;
@@ -71,7 +69,7 @@ public class OrcAssassinVisual : MonoBehaviour, IBossVisual
             Material[] stealthMats = new Material[r.sharedMaterials.Length];
             for (int i = 0; i < stealthMats.Length; i++)
             {
-                stealthMats[i] = stealthMaterial; // 슬롯 개수만큼 투명 머티리얼 채워넣기
+                stealthMats[i] = stealthMaterial; 
             }
             r.sharedMaterials = stealthMats;
         }
@@ -83,7 +81,6 @@ public class OrcAssassinVisual : MonoBehaviour, IBossVisual
         {
             if (r == null) continue;
 
-            // 기억해뒀던 원래 머티리얼을 꺼내서 다시 입혀줍니다.
             if (_originalMaterials.TryGetValue(r, out Material[] origMats))
             {
                 r.sharedMaterials = origMats;
@@ -93,36 +90,29 @@ public class OrcAssassinVisual : MonoBehaviour, IBossVisual
     }
 
     // ==========================================
-    // [IBossVisual 구현부] 부모(Core)가 호출해 줄 함수들
+    // [IBossVisual 구현부] 
     // ==========================================
     public void PlayAction(int stateHash, float crossFadeTime = 0.1f) => anim.CrossFade(stateHash, crossFadeTime, 0, 0f);
 
     public void SetDirection(float dirX, float dirY)
     {
-        // 전달받은 방향(X, Y)의 크기를 구합니다. 
-        // 가만히 있으면 0, 어느 방향이든 움직이려 하면 1이 됩니다.
         Vector2 dir = new Vector2(dirX, dirY);
         float targetSpeed = dir.magnitude; 
-
-        // 기존에 쓰시던 MoveSpeed 파라미터를 그대로 사용합니다!
         float currentSpeed = anim.GetFloat("MoveSpeed");
         anim.SetFloat("MoveSpeed", Mathf.Lerp(currentSpeed, targetSpeed, Time.deltaTime * 5f));
     }
 
-    // 타겟 주시 (LookAt)
     public void SetLookAtTarget(Vector3 targetPos)
     {
         _ikLookAtPosition = targetPos;
         _ikWeight = Mathf.Lerp(_ikWeight, 1f, Time.deltaTime * 2f); 
     }
 
-    // 타겟 주시 해제
     public void ResetLookAt()
     {
         _ikWeight = Mathf.Lerp(_ikWeight, 0f, Time.deltaTime * 3f);
     }
 
-    // 애니메이터 IK (고개 돌리기)
     private void OnAnimatorIK(int layerIndex)
     {
         if (anim == null) return;
@@ -144,14 +134,12 @@ public class OrcAssassinVisual : MonoBehaviour, IBossVisual
     public void PlayWakeUp(int wakeUpHash)
     {
         PlayAction(wakeUpHash);
-        // 오크 어쌔신만의 등장 사운드 재생
     }
 
     public void PlayPhaseTransition(int wakeUpHash)
     {
         PlayAction(wakeUpHash);
         if (smokeBombEffect != null) smokeBombEffect.Play();
-        // 연막탄 터트리면서 2페이즈 진입 연출
     }
 
     public void PlayGroggy(float speedMultiplier)
@@ -164,7 +152,6 @@ public class OrcAssassinVisual : MonoBehaviour, IBossVisual
         anim.CrossFade("death1", 0.1f);
     }
 
-    // 루트모션 위임
     public void SetRootMotionCapture(bool enabled)
     {
         if (rootMotionCapture != null) rootMotionCapture.SetCapture(enabled);
@@ -176,22 +163,22 @@ public class OrcAssassinVisual : MonoBehaviour, IBossVisual
     }
 
     // ==========================================
-    // [애니메이션 이벤트용 함수] 애니메이션 클립에서 호출
+    // [애니메이션 이벤트용 함수] 
     // ==========================================
     public void EnableRightDagger()
     {
-        rightDaggerHitbox.StartAttack();
-        leftDaggerHitbox.StartAttack();
+        // 🔥 [수정됨] 신형 근접 공격 시스템 호출
+        if (rightDaggerAttack != null) rightDaggerAttack.StartAttack();
+        if (leftDaggerAttack != null) leftDaggerAttack.StartAttack();
     }
     public void DisableRightDagger()
     {
-        rightDaggerHitbox.StopAttack();
-        leftDaggerHitbox.StopAttack();
+        if (rightDaggerAttack != null) rightDaggerAttack.StopAttack();
+        if (leftDaggerAttack != null) leftDaggerAttack.StopAttack();
     }
 
     public void ThrowPoisonDagger()
     {
-        // 단검 투척 애니메이션 타이밍에 맞춰 단검 프리팹 생성
         if (poisonDaggerPrefab && daggerSpawnPoint)
             Instantiate(poisonDaggerPrefab, daggerSpawnPoint.position, daggerSpawnPoint.rotation);
     }

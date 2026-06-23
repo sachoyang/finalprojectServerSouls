@@ -13,7 +13,7 @@ public class PlayerSkillHitbox : NetworkBehaviour
     [SerializeField] private float defaultLifetime = 0.3f;
 
     private readonly HashSet<NetworkBossCore> _hitBosses = new HashSet<NetworkBossCore>();
-    private readonly HashSet<BossHitbox> _hitboxesWithoutBoss = new HashSet<BossHitbox>();
+    private readonly HashSet<BossHurtbox> _hurtboxesWithoutBoss = new HashSet<BossHurtbox>();
     private readonly HashSet<PlayerStats> _reviveHitPlayers = new HashSet<PlayerStats>();
 
     private GameObject _owner;
@@ -86,13 +86,13 @@ public class PlayerSkillHitbox : NetworkBehaviour
             return;
         }
 
-        BossHitbox bossHitbox = other.GetComponentInParent<BossHitbox>();
-        if (bossHitbox == null)
+        BossHurtbox bossHurtbox = other.GetComponentInParent<BossHurtbox>();
+        if (bossHurtbox == null)
         {
             return;
         }
 
-        NetworkBossCore boss = bossHitbox.GetComponentInParent<NetworkBossCore>();
+        NetworkBossCore boss = bossHurtbox.GetComponentInParent<NetworkBossCore>();
         if (boss != null)
         {
             if (!_hitBosses.Add(boss))
@@ -100,12 +100,12 @@ public class PlayerSkillHitbox : NetworkBehaviour
                 return;
             }
         }
-        else if (!_hitboxesWithoutBoss.Add(bossHitbox))
+        else if (!_hurtboxesWithoutBoss.Add(bossHurtbox))
         {
             return;
         }
 
-        bossHitbox.OnHitByPlayer(_damage, _attacker);
+        bossHurtbox.OnHitByPlayer(_damage, 10f, _attacker);
     }
 
     private void ScheduleActivation()
