@@ -22,6 +22,7 @@ public class OrcAssassinVisual : MonoBehaviour, IBossVisual
     private Dictionary<Renderer, Material[]> _originalMaterials = new Dictionary<Renderer, Material[]>();
 
     [Header("근접 공격 판정 (신형 Sweep)")]
+    // BossHurtbox -> BossMeleeAttack으로 변경 및 이름 수정
     public BossMeleeAttack leftDaggerAttack;
     public BossMeleeAttack rightDaggerAttack;
 

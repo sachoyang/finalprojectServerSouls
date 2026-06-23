@@ -214,7 +214,7 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.7
+  m_Radius: 0.37
   m_Height: 3.19
   m_Direction: 1
   m_Center: {x: 0, y: 1, z: 0}
@@ -362,6 +362,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 1637584495559616, guid: f32f6d542cd744a408b8da872db675ae, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8362586581587172298}
+    - targetCorrespondingSourceObject: {fileID: 1637584495559616, guid: f32f6d542cd744a408b8da872db675ae, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8254360423786327256}
     - targetCorrespondingSourceObject: {fileID: 1624756617183532, guid: f32f6d542cd744a408b8da872db675ae, type: 3}
       insertIndex: -1
       addedObject: {fileID: 3658658473912946082}
@@ -470,14 +473,29 @@ CapsuleCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.67
+  m_Radius: 0.41
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0, y: 0.87, z: 0}
+--- !u!114 &8254360423786327256
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5802303037623645147}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f8bccd2b6af74644ba46cc738255ae68, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bodyPart: 1
+  damageMultiplier: 1
+  groggyMultiplier: 1
 --- !u!1 &5802324294136262967 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1624756617183532, guid: f32f6d542cd744a408b8da872db675ae, type: 3}
