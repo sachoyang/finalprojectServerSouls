@@ -4641,6 +4641,7 @@ GameObject:
   - component: {fileID: 4825948614923682}
   - component: {fileID: 198345217066185332}
   - component: {fileID: 199528594520767084}
+  - component: {fileID: 1094606460419332808}
   m_Layer: 0
   m_Name: EarthShatter
   m_TagString: Untagged
@@ -4656,7 +4657,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1314945738539566}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.7071068, z: -0, w: 0.7071068}
+  m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -9546,6 +9547,44 @@ ParticleSystemRenderer:
   m_MeshWeighting2: 1
   m_MeshWeighting3: 1
   m_MaskInteraction: 0
+--- !u!114 &1094606460419332808
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1314945738539566}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5695f8d50fc079f40bf1a4bef6077b7a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hitZones:
+  - hitShape: 0
+    hitRadius: 3
+    boxSize: {x: 4, y: 4, z: 4}
+    hitOffset: {x: 0, y: 0, z: 1}
+    startTime: 0.29
+    duration: 1
+  - hitShape: 0
+    hitRadius: 3
+    boxSize: {x: 0, y: 0, z: 0}
+    hitOffset: {x: 0, y: 0, z: 5}
+    startTime: 0.6
+    duration: 1
+  - hitShape: 0
+    hitRadius: 3
+    boxSize: {x: 0, y: 0, z: 0}
+    hitOffset: {x: 0, y: 0, z: 9}
+    startTime: 0.85
+    duration: 1
+  syncParticle: {fileID: 198345217066185332}
+  baseDamage: 3000
+  isMultiHit: 0
+  hitInterval: 0.5
+  targetLayer:
+    serializedVersion: 2
+    m_Bits: 256
 --- !u!1 &1584802242839310
 GameObject:
   m_ObjectHideFlags: 0

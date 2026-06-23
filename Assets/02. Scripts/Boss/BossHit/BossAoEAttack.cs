@@ -5,112 +5,160 @@ public class BossAoEAttack : MonoBehaviour
 {
     public enum AoEShape { Sphere, Box }
 
-    [Header("AOE 판정 형태")]
-    public AoEShape hitShape = AoEShape.Sphere;
+    [System.Serializable]
+    public class AoEHitZone
+    {
+        [Header("형태 및 크기")]
+        public AoEShape hitShape = AoEShape.Sphere;
+        public float hitRadius = 5f;
+        public Vector3 boxSize = new Vector3(5f, 5f, 5f);
+        public Vector3 hitOffset = Vector3.zero;
 
-    [Tooltip("플레이어 레이어만 선택 (지형 무시)")]
-    public LayerMask targetLayer;
+        [Header("타이밍 (초 단위)")]
+        public float startTime = 0f;
+        public float duration = 0.5f;
+    }
 
-    [Header("형태별 크기 설정")]
-    public float hitRadius = 5f;
-    public Vector3 boxSize = new Vector3(5f, 5f, 5f);
+    [Header("연쇄 판정(Cascading) 구역 리스트")]
+    public List<AoEHitZone> hitZones = new List<AoEHitZone>();
 
-    [Tooltip("판정 중심점 오프셋 (예: 브레스가 입술 앞쪽으로 뻗어나가게 할 때 Z축 조절)")]
-    public Vector3 hitOffset = Vector3.zero;
+    // 🔥 [핵심 추가] 파티클 시스템을 끌어다 넣을 칸
+    [Header("파티클 동기화 (선택사항)")]
+    [Tooltip("파티클을 넣으면, 이 판정 스크립트는 파티클의 실제 재생 시간과 100% 동기화됩니다!")]
+    public ParticleSystem syncParticle;
 
-    [Header("데미지 설정")]
+    [Header("공통 데미지 설정")]
     public float baseDamage = 20f;
-    public float delayBeforeActive = 0.2f;
-    public float activeDuration = 1.5f;
     public bool isMultiHit = false;
     public float hitInterval = 0.5f;
+    public LayerMask targetLayer;
 
     private float _timer = 0f;
-    private bool _isActive = false;
     private float _bossDamageMultiplier = 1.0f;
+    private float _maxEndTime = 0f; 
+    
     private Dictionary<Collider, float> _hitTargets = new Dictionary<Collider, float>();
 
     public void Initialize(float bossOutgoingMultiplier)
     {
         _bossDamageMultiplier = bossOutgoingMultiplier;
+        
+        _maxEndTime = 0f;
+        foreach (var zone in hitZones)
+        {
+            float endTime = zone.startTime + zone.duration;
+            if (endTime > _maxEndTime) _maxEndTime = endTime;
+        }
     }
 
     private void Update()
     {
-        _timer += Time.deltaTime;
-
-        if (!_isActive && _timer >= delayBeforeActive && _timer < delayBeforeActive + activeDuration)
+        // 🔥 [동기화 로직] 파티클이 연결되어 있다면 파티클의 시계를, 없다면 아날로그 시계를 씁니다.
+        if (syncParticle != null)
         {
-            _isActive = true;
+            _timer = syncParticle.time; // 파티클의 현재 재생 시간을 그대로 가져옴!
+            
+            // 파티클 수명이 완전히 끝났다면 스크립트 정지
+            if (!syncParticle.IsAlive(true))
+            {
+                this.enabled = false;
+                return;
+            }
+        }
+        else
+        {
+            _timer += Time.deltaTime; // 기존 방식
+
+            if (_timer > _maxEndTime && _maxEndTime > 0f)
+            {
+                this.enabled = false;
+                return;
+            }
         }
 
-        if (_isActive && _timer >= delayBeforeActive + activeDuration)
-        {
-            _isActive = false;
-            this.enabled = false;
-            return;
-        }
-
-        if (_isActive)
-        {
-            DetectAndDamage();
-        }
+        DetectAndDamage();
     }
 
     private void DetectAndDamage()
     {
-        Collider[] hits = new Collider[0];
-
-        // 🔥 [수정됨] hitOffset을 적용한 최종 중심 좌표
-        Vector3 centerPosition = transform.position + (transform.rotation * hitOffset);
-
-        if (hitShape == AoEShape.Sphere)
+        foreach (var zone in hitZones)
         {
-            // 🔥 [수정됨] transform.position 대신 centerPosition 사용
-            hits = Physics.OverlapSphere(centerPosition, hitRadius, targetLayer);
-        }
-        else if (hitShape == AoEShape.Box)
-        {
-            // 🔥 [수정됨] transform.position 대신 centerPosition 사용
-            hits = Physics.OverlapBox(centerPosition, boxSize / 2f, transform.rotation, targetLayer);
-        }
+            if (_timer < zone.startTime || _timer > zone.startTime + zone.duration) continue;
 
-        foreach (var hit in hits)
-        {
-            if (_hitTargets.TryGetValue(hit, out float lastHitTime))
+            Vector3 centerPosition = transform.position + (transform.rotation * zone.hitOffset);
+            Collider[] hits = new Collider[0];
+
+            if (zone.hitShape == AoEShape.Sphere)
             {
-                if (!isMultiHit) continue;
-                if (Time.time - lastHitTime < hitInterval) continue;
+                hits = Physics.OverlapSphere(centerPosition, zone.hitRadius, targetLayer);
+            }
+            else if (zone.hitShape == AoEShape.Box)
+            {
+                hits = Physics.OverlapBox(centerPosition, zone.boxSize / 2f, transform.rotation, targetLayer);
             }
 
-            if (hit.CompareTag("Player"))
+            foreach (var hit in hits)
             {
-                PlayerStats playerStats = hit.GetComponent<PlayerStats>();
-                if (playerStats != null)
+                if (_hitTargets.TryGetValue(hit, out float lastHitTime))
                 {
-                    float finalDamage = baseDamage * _bossDamageMultiplier;
-                    playerStats.TakeDamage(finalDamage);
-                    Debug.Log($"[AoE Hit] 광역 이펙트 적중! 최종 딜: {finalDamage}");
+                    if (!isMultiHit) continue;
+                    if (Time.time - lastHitTime < hitInterval) continue;
                 }
-                _hitTargets[hit] = Time.time;
+
+                if (hit.CompareTag("Player"))
+                {
+                    PlayerStats playerStats = hit.GetComponent<PlayerStats>();
+                    if (playerStats != null)
+                    {
+                        float finalDamage = baseDamage * _bossDamageMultiplier;
+                        playerStats.TakeDamage(finalDamage);
+                        Debug.Log($"[AoE Hit] 광역 이펙트 연쇄 적중! 파티클 동기화 딜: {finalDamage}");
+                    }
+                    _hitTargets[hit] = Time.time;
+                }
             }
         }
     }
 
-    private void OnDrawGizmosSelected()
+    private void OnDrawGizmos()
     {
         Gizmos.matrix = Matrix4x4.TRS(transform.position, transform.rotation, Vector3.one);
-        Gizmos.color = new Color(1f, 0.5f, 0f, 0.4f);
 
-        if (hitShape == AoEShape.Sphere)
+        foreach (var zone in hitZones)
         {
-            // 🔥 [수정됨] Vector3.zero 대신 hitOffset을 기준으로 그립니다.
-            Gizmos.DrawSphere(hitOffset, hitRadius); 
-        }
-        else if (hitShape == AoEShape.Box)
-        {
-            // 🔥 [수정됨] Vector3.zero 대신 hitOffset을 기준으로 그립니다.
-            Gizmos.DrawCube(hitOffset, boxSize);
+            bool isActiveNow = false;
+
+            if (Application.isPlaying)
+            {
+                if (_timer >= zone.startTime && _timer <= zone.startTime + zone.duration)
+                {
+                    isActiveNow = true;
+                }
+            }
+            else
+            {
+                isActiveNow = true;
+            }
+
+            if (isActiveNow)
+            {
+                Gizmos.color = new Color(1f, 0.2f, 0f, 0.6f); 
+            }
+            else
+            {
+                Gizmos.color = new Color(0.5f, 0.5f, 0.5f, 0.1f); 
+            }
+
+            if (zone.hitShape == AoEShape.Sphere)
+            {
+                Gizmos.DrawSphere(zone.hitOffset, zone.hitRadius);
+                if (isActiveNow) { Gizmos.color = Color.red; Gizmos.DrawWireSphere(zone.hitOffset, zone.hitRadius); }
+            }
+            else if (zone.hitShape == AoEShape.Box)
+            {
+                Gizmos.DrawCube(zone.hitOffset, zone.boxSize);
+                if (isActiveNow) { Gizmos.color = Color.red; Gizmos.DrawWireCube(zone.hitOffset, zone.boxSize); }
+            }
         }
     }
 }
