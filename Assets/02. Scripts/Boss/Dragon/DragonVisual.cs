@@ -44,12 +44,16 @@ public class DragonVisual : MonoBehaviour, IBossVisual
     [Tooltip("변신 연출이 시작될 때 재생되며, 기존 맵 BGM과 크로스페이드 됩니다.")]
     public AudioClip phase2ThemeBGM;
 
+    private NetworkBossCore _bossCore;
+
     private void Awake()
     {
         if (anim == null)
         {
             anim = GetComponent<Animator>();
         }
+
+        _bossCore = GetComponentInParent<NetworkBossCore>();
     }
 
     private void LateUpdate()
@@ -163,7 +167,7 @@ public class DragonVisual : MonoBehaviour, IBossVisual
     public void SetRootMotionCapture(bool enabled)
     {
     }
- 
+
     public Vector3 ConsumeRootMotionDelta()
     {
         return Vector3.zero;
@@ -212,7 +216,7 @@ public class DragonVisual : MonoBehaviour, IBossVisual
         // 신형 스윕 공격 시작!
         if (leftClawAttack != null) leftClawAttack.StartAttack();
         if (rightClawAttack != null) rightClawAttack.StartAttack();
-        
+
         if (audioClips[0] != null)
         {
             SoundManager.Instance.PlaySFX_3D(audioClips[0], transform.position, SoundCategory.CombatHit);
@@ -247,15 +251,32 @@ public class DragonVisual : MonoBehaviour, IBossVisual
     {
         if (jumpSlamEffectPrefab != null && jumpSlamSpawnPoint != null)
         {
-            Instantiate(jumpSlamEffectPrefab, jumpSlamSpawnPoint.position, jumpSlamSpawnPoint.rotation);
+            // 부모 없이 월드에 덩그러니 생성합니다. (보스가 도망가도 그 자리에 폭발)
+            GameObject effect = Instantiate(jumpSlamEffectPrefab, jumpSlamSpawnPoint.position, jumpSlamSpawnPoint.rotation);
+
+            // 방장의 공격력 배율을 이펙트 스크립트에 주입!
+            BossAoEAttack aoe = effect.GetComponent<BossAoEAttack>();
+            if (aoe != null && _bossCore != null)
+            {
+                aoe.Initialize(_bossCore.GetOutgoingDamageMultiplier());
+            }
         }
     }
 
     public void SpawnFireEffect()
     {
-        if(fireBreath!=null && fireBreathPoint!=null)
+        if (fireBreath != null && fireBreathPoint != null)
         {
-            Instantiate(fireBreath, fireBreathPoint.position,jumpSlamSpawnPoint.rotation);
+            // 🔥 [핵심 수정] Instantiate의 4번째 인자로 fireBreathPoint(입 뼈)를 부모로 넣어줍니다!
+            // 이렇게 하면 고개를 돌리거나 몸을 틀 때 브레스가 입술에 딱 붙어서 완벽하게 따라갑니다.
+            GameObject effect = Instantiate(fireBreath, fireBreathPoint.position, fireBreathPoint.rotation, fireBreathPoint);
+
+            // 🔥 [데미지 연동] 방장의 공격력 배율을 이펙트 스크립트에 주입!
+            BossAoEAttack aoe = effect.GetComponent<BossAoEAttack>();
+            if (aoe != null && _bossCore != null)
+            {
+                aoe.Initialize(_bossCore.GetOutgoingDamageMultiplier());
+            }
         }
     }
 
