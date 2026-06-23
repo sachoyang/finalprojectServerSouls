@@ -13,8 +13,9 @@ public class DragonVisual : MonoBehaviour, IBossVisual
     public Transform headBone;
     public Transform lookAtGuide;
 
-    [Header("이펙트")]
-    public ParticleSystem fireBreath;
+    [Header("이펙트 프리펩")]
+    public GameObject fireBreath;
+    public Transform fireBreathPoint;
 
     [Header("근접 공격 판정 (신형 Sweep)")]
     // 기존의 BossHitbox 타입이었던 것을 BossMeleeAttack으로 바꿉니다!
@@ -87,6 +88,7 @@ public class DragonVisual : MonoBehaviour, IBossVisual
     public void PlayWakeUp(int wakeUpHash)
     {
         PlayAction(wakeUpHash);
+        SpawnFireEffect();
         if (wakeUpAndPhaseSound != null)
         {
             SoundManager.Instance.PlaySFX_3D(wakeUpAndPhaseSound, transform.position, SoundCategory.BossGimmick, 1f, 1f);
@@ -246,6 +248,14 @@ public class DragonVisual : MonoBehaviour, IBossVisual
         if (jumpSlamEffectPrefab != null && jumpSlamSpawnPoint != null)
         {
             Instantiate(jumpSlamEffectPrefab, jumpSlamSpawnPoint.position, jumpSlamSpawnPoint.rotation);
+        }
+    }
+
+    public void SpawnFireEffect()
+    {
+        if(fireBreath!=null && fireBreathPoint!=null)
+        {
+            Instantiate(fireBreath, fireBreathPoint.position,jumpSlamSpawnPoint.rotation);
         }
     }
 
