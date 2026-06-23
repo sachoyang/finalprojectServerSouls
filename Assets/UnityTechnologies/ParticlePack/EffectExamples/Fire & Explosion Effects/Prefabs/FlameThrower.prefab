@@ -44,7 +44,7 @@ ParticleSystem:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1634767862067424}
   serializedVersion: 8
-  lengthInSec: 5
+  lengthInSec: 4
   simulationSpeed: 1
   stopAction: 0
   cullingMode: 3
@@ -4874,8 +4874,8 @@ MonoBehaviour:
   boxSize: {x: 3, y: 3, z: 10}
   hitOffset: {x: 0, y: 0, z: 5}
   baseDamage: 2000
-  delayBeforeActive: 0.5
-  activeDuration: 2
+  delayBeforeActive: 2
+  activeDuration: 4
   isMultiHit: 1
   hitInterval: 1
 --- !u!1 &1685911702664702
@@ -4926,7 +4926,7 @@ ParticleSystem:
   ringBufferMode: 0
   ringBufferLoopRange: {x: 0, y: 1}
   emitterVelocityMode: 1
-  looping: 1
+  looping: 0
   prewarm: 0
   playOnAwake: 1
   useUnscaledTime: 0
