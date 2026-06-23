@@ -72,7 +72,6 @@ Shader "Odin XVI/Original Material URP"
             Name "ForwardLit"
             Tags { "LightMode" = "UniversalForward" }
 
-            Blend SrcAlpha OneMinusSrcAlpha
             ZWrite[_ZWrite]
             Cull[_Cull]
 
