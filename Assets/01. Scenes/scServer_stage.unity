@@ -898,7 +898,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 545308601635412824, guid: 23b5baea9d0423047acddd3bec009cd9, type: 3}
       propertyPath: m_Shadows.m_Type
-      value: 2
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 691754229784352003, guid: 23b5baea9d0423047acddd3bec009cd9, type: 3}
       propertyPath: m_LocalPosition.x
@@ -930,7 +930,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1639313262850042349, guid: 23b5baea9d0423047acddd3bec009cd9, type: 3}
       propertyPath: m_Shadows.m_Type
-      value: 2
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1678150077984147800, guid: 23b5baea9d0423047acddd3bec009cd9, type: 3}
       propertyPath: m_IsActive
@@ -970,7 +970,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2607621618492794559, guid: 23b5baea9d0423047acddd3bec009cd9, type: 3}
       propertyPath: m_Shadows.m_Type
-      value: 2
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2779153343147485537, guid: 23b5baea9d0423047acddd3bec009cd9, type: 3}
       propertyPath: m_IsActive
@@ -1002,7 +1002,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3728317436198385835, guid: 23b5baea9d0423047acddd3bec009cd9, type: 3}
       propertyPath: m_Shadows.m_Type
-      value: 2
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4397071364063362451, guid: 23b5baea9d0423047acddd3bec009cd9, type: 3}
       propertyPath: m_Color.b
@@ -1022,7 +1022,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4397071364063362451, guid: 23b5baea9d0423047acddd3bec009cd9, type: 3}
       propertyPath: m_Shadows.m_Type
-      value: 2
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5450639633719286155, guid: 23b5baea9d0423047acddd3bec009cd9, type: 3}
       propertyPath: m_LocalPosition.y
@@ -1046,7 +1046,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5791007364343447433, guid: 23b5baea9d0423047acddd3bec009cd9, type: 3}
       propertyPath: m_Shadows.m_Type
-      value: 2
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6193751497138133246, guid: 23b5baea9d0423047acddd3bec009cd9, type: 3}
       propertyPath: m_Color.b
@@ -1066,7 +1066,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6193751497138133246, guid: 23b5baea9d0423047acddd3bec009cd9, type: 3}
       propertyPath: m_Shadows.m_Type
-      value: 2
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6651172769335885083, guid: 23b5baea9d0423047acddd3bec009cd9, type: 3}
       propertyPath: m_LocalPosition.y
@@ -1090,7 +1090,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6767567934297927388, guid: 23b5baea9d0423047acddd3bec009cd9, type: 3}
       propertyPath: m_Shadows.m_Type
-      value: 2
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8034448234881988501, guid: 23b5baea9d0423047acddd3bec009cd9, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1162,7 +1162,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9012007376014769371, guid: 23b5baea9d0423047acddd3bec009cd9, type: 3}
       propertyPath: m_Shadows.m_Type
-      value: 2
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1461,7 +1461,7 @@ Light:
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
   m_Shadows:
-    m_Type: 2
+    m_Type: 0
     m_Resolution: -1
     m_CustomResolution: -1
     m_Strength: 1
@@ -1889,7 +1889,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   debugBossPool:
-  - {fileID: 11400000, guid: d7e46c98e98aec845b9c6865f2dec211, type: 2}
+  - {fileID: 11400000, guid: 96df1c5f1bcdd344cab8ecd91e9892ca, type: 2}
   useRandomBoss: 0
   debugUserId: 
   guiPosition: {x: 10, y: 10}

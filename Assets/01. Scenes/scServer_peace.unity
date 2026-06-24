@@ -1411,111 +1411,6 @@ MonoBehaviour:
   m_LightCookieSize: {x: 1, y: 1}
   m_LightCookieOffset: {x: 0, y: 0}
   m_SoftShadowQuality: 0
---- !u!1 &1429134274
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1429134277}
-  - component: {fileID: 1429134276}
-  - component: {fileID: 1429134275}
-  m_Layer: 0
-  m_Name: PolarDragonBoss
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1429134275
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1429134274}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  SortKey: 3149541400
-  ObjectInterest: 1
-  Flags: 262145
-  NestedObjects: []
-  NetworkedBehaviours:
-  - {fileID: 1429134276}
-  ForceRemoteRenderTimeframe: 0
---- !u!114 &1429134276
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1429134274}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 968703c2a0c8b2040ababd1616178edb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _bossName: 
-  moveSpeed: 2.5
-  rotationSpeed: 5
-  wakeUpRange: 10
-  aggroRefreshTime: 5
-  patternCooldown: 2
-  statusDatabase: []
-  wakeUpAnimName: SpreadFrozenBreath
-  wakeUpDuration: 2.8
-  maxGroggy: 40
-  groggyDuration: 3
-  groggyAnimLength: 1.4
-  _CurrentGroggy: 0
-  baseMaxHP: 100000
-  _maxHP: 0
-  _CurrentHP: 0
-  wallLayerMask:
-    serializedVersion: 2
-    m_Bits: 128
-  bodyRadius: 2
-  castHeightOffset: 2
-  groundLayerMask:
-    serializedVersion: 2
-    m_Bits: 512
-  stepHeight: 0.5
-  gravitySpeed: 15
-  phase1Patterns: []
-  phase2Patterns: []
-  _AllowedMaxPhase: 1
-  _DamageMultiplier: 1
-  _CurrentPhase: 1
-  _CurrentState: 0
-  _AggroTarget: {fileID: 0}
-  _CurrentPatternIndex: -1
-  _CurrentStepIndex: -1
-  _IsGimmickActive:
-    _value: 0
-  gimmickDamageReduction: 0.3
-  rearAttackPatternIndex: 2
-  phase2BuffId: 1
---- !u!4 &1429134277
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1429134274}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 4.041249, y: 4.136207, z: 2.5710154}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1520696189}
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1484418656
 GameObject:
   m_ObjectHideFlags: 0
@@ -1571,106 +1466,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1001 &1520696188
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 1429134277}
-    m_Modifications:
-    - target: {fileID: 1112051999470744, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}
-      propertyPath: m_Name
-      value: PolarDragon_PBR
-      objectReference: {fileID: 0}
-    - target: {fileID: 4240964543308124, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: -4.041249
-      objectReference: {fileID: 0}
-    - target: {fileID: 4240964543308124, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: -4.136207
-      objectReference: {fileID: 0}
-    - target: {fileID: 4240964543308124, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: -2.5710154
-      objectReference: {fileID: 0}
-    - target: {fileID: 4240964543308124, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4240964543308124, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4240964543308124, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4240964543308124, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4240964543308124, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4240964543308124, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4240964543308124, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 1112051999470744, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1520696191}
-  m_SourcePrefab: {fileID: 100100000, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}
---- !u!4 &1520696189 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 4240964543308124, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}
-  m_PrefabInstance: {fileID: 1520696188}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &1520696190 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 1112051999470744, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}
-  m_PrefabInstance: {fileID: 1520696188}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1520696191
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1520696190}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 815001a0a18d9864aa52a9f5069c1f48, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  anim: {fileID: 0}
-  headBone: {fileID: 0}
-  lookAtGuide: {fileID: 0}
-  fireBreath: {fileID: 0}
-  fireBreathPoint: {fileID: 0}
-  leftClawAttack: {fileID: 0}
-  rightClawAttack: {fileID: 0}
-  bodyAttack: {fileID: 0}
-  mouthAttack: {fileID: 0}
-  jumpSlamEffectPrefab: {fileID: 0}
-  jumpSlamSpawnPoint: {fileID: 0}
-  jumpWarningPrefab: {fileID: 0}
-  audioClips: []
-  wakeUpAndPhaseSound: {fileID: 0}
-  groggySound: {fileID: 0}
-  dieSound: {fileID: 0}
-  walkSound: {fileID: 0}
-  phase2ThemeBGM: {fileID: 0}
 --- !u!1 &1653262906
 GameObject:
   m_ObjectHideFlags: 0
@@ -2083,6 +1878,67 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9ea1bf360e44f3f4e91b0aad1152e360, type: 3}
+--- !u!1001 &8380852754091565978
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 150577676177912306, guid: 8834dc9c55ad8c748964fb9d77490052, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -20.71
+      objectReference: {fileID: 0}
+    - target: {fileID: 150577676177912306, guid: 8834dc9c55ad8c748964fb9d77490052, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.27
+      objectReference: {fileID: 0}
+    - target: {fileID: 150577676177912306, guid: 8834dc9c55ad8c748964fb9d77490052, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 7.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 150577676177912306, guid: 8834dc9c55ad8c748964fb9d77490052, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 150577676177912306, guid: 8834dc9c55ad8c748964fb9d77490052, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 150577676177912306, guid: 8834dc9c55ad8c748964fb9d77490052, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 150577676177912306, guid: 8834dc9c55ad8c748964fb9d77490052, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 150577676177912306, guid: 8834dc9c55ad8c748964fb9d77490052, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 150577676177912306, guid: 8834dc9c55ad8c748964fb9d77490052, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 150577676177912306, guid: 8834dc9c55ad8c748964fb9d77490052, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2402919297648847605, guid: 8834dc9c55ad8c748964fb9d77490052, type: 3}
+      propertyPath: SortKey
+      value: 845458223
+      objectReference: {fileID: 0}
+    - target: {fileID: 8521524127431077655, guid: 8834dc9c55ad8c748964fb9d77490052, type: 3}
+      propertyPath: m_Name
+      value: PolarDragonBoss
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 8834dc9c55ad8c748964fb9d77490052, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -2101,6 +1957,6 @@ SceneRoots:
   - {fileID: 1484418658}
   - {fileID: 1737116500}
   - {fileID: 2050000001}
-  - {fileID: 1429134277}
+  - {fileID: 8380852754091565978}
   - {fileID: 129979769}
   - {fileID: 1079730517}
