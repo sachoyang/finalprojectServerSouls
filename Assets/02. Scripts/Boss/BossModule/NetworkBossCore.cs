@@ -106,7 +106,7 @@ public class NetworkBossCore : NetworkBehaviour
     [Networked] public int CurrentPhase { get; set; } = 1;
 
     // 기존의 CurrentAvailablePatterns를 프로퍼티로 변경하여, 현재 페이즈에 맞는 리스트를 자동으로 내뱉게 합니다.
-    protected List<BossPatternModule> CurrentAvailablePatterns => (CurrentPhase == 2) ? phase2Patterns : phase1Patterns;
+    protected virtual List<BossPatternModule> CurrentAvailablePatterns => (CurrentPhase == 2) ? phase2Patterns : phase1Patterns;
 
     // ==========================================
     // [네트워크 동기화 변수들]

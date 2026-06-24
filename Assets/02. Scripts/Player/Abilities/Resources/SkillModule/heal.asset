@@ -33,6 +33,10 @@ MonoBehaviour:
   animationClip: {fileID: -203655887218126122, guid: b87c0223bacdbd840967e74c4a41288f, type: 3}
   animationStateName: 
   animationTrigger: Heal
+  rootMotionMode: 0
+  staminaRecoveryDelayMode: 0
+  opensComboInput: 0
+  comboInputOpenNormalizedTime: 0.72
   effectPrefab: {fileID: 0}
   effectLocalOffset: {x: 0, y: 0, z: 0}
   parentEffectToPlayer: 0

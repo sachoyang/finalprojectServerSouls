@@ -7,7 +7,7 @@ using System.IO;
 public class AbilityBakeWindow : EditorWindow
 {
     private SoulRushApiSettings settings;
-    private const string SAVE_PATH = "Assets/02. Scripts/Player/Abilities/Resources/GeneratedAbilities";
+    private const string SAVE_PATH = "Assets/02. Scripts/Player/Abilities/Resources/SkillModule";
 
     [MenuItem("Soul Rush/⚔️ 스킬 DB 동기화 (Bake)")]
     public static void ShowWindow()
@@ -50,15 +50,6 @@ public class AbilityBakeWindow : EditorWindow
 
     private async void BakeAbilities()
     {
-        // 1. AbilityAssetDatabase 자동 찾기
-        string[] guids = AssetDatabase.FindAssets("t:AbilityAssetDatabase");
-        if (guids.Length == 0)
-        {
-            Debug.LogError("[Bake 에러] 프로젝트 내에 AbilityAssetDatabase 파일이 없습니다!");
-            return;
-        }
-        AbilityAssetDatabase assetDB = AssetDatabase.LoadAssetAtPath<AbilityAssetDatabase>(AssetDatabase.GUIDToAssetPath(guids[0]));
-
         // 2. 서버 연결 및 JSON 받아오기 (세팅 파일의 주소 사용)
         Debug.Log("🌐 서버에서 스킬 데이터를 다운로드 중...");
         UnityWebRequest req = UnityWebRequest.Get(settings.bakeUrl);
@@ -102,7 +93,7 @@ public class AbilityBakeWindow : EditorWindow
             }
 
             // 에셋에 DB 수치와 프리팹 연결!
-            module.InitializeFromDB(dbData, assetDB);
+            module.InitializeFromDB(dbData);
 
             if (isNew)
             {
