@@ -13,6 +13,12 @@ public static class GothicCategoryPrefabBuilder
 
     private static readonly CategoryDefinition[] Categories =
     {
+        new("GlassDebris", "Gothic_GlassDebris.prefab", StripColliders,
+            "glassdebris", "glass_debris"),
+        new("Candelabra", "Gothic_Candelabra.prefab", KeepColliders,
+            "candelabra", "candleabra"),
+        new("Chandelier", "Gothic_Chandelier.prefab", KeepColliders,
+            "chandelier"),
         new("Static_Architecture", "Gothic_Static_Architecture.prefab", KeepColliders,
             "arch", "wall", "floor", "pillar", "stair", "ceiling", "trim", "baseboard", "railing", "window", "glass"),
         new("WoodDebris", "Gothic_WoodDebris.prefab", StripColliders,
@@ -147,6 +153,9 @@ public static class GothicCategoryPrefabBuilder
         int repairedCount = 0;
         int instantiatedCount = 0;
         SplitExistingOtherFakeCloudPrefab();
+        SplitExistingCategoryPrefab("Static_Architecture", "GlassDebris");
+        SplitExistingCategoryPrefab("Props", "Candelabra");
+        SplitExistingCategoryPrefab("Props", "Chandelier");
 
         foreach (CategoryDefinition category in Categories)
         {
@@ -224,57 +233,98 @@ public static class GothicCategoryPrefabBuilder
 
     private static void SplitExistingOtherFakeCloudPrefab()
     {
-        CategoryDefinition otherCategory = GetCategory("Other");
-        CategoryDefinition fakeCloudCategory = GetCategory("FakeCloud");
-        string otherPath = $"{OutputFolder}/{otherCategory.PrefabName}";
-        string fakeCloudPath = $"{OutputFolder}/{fakeCloudCategory.PrefabName}";
-        if (!File.Exists(otherPath))
+        SplitExistingCategoryPrefab("Other", "FakeCloud");
+    }
+
+    private static void SplitExistingCategoryPrefab(string sourceName, string targetName)
+    {
+        CategoryDefinition sourceCategory = GetCategory(sourceName);
+        CategoryDefinition targetCategory = GetCategory(targetName);
+        string sourcePath = $"{OutputFolder}/{sourceCategory.PrefabName}";
+        string targetPath = $"{OutputFolder}/{targetCategory.PrefabName}";
+        if (!File.Exists(sourcePath))
         {
             return;
         }
 
-        GameObject otherRoot = null;
-        GameObject fakeCloudRoot = null;
+        GameObject sourceRoot = null;
+        GameObject targetRoot = null;
         try
         {
-            otherRoot = PrefabUtility.LoadPrefabContents(otherPath);
-            List<Transform> fakeCloudChildren = FindDirectCategoryChildren(otherRoot, fakeCloudCategory);
-            if (fakeCloudChildren.Count == 0)
+            sourceRoot = PrefabUtility.LoadPrefabContents(sourcePath);
+            List<Transform> matchingChildren = FindDirectCategoryChildren(sourceRoot, targetCategory);
+            if (matchingChildren.Count == 0)
             {
                 return;
             }
 
-            fakeCloudRoot = new GameObject("Gothic_FakeCloud");
-            fakeCloudRoot.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
-            fakeCloudRoot.transform.localScale = Vector3.one;
-            GameObjectUtility.SetStaticEditorFlags(fakeCloudRoot, GameObjectUtility.GetStaticEditorFlags(otherRoot));
+            targetRoot = new GameObject($"Gothic_{targetCategory.Name}");
+            targetRoot.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+            targetRoot.transform.localScale = Vector3.one;
+            GameObjectUtility.SetStaticEditorFlags(targetRoot, GameObjectUtility.GetStaticEditorFlags(sourceRoot));
 
-            foreach (Transform child in fakeCloudChildren)
+            foreach (Transform child in matchingChildren)
             {
-                child.SetParent(fakeCloudRoot.transform, true);
+                GameObject clone = UnityEngine.Object.Instantiate(child.gameObject);
+                clone.name = child.gameObject.name;
+                clone.transform.SetParent(targetRoot.transform, true);
             }
 
-            ApplyCategoryPolicy(fakeCloudRoot, fakeCloudCategory);
-            ApplyCategoryPolicy(otherRoot, otherCategory);
-            PrefabUtility.SaveAsPrefabAsset(fakeCloudRoot, fakeCloudPath);
-            PrefabUtility.SaveAsPrefabAsset(otherRoot, otherPath);
-            Debug.Log($"[GothicCategoryPrefabBuilder] Moved {fakeCloudChildren.Count} fake cloud roots from Gothic_Other to Gothic_FakeCloud.");
+            ApplyCategoryPolicy(targetRoot, targetCategory);
+            EnsureWritablePrefabPath(targetPath);
+            GameObject savedTarget = PrefabUtility.SaveAsPrefabAsset(targetRoot, targetPath);
+            if (savedTarget == null || AssetDatabase.LoadAssetAtPath<GameObject>(targetPath) == null)
+            {
+                Debug.LogError($"[GothicCategoryPrefabBuilder] Failed to save split prefab: {targetPath}");
+                return;
+            }
+
+            foreach (Transform child in matchingChildren)
+            {
+                UnityEngine.Object.DestroyImmediate(child.gameObject);
+            }
+
+            ApplyCategoryPolicy(sourceRoot, sourceCategory);
+            PrefabUtility.SaveAsPrefabAsset(sourceRoot, sourcePath);
+            Debug.Log(
+                $"[GothicCategoryPrefabBuilder] Moved {matchingChildren.Count} roots from " +
+                $"{sourceCategory.PrefabName} to {targetCategory.PrefabName}.");
         }
         catch (Exception exception)
         {
-            Debug.LogError($"[GothicCategoryPrefabBuilder] Failed to split fake clouds from Gothic_Other.\n{exception.Message}");
+            Debug.LogError(
+                $"[GothicCategoryPrefabBuilder] Failed to split {targetName} from {sourceName}.\n" +
+                exception.Message);
         }
         finally
         {
-            if (otherRoot != null)
+            if (sourceRoot != null)
             {
-                PrefabUtility.UnloadPrefabContents(otherRoot);
+                PrefabUtility.UnloadPrefabContents(sourceRoot);
             }
 
-            if (fakeCloudRoot != null)
+            if (targetRoot != null)
             {
-                UnityEngine.Object.DestroyImmediate(fakeCloudRoot);
+                UnityEngine.Object.DestroyImmediate(targetRoot);
             }
+        }
+    }
+
+    private static void EnsureWritablePrefabPath(string prefabPath)
+    {
+        if (!File.Exists(prefabPath))
+        {
+            return;
+        }
+
+        if (AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath) != null)
+        {
+            return;
+        }
+
+        if (!AssetDatabase.DeleteAsset(prefabPath))
+        {
+            throw new InvalidOperationException($"Could not remove invalid prefab before rebuilding: {prefabPath}");
         }
     }
 
@@ -388,12 +438,17 @@ public static class GothicCategoryPrefabBuilder
                 UnityEngine.Object.DestroyImmediate(collider);
             }
         }
-        else if (category.Name == "Props")
+        else if (category.Name == "Props" ||
+                 category.Name == "Candelabra" ||
+                 category.Name == "Chandelier")
         {
             RemoveSmallCandleColliders(root);
         }
 
-        if (category.Name == "Candles" || category.Name == "Props")
+        if (category.Name == "Candles" ||
+            category.Name == "Props" ||
+            category.Name == "Candelabra" ||
+            category.Name == "Chandelier")
         {
             foreach (ParticleSystem particleSystem in root.GetComponentsInChildren<ParticleSystem>(true))
             {
