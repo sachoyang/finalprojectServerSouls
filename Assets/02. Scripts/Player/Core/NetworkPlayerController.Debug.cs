@@ -80,7 +80,7 @@ public partial class NetworkPlayerController
         builder.AppendLine($"Authority : state={HasStateAuthority}, input={Object.HasInputAuthority}, forward={(Runner != null && Runner.IsForward)}");
         builder.AppendLine($"Action : {GetActionName(LastAction)} / id={LastActionId} / seq={ActionSequence}");
         builder.AppendLine($"Consumed : net={LastConsumedActionId}, local={_lastLocalConsumedActionId}");
-        builder.AppendLine($"Lock : net={ActionAnimationLocked}({(PlayerActionLockType)ActionLockType}), local={_localActionAnimationLocked}({(PlayerActionLockType)_localActionLockType})");
+        builder.AppendLine($"Lock : net={ActionAnimationLocked}({(StateActionLockType)ActionLockType}), local={_localActionAnimationLocked}({(StateActionLockType)_localActionLockType})");
         builder.AppendLine($"Combo : index={BasicAttackComboIndex}, window={ComboInputWindowOpen || _localComboInputWindowOpen}, queued={_queuedComboAttack}:{_queuedComboActionId}");
 
         if (animator == null)

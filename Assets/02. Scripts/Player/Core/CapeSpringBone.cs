@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [DefaultExecutionOrder(10050)]
-public class CapeSpringBone : MonoBehaviour
+public class CapeSpringBone : MonoBehaviour, IStateResetReceiver
 {
     [Serializable]
     private sealed class Particle
@@ -230,6 +230,14 @@ public class CapeSpringBone : MonoBehaviour
         }
 
         _crawlingResetRoutine = StartCoroutine(ResetForCrawlingPose());
+    }
+
+    public void ResetForAnimatorState(string resetKey)
+    {
+        if (string.Equals(resetKey, "Crawling", StringComparison.OrdinalIgnoreCase))
+        {
+            ResetForCrawlingState();
+        }
     }
 
     private IEnumerator ResetForCrawlingPose()

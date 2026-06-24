@@ -28,14 +28,19 @@ public static class CrawlingCapeResetInstaller
 
         foreach (StateMachineBehaviour existing in crawlingState.behaviours)
         {
-            if (existing is CrawlingCapeResetStateBehaviour)
+            if (existing is AnimatorStateResetBehaviour existingReset)
             {
+                existingReset.Configure("Crawling");
+                EditorUtility.SetDirty(existingReset);
+                EditorUtility.SetDirty(controller);
+                AssetDatabase.SaveAssets();
                 return;
             }
         }
 
-        CrawlingCapeResetStateBehaviour behaviour =
-            crawlingState.AddStateMachineBehaviour<CrawlingCapeResetStateBehaviour>();
+        AnimatorStateResetBehaviour behaviour =
+            crawlingState.AddStateMachineBehaviour<AnimatorStateResetBehaviour>();
+        behaviour.Configure("Crawling");
         EditorUtility.SetDirty(behaviour);
         EditorUtility.SetDirty(controller);
         AssetDatabase.SaveAssets();

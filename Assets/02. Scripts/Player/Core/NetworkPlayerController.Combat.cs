@@ -147,11 +147,11 @@ public partial class NetworkPlayerController
         return false;
     }
 
-    public void BeginActionAnimation(PlayerActionLockType lockType)
+    public void BeginActionAnimation(StateActionLockType lockType)
     {
         // None은 락을 소유하지 않는 상태다.
         // 잘못 붙은 Behaviour 때문에 락이 켜진 뒤 풀리지 않는 상황을 막기 위해 무시한다.
-        if (lockType == PlayerActionLockType.None)
+        if (lockType == StateActionLockType.None)
         {
             return;
         }
@@ -170,13 +170,11 @@ public partial class NetworkPlayerController
         SetComboInputWindowOpen(true);
     }
 
-    public void EndActionAnimation(PlayerActionLockType lockType)
+    public void EndActionAnimation(StateActionLockType lockType)
     {
-        DelayStaminaRegenAfterAction(lockType);
-
         // 나가는 State가 현재 락을 소유한 타입일 때만 해제한다.
         // 예: 공격 중 피격되면 현재 타입은 Impact가 되므로, 늦게 호출된 Attack Exit는 락을 풀 수 없다.
-        if (lockType == PlayerActionLockType.None || GetCurrentActionLockType() != lockType)
+        if (lockType == StateActionLockType.None || GetCurrentActionLockType() != lockType)
         {
             return;
         }
@@ -184,7 +182,7 @@ public partial class NetworkPlayerController
         SetActionAnimationLocked(false);
         SetComboInputWindowOpen(false);
 
-        if (lockType == PlayerActionLockType.Roll)
+        if (lockType == StateActionLockType.Roll)
         {
             RollDirection = Vector3.zero;
         }
@@ -202,21 +200,9 @@ public partial class NetworkPlayerController
         ClearComboRequests();
     }
 
-    private void DelayStaminaRegenAfterAction(PlayerActionLockType lockType)
+    public void DelayStaminaRecoveryAfterAnimation()
     {
-        if (lockType == PlayerActionLockType.Parry && IsTransitioningToParryState())
-        {
-            return;
-        }
-
-        if (lockType == PlayerActionLockType.Attack ||
-            lockType == PlayerActionLockType.Parry ||
-            lockType == PlayerActionLockType.Jump ||
-            lockType == PlayerActionLockType.Roll ||
-            lockType == PlayerActionLockType.Skill)
-        {
-            _playerStats?.DelayStaminaRegen();
-        }
+        _playerStats?.DelayStaminaRegen();
     }
 
     private bool IsComboInputWindowOpen()
@@ -224,21 +210,21 @@ public partial class NetworkPlayerController
         return ComboInputWindowOpen || _localComboInputWindowOpen;
     }
 
-    private PlayerActionLockType GetCurrentActionLockType()
+    private StateActionLockType GetCurrentActionLockType()
     {
         // StateMachineBehaviour가 현재 재생 중인 State에 맞춰 로컬 락을 갱신한다.
         // 전환 중에는 네트워크 값보다 로컬 Animator 상태가 더 최신일 수 있어 로컬 락을 우선 본다.
         byte lockType = _localActionAnimationLocked ? _localActionLockType : ActionLockType;
-        return (PlayerActionLockType)lockType;
+        return (StateActionLockType)lockType;
     }
 
-    private void SetActionAnimationLocked(bool isLocked, PlayerActionLockType lockType = PlayerActionLockType.None)
+    private void SetActionAnimationLocked(bool isLocked, StateActionLockType lockType = StateActionLockType.None)
     {
         // Animator State 진입/종료가 알려주는 현재 액션 락을 로컬과 네트워크 상태에 반영한다.
         // 게임 결과는 서버가 확정하지만, 각 클라이언트의 입력 차단은 현재 재생 중인 Animator 상태도 참고한다.
         // 이렇게 해야 애니메이션/입력 지연 때문에 공격, 패링, 스킬이 늦게 끼어드는 상황을 줄일 수 있다.
         _localActionAnimationLocked = isLocked;
-        _localActionLockType = isLocked ? (byte)lockType : (byte)PlayerActionLockType.None;
+        _localActionLockType = isLocked ? (byte)lockType : (byte)StateActionLockType.None;
         UpdateAnimatorRootMotionMode();
 
         if (Object != null && HasStateAuthority)
@@ -341,7 +327,7 @@ public partial class NetworkPlayerController
         LastAction = ActionParryImpact;
         LastActionId = 0;
         ActionSequence++;
-        SetActionAnimationLocked(true, PlayerActionLockType.Impact);
+        SetActionAnimationLocked(true, StateActionLockType.Impact);
         SetComboInputWindowOpen(false);
         ClearComboRequests();
     }
@@ -349,9 +335,12 @@ public partial class NetworkPlayerController
     public void NotifyRevived()
     {
         _localActionAnimationLocked = false;
-        _localActionLockType = (byte)PlayerActionLockType.None;
+        _localActionLockType = (byte)StateActionLockType.None;
         _localComboInputWindowOpen = false;
         _localParryGuardActive = false;
+        _parryGuardStateDepth = 0;
+        _invincibilityStateDepth = 0;
+        _animatorStateRootMotionActive = false;
         ClearComboRequests();
         _lastLocalConsumedActionId = 0;
 
@@ -362,7 +351,7 @@ public partial class NetworkPlayerController
             LastConsumedActionId = 0;
             BasicAttackComboIndex = 0;
             ActionAnimationLocked = false;
-            ActionLockType = (byte)PlayerActionLockType.None;
+            ActionLockType = (byte)StateActionLockType.None;
             ComboInputWindowOpen = false;
             ParryGuardActive = false;
             ActionSequence++;
@@ -383,14 +372,21 @@ public partial class NetworkPlayerController
 
     public void SetActionInvincible(bool isInvincible)
     {
-        // StateMachineBehaviour에서 제어하는 순수 무적이다.
-        // ParryGuard와 달리 피해를 막아도 Impact2 같은 반격 리액션은 발생시키지 않는다.
-        _playerStats?.SetAnimationInvincible(isInvincible);
+        _invincibilityStateDepth = isInvincible
+            ? _invincibilityStateDepth + 1
+            : Mathf.Max(0, _invincibilityStateDepth - 1);
+
+        // Every client runs Animator behaviours, but only StateAuthority may decide damage immunity.
+        // This avoids duplicate RPCs and timing races from proxy animators.
+        if (HasStateAuthority)
+        {
+            RefreshAnimationInvincibility();
+        }
     }
 
     private bool IsParryActive()
     {
-        return LastAction == ActionParry && (IsActionAnimationLocked || IsParryAnimatorStateActive());
+        return LastAction == ActionParry && IsActionAnimationLocked;
     }
 
     public bool IsParryActionActive => IsParryActive();
@@ -399,20 +395,27 @@ public partial class NetworkPlayerController
 
     public void SetParryGuardActive(bool isActive)
     {
-        _localParryGuardActive = isActive;
-        _playerStats?.SetAnimationInvincible(isActive);
-
-        if (Object != null && HasStateAuthority)
+        if (isActive)
         {
-            ParryGuardActive = isActive;
+            _parryGuardStateDepth++;
+        }
+        else
+        {
+            _parryGuardStateDepth = 0;
+        }
+
+        _localParryGuardActive = _parryGuardStateDepth > 0;
+
+        if (HasStateAuthority)
+        {
+            ParryGuardActive = _localParryGuardActive;
         }
     }
 
     public void EndParryGuardState()
     {
-        // blocking1 -> blocking2 -> blocking3처럼 guard가 켜진 패링 State끼리 이어질 때,
-        // 이전 State의 Exit가 다음 State의 guard를 꺼버리면 전환 중 공격이 뚫릴 수 있다.
-        if (IsTransitioningToParryState())
+        _parryGuardStateDepth = Mathf.Max(0, _parryGuardStateDepth - 1);
+        if (_parryGuardStateDepth > 0)
         {
             return;
         }
@@ -420,18 +423,30 @@ public partial class NetworkPlayerController
         SetParryGuardActive(false);
     }
 
-    private static PlayerActionLockType GetActionLockType(byte actionType)
+    private void RefreshAnimationInvincibility()
+    {
+        if (!HasStateAuthority)
+        {
+            return;
+        }
+
+        bool shouldBeInvincible =
+            _invincibilityStateDepth > 0;
+        _playerStats?.SetAnimationInvincible(shouldBeInvincible);
+    }
+
+    private static StateActionLockType GetActionLockType(byte actionType)
     {
         // 네트워크로 동기화되는 byte 액션 값을 Animator StateBehaviour에서 사용하는 락 타입으로 변환한다.
         // Death는 별도 조작 복귀가 없는 상태라 None으로 두고, 피격류는 Impact 타입으로 묶는다.
         return actionType switch
         {
-            ActionAttack => PlayerActionLockType.Attack,
-            ActionParry => PlayerActionLockType.Parry,
-            ActionRoll => PlayerActionLockType.Roll,
-            ActionJump or ActionJumpForward => PlayerActionLockType.Jump,
-            ActionImpact or ActionParryImpact => PlayerActionLockType.Impact,
-            _ => PlayerActionLockType.None
+            ActionAttack => StateActionLockType.Attack,
+            ActionParry => StateActionLockType.Parry,
+            ActionRoll => StateActionLockType.Roll,
+            ActionJump or ActionJumpForward => StateActionLockType.Jump,
+            ActionImpact or ActionParryImpact => StateActionLockType.Impact,
+            _ => StateActionLockType.None
         };
     }
 
@@ -662,75 +677,23 @@ public partial class NetworkPlayerController
 
     private bool IsForwardJumpRootMotionActive()
     {
-        return useForwardJumpRootMotion && LastAction == ActionJumpForward && IsActionAnimationLocked;
+        return useForwardJumpRootMotion &&
+               _animatorStateRootMotionActive &&
+               LastAction == ActionJumpForward &&
+               IsActionAnimationLocked;
     }
 
     private bool IsRollRootMotionActive()
     {
-        return LastAction == ActionRoll && IsActionAnimationLocked;
+        return _animatorStateRootMotionActive &&
+               LastAction == ActionRoll &&
+               IsActionAnimationLocked;
     }
 
     private bool IsSkillRootMotionActive()
     {
-        return GetCurrentActionLockType() == PlayerActionLockType.Skill &&
-               IsSkillRootMotionAnimatorStateActive();
-    }
-
-    private bool IsParryAnimatorStateActive()
-    {
-        return IsAnimatorInState(Blocking1State) ||
-               IsAnimatorInState(Blocking2State) ||
-               IsAnimatorInState(Blocking3State);
-    }
-
-    private bool IsTransitioningToParryState()
-    {
-        if (animator == null || !animator.IsInTransition(0))
-        {
-            return false;
-        }
-
-        AnimatorStateInfo nextState = animator.GetNextAnimatorStateInfo(0);
-        return IsParryState(nextState.shortNameHash);
-    }
-
-    private static bool IsParryState(int stateHash)
-    {
-        return stateHash == Blocking1State ||
-               stateHash == Blocking2State ||
-               stateHash == Blocking3State;
-    }
-
-    private bool IsSkillRootMotionAnimatorStateActive()
-    {
-        if (animator == null)
-        {
-            return false;
-        }
-
-        AnimatorStateInfo currentState = animator.GetCurrentAnimatorStateInfo(0);
-        if (IsRootMotionSkillState(currentState.shortNameHash))
-        {
-            return true;
-        }
-
-        if (!animator.IsInTransition(0))
-        {
-            return false;
-        }
-
-        AnimatorStateInfo nextState = animator.GetNextAnimatorStateInfo(0);
-        return IsRootMotionSkillState(nextState.shortNameHash);
-    }
-
-    private static bool IsRootMotionSkillState(int stateHash)
-    {
-        return stateHash == SlideAttackState ||
-               stateHash == HighSpinAttackState ||
-               stateHash == JumpAttackState ||
-               stateHash == GreatSwordSlideAttackState ||
-               stateHash == GreatSwordHighSpinAttackState ||
-               stateHash == GreatSwordJumpAttackState;
+        return _animatorStateRootMotionActive &&
+               GetCurrentActionLockType() == StateActionLockType.Skill;
     }
 
     private int GetBasicAttackTrigger()
@@ -770,7 +733,8 @@ public partial class NetworkPlayerController
 
         // 현재 State가 목표 State이고 거의 끝난 상태가 아니면, 같은 트리거를 다시 넣어 중복 전이를 만들지 않는다.
         AnimatorStateInfo currentState = animator.GetCurrentAnimatorStateInfo(0);
-        if (currentState.shortNameHash == stateHash && currentState.normalizedTime < 0.98f)
+        if (currentState.shortNameHash == stateHash &&
+            currentState.normalizedTime < activeAnimatorStateEndThreshold)
         {
             return true;
         }

@@ -123,7 +123,7 @@ public partial class NetworkPlayerController
 
         bool shiftReleased = WasShiftHeld && !shiftHeld;
         bool isRolling = IsRollRootMotionActive();
-        bool isActing = IsActionAnimationLocked || IsParryAnimatorStateActive();
+        bool isActing = IsActionAnimationLocked;
         bool rawAttackPressed = data.buttons.IsSet(NetworkInputData.MOUSEBUTTON0);
         bool rawParryPressed = data.buttons.IsSet(NetworkInputData.MOUSEBUTTON1);
         bool rawJumpPressed = data.buttons.IsSet(NetworkInputData.JUMP);
