@@ -34,6 +34,12 @@ public partial class NetworkPlayerController
                 IsSkillRootMotionActive());
     }
 
+    public void SetAnimatorStateRootMotionActive(bool isActive)
+    {
+        _animatorStateRootMotionActive = isActive;
+        UpdateAnimatorRootMotionMode();
+    }
+
     private void UpdateAnimatorRootMotionMode()
     {
         if (animator == null)

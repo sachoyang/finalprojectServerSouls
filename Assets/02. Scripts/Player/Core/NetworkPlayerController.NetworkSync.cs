@@ -42,9 +42,12 @@ public partial class NetworkPlayerController
     private void ResetLocalActionState()
     {
         _localActionAnimationLocked = false;
-        _localActionLockType = (byte)PlayerActionLockType.None;
+        _localActionLockType = (byte)StateActionLockType.None;
         _localComboInputWindowOpen = false;
         _localParryGuardActive = false;
+        _parryGuardStateDepth = 0;
+        _invincibilityStateDepth = 0;
+        _animatorStateRootMotionActive = false;
         ClearComboRequests();
         _lastLocalConsumedActionId = 0;
         if (animator != null)
@@ -82,7 +85,7 @@ public partial class NetworkPlayerController
                 _networkCharacterController.gravity = _networkControllerGravity;
             }
             ActionAnimationLocked = false;
-            ActionLockType = (byte)PlayerActionLockType.None;
+            ActionLockType = (byte)StateActionLockType.None;
             ComboInputWindowOpen = false;
             ControlLockMask = 0;
         }

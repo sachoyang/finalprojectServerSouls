@@ -16,7 +16,15 @@ public enum PlayerControlLockFlags
 }
 
 [RequireComponent(typeof(NetworkCharacterController))]
-public partial class NetworkPlayerController : NetworkBehaviour
+public partial class NetworkPlayerController :
+    NetworkBehaviour,
+    IActionLockStateReceiver,
+    IComboInputStateReceiver,
+    IParryGuardStateReceiver,
+    IInvincibilityStateReceiver,
+    ITurnStateReceiver,
+    IRootMotionStateReceiver,
+    IStaminaRecoveryStateReceiver
 {
     // Animator 파라미터 이름은 매 프레임 문자열로 찾지 않도록 해시로 캐싱한다.
     private static readonly int MoveSpeed = Animator.StringToHash("MoveSpeed");
@@ -44,15 +52,6 @@ public partial class NetworkPlayerController : NetworkBehaviour
     private static readonly int Slash2State = Animator.StringToHash("slash2");
     private static readonly int Slash3State = Animator.StringToHash("slash3");
     private static readonly int Slash4State = Animator.StringToHash("slash4");
-    private static readonly int Blocking1State = Animator.StringToHash("blocking1");
-    private static readonly int Blocking2State = Animator.StringToHash("blocking2");
-    private static readonly int Blocking3State = Animator.StringToHash("blocking3");
-    private static readonly int SlideAttackState = Animator.StringToHash("SlideAttack");
-    private static readonly int HighSpinAttackState = Animator.StringToHash("HighSpinAttack");
-    private static readonly int JumpAttackState = Animator.StringToHash("JumpAttack");
-    private static readonly int GreatSwordSlideAttackState = Animator.StringToHash("Great Sword Slide Attack");
-    private static readonly int GreatSwordHighSpinAttackState = Animator.StringToHash("Great Sword High Spin Attack");
-    private static readonly int GreatSwordJumpAttackState = Animator.StringToHash("Great Sword Jump Attack");
 
     private const byte ActionNone = 0;
     private const byte ActionAttack = 1;
@@ -73,8 +72,6 @@ public partial class NetworkPlayerController : NetworkBehaviour
     private const byte LockMoveRunRight = 6;
     private const byte LockMoveRunForward = 7;
     private const byte LockMoveRunBack = 8;
-    private const byte BasicAttackComboLastIndex = 2;
-
     private const string AlivePlayerTag = "Player";
     private const string DeadPlayerTag = "DeadPlayer";
     private static readonly int[] BasicAttackComboTriggers =
@@ -83,6 +80,8 @@ public partial class NetworkPlayerController : NetworkBehaviour
         Attack3,
         Attack4
     };
+    private static byte BasicAttackComboLastIndex =>
+        (byte)Mathf.Max(0, BasicAttackComboTriggers.Length - 1);
 
     [Header("References")]
     // 플레이어 모델 애니메이터와 로컬 플레이어가 바라볼 카메라.
@@ -114,6 +113,9 @@ public partial class NetworkPlayerController : NetworkBehaviour
     [SerializeField, Range(0f, 1f)] private float fastTurnActionCancelNormalizedTime = 0.25f;
 
     [Header("Action Locks")]
+    [SerializeField, Range(0.5f, 1f)]
+    private float activeAnimatorStateEndThreshold = 0.98f;
+
     // 점프 높이와 전체 체공 시간을 기준으로 초기 속도와 중력을 계산해 애니메이션 타이밍에 맞춘다.
     [SerializeField] private float jumpHeight = 1.15f;
     [SerializeField] private float jumpAirTime = 0.68f;
@@ -207,6 +209,9 @@ public partial class NetworkPlayerController : NetworkBehaviour
     private byte _localActionLockType;
     private bool _localComboInputWindowOpen;
     private bool _localParryGuardActive;
+    private int _parryGuardStateDepth;
+    private int _invincibilityStateDepth;
+    private bool _animatorStateRootMotionActive;
     private int _localControlLockMask;
     // queue는 Animator StateBehaviour가 연 입력 가능 구간에서 다음 공격으로 확정된 선입력이다.
     private bool _queuedComboAttack;

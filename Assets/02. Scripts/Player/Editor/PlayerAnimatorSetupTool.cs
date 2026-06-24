@@ -42,6 +42,12 @@ public static class PlayerAnimatorSetupTool
     private const float TurnExitBlendDuration = 0.15f;
     private const float ComboInputOpenNormalizedTime = 0.72f;
 
+    [InitializeOnLoadMethod]
+    private static void ScheduleStateBehaviourMigration()
+    {
+        EditorApplication.delayCall += MigrateCombinedStateBehaviours;
+    }
+
     [MenuItem("Tools/ServerSouls/Setup Player Base Animator")]
     public static void SetupPlayerBaseAnimator()
     {
@@ -221,7 +227,14 @@ public static class PlayerAnimatorSetupTool
             state.motion = module.AnimationClip;
             state.tag = "Action";
             // 스킬 모션 중에는 공격/패링/다른 스킬로 캔슬되지 않도록 Skill 타입 액션락 Behaviour를 자동 부착한다.
-            EnsureActionBehaviour(state, PlayerActionLockType.Skill, false);
+            EnsureActionBehaviour(
+                state,
+                StateActionLockType.Skill,
+                module.OpensComboInput,
+                delaysStaminaRecovery: module.DelaysStaminaRecovery,
+                usesRootMotion: module.UsesRootMotion,
+                comboInputOpenNormalizedTime: module.ComboInputOpenNormalizedTime,
+                preserveExistingInspectorValues: false);
 
             EnsureAnyStateTriggerTransition(root, state, module.AnimationTrigger);
             EnsureTimedExitTransition(state, idleState);
@@ -382,8 +395,8 @@ public static class PlayerAnimatorSetupTool
         AnimatorState parryImpactState = EnsureState(hitAndDeathMachine, Impact2, "Assets/04. Images/Animation/Great Sword Impact2.fbx", new Vector3(300f, 80f, 0f), "Action");
         AnimatorState deathState = EnsureState(hitAndDeathMachine, Death, "Assets/04. Images/Animation/Great Sword Death.fbx", new Vector3(520f, 80f, 0f), "Action");
         AnimatorState crawlingState = EnsureState(hitAndDeathMachine, "Crawling", "Assets/04. Images/Animation/Crawling.fbx", new Vector3(740f, 80f, 0f), string.Empty);
-        EnsureActionBehaviour(impactState, PlayerActionLockType.Impact, false);
-        EnsureActionBehaviour(parryImpactState, PlayerActionLockType.Impact, false, enablesInvincibility: true);
+        EnsureActionBehaviour(impactState, StateActionLockType.Impact, false);
+        EnsureActionBehaviour(parryImpactState, StateActionLockType.Impact, false, enablesInvincibility: true);
         EnsureCrawlingCapeResetBehaviour(crawlingState);
         hitAndDeathMachine.defaultState = impactState;
 
@@ -707,15 +720,30 @@ public static class PlayerAnimatorSetupTool
         EnsureAnyStateTriggerTransition(root, jump2State, Jump2);
         EnsureAnyStateTriggerTransition(root, parryRaiseState, Parry);
         EnsureAnyStateTriggerTransition(root, rollState, Roll);
-        EnsureActionBehaviour(slash2, PlayerActionLockType.Attack, true);
-        EnsureActionBehaviour(slash3, PlayerActionLockType.Attack, true);
-        EnsureActionBehaviour(slash4, PlayerActionLockType.Attack, false);
-        EnsureActionBehaviour(jumpState, PlayerActionLockType.Jump, false);
-        EnsureActionBehaviour(jump2State, PlayerActionLockType.Jump, false);
-        EnsureActionBehaviour(parryRaiseState, PlayerActionLockType.Parry, false, true);
-        EnsureActionBehaviour(parryGuardState, PlayerActionLockType.Parry, false, true);
-        EnsureActionBehaviour(parryLowerState, PlayerActionLockType.Parry, false, true);
-        EnsureActionBehaviour(rollState, PlayerActionLockType.Roll, false);
+        EnsureActionBehaviour(slash2, StateActionLockType.Attack, true, delaysStaminaRecovery: true);
+        EnsureActionBehaviour(slash3, StateActionLockType.Attack, true, delaysStaminaRecovery: true);
+        EnsureActionBehaviour(slash4, StateActionLockType.Attack, false, delaysStaminaRecovery: true);
+        EnsureActionBehaviour(jumpState, StateActionLockType.Jump, false, delaysStaminaRecovery: true);
+        EnsureActionBehaviour(
+            jump2State,
+            StateActionLockType.Jump,
+            false,
+            delaysStaminaRecovery: true,
+            usesRootMotion: true);
+        EnsureActionBehaviour(parryRaiseState, StateActionLockType.Parry, false, true);
+        EnsureActionBehaviour(parryGuardState, StateActionLockType.Parry, false, true);
+        EnsureActionBehaviour(
+            parryLowerState,
+            StateActionLockType.Parry,
+            false,
+            true,
+            delaysStaminaRecovery: true);
+        EnsureActionBehaviour(
+            rollState,
+            StateActionLockType.Roll,
+            false,
+            delaysStaminaRecovery: true,
+            usesRootMotion: true);
         EnsureTimedExitTransition(slash2, idleState);
         EnsureTimedExitTransition(slash3, idleState);
         EnsureTimedExitTransition(slash4, idleState);
@@ -766,10 +794,14 @@ public static class PlayerAnimatorSetupTool
 
     private static void EnsureActionBehaviour(
         AnimatorState state,
-        PlayerActionLockType lockType,
+        StateActionLockType lockType,
         bool opensComboInput,
         bool enablesParryGuard = false,
-        bool enablesInvincibility = false)
+        bool enablesInvincibility = false,
+        bool delaysStaminaRecovery = false,
+        bool usesRootMotion = false,
+        float comboInputOpenNormalizedTime = ComboInputOpenNormalizedTime,
+        bool preserveExistingInspectorValues = true)
     {
         // StateMachineBehaviour는 Animator State에 붙는 스크립트다.
         // 여기서 타입까지 자동 지정해두면 Inspector에서 문자열 이름을 직접 입력하지 않아도 액션락이 맞물린다.
@@ -778,31 +810,225 @@ public static class PlayerAnimatorSetupTool
             return;
         }
 
-        PlayerActionStateBehaviour behaviour = null;
-        bool createdBehaviour = false;
-        foreach (StateMachineBehaviour existing in state.behaviours)
+        ActionLockStateBehaviour actionLock =
+            EnsureBehaviour<ActionLockStateBehaviour>(state);
+        actionLock.Configure(lockType);
+        EditorUtility.SetDirty(actionLock);
+
+        ConfigureOptionalComboBehaviour(
+            state,
+            opensComboInput,
+            comboInputOpenNormalizedTime,
+            preserveExistingInspectorValues);
+        ConfigureOptionalBehaviour<GuardWindowStateBehaviour>(state, enablesParryGuard);
+        ConfigureOptionalBehaviour<InvincibilityStateBehaviour>(state, enablesInvincibility);
+        ConfigureOptionalBehaviour<StaminaRecoveryDelayStateBehaviour>(state, delaysStaminaRecovery);
+        ConfigureOptionalBehaviour<AnimatorRootMotionStateBehaviour>(state, usesRootMotion);
+    }
+
+    private static void MigrateCombinedStateBehaviours()
+    {
+        if (!TryLoadController(out AnimatorController controller))
         {
-            if (existing is PlayerActionStateBehaviour actionBehaviour)
+            return;
+        }
+
+        bool changed = false;
+        foreach (AnimatorControllerLayer layer in controller.layers)
+        {
+            changed |= MigrateCombinedStateBehaviours(layer.stateMachine);
+        }
+
+        if (!changed)
+        {
+            return;
+        }
+
+        SaveController(controller);
+        Debug.Log("Player Animator StateBehaviours were migrated to single-purpose components.");
+    }
+
+    private static bool MigrateCombinedStateBehaviours(AnimatorStateMachine stateMachine)
+    {
+        bool changed = false;
+        foreach (ChildAnimatorState childState in stateMachine.states)
+        {
+            AnimatorState state = childState.state;
+            ActionLockStateBehaviour actionLock =
+                FindBehaviour<ActionLockStateBehaviour>(state);
+            if (actionLock == null)
             {
-                behaviour = actionBehaviour;
-                break;
+                continue;
+            }
+
+            bool hasLegacySettings =
+                actionLock.LegacyOpensComboInput ||
+                actionLock.LegacyEnablesParryGuard ||
+                actionLock.LegacyEnablesInvincibility;
+            if (hasLegacySettings && actionLock.LegacyOpensComboInput)
+            {
+                ConfigureOptionalComboBehaviour(
+                    state,
+                    true,
+                    actionLock.LegacyComboInputOpenNormalizedTime);
+            }
+
+            if (hasLegacySettings && actionLock.LegacyEnablesParryGuard)
+            {
+                ConfigureOptionalBehaviour<GuardWindowStateBehaviour>(state, true);
+            }
+
+            if (hasLegacySettings && actionLock.LegacyEnablesInvincibility)
+            {
+                ConfigureOptionalBehaviour<InvincibilityStateBehaviour>(state, true);
+            }
+
+            if (hasLegacySettings)
+            {
+                actionLock.ClearLegacySettings();
+                EditorUtility.SetDirty(actionLock);
+                changed = true;
+            }
+
+            bool shouldDelayStamina =
+                actionLock.LockType == StateActionLockType.Attack ||
+                actionLock.LockType == StateActionLockType.Jump ||
+                actionLock.LockType == StateActionLockType.Roll ||
+                (actionLock.LockType == StateActionLockType.Parry && state.name == "blocking3");
+            bool shouldUseRootMotion =
+                state.name == "Jump2" ||
+                state.name == "Sprinting Forward Roll";
+
+            if (actionLock.LockType == StateActionLockType.Skill &&
+                TryFindAbilityModuleForState(state.name, out PlayerAbilityModule module))
+            {
+                shouldDelayStamina = module.DelaysStaminaRecovery;
+                shouldUseRootMotion = module.UsesRootMotion;
+                ConfigureOptionalComboBehaviour(
+                    state,
+                    module.OpensComboInput,
+                    module.ComboInputOpenNormalizedTime,
+                    false);
+            }
+
+            changed |= SetOptionalBehaviour<StaminaRecoveryDelayStateBehaviour>(
+                state,
+                shouldDelayStamina);
+            changed |= SetOptionalBehaviour<AnimatorRootMotionStateBehaviour>(
+                state,
+                shouldUseRootMotion);
+        }
+
+        foreach (ChildAnimatorStateMachine childStateMachine in stateMachine.stateMachines)
+        {
+            changed |= MigrateCombinedStateBehaviours(childStateMachine.stateMachine);
+        }
+
+        return changed;
+    }
+
+    private static bool TryFindAbilityModuleForState(
+        string stateName,
+        out PlayerAbilityModule matchingModule)
+    {
+        string[] moduleGuids =
+            AssetDatabase.FindAssets("t:PlayerAbilityModule", new[] { SkillModuleFolder });
+        foreach (string moduleGuid in moduleGuids)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(moduleGuid);
+            PlayerAbilityModule module = AssetDatabase.LoadAssetAtPath<PlayerAbilityModule>(path);
+            if (module != null && GetModuleStateName(module) == stateName)
+            {
+                matchingModule = module;
+                return true;
             }
         }
 
-        if (behaviour == null)
+        matchingModule = null;
+        return false;
+    }
+
+    private static void ConfigureOptionalComboBehaviour(
+        AnimatorState state,
+        bool enabled,
+        float openNormalizedTime,
+        bool preserveExistingValue = false)
+    {
+        ComboInputWindowStateBehaviour behaviour =
+            FindBehaviour<ComboInputWindowStateBehaviour>(state);
+        if (!enabled)
         {
-            behaviour = state.AddStateMachineBehaviour<PlayerActionStateBehaviour>();
-            createdBehaviour = true;
+            RemoveBehaviour(behaviour);
+            return;
         }
 
-        behaviour.Configure(
-            lockType,
-            opensComboInput,
-            ComboInputOpenNormalizedTime,
-            enablesParryGuard,
-            preserveParryGuard: !createdBehaviour,
-            shouldEnableInvincibility: enablesInvincibility);
+        bool created = behaviour == null;
+        behaviour ??= state.AddStateMachineBehaviour<ComboInputWindowStateBehaviour>();
+        if (created || !preserveExistingValue)
+        {
+            behaviour.Configure(openNormalizedTime);
+        }
         EditorUtility.SetDirty(behaviour);
+    }
+
+    private static void ConfigureOptionalBehaviour<T>(AnimatorState state, bool enabled)
+        where T : StateMachineBehaviour
+    {
+        T behaviour = FindBehaviour<T>(state);
+        if (!enabled)
+        {
+            RemoveBehaviour(behaviour);
+            return;
+        }
+
+        behaviour ??= state.AddStateMachineBehaviour<T>();
+        EditorUtility.SetDirty(behaviour);
+    }
+
+    private static bool SetOptionalBehaviour<T>(AnimatorState state, bool enabled)
+        where T : StateMachineBehaviour
+    {
+        T existing = FindBehaviour<T>(state);
+        if (enabled == (existing != null))
+        {
+            return false;
+        }
+
+        ConfigureOptionalBehaviour<T>(state, enabled);
+        return true;
+    }
+
+    private static T EnsureBehaviour<T>(AnimatorState state)
+        where T : StateMachineBehaviour
+    {
+        return FindBehaviour<T>(state) ?? state.AddStateMachineBehaviour<T>();
+    }
+
+    private static T FindBehaviour<T>(AnimatorState state)
+        where T : StateMachineBehaviour
+    {
+        if (state == null)
+        {
+            return null;
+        }
+
+        foreach (StateMachineBehaviour existing in state.behaviours)
+        {
+            if (existing is T behaviour)
+            {
+                return behaviour;
+            }
+        }
+
+        return null;
+    }
+
+    private static void RemoveBehaviour(StateMachineBehaviour behaviour)
+    {
+        if (behaviour != null)
+        {
+            Object.DestroyImmediate(behaviour, true);
+        }
     }
 
     private static void EnsureCrawlingCapeResetBehaviour(AnimatorState state)
@@ -814,14 +1040,17 @@ public static class PlayerAnimatorSetupTool
 
         foreach (StateMachineBehaviour existing in state.behaviours)
         {
-            if (existing is CrawlingCapeResetStateBehaviour)
+            if (existing is AnimatorStateResetBehaviour existingReset)
             {
+                existingReset.Configure("Crawling");
+                EditorUtility.SetDirty(existingReset);
                 return;
             }
         }
 
-        CrawlingCapeResetStateBehaviour behaviour =
-            state.AddStateMachineBehaviour<CrawlingCapeResetStateBehaviour>();
+        AnimatorStateResetBehaviour behaviour =
+            state.AddStateMachineBehaviour<AnimatorStateResetBehaviour>();
+        behaviour.Configure("Crawling");
         EditorUtility.SetDirty(behaviour);
     }
 
@@ -832,10 +1061,10 @@ public static class PlayerAnimatorSetupTool
             return;
         }
 
-        PlayerTurnStateBehaviour behaviour = null;
+        TurnMotionStateBehaviour behaviour = null;
         foreach (StateMachineBehaviour existing in state.behaviours)
         {
-            behaviour = existing as PlayerTurnStateBehaviour;
+            behaviour = existing as TurnMotionStateBehaviour;
             if (behaviour != null)
             {
                 break;
@@ -844,7 +1073,7 @@ public static class PlayerAnimatorSetupTool
 
         if (behaviour == null)
         {
-            behaviour = state.AddStateMachineBehaviour<PlayerTurnStateBehaviour>();
+            behaviour = state.AddStateMachineBehaviour<TurnMotionStateBehaviour>();
         }
 
         EditorUtility.SetDirty(behaviour);

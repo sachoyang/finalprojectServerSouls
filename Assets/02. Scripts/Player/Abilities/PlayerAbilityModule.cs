@@ -15,6 +15,13 @@ public enum PlayerAbilitySpecialEffect
     UnlockBasicAttackCombo
 }
 
+public enum AnimatorStateFeatureMode
+{
+    Auto,
+    Enabled,
+    Disabled
+}
+
 [CreateAssetMenu(menuName = "ServerSouls/Player Modules/Player Ability")]
 public class PlayerAbilityModule : ScriptableObject
 {
@@ -86,6 +93,18 @@ public class PlayerAbilityModule : ScriptableObject
     // Animator Trigger 파라미터로 재생할 때 사용하는 트리거 이름.
     [SerializeField] private string animationTrigger;
 
+    [Header("Animation State Behaviour")]
+    [Tooltip("Auto uses the animation clip's root curves. Override it when clip import settings make detection unreliable.")]
+    [SerializeField] private AnimatorStateFeatureMode rootMotionMode = AnimatorStateFeatureMode.Auto;
+
+    [Tooltip("Auto delays recovery when this ability consumes stamina.")]
+    [SerializeField] private AnimatorStateFeatureMode staminaRecoveryDelayMode = AnimatorStateFeatureMode.Auto;
+
+    [Tooltip("Allows a follow-up input while this animation state is playing.")]
+    [SerializeField] private bool opensComboInput;
+
+    [SerializeField, Range(0f, 1f)] private float comboInputOpenNormalizedTime = 0.72f;
+
     [Header("VFX")]
     // 능력 사용 시 생성할 파티클/이펙트 프리팹.
     [SerializeField] private GameObject effectPrefab;
@@ -136,6 +155,16 @@ public class PlayerAbilityModule : ScriptableObject
     public AnimationClip AnimationClip => animationClip;
     public string AnimationStateName => animationStateName;
     public string AnimationTrigger => animationTrigger;
+    public bool UsesRootMotion =>
+        rootMotionMode == AnimatorStateFeatureMode.Enabled ||
+        (rootMotionMode == AnimatorStateFeatureMode.Auto &&
+         animationClip != null &&
+         animationClip.hasRootCurves);
+    public bool DelaysStaminaRecovery =>
+        staminaRecoveryDelayMode == AnimatorStateFeatureMode.Enabled ||
+        (staminaRecoveryDelayMode == AnimatorStateFeatureMode.Auto && staminaCost > 0f);
+    public bool OpensComboInput => opensComboInput;
+    public float ComboInputOpenNormalizedTime => comboInputOpenNormalizedTime;
     public float HealthRestoreAmount => healthRestoreAmount;
     public float StaminaRestoreAmount => staminaRestoreAmount;
     public PlayerAbilitySpecialEffect SpecialEffect => specialEffect;

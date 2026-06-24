@@ -511,20 +511,17 @@ public class PlayerStats : NetworkBehaviour
     {
         NetworkPlayerController controller = GetComponent<NetworkPlayerController>();
         bool isParryGuardActive = controller != null && controller.IsParryGuardActive;
-        if (!IsDead && IsAnimationInvincible && isParryGuardActive)
+        if (!IsDead && isParryGuardActive)
         {
             Debug.Log("[Player Damage Blocked] parry guard");
             controller.NotifyParryGuardBlocked();
             return;
         }
 
-        bool ignoresDamageByAnimationInvincible = IsAnimationInvincible &&
-            (controller == null || !controller.IsParryActionActive);
-
         // 이미 죽었거나 짧은 피격 무적 중이면 데미지를 무시한다.
-        if (IsDead || ignoresDamageByAnimationInvincible || !HitInvincibleTimer.ExpiredOrNotRunning(Runner))
+        if (IsDead || IsAnimationInvincible || !HitInvincibleTimer.ExpiredOrNotRunning(Runner))
         {
-            Debug.Log($"[Player Damage Ignored] dead:{IsDead}, animationInvincible:{ignoresDamageByAnimationInvincible}, hitInvincible:{!HitInvincibleTimer.ExpiredOrNotRunning(Runner)}");
+            Debug.Log($"[Player Damage Ignored] dead:{IsDead}, animationInvincible:{IsAnimationInvincible}, hitInvincible:{!HitInvincibleTimer.ExpiredOrNotRunning(Runner)}");
             return;
         }
 
