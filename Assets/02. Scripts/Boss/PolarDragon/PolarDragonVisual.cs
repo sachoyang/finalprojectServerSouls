@@ -38,11 +38,17 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
     public BossRootMotionCapture rootMotionCapture;
 
     private NetworkBossCore _bossCore;
+    private bool _hasTurnParam; // Animator에 "Turn" 파라미터가 있는지 (없으면 SetTurn graceful 무시)
 
     private void Awake()
     {
         if (anim == null) anim = GetComponent<Animator>();
         _bossCore = GetComponentInParent<NetworkBossCore>();
+
+        // "Turn" 파라미터 존재 여부 1회 캐싱 (없을 때 SetFloat 경고 스팸 방지)
+        if (anim != null)
+            foreach (var p in anim.parameters)
+                if (p.type == AnimatorControllerParameterType.Float && p.name == "Turn") { _hasTurnParam = true; break; }
 
         // 🔥 [버그 픽스] 루트모션 캡처 컴포넌트 확보.
         //    이게 Animator 오브젝트에 있어야 OnAnimatorMove 가 루트모션 자동적용을 가로채서
@@ -137,6 +143,14 @@ private void Update()
         float currentSpeed = anim.GetFloat("MoveSpeed");
         // 부드럽게 감속/가속되도록 Lerp 처리
         anim.SetFloat("MoveSpeed", Mathf.Lerp(currentSpeed, targetSpeed, Time.deltaTime * 5f));
+    }
+
+    // 🔥 [요구사항4] 제자리 회전 시 발 스텝 턴 모션을 블렌딩 (Foot Sliding 제거)
+    public void SetTurn(float turnSign)
+    {
+        if (!_hasTurnParam) return; // 파라미터 미설정 시 안전하게 무시 (몸통은 코어가 턴 속도로 회전)
+        float cur = anim.GetFloat("Turn");
+        anim.SetFloat("Turn", Mathf.Lerp(cur, turnSign, Time.deltaTime * 8f));
     }
 
     public void SetLookAtTarget(Vector3 targetPos)

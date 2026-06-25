@@ -46,6 +46,12 @@ public class NetworkBossCore : NetworkBehaviour
     public float aggroRefreshTime = 5.0f;
     public float patternCooldown = 2.0f;
 
+    [Header("제자리 회전(Turn-in-place) 설정")]
+    [Tooltip("타겟과의 각도 오차가 이 값(도) 이하면 회전을 멈춘다(데드존). 미세 떨림 방지.")]
+    public float facingDeadzoneAngle = 10f;
+    [Tooltip("제자리에서 몸이 도는 속도(도/초). 반드시 Turn 애니메이션의 발놀림 속도와 맞춰야 미끄러짐(Foot Sliding)이 사라진다.")]
+    public float turnInPlaceSpeed = 80f;
+
     [Header("상태이상 도감 (SO 리스트)")]
     [Tooltip("기획자가 만든 StatusEffectData SO들을 여기에 모두 넣어주세요.")]
     public List<StatusEffectData> statusDatabase;
@@ -217,13 +223,14 @@ public class NetworkBossCore : NetworkBehaviour
         {
             _visual?.ResetLookAt();
             _visual?.SetDirection(0f, 0f);
+            _visual?.SetTurn(0f);
             return;
         }
 
         // 1. 고개 돌리기 (네트워크로 넘어온 타겟 위치를 바라봄)
         _visual?.SetLookAtTarget(AggroTarget.transform.position);
 
-        // 2. 애니메이션 방향 블렌딩 
+        // 2. 애니메이션 방향 블렌딩
         if (CurrentState == BossState.Walk)
         {
             // 내 컴퓨터에서 보여지는 보스 위치 기준, 타겟이 어디있는지 방향 계산
@@ -233,10 +240,29 @@ public class NetworkBossCore : NetworkBehaviour
 
             // 모든 클라이언트가 각자의 애니메이터에 값을 집어넣어 다리를 움직임!
             _visual?.SetDirection(animDir.x, animDir.z);
+            _visual?.SetTurn(0f); // 걷는 중엔 이동 블렌드가 처리하므로 제자리 턴은 끔
         }
         else
         {
             _visual?.SetDirection(0f, 0f);
+
+            // 🔥 [요구사항4] 제자리(Idle)에서 타겟과의 각도 오차를 Turn 파라미터(-1 좌 ~ +1 우)로 전달.
+            //    각 클라이언트가 자기 화면의 네트워크 동기화된 transform/타겟 기준으로 계산하므로 별도 네트워크 변수 불필요.
+            //    Animator의 Turn 블렌드 트리(좌턴/Idle/우턴 스텝)가 이 값으로 발을 움직여 미끄러짐을 없앤다.
+            float turnSign = 0f;
+            if (CurrentState == BossState.Idle)
+            {
+                Vector3 toTarget = AggroTarget.transform.position - transform.position;
+                toTarget.y = 0f;
+                if (toTarget.sqrMagnitude > 0.0001f)
+                {
+                    Vector3 flatForward = transform.forward; flatForward.y = 0f;
+                    float angle = Vector3.SignedAngle(flatForward.normalized, toTarget.normalized, Vector3.up);
+                    if (Mathf.Abs(angle) > facingDeadzoneAngle)
+                        turnSign = Mathf.Clamp(angle / 90f, -1f, 1f);
+                }
+            }
+            _visual?.SetTurn(turnSign);
         }
     }
 
@@ -298,24 +324,17 @@ public class NetworkBossCore : NetworkBehaviour
             return;
         }
 
-        // [개선] Idle/Walk 모두에서 타겟을 향해 부드럽게 몸통 회전.
-        //        → 평상시에도 항상 어그로 타겟을 향하므로, 큰 각도일 때만 90도 루트모션 턴이 나가고
-        //          작은 각도는 이 슬러프가 자연스럽게 흡수해 "딱딱 끊기는" 느낌을 줄인다.
-        if (CurrentState == BossState.Idle || CurrentState == BossState.Walk)
-        {
-            Vector3 targetDir = (AggroTarget.transform.position - transform.position);
-            targetDir.y = 0;
-            if (targetDir.sqrMagnitude > 0.0001f)
-            {
-                Quaternion targetRot = Quaternion.LookRotation(targetDir.normalized);
-                // Walk는 좀 더 빠르게, Idle(호버 포함)은 살짝 느리게 회전
-                float rotMul = (CurrentState == BossState.Walk) ? 0.4f : 0.25f;
-                transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, (rotationSpeed * rotMul) * Runner.DeltaTime);
-            }
-        }
+        Vector3 toTarget = AggroTarget.transform.position - transform.position;
+        toTarget.y = 0f;
+        if (toTarget.sqrMagnitude < 0.0001f) return;
+        Vector3 toTargetDir = toTarget.normalized;
 
         if (CurrentState == BossState.Walk)
         {
+            // 걷는 중엔 다리가 실제로 앞으로 움직이므로, 몸통을 부드럽게 슬러프해도 미끄러짐이 보이지 않는다.
+            Quaternion targetRot = Quaternion.LookRotation(toTargetDir);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, (rotationSpeed * 0.4f) * Runner.DeltaTime);
+
             // 이동 연산 (이동속도 버프 반영: 비행 시 Boss_Flying power 2 → 2배)
             Vector3 localTargetPos = transform.InverseTransformPoint(AggroTarget.transform.position);
             localTargetPos.y = 0;
@@ -324,6 +343,30 @@ public class NetworkBossCore : NetworkBehaviour
             float speed = moveSpeed * GetMoveSpeedMultiplier();
             Vector3 worldMoveOffset = transform.TransformDirection(new Vector3(animDir.x, 0, animDir.z)) * speed * Runner.DeltaTime;
             _movement.MoveWithWallSlide(transform, worldMoveOffset, Runner.DeltaTime);
+        }
+        else if (CurrentState == BossState.Idle)
+        {
+            // ==========================================
+            // 🔥 [요구사항4] 제자리 회전 풋슬라이딩(동상 회전) 제거
+            // ==========================================
+            Vector3 flatForward = transform.forward; flatForward.y = 0f;
+            float angle = Vector3.SignedAngle(flatForward.normalized, toTargetDir, Vector3.up);
+
+            if (IsAirborne)
+            {
+                // 공중 호버: 발이 땅에 없으므로 '미끄러짐' 개념이 없다 → 부드러운 슬러프로 타겟을 향함.
+                Quaternion targetRot = Quaternion.LookRotation(toTargetDir);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, (rotationSpeed * 0.3f) * Runner.DeltaTime);
+            }
+            else if (Mathf.Abs(angle) > facingDeadzoneAngle)
+            {
+                // 지상 제자리 회전: 몸통을 '턴 애니메이션 발놀림과 동일한 속도(turnInPlaceSpeed)'로만 돌린다.
+                // 동시에 UpdateLocomotionVisuals가 Turn 파라미터로 발 스텝 모션을 블렌딩하므로,
+                // 발이 회전을 끌고 가는 것처럼 보여 '팽이 회전(Foot Sliding)'이 사라진다.
+                float maxStep = turnInPlaceSpeed * Runner.DeltaTime;
+                float step = Mathf.Clamp(angle, -maxStep, maxStep);
+                transform.Rotate(0f, step, 0f, Space.World);
+            }
         }
     }
 
