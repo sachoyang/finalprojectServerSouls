@@ -1854,6 +1854,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1849285323}
   - component: {fileID: 1849285324}
+  - component: {fileID: 1849285325}
   m_Layer: 0
   m_Name: DebugGame
   m_TagString: Untagged
@@ -1894,6 +1895,21 @@ MonoBehaviour:
   debugUserId: 
   guiPosition: {x: 10, y: 10}
   guiWidth: 260
+--- !u!114 &1849285325
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1849285322}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83d04f1f1f784adf91d9d66dc243435a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  killBossAndSkipCutsceneKey: 286
+  respawnChestKey: 287
+  teleportToChestKey: 288
 --- !u!1 &1898967616 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 105842480600620659, guid: 23b5baea9d0423047acddd3bec009cd9, type: 3}
