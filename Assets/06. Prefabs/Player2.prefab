@@ -157,8 +157,6 @@ GameObject:
   - component: {fileID: 6580439990751833769}
   - component: {fileID: 6066741626657161726}
   - component: {fileID: 1745647009342870012}
-  - component: {fileID: 1791975044507147035}
-  - component: {fileID: 5808674857098424799}
   - component: {fileID: 3157636954750617142}
   - component: {fileID: 3532236537947503394}
   m_Layer: 8
@@ -300,6 +298,9 @@ MonoBehaviour:
   moveStartSpeed: 1.2
   moveStopSpeed: 0.18
   minimumMoveAnimationBlend: 0.5
+  maximumStepUpHeight: 0.35
+  minimumStepUpHeight: 0.01
+  activeAnimatorStateEndThreshold: 0.98
   jumpHeight: 1.15
   jumpAirTime: 0.68
   forwardJumpHeight: 1.15
@@ -417,36 +418,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f3ae763d661bfb54384d8fad474257b5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &1791975044507147035
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5093928462932519886}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 357844ce8518c914b965ef6e9364f05c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  lastClearedBossStage: 1
-  pendingOptions: []
---- !u!114 &5808674857098424799
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5093928462932519886}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8dbef57a70044702933c40d2132aa99e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  offerRewardKey: 286
-  selectFirstOptionKey: 287
-  selectSecondOptionKey: 288
-  selectThirdOptionKey: 289
 --- !u!114 &3157636954750617142
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -462,8 +433,8 @@ MonoBehaviour:
   drawMode: 0
   onlyShowAfterAttackInput: 1
   visibleSecondsAfterAttack: 0.35
-  fillColor: {r: 0.9632838, g: 1, b: 0, a: 0.25}
-  wireColor: {r: 1, g: 0.1, b: 0, a: 1}
+  fillColor: {r: 0, g: 0.18431373, b: 1, a: 0.25}
+  wireColor: {r: 0.764151, g: 0.764151, b: 0.764151, a: 1}
   showWireframe: 1
   drawCenterLine: 1
 --- !u!114 &3532236537947503394
@@ -617,6 +588,12 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 7368915328334569149}
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5524357496402786692, guid: 033a3d9b8fb69dc43b0a6f84a29ca4ec, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5030165299384938240}
+    - targetCorrespondingSourceObject: {fileID: 5524357496402786692, guid: 033a3d9b8fb69dc43b0a6f84a29ca4ec, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5312276369627772550}
     - targetCorrespondingSourceObject: {fileID: -2237898583773686168, guid: 033a3d9b8fb69dc43b0a6f84a29ca4ec, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4017122181798045110}

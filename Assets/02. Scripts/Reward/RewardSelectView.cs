@@ -19,13 +19,13 @@ public class RewardSelectView : MonoBehaviour
     [SerializeField] private float messageDuration = 2f;
     [SerializeField] private Color confirmDisabledColor = Color.gray;
     [SerializeField] private Color confirmEnabledColor = Color.green;
-    [SerializeField] private bool autoBindLocalRewardController = true;
+    [SerializeField] private bool autoBindRewardManager = true;
 
     private readonly List<RewardCardView> spawnedCards = new List<RewardCardView>();
     private Func<PlayerAbilityModule, bool> onConfirmed;
     private PlayerAbilityModule selectedModule;
     private RewardCardView selectedCard;
-    private PlayerAbilityRewardController rewardController;
+    private RewardManager rewardManager;
     private InventoryPanelController inventoryPanel;
     private Coroutine bindCoroutine;
     private Coroutine messageCoroutine;
@@ -47,11 +47,11 @@ public class RewardSelectView : MonoBehaviour
 
     private void OnEnable()
     {
-        if (!autoBindLocalRewardController)
+        if (!autoBindRewardManager)
             return;
 
         if (bindCoroutine == null)
-            bindCoroutine = StartCoroutine(BindLocalRewardControllerRoutine());
+            bindCoroutine = StartCoroutine(BindRewardManagerRoutine());
     }
 
     private void OnDisable()
@@ -62,7 +62,7 @@ public class RewardSelectView : MonoBehaviour
             bindCoroutine = null;
         }
 
-        UnbindRewardController();
+        UnbindRewardManager();
     }
 
     public void Show(
@@ -151,13 +151,13 @@ public class RewardSelectView : MonoBehaviour
         Hide();
     }
 
-    private IEnumerator BindLocalRewardControllerRoutine()
+    private IEnumerator BindRewardManagerRoutine()
     {
-        while (rewardController == null)
+        while (rewardManager == null)
         {
-            BindRewardController(FindLocalRewardController());
+            BindRewardManager(RewardManager.Active ?? FindObjectOfType<RewardManager>());
 
-            if (rewardController != null)
+            if (rewardManager != null)
             {
                 bindCoroutine = null;
                 yield break;
@@ -169,29 +169,29 @@ public class RewardSelectView : MonoBehaviour
         bindCoroutine = null;
     }
 
-    private void BindRewardController(PlayerAbilityRewardController controller)
+    private void BindRewardManager(RewardManager manager)
     {
-        if (rewardController == controller)
+        if (rewardManager == manager)
             return;
 
-        UnbindRewardController();
-        rewardController = controller;
+        UnbindRewardManager();
+        rewardManager = manager;
 
-        if (rewardController == null)
+        if (rewardManager == null)
             return;
 
-        rewardController.BossRewardOffered += OnBossRewardOffered;
-        rewardController.BossRewardSelected += OnBossRewardSelected;
+        rewardManager.BossRewardOffered += OnBossRewardOffered;
+        rewardManager.BossRewardSelected += OnBossRewardSelected;
     }
 
-    private void UnbindRewardController()
+    private void UnbindRewardManager()
     {
-        if (rewardController == null)
+        if (rewardManager == null)
             return;
 
-        rewardController.BossRewardOffered -= OnBossRewardOffered;
-        rewardController.BossRewardSelected -= OnBossRewardSelected;
-        rewardController = null;
+        rewardManager.BossRewardOffered -= OnBossRewardOffered;
+        rewardManager.BossRewardSelected -= OnBossRewardSelected;
+        rewardManager = null;
     }
 
     private void OnBossRewardOffered(int bossStage, IReadOnlyList<PlayerAbilityModule> modules)
@@ -216,9 +216,9 @@ public class RewardSelectView : MonoBehaviour
 
     private bool ConfirmRewardSelection(PlayerAbilityModule module)
     {
-        if (rewardController == null)
+        if (rewardManager == null)
         {
-            ShowMessage("보상 컨트롤러를 찾을 수 없습니다");
+            ShowMessage("보상 매니저를 찾을 수 없습니다");
             return false;
         }
 
@@ -229,7 +229,7 @@ public class RewardSelectView : MonoBehaviour
             return false;
         }
 
-        if (!rewardController.SelectPendingOption(optionIndex))
+        if (!rewardManager.SelectPendingOption(optionIndex))
         {
             ShowMessage("보상을 적용할 수 없습니다");
             return false;
@@ -243,10 +243,10 @@ public class RewardSelectView : MonoBehaviour
 
     private int GetPendingOptionIndex(PlayerAbilityModule module)
     {
-        if (rewardController == null || rewardController.PendingOptions == null)
+        if (rewardManager == null || rewardManager.PendingOptions == null)
             return -1;
 
-        IReadOnlyList<PlayerAbilityModule> pendingOptions = rewardController.PendingOptions;
+        IReadOnlyList<PlayerAbilityModule> pendingOptions = rewardManager.PendingOptions;
         for (int i = 0; i < pendingOptions.Count; i++)
         {
             if (pendingOptions[i] == module)
@@ -254,12 +254,6 @@ public class RewardSelectView : MonoBehaviour
         }
 
         return -1;
-    }
-
-    private static PlayerAbilityRewardController FindLocalRewardController()
-    {
-        NetworkPlayerController localPlayer = PlayerRegistry.LocalPlayer;
-        return localPlayer != null ? localPlayer.GetComponent<PlayerAbilityRewardController>() : null;
     }
 
     private void SetConfirmButtonState(bool hasSelectedCard)

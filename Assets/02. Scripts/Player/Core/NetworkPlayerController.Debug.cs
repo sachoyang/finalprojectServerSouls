@@ -61,8 +61,6 @@ public partial class NetworkPlayerController
 
         builder.AppendLine();
         builder.AppendLine("Skills");
-        AppendRewardOptions(builder);
-
         if (_abilityInventory == null || _abilityInventory.EquippedModules.Count == 0)
         {
             builder.AppendLine("- None");
@@ -117,25 +115,6 @@ public partial class NetworkPlayerController
         if (shortNameHash == Slash3State) return "slash3";
         if (shortNameHash == Slash4State) return "slash4";
         return shortNameHash.ToString();
-    }
-
-    private void AppendRewardOptions(StringBuilder builder)
-    {
-        if (_abilityRewardController == null ||
-            _abilityRewardController.PendingOptions == null ||
-            _abilityRewardController.PendingOptions.Count == 0)
-        {
-            return;
-        }
-
-        builder.AppendLine();
-        builder.AppendLine($"Reward Options / Boss Stage {_abilityRewardController.LastClearedBossStage}");
-        for (int i = 0; i < _abilityRewardController.PendingOptions.Count; i++)
-        {
-            PlayerAbilityModule module = _abilityRewardController.PendingOptions[i];
-            string optionName = module != null ? module.DisplayName : "Empty";
-            builder.AppendLine($"- [F{6 + i}] {optionName}");
-        }
     }
 
     private void AppendEquippedPassiveSkills(StringBuilder builder)
