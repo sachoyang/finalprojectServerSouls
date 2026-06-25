@@ -23,7 +23,6 @@ public partial class NetworkPlayerController
     {
         UpdateAnimatorRootMotionMode();
         RestoreDefaultGravityIfGrounded();
-        CompleteTurnAnimationIfAnimatorExited();
 
         if (HasControlLock(PlayerControlLockFlags.Movement))
         {
@@ -34,62 +33,9 @@ public partial class NetworkPlayerController
         // HP가 0이 되면 전투 입력은 막고 느린 크롤링 이동만 허용한다.
         if (_playerStats != null && _playerStats.IsDead)
         {
-            ClearTurnActionBuffer();
             HandleCrawlingMovement();
             return;
         }
-
-        if (IsTurnAnimationActive())
-        {
-            Vector3 turnDesiredMove = Vector3.zero;
-            bool resumeRun = false;
-            if (GetInput(out NetworkInputData turnData))
-            {
-                turnDesiredMove = turnData.direction;
-                if (turnDesiredMove.sqrMagnitude > 1f)
-                {
-                    turnDesiredMove.Normalize();
-                }
-
-                bool turnShiftHeld = turnData.buttons.IsSet(NetworkInputData.SHIFT);
-                if (turnShiftHeld)
-                {
-                    ShiftHoldTime = WasShiftHeld ? ShiftHoldTime + Runner.DeltaTime : shiftHoldThreshold;
-                }
-                else
-                {
-                    ShiftHoldTime = 0f;
-                }
-
-                float turnRunStaminaCost = _playerStats != null ? _playerStats.RunStaminaPerSecond * Runner.DeltaTime : 0f;
-                resumeRun = turnDesiredMove.sqrMagnitude > 0.001f &&
-                            turnShiftHeld &&
-                            ShiftHoldTime >= shiftHoldThreshold &&
-                            (_playerStats == null || _playerStats.HasStamina(turnRunStaminaCost));
-                UpdateTurnResumeState(turnDesiredMove, resumeRun);
-                TryBufferTurnAction(turnData, turnDesiredMove);
-                WasShiftHeld = turnShiftHeld;
-            }
-            else
-            {
-                UpdateTurnResumeState(Vector3.zero, false);
-                WasShiftHeld = false;
-                ShiftHoldTime = 0f;
-            }
-
-            if (IsTurnActionCancelWindowOpen())
-            {
-                TryExecuteTurnActionBuffer();
-            }
-
-            CurrentMoveSpeed = UpdateCurrentMoveSpeed(0f, true);
-            ApplyTurnRootMotion();
-            ApplyTurnInputControl(turnDesiredMove, resumeRun);
-            UpdateTurnAnimatorResumeParameters();
-            return;
-        }
-
-        TryExecuteTurnActionBuffer();
 
         if (!GetInput(out NetworkInputData data))
         {
@@ -243,7 +189,6 @@ public partial class NetworkPlayerController
         float targetSpeed = 0f;
         Vector3 moveDirection = Vector3.zero;
         Vector3 facingDirection = IsLockOnNetworked ? GetLockOnFacingDirection() : Vector3.zero;
-        bool snapMoveSpeed = false;
 
         if (!actionBlocksMovement && desiredMove.sqrMagnitude > 0.001f)
         {
@@ -253,8 +198,7 @@ public partial class NetworkPlayerController
 
         float moveSpeedMultiplier = GetMoveSpeedMultiplier();
         targetSpeed *= moveSpeedMultiplier;
-        snapMoveSpeed = ConsumeTurnResumeSpeedSnap(targetSpeed, moveDirection);
-        float currentSpeed = UpdateCurrentMoveSpeed(targetSpeed, snapMoveSpeed);
+        float currentSpeed = UpdateCurrentMoveSpeed(targetSpeed, false);
 
         if (actionBlocksMovement)
         {
@@ -287,15 +231,6 @@ public partial class NetworkPlayerController
             return;
         }
 
-        if (TryStartTurnAnimation(moveDirection, facingDirection, shouldRun, isBusy, currentSpeed, moveSpeedMultiplier))
-        {
-            currentSpeed = UpdateCurrentMoveSpeed(0f, true);
-            ApplyTurnRootMotion();
-            UpdateMovementState(false, false, LockMoveIdle, 0f);
-            WasShiftHeld = shiftHeld;
-            return;
-        }
-
         ApplyMovement(moveDirection, currentSpeed, facingDirection);
         if (shouldRun && _playerStats != null)
         {
@@ -310,91 +245,6 @@ public partial class NetworkPlayerController
         {
             ShiftHoldTime = 0f;
         }
-    }
-
-    private void TryBufferTurnAction(NetworkInputData data, Vector3 desiredMove)
-    {
-        bool jumpPressed = data.buttons.IsSet(NetworkInputData.JUMP);
-        bool attackPressed = data.buttons.IsSet(NetworkInputData.MOUSEBUTTON0);
-        bool parryPressed = data.buttons.IsSet(NetworkInputData.MOUSEBUTTON1);
-        if ((!jumpPressed && !attackPressed && !parryPressed) ||
-            HasControlLock(PlayerControlLockFlags.Action) ||
-            !TryConsumeInputAction(data.actionId))
-        {
-            return;
-        }
-
-        TurnQueuedAction = jumpPressed
-            ? ActionJump
-            : attackPressed
-                ? ActionAttack
-                : ActionParry;
-        TurnQueuedActionId = data.actionId;
-        TurnQueuedDirection = desiredMove;
-    }
-
-    private bool TryExecuteTurnActionBuffer()
-    {
-        byte queuedAction = TurnQueuedAction;
-        if (queuedAction == ActionNone)
-        {
-            return false;
-        }
-
-        int actionId = TurnQueuedActionId;
-        Vector3 direction = TurnQueuedDirection;
-        ClearTurnActionBuffer();
-
-        if (HasControlLock(PlayerControlLockFlags.Action) ||
-            IsActionAnimationLocked ||
-            IsRollRootMotionActive())
-        {
-            return false;
-        }
-
-        if (queuedAction == ActionJump)
-        {
-            if (!_networkCharacterController.Grounded || !TrySpendJumpStamina())
-            {
-                return false;
-            }
-
-            bool useForwardJump = ShouldUseForwardJumpAnimation();
-            ForwardJumpDirection = useForwardJump
-                ? (direction.sqrMagnitude > 0.001f
-                    ? direction.normalized
-                    : Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized)
-                : Vector3.zero;
-            ApplyJumpPhysics(useForwardJump);
-            StartAction(useForwardJump ? ActionJumpForward : ActionJump, actionId);
-            return true;
-        }
-
-        if (queuedAction == ActionAttack)
-        {
-            if (!TrySpendBasicAttackStamina())
-            {
-                return false;
-            }
-
-            StartBasicAttack(GetOpeningBasicAttackComboIndex(), actionId);
-            return true;
-        }
-
-        if (queuedAction == ActionParry && TrySpendParryStamina())
-        {
-            StartAction(ActionParry, actionId);
-            return true;
-        }
-
-        return false;
-    }
-
-    private void ClearTurnActionBuffer()
-    {
-        TurnQueuedAction = ActionNone;
-        TurnQueuedActionId = 0;
-        TurnQueuedDirection = Vector3.zero;
     }
 
     private void ProcessLockOnInput(NetworkInputData data)

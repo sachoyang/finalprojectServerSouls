@@ -22,7 +22,6 @@ public partial class NetworkPlayerController :
     IComboInputStateReceiver,
     IParryGuardStateReceiver,
     IInvincibilityStateReceiver,
-    ITurnStateReceiver,
     IRootMotionStateReceiver,
     IStaminaRecoveryStateReceiver
 {
@@ -44,10 +43,6 @@ public partial class NetworkPlayerController :
     private static readonly int LockMoveX = Animator.StringToHash("LockMoveX");
     private static readonly int LockMoveY = Animator.StringToHash("LockMoveY");
     private static readonly int LockMoveSpeed = Animator.StringToHash("LockMoveSpeed");
-    private static readonly int Turn180 = Animator.StringToHash("Turn180");
-    private static readonly int Turn180Fast = Animator.StringToHash("Turn180Fast");
-    private static readonly int Turn180State = Animator.StringToHash("Great Sword 180 Turn");
-    private static readonly int Turn180FastState = Animator.StringToHash("Great Sword 180 Turn Fast");
     private static readonly int IdleState = Animator.StringToHash("idle1");
     private static readonly int Slash2State = Animator.StringToHash("slash2");
     private static readonly int Slash3State = Animator.StringToHash("slash3");
@@ -102,15 +97,13 @@ public partial class NetworkPlayerController :
     [SerializeField] private float moveStartSpeed = 1.2f;
     [SerializeField] private float moveStopSpeed = 0.18f;
     [SerializeField, Range(0f, 0.5f)] private float minimumMoveAnimationBlend = 0.5f;
-    [SerializeField] private float turnRootMotionFallbackRotationSpeed = 360f;
-    [SerializeField] private float turnAnimationYawDirection = 1f;
-    [SerializeField, Range(0.5f, 1f)] private float turnStartSpeedRatio = 0.75f;
-    [SerializeField, Range(0f, 1f)] private float turnInputMoveRatio = 0.35f;
-    [SerializeField] private float turnInputRotationSpeed = 360f;
-    [SerializeField, Range(0f, 1f)] private float fastTurnInputMoveRatio = 0.15f;
-    [SerializeField] private float fastTurnInputRotationSpeed = 220f;
-    [SerializeField, Range(0f, 1f)] private float turnActionCancelNormalizedTime = 0.4f;
-    [SerializeField, Range(0f, 1f)] private float fastTurnActionCancelNormalizedTime = 0.25f;
+
+    [Header("Step Up")]
+    // CharacterController가 이 높이 이하의 턱을 자동으로 올라간 뒤 만든 가짜 상승 속도를 제거한다.
+    // Player.prefab의 CharacterController Step Offset(현재 0.3m)보다 약간 크게 두는 것이 안전하다.
+    [SerializeField, Min(0f)] private float maximumStepUpHeight = 0.35f;
+    // 바닥이나 계단의 미세한 높이 변화까지 판정할 수 있도록 사용하는 최소 상승량이다.
+    [SerializeField, Min(0f)] private float minimumStepUpHeight = 0.01f;
 
     [Header("Action Locks")]
     [SerializeField, Range(0.5f, 1f)]
@@ -162,19 +155,6 @@ public partial class NetworkPlayerController :
     [Networked] private int ControlLockMask { get; set; }
     [Networked] private float CurrentMoveSpeed { get; set; }
     [Networked] private float MoveSpeedBlendNetworked { get; set; }
-    [Networked] private int TurnAnimationSequence { get; set; }
-    [Networked] private NetworkBool TurnAnimationFast { get; set; }
-    [Networked] private NetworkBool TurnAnimationActive { get; set; }
-    [Networked] private NetworkBool TurnAnimationStateEntered { get; set; }
-    [Networked] private Vector3 TurnTargetDirection { get; set; }
-    [Networked] private NetworkBool TurnNeedsFinalRotation { get; set; }
-    [Networked] private NetworkBool TurnResumeSpeedPending { get; set; }
-    [Networked] private float TurnResumeCurrentSpeed { get; set; }
-    [Networked] private float TurnResumeMoveSpeedBlend { get; set; }
-    [Networked] private byte TurnResumeLockMove { get; set; }
-    [Networked] private byte TurnQueuedAction { get; set; }
-    [Networked] private int TurnQueuedActionId { get; set; }
-    [Networked] private Vector3 TurnQueuedDirection { get; set; }
     [Networked] private Vector3 ForwardJumpDirection { get; set; }
 
     private NetworkCharacterController _networkCharacterController;
@@ -195,7 +175,6 @@ public partial class NetworkPlayerController :
     private Vector3 _queuedRootMotionDeltaPosition;
     private Quaternion _queuedRootMotionDeltaRotation = Quaternion.identity;
     private bool _hasQueuedRootMotion;
-    private bool _turnUsedRootMotionRotation;
     // 공격 판정은 매번 새 배열을 만들지 않고 재사용해 GC 할당을 줄인다.
     private readonly Collider[] _attackHits = new Collider[16];
     // 한 번의 공격에 같은 보스의 여러 히트박스가 들어오면 가장 높은 배율 부위만 남긴다.

@@ -793,15 +793,6 @@ MonoBehaviour:
   moveStartSpeed: 1.2
   moveStopSpeed: 0.18
   minimumMoveAnimationBlend: 0.5
-  turnRootMotionFallbackRotationSpeed: 360
-  turnAnimationYawDirection: 1
-  turnStartSpeedRatio: 0.75
-  turnInputMoveRatio: 0.35
-  turnInputRotationSpeed: 360
-  fastTurnInputMoveRatio: 0.15
-  fastTurnInputRotationSpeed: 220
-  turnActionCancelNormalizedTime: 0.4
-  fastTurnActionCancelNormalizedTime: 0.25
   jumpHeight: 1.15
   jumpAirTime: 0.68
   forwardJumpHeight: 1.15
@@ -1841,15 +1832,6 @@ MonoBehaviour:
   moveStartSpeed: 1.2
   moveStopSpeed: 0.18
   minimumMoveAnimationBlend: 0.5
-  turnRootMotionFallbackRotationSpeed: 360
-  turnAnimationYawDirection: 1
-  turnStartSpeedRatio: 0.75
-  turnInputMoveRatio: 0.35
-  turnInputRotationSpeed: 360
-  fastTurnInputMoveRatio: 0.15
-  fastTurnInputRotationSpeed: 220
-  turnActionCancelNormalizedTime: 0.4
-  fastTurnActionCancelNormalizedTime: 0.25
   jumpHeight: 1.15
   jumpAirTime: 0.68
   forwardJumpHeight: 1.15
@@ -54760,15 +54742,6 @@ MonoBehaviour:
   moveStartSpeed: 1.2
   moveStopSpeed: 0.18
   minimumMoveAnimationBlend: 0.5
-  turnRootMotionFallbackRotationSpeed: 360
-  turnAnimationYawDirection: 1
-  turnStartSpeedRatio: 0.75
-  turnInputMoveRatio: 0.35
-  turnInputRotationSpeed: 360
-  fastTurnInputMoveRatio: 0.15
-  fastTurnInputRotationSpeed: 220
-  turnActionCancelNormalizedTime: 0.4
-  fastTurnActionCancelNormalizedTime: 0.25
   jumpHeight: 1.15
   jumpAirTime: 0.68
   forwardJumpHeight: 1.15

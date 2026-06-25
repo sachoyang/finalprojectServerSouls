@@ -123,260 +123,6 @@ public partial class NetworkPlayerController
         };
     }
 
-    private bool TryStartTurnAnimation(Vector3 moveDirection, Vector3 facingDirection, bool isRunning, bool isBusy, float currentSpeed, float moveSpeedMultiplier)
-    {
-        if (isBusy ||
-            IsTurnAnimationActive() ||
-            moveDirection.sqrMagnitude <= 0.001f)
-        {
-            return false;
-        }
-
-        float requiredSpeed = (isRunning ? runSpeed : walkSpeed) * moveSpeedMultiplier * turnStartSpeedRatio;
-        if (currentSpeed < requiredSpeed)
-        {
-            return false;
-        }
-
-        Vector3 targetDirection = IsLockOnNetworked ? facingDirection : moveDirection;
-        if (targetDirection.sqrMagnitude <= 0.001f)
-        {
-            return false;
-        }
-
-        Vector3 currentForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
-        if (currentForward.sqrMagnitude <= 0.001f)
-        {
-            return false;
-        }
-
-        Vector3 flatTargetDirection = Vector3.ProjectOnPlane(targetDirection, Vector3.up).normalized;
-        float turnDot = Vector3.Dot(currentForward.normalized, flatTargetDirection);
-        if (turnDot > -0.72f)
-        {
-            return false;
-        }
-
-        bool fastTurn = isRunning && !IsLockOnNetworked;
-        TurnAnimationFast = fastTurn;
-        TurnTargetDirection = flatTargetDirection;
-        TurnAnimationActive = true;
-        TurnAnimationStateEntered = false;
-        TurnNeedsFinalRotation = true;
-        UpdateTurnResumeState(moveDirection, isRunning);
-        TurnAnimationSequence++;
-        CurrentMoveSpeed = 0f;
-        MoveSpeedBlendNetworked = TurnResumeMoveSpeedBlend;
-        LockOnMoveNetworked = TurnResumeLockMove;
-        _turnUsedRootMotionRotation = false;
-        ClearQueuedRootMotion();
-        UpdateAnimatorRootMotionMode();
-        return true;
-    }
-
-    private bool IsTurnAnimationActive()
-    {
-        return TurnAnimationActive;
-    }
-
-    private bool IsTurnActionCancelWindowOpen()
-    {
-        if (!TurnAnimationActive || !TurnAnimationStateEntered || animator == null)
-        {
-            return false;
-        }
-
-        AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
-        if (!IsTurnState(state.shortNameHash) && animator.IsInTransition(0))
-        {
-            AnimatorStateInfo nextState = animator.GetNextAnimatorStateInfo(0);
-            if (IsTurnState(nextState.shortNameHash))
-            {
-                state = nextState;
-            }
-        }
-
-        if (!IsTurnState(state.shortNameHash))
-        {
-            return false;
-        }
-
-        float cancelTime = TurnAnimationFast
-            ? fastTurnActionCancelNormalizedTime
-            : turnActionCancelNormalizedTime;
-        return state.normalizedTime >= cancelTime;
-    }
-
-    public void BeginTurnAnimationState()
-    {
-        if (!HasStateAuthority || !TurnAnimationActive)
-        {
-            return;
-        }
-
-        TurnAnimationStateEntered = true;
-    }
-
-    public void EndTurnAnimationState()
-    {
-        if (!HasStateAuthority || !TurnAnimationActive)
-        {
-            return;
-        }
-
-        CompleteTurnAnimation();
-    }
-
-    private void CompleteTurnAnimationIfAnimatorExited()
-    {
-        if (!HasStateAuthority ||
-            !TurnAnimationActive ||
-            !TurnAnimationStateEntered ||
-            IsAnimatorInTurnState())
-        {
-            return;
-        }
-
-        CompleteTurnAnimation();
-    }
-
-    private void CompleteTurnAnimation()
-    {
-        if (TurnNeedsFinalRotation && !_turnUsedRootMotionRotation && TurnTargetDirection.sqrMagnitude > 0.001f)
-        {
-            transform.rotation = Quaternion.LookRotation(TurnTargetDirection.normalized, Vector3.up);
-            _lastMoveDirection = TurnTargetDirection.normalized;
-        }
-
-        ClearQueuedRootMotion();
-        _turnUsedRootMotionRotation = false;
-        TurnAnimationActive = false;
-        TurnAnimationStateEntered = false;
-        TurnNeedsFinalRotation = false;
-        TurnResumeSpeedPending = TurnResumeCurrentSpeed > 0.001f;
-        TurnTargetDirection = Vector3.zero;
-        CurrentMoveSpeed = TurnResumeCurrentSpeed;
-        MoveSpeedBlendNetworked = TurnResumeMoveSpeedBlend;
-        LockOnMoveNetworked = TurnResumeLockMove;
-    }
-
-    private bool IsAnimatorInTurnState()
-    {
-        if (animator == null)
-        {
-            return false;
-        }
-
-        AnimatorStateInfo currentState = animator.GetCurrentAnimatorStateInfo(0);
-        if (IsTurnState(currentState.shortNameHash))
-        {
-            return true;
-        }
-
-        if (!animator.IsInTransition(0))
-        {
-            return false;
-        }
-
-        AnimatorStateInfo nextState = animator.GetNextAnimatorStateInfo(0);
-        return IsTurnState(nextState.shortNameHash);
-    }
-
-    private static bool IsTurnState(int stateHash)
-    {
-        return stateHash == Turn180State ||
-               stateHash == Turn180FastState;
-    }
-
-    private void UpdateTurnResumeState(Vector3 desiredMove, bool isRunning)
-    {
-        if (desiredMove.sqrMagnitude <= 0.001f)
-        {
-            TurnResumeCurrentSpeed = 0f;
-            TurnResumeMoveSpeedBlend = 0f;
-            TurnResumeLockMove = LockMoveIdle;
-            return;
-        }
-
-        Vector3 moveDirection = desiredMove.normalized;
-        float moveSpeedMultiplier = GetMoveSpeedMultiplier();
-        TurnResumeCurrentSpeed = (isRunning ? runSpeed : walkSpeed) * moveSpeedMultiplier;
-        TurnResumeMoveSpeedBlend = IsLockOnNetworked ? 0f : GetNormalMoveBlendFromSpeed(TurnResumeCurrentSpeed, moveSpeedMultiplier);
-        TurnResumeLockMove = IsLockOnNetworked ? GetLockOnMoveCode(moveDirection, isRunning) : LockMoveIdle;
-    }
-
-    private void UpdateTurnAnimatorResumeParameters()
-    {
-        // 턴 중 실제 이동 속도는 0으로 고정하지만, Animator 파라미터는 복귀할 이동 상태를 미리 유지한다.
-        // 그래야 TurnFast -> Run 전이 구간이 idle/walk 값에서 다시 올라오며 느려져 보이지 않는다.
-        IsMovingNetworked = false;
-        IsRunningNetworked = false;
-        MoveSpeedBlendNetworked = TurnResumeMoveSpeedBlend;
-        LockOnMoveNetworked = TurnResumeLockMove;
-    }
-
-    private void ApplyTurnInputControl(Vector3 desiredMove, bool isRunning)
-    {
-        if (desiredMove.sqrMagnitude <= 0.001f)
-        {
-            return;
-        }
-
-        Vector3 moveDirection = Vector3.ProjectOnPlane(desiredMove, Vector3.up).normalized;
-        if (moveDirection.sqrMagnitude <= 0.001f)
-        {
-            return;
-        }
-
-        float inputMoveRatio = TurnAnimationFast ? fastTurnInputMoveRatio : turnInputMoveRatio;
-        if (inputMoveRatio <= 0f)
-        {
-            return;
-        }
-
-        float baseSpeed = isRunning ? runSpeed : walkSpeed;
-        float controlledSpeed = baseSpeed * GetMoveSpeedMultiplier() * inputMoveRatio;
-        _networkCharacterController.maxSpeed = controlledSpeed;
-        _networkCharacterController.acceleration = movementAcceleration;
-        _networkCharacterController.braking = movementBraking;
-        _networkCharacterController.rotationSpeed = 0f;
-        _networkCharacterController.Move(moveDirection);
-
-        Vector3 steeringDirection = IsLockOnNetworked
-            ? GetLockOnFacingDirection()
-            : moveDirection;
-        float inputRotationSpeed = TurnAnimationFast
-            ? fastTurnInputRotationSpeed
-            : turnInputRotationSpeed;
-        RotateTowards(steeringDirection, inputRotationSpeed);
-
-        if (!IsLockOnNetworked)
-        {
-            TurnTargetDirection = moveDirection;
-        }
-    }
-
-    private bool ConsumeTurnResumeSpeedSnap(float targetSpeed, Vector3 moveDirection)
-    {
-        if (!TurnResumeSpeedPending)
-        {
-            return false;
-        }
-
-        TurnResumeSpeedPending = false;
-        if (targetSpeed <= 0.001f || moveDirection.sqrMagnitude <= 0.001f)
-        {
-            return false;
-        }
-
-        // 턴 직후 첫 이동 틱은 가속 보간을 타지 않고, 턴 진입 전 속도를 즉시 이어받는다.
-        // 이후 틱부터는 일반 가속/감속 규칙으로 돌아간다.
-        CurrentMoveSpeed = Mathf.Max(targetSpeed, TurnResumeCurrentSpeed);
-        MoveSpeedBlendNetworked = TurnResumeMoveSpeedBlend;
-        LockOnMoveNetworked = TurnResumeLockMove;
-        return true;
-    }
-
     private bool IsInActionAnimation()
     {
         // Action 태그가 붙은 상태는 락온 블렌드 트리가 덮어쓰지 않게 보호한다.
@@ -494,17 +240,51 @@ public partial class NetworkPlayerController
         if (facingDirection.sqrMagnitude > 0.001f)
         {
             _networkCharacterController.rotationSpeed = 0f;
-            _networkCharacterController.Move(moveDirection);
+            MoveWithStepUpCorrection(moveDirection);
             RotateTowards(facingDirection, lockOnRotationSpeed);
             return;
         }
 
         _networkCharacterController.rotationSpeed = _networkControllerRotationSpeed;
-        _networkCharacterController.Move(moveDirection);
+        MoveWithStepUpCorrection(moveDirection);
 
         // NetworkCharacterController도 이동 방향으로 회전하지만, 최종 회전 속도는 이 컨트롤러 설정을 기준으로 맞춘다.
         // 이동/락온/구르기마다 회전 속도를 다르게 줄 수 있게 직접 보정한다.
         RotateTowards(moveDirection, rotationSpeed);
+    }
+
+    private void MoveWithStepUpCorrection(Vector3 moveDirection)
+    {
+        bool wasGrounded = _networkCharacterController.Grounded;
+        float previousHeight = transform.position.y;
+
+        _networkCharacterController.Move(moveDirection);
+
+        // [낮은 턱 스텝업 보정]
+        // Fusion 기본 NetworkCharacterController는 CharacterController가 턱을 올라간 높이까지
+        // 한 틱의 이동 속도로 환산한다. 0.3m 턱을 한 틱에 오르면 큰 양의 Y 속도가 저장되어
+        // 다음 틱에 캐릭터가 점프한 것처럼 위로 튀므로, 정상적인 점프가 아닐 때만 제거한다.
+        if (!wasGrounded ||
+            (IsJumpAction(LastAction) && IsActionAnimationLocked) ||
+            maximumStepUpHeight <= 0f)
+        {
+            return;
+        }
+
+        float climbedHeight = transform.position.y - previousHeight;
+        if (climbedHeight < minimumStepUpHeight ||
+            climbedHeight > maximumStepUpHeight)
+        {
+            return;
+        }
+
+        Vector3 correctedVelocity = _networkCharacterController.Velocity;
+        if (correctedVelocity.y > 0f)
+        {
+            // 수평 속도는 유지하고 턱을 올라가며 잘못 생성된 상승 속도만 제거한다.
+            correctedVelocity.y = 0f;
+            _networkCharacterController.Velocity = correctedVelocity;
+        }
     }
 
     private void StopHorizontalVelocity()
@@ -522,21 +302,12 @@ public partial class NetworkPlayerController
         StopHorizontalVelocity();
         CurrentMoveSpeed = 0f;
         MoveSpeedBlendNetworked = 0f;
-        TurnAnimationActive = false;
-        TurnAnimationStateEntered = false;
-        TurnNeedsFinalRotation = false;
-        TurnResumeSpeedPending = false;
-        TurnResumeCurrentSpeed = 0f;
-        TurnResumeMoveSpeedBlend = 0f;
-        TurnResumeLockMove = LockMoveIdle;
-        ClearTurnActionBuffer();
         RollDirection = Vector3.zero;
         if (!IsParryActive())
         {
             ParryGuardActive = false;
             _localParryGuardActive = false;
         }
-        _turnUsedRootMotionRotation = false;
         ClearQueuedRootMotion();
         _networkCharacterController.gravity = _networkControllerGravity;
         ApplyMovement(Vector3.zero, 0f, Vector3.zero);

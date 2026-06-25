@@ -5665,11 +5665,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   destroyclip: {fileID: 8300000, guid: c6c22fbab81ac9d49bf11e0d2bf84406, type: 3}
   gimmickOffObjects:
-  - {fileID: 0}
-  gimmickOnObjects:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 1218179764}
+  gimmickOnObjects: []
   fadeDuration: 2
 --- !u!114 &632228156
 MonoBehaviour:

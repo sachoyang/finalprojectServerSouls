@@ -24,8 +24,6 @@ public static class PlayerAnimatorSetupTool
     private const string Roll = "Roll";
     private const string Jump = "Jump";
     private const string Jump2 = "Jump2";
-    private const string Turn180 = "Turn180";
-    private const string Turn180Fast = "Turn180Fast";
     private const string Attack2 = "Attack2";
     private const string Attack3 = "Attack3";
     private const string Attack4 = "Attack4";
@@ -35,13 +33,11 @@ public static class PlayerAnimatorSetupTool
     private const string LockOnBlendStateName = "LockOn Blend Tree";
     private const string NormalLocomotionBlendStateName = "Locomotion Blend Tree";
     private const string CombatMachineName = "Combat Actions";
-    private const string TurnMachineName = "Turn Actions";
     private const string HitAndDeathMachineName = "Hit & Death";
     private const string SkillMachineName = "Skill Actions";
     // SkillModule은 런타임 Resources.Load와 에디터 도구가 같은 에셋을 사용하도록
     // 반드시 Resources/SkillModule 경로를 기준으로 검색한다.
     private const string SkillModuleFolder = "Assets/02. Scripts/Player/Abilities/Resources/SkillModule";
-    private const float TurnExitBlendDuration = 0.15f;
     private const float ComboInputOpenNormalizedTime = 0.72f;
 
     // 이전에는 Unity 스크립트 리로드 때마다 자동 마이그레이션을 실행했다.
@@ -91,8 +87,6 @@ public static class PlayerAnimatorSetupTool
         EnsureAnyStateTransition(root, lockOnState);
         EnsureExitTransition(lockOnState, FindState(root, "idle1"));
         SetupDamageAndDownStates(root);
-        RemoveOldTurnStates(root);
-        RemoveOldTurnParameters(controller, root);
         SetupBuiltInActionStates(root, lockOnState);
         RemoveMovementBoolTransitions(root);
         RemoveParameter(controller, IsMoving);
@@ -156,8 +150,6 @@ public static class PlayerAnimatorSetupTool
         AddParameter(controller, Roll, AnimatorControllerParameterType.Trigger);
         AddParameter(controller, Jump, AnimatorControllerParameterType.Trigger);
         AddParameter(controller, Jump2, AnimatorControllerParameterType.Trigger);
-        AddParameter(controller, Turn180, AnimatorControllerParameterType.Trigger);
-        AddParameter(controller, Turn180Fast, AnimatorControllerParameterType.Trigger);
         AddParameter(controller, Attack2, AnimatorControllerParameterType.Trigger);
         AddParameter(controller, Attack3, AnimatorControllerParameterType.Trigger);
         AddParameter(controller, Attack4, AnimatorControllerParameterType.Trigger);
@@ -645,59 +637,6 @@ public static class PlayerAnimatorSetupTool
         lockOnToIdle.AddCondition(AnimatorConditionMode.IfNot, 0f, IsLockOn);
     }
 
-    private static void EnsureTurnExitTransitions(AnimatorState turnState, AnimatorState idleState, AnimatorState lockOnState)
-    {
-        if (turnState == null)
-        {
-            return;
-        }
-
-        if (lockOnState != null)
-        {
-            EnsureTimedConditionalExitTransition(turnState, lockOnState, IsLockOn, true);
-        }
-
-        EnsureTimedConditionalExitTransition(turnState, idleState, IsLockOn, false);
-    }
-
-    private static void EnsureTimedConditionalExitTransition(AnimatorState source, AnimatorState destination, string conditionName, bool conditionValue)
-    {
-        if (source == null || destination == null)
-        {
-            return;
-        }
-
-        foreach (AnimatorStateTransition transition in source.transitions)
-        {
-            if (transition.destinationState != destination || !transition.hasExitTime)
-            {
-                continue;
-            }
-
-            foreach (AnimatorCondition condition in transition.conditions)
-            {
-                if (condition.parameter == conditionName)
-                {
-                    transition.exitTime = 1f;
-                    transition.hasFixedDuration = true;
-                    transition.duration = TurnExitBlendDuration;
-                    transition.interruptionSource = TransitionInterruptionSource.None;
-                    transition.orderedInterruption = true;
-                    return;
-                }
-            }
-        }
-
-        AnimatorStateTransition exitTransition = source.AddTransition(destination);
-        exitTransition.hasExitTime = true;
-        exitTransition.hasFixedDuration = true;
-        exitTransition.exitTime = 1f;
-        exitTransition.duration = TurnExitBlendDuration;
-        exitTransition.interruptionSource = TransitionInterruptionSource.None;
-        exitTransition.orderedInterruption = true;
-        exitTransition.AddCondition(conditionValue ? AnimatorConditionMode.If : AnimatorConditionMode.IfNot, 0f, conditionName);
-    }
-
     private static void SetupBuiltInActionStates(AnimatorStateMachine root, AnimatorState lockOnState)
     {
         // 기본 공격 콤보는 slash2 -> slash3 -> slash4 순서로 사용한다.
@@ -762,39 +701,6 @@ public static class PlayerAnimatorSetupTool
         EnsureTimedExitTransition(parryLowerState, idleState);
         EnsureParryImpactExitTransition(root, parryLowerState);
         EnsureTimedExitTransition(rollState, idleState);
-        SetupTurnStates(root, idleState, lockOnState);
-    }
-
-    private static void SetupTurnStates(AnimatorStateMachine root, AnimatorState idleState, AnimatorState lockOnState)
-    {
-        AnimatorStateMachine turnMachine = FindStateMachine(root, TurnMachineName)
-            ?? root.AddStateMachine(TurnMachineName, new Vector3(360f, 40f, 0f));
-        RemoveDirectStates(root, "Great Sword 180 Turn", "Great Sword 180 Turn Fast");
-
-        AnimatorState turn180 = EnsureState(turnMachine, "Great Sword 180 Turn", "Assets/04. Images/Animation/Great Sword 180 Turn.fbx", new Vector3(80f, 80f, 0f), string.Empty);
-        AnimatorState turn180Fast = EnsureState(turnMachine, "Great Sword 180 Turn Fast", "Assets/04. Images/Animation/Great Sword 180 Turn Fast.fbx", new Vector3(300f, 80f, 0f), string.Empty);
-
-        turn180.mirror = false;
-        turn180Fast.mirror = false;
-        EnsureTurnBehaviour(turn180);
-        EnsureTurnBehaviour(turn180Fast);
-        turnMachine.defaultState = turn180;
-        RemoveAllStateTransitions(turn180);
-        RemoveAllStateTransitions(turn180Fast);
-
-        RemoveAnyStateTransitionsWithParameter(root, Turn180);
-        RemoveAnyStateTransitionsWithParameter(root, Turn180Fast);
-
-        EnsureStateTriggerTransition(idleState, turn180, Turn180, 0f);
-        EnsureStateTriggerTransition(idleState, turn180Fast, Turn180Fast, 0f);
-
-        if (lockOnState != null)
-        {
-            EnsureStateTriggerTransition(lockOnState, turn180, Turn180, 0f);
-        }
-
-        EnsureTurnExitTransitions(turn180, idleState, lockOnState);
-        EnsureTurnExitTransitions(turn180Fast, idleState, lockOnState);
     }
 
     private static void EnsureActionBehaviour(
@@ -1066,30 +972,6 @@ public static class PlayerAnimatorSetupTool
         EditorUtility.SetDirty(behaviour);
     }
 
-    private static void EnsureTurnBehaviour(AnimatorState state)
-    {
-        if (state == null)
-        {
-            return;
-        }
-
-        TurnMotionStateBehaviour behaviour = null;
-        foreach (StateMachineBehaviour existing in state.behaviours)
-        {
-            behaviour = existing as TurnMotionStateBehaviour;
-            if (behaviour != null)
-            {
-                break;
-            }
-        }
-
-        if (behaviour == null)
-        {
-            behaviour = state.AddStateMachineBehaviour<TurnMotionStateBehaviour>();
-        }
-
-        EditorUtility.SetDirty(behaviour);
-    }
 
     private static void SetActionTag(AnimatorStateMachine root, string stateName)
     {
@@ -1286,60 +1168,6 @@ public static class PlayerAnimatorSetupTool
 
             RemoveTransitionsToState(root, state);
             root.RemoveState(state);
-        }
-    }
-
-    private static void RemoveOldTurnStates(AnimatorStateMachine root)
-    {
-        string[] oldStateNames =
-        {
-            "Great Sword 180 Turn Left",
-            "Great Sword 180 Turn Right",
-            "Great Sword 180 Turn Fast Left",
-            "Great Sword 180 Turn Fast Right"
-        };
-
-        foreach (string stateName in oldStateNames)
-        {
-            AnimatorState state = FindState(root, stateName);
-            if (state == null)
-            {
-                continue;
-            }
-
-            RemoveTransitionsToState(root, state);
-            root.RemoveState(state);
-        }
-    }
-
-    private static void RemoveOldTurnParameters(AnimatorController controller, AnimatorStateMachine root)
-    {
-        string[] oldParameterNames =
-        {
-            "Turn180Left",
-            "Turn180Right",
-            "Turn180FastLeft",
-            "Turn180FastRight"
-        };
-
-        foreach (string parameterName in oldParameterNames)
-        {
-            RemoveAnyStateTransitionsWithParameter(root, parameterName);
-            RemoveStateTransitionsWithParameterRecursive(root, parameterName);
-            RemoveParameter(controller, parameterName);
-        }
-    }
-
-    private static void RemoveStateTransitionsWithParameterRecursive(AnimatorStateMachine machine, string parameterName)
-    {
-        foreach (ChildAnimatorState child in machine.states)
-        {
-            RemoveStateTransitionsWithParameter(child.state, parameterName);
-        }
-
-        foreach (ChildAnimatorStateMachine child in machine.stateMachines)
-        {
-            RemoveStateTransitionsWithParameterRecursive(child.stateMachine, parameterName);
         }
     }
 
