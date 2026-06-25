@@ -1910,6 +1910,8 @@ MonoBehaviour:
   killBossAndSkipCutsceneKey: 286
   respawnChestKey: 287
   teleportToChestKey: 288
+  loadPathSceneKey: 289
+  pathSceneName: scPath
 --- !u!1 &1898967616 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 105842480600620659, guid: 23b5baea9d0423047acddd3bec009cd9, type: 3}

@@ -121,7 +121,7 @@ public class PlayerAbilityInventory : MonoBehaviour
     // 보상 선택창에서 플레이어가 능력 1개를 고르면 호출한다.
     public bool SelectRewardOption(PlayerAbilityModule module)
     {
-        if (!EquipModule(module, false))
+        if (!EquipModule(module, false, true))
         {
             return false;
         }
@@ -143,7 +143,7 @@ public class PlayerAbilityInventory : MonoBehaviour
         for (int i = 0; i < _playerData.SavedAbilityCount; i++)
         {
             PlayerAbilityModule module = FindModuleById(_playerData.GetAbilityId(i));
-            EquipModule(module, true);
+            EquipModule(module, true, false);
         }
     }
 
@@ -154,11 +154,14 @@ public class PlayerAbilityInventory : MonoBehaviour
         for (int i = 0; i < abilityIds.Count; i++)
         {
             PlayerAbilityModule module = FindModuleById(abilityIds[i]);
-            EquipModule(module, true);
+            EquipModule(module, true, false);
         }
     }
 
-    private bool EquipModule(PlayerAbilityModule module, bool allowAlreadyEquipped)
+    private bool EquipModule(
+        PlayerAbilityModule module,
+        bool allowAlreadyEquipped,
+        bool applyAcquireEffects)
     {
         EnsureRuntimeLists();
         if (module == null)
@@ -180,9 +183,17 @@ public class PlayerAbilityInventory : MonoBehaviour
 
         equippedModules.Add(module);
 
-        // 패시브는 장착 즉시 스탯 보너스와 즉시 효과를 적용한다.
-        // 액티브는 슬롯에 등록하고 실제 실행은 PlayerAbilityController가 담당한다.
-        _executor?.EquipModule(module, context);
+        // 새 보상 획득 때만 패시브 스탯, 즉시 회복, 애니메이션/VFX를 실행한다.
+        // 씬 이동 복구에서는 PlayerStats 세션 스냅샷에 이미 반영된 값을 유지하고
+        // 보유 목록과 액티브 슬롯만 재구성해 패시브 모션 및 수치 중복 적용을 막는다.
+        if (applyAcquireEffects)
+        {
+            _executor?.EquipModule(module, context);
+        }
+        else
+        {
+            _executor?.RestoreModule(module, context);
+        }
 
         if (module.IsActive && module.SpecialEffect == PlayerAbilitySpecialEffect.None)
         {

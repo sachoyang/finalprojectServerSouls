@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.Reflection;
 using Fusion;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 // 전투 씬의 DebugGame 오브젝트에서 사용하는 공통 단축키.
 // F5: 보스 강제 처치 + 상자 등장 컷신 생략
 // F6: 보상 상자 재소환
 // F7: 로컬 플레이어를 상자 생성 위치로 이동
+// F8: Path 씬으로 강제 이동
 [DisallowMultipleComponent]
 public class DebugHotkey : MonoBehaviour
 {
@@ -15,6 +17,8 @@ public class DebugHotkey : MonoBehaviour
     [SerializeField] private KeyCode killBossAndSkipCutsceneKey = KeyCode.F5;
     [SerializeField] private KeyCode respawnChestKey = KeyCode.F6;
     [SerializeField] private KeyCode teleportToChestKey = KeyCode.F7;
+    [SerializeField] private KeyCode loadPathSceneKey = KeyCode.F8;
+    [SerializeField] private string pathSceneName = "scPath";
 
     private void Update()
     {
@@ -31,6 +35,11 @@ public class DebugHotkey : MonoBehaviour
         if (Input.GetKeyDown(teleportToChestKey))
         {
             TeleportLocalPlayerToChest();
+        }
+
+        if (Input.GetKeyDown(loadPathSceneKey))
+        {
+            LoadPathScene();
         }
     }
 
@@ -163,6 +172,52 @@ public class DebugHotkey : MonoBehaviour
             : FindObjectOfType<RewardManager>();
     }
 
+    private void LoadPathScene()
+    {
+        if (string.IsNullOrWhiteSpace(pathSceneName) ||
+            !Application.CanStreamedLevelBeLoaded(pathSceneName))
+        {
+            Debug.LogError($"[DebugHotkey] F8 이동 씬 '{pathSceneName}'이 Build Settings에 없습니다.");
+            return;
+        }
+
+        // 일반 게임은 NetworkManager가 Runner를 소유하지만, DebugQuickEntry는
+        // 별도의 DebugNetworkRunner를 생성한다. 둘 다 찾지 않으면 일반 씬 로드가
+        // 실행되어 Path 씬의 NetworkObject와 플레이어 스포너가 등록되지 않는다.
+        NetworkRunner runner =
+            NetworkManager.Instance != null ? NetworkManager.Instance.Runner : null;
+        if (runner == null || !runner.IsRunning)
+        {
+            NetworkRunner[] runners = FindObjectsOfType<NetworkRunner>(true);
+            foreach (NetworkRunner candidate in runners)
+            {
+                if (candidate != null && candidate.IsRunning)
+                {
+                    runner = candidate;
+                    break;
+                }
+            }
+        }
+
+        if (runner == null)
+        {
+            SceneManager.LoadScene(pathSceneName);
+            Debug.Log($"[DebugHotkey] F8: {pathSceneName} 씬으로 강제 이동합니다.");
+            return;
+        }
+
+        if (!runner.IsServer)
+        {
+            Debug.LogWarning("[DebugHotkey] 네트워크 씬 전환은 서버/호스트에서 F8을 눌러야 합니다.");
+            return;
+        }
+
+        PlayerSessionStore.SaveActivePlayerStats(runner);
+        DebugPathSpawnRecovery.Begin(runner, pathSceneName);
+        runner.LoadScene(pathSceneName, LoadSceneMode.Single);
+        Debug.Log($"[DebugHotkey] F8: 서버에서 {pathSceneName} 씬으로 강제 이동합니다.");
+    }
+
     private static T GetPrivateField<T>(object target, string fieldName)
     {
         FieldInfo field = target.GetType().GetField(
@@ -185,5 +240,91 @@ public class DebugHotkey : MonoBehaviour
             methodName,
             BindingFlags.Instance | BindingFlags.NonPublic);
         method?.Invoke(target, arguments);
+    }
+}
+
+// F8 강제 전환은 정상 보상 코루틴을 통하지 않으므로, 씬 로드 직후 스폰 콜백이
+// 누락된 경우에만 BossArenaManager의 기존 SpawnPlayer 경로를 다시 호출한다.
+// 작업이 끝나면 자기 자신을 삭제해 다음 씬에 디버그 객체를 남기지 않는다.
+internal sealed class DebugPathSpawnRecovery : MonoBehaviour
+{
+    private NetworkRunner _runner;
+    private string _targetSceneName;
+
+    public static void Begin(NetworkRunner runner, string targetSceneName)
+    {
+        GameObject recoveryObject = new GameObject(nameof(DebugPathSpawnRecovery));
+        DontDestroyOnLoad(recoveryObject);
+
+        DebugPathSpawnRecovery recovery =
+            recoveryObject.AddComponent<DebugPathSpawnRecovery>();
+        recovery._runner = runner;
+        recovery._targetSceneName = targetSceneName;
+    }
+
+    private IEnumerator Start()
+    {
+        float elapsed = 0f;
+        const float timeout = 10f;
+
+        while (elapsed < timeout)
+        {
+            elapsed += Time.unscaledDeltaTime;
+
+            if (_runner == null || !_runner.IsRunning)
+            {
+                break;
+            }
+
+            if (SceneManager.GetActiveScene().name == _targetSceneName)
+            {
+                BossArenaManager arenaManager = FindObjectOfType<BossArenaManager>();
+                if (arenaManager != null && arenaManager.Object != null && arenaManager.Object.IsValid)
+                {
+                    RestoreMissingPlayers(arenaManager);
+                    Destroy(gameObject);
+                    yield break;
+                }
+            }
+
+            yield return null;
+        }
+
+        Debug.LogWarning("[DebugHotkey] Path 씬 플레이어 스폰 복구 시간이 초과되었습니다.");
+        Destroy(gameObject);
+    }
+
+    private void RestoreMissingPlayers(BossArenaManager arenaManager)
+    {
+        MethodInfo spawnPlayerMethod = typeof(BossArenaManager).GetMethod(
+            "SpawnPlayer",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        if (spawnPlayerMethod == null)
+        {
+            Debug.LogWarning("[DebugHotkey] BossArenaManager.SpawnPlayer를 찾지 못했습니다.");
+            return;
+        }
+
+        foreach (PlayerRef player in _runner.ActivePlayers)
+        {
+            bool hasPlayerInCurrentScene =
+                _runner.TryGetPlayerObject(player, out NetworkObject playerObject) &&
+                playerObject != null &&
+                playerObject.gameObject.scene == SceneManager.GetActiveScene();
+
+            if (!hasPlayerInCurrentScene)
+            {
+                FieldInfo spawnedCharactersField = typeof(BossArenaManager).GetField(
+                    "_spawnedCharacters",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                Dictionary<PlayerRef, NetworkObject> spawnedCharacters =
+                    spawnedCharactersField?.GetValue(arenaManager)
+                        as Dictionary<PlayerRef, NetworkObject>;
+                spawnedCharacters?.Remove(player);
+
+                spawnPlayerMethod.Invoke(arenaManager, new object[] { _runner, player });
+                Debug.Log($"[DebugHotkey] Path 씬에서 {player} 플레이어 스폰을 복구했습니다.");
+            }
+        }
     }
 }

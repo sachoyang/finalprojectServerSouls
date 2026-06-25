@@ -39,6 +39,18 @@ public class PlayerAbilityExecutor : MonoBehaviour
         EquipModule(module, context);
     }
 
+    // 씬 이동 복구에서는 PlayerStats 스냅샷에 패시브 수치가 이미 포함되어 있다.
+    // 스탯/회복/애니메이션/VFX는 다시 실행하지 않고 콤보 해금 같은 영구 특수효과만 복구한다.
+    public void RestoreModule(PlayerAbilityModule module, PlayerAbilityContext context)
+    {
+        if (module == null)
+        {
+            return;
+        }
+
+        ApplySpecialEffect(module, context);
+    }
+
     public void Activate(PlayerAbilityModule module, PlayerAbilityContext context)
     {
         if (!CanActivate(module, context))

@@ -2921,6 +2921,8 @@ MonoBehaviour:
   killBossAndSkipCutsceneKey: 286
   respawnChestKey: 287
   teleportToChestKey: 288
+  loadPathSceneKey: 289
+  pathSceneName: scPath
 --- !u!4 &1251331810
 Transform:
   m_ObjectHideFlags: 0
