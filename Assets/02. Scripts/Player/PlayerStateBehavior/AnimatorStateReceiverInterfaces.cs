@@ -20,12 +20,6 @@ public interface IInvincibilityStateReceiver
     void SetActionInvincible(bool isInvincible);
 }
 
-public interface ITurnStateReceiver
-{
-    void BeginTurnAnimationState();
-    void EndTurnAnimationState();
-}
-
 public interface IRootMotionStateReceiver
 {
     void SetAnimatorStateRootMotionActive(bool isActive);
