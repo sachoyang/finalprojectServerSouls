@@ -144,7 +144,7 @@ public class PlayerAbilityModuleEditor : Editor
 
         DrawSection(isActive ? "Presentation" : "Acquisition Presentation", ref _presentationOpen, DrawPresentation);
         DrawSection(isActive ? "VFX" : "Acquisition VFX", ref _vfxOpen, DrawVfx);
-        DrawSection("Sound", ref _soundOpen, DrawSound); 
+        DrawSection("Sound", ref _soundOpen, DrawSound);
 
         if (isActive)
         {
@@ -615,6 +615,24 @@ public class PlayerAbilityModuleEditor : Editor
 
     private void CleanupPreview()
     {
+        // 추가: 플레이어 오브젝트가 삭제되기 전에 애니메이션/플레이어블 그래프 상태를 안전하게 해제합니다.
+        if (_previewPlayer != null)
+        {
+            // 1. Animator 컴포넌트가 있다면 비활성화하여 내부 그래프 정리 유도
+            if (_previewPlayer.TryGetComponent<Animator>(out var animator))
+            {
+                animator.Rebind(); // 상태 초기화
+                animator.enabled = false;
+            }
+
+            // 2. 만약 기존 legacy Animation 컴포넌트를 쓰고 있다면 정지
+            if (_previewPlayer.TryGetComponent<Animation>(out var animation))
+            {
+                animation.Stop();
+            }
+        }
+
+        // 기존 파괴 로직 진행
         DestroyPreviewObject(_previewPlayer);
         DestroyPreviewObject(_previewVfx);
         DestroyPreviewObject(_hitboxVisual);
