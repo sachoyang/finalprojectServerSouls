@@ -41,20 +41,119 @@ public class AbilityManager : MonoSingleton<AbilityManager>
     protected override void Awake()
     {
         base.Awake();
+
+        // [로컬 스킬 풀 초기화]
+        // 서버 로그인 여부와 관계없이 게임 시작 시 Resources/SkillModule 안의 에셋을 먼저 읽는다.
+        // 애니메이션, VFX, 히트박스, 사운드 같은 Unity 에셋 참조는 이 로컬 모듈이 원본으로 보관한다.
+        LoadLocalAbilityCatalog();
     }
 
     // ==========================================
-    // 🌐 서버에서 스킬 목록 가져와서 조립하기
+    // 📦 로컬 SkillModule을 기본 스킬 풀로 등록하기
+    // ==========================================
+    private void LoadLocalAbilityCatalog()
+    {
+        PlayerAbilityModule[] localModules =
+            Resources.LoadAll<PlayerAbilityModule>("SkillModule");
+
+        AllAbilitiesDict.Clear();
+        AllAbilitiesById.Clear();
+        _debugLoadedAbilities.Clear();
+
+        foreach (PlayerAbilityModule module in localModules)
+        {
+            RegisterAbilityModule(module);
+        }
+
+        // 서버에 접속하지 않아도 로컬 에셋이 하나 이상 있으면 스킬 시스템을 사용할 수 있다.
+        IsLoaded = AllAbilitiesById.Count > 0;
+
+        if (IsLoaded)
+        {
+            Debug.Log(
+                $"<color=cyan>[AbilityManager] 로컬 SkillModule {AllAbilitiesById.Count}개를 기본 스킬 풀로 등록했습니다.</color>");
+        }
+        else
+        {
+            Debug.LogWarning(
+                "[AbilityManager] Resources/SkillModule에서 PlayerAbilityModule을 찾지 못했습니다.");
+        }
+    }
+
+    // 로컬 로드와 서버 최신화 후 인덱스 재구성에서 공통으로 사용하는 등록 함수다.
+    private void RegisterAbilityModule(PlayerAbilityModule module)
+    {
+        if (module == null || string.IsNullOrWhiteSpace(module.AbilityId))
+        {
+            return;
+        }
+
+        if (AllAbilitiesById.ContainsKey(module.AbilityId))
+        {
+            Debug.LogWarning(
+                $"[AbilityManager] 중복된 AbilityId '{module.AbilityId}'가 있어 뒤에 읽은 모듈로 교체합니다.");
+        }
+
+        if (AllAbilitiesDict.TryGetValue(module.BitIndex, out PlayerAbilityModule existingModule) &&
+            existingModule != null &&
+            existingModule.AbilityId != module.AbilityId)
+        {
+            Debug.LogWarning(
+                $"[AbilityManager] BitIndex {module.BitIndex}가 '{existingModule.AbilityId}'와 '{module.AbilityId}'에서 중복됩니다.");
+        }
+
+        AllAbilitiesDict[module.BitIndex] = module;
+        AllAbilitiesById[module.AbilityId] = module;
+
+        if (!_debugLoadedAbilities.Contains(module))
+        {
+            _debugLoadedAbilities.Add(module);
+        }
+    }
+
+    // 서버 데이터가 BitIndex나 AbilityId를 최신 값으로 바꿀 수 있으므로 딕셔너리 키도 다시 맞춘다.
+    private void RebuildCatalogIndexes()
+    {
+        PlayerAbilityModule[] modules = _debugLoadedAbilities.ToArray();
+
+        AllAbilitiesDict.Clear();
+        AllAbilitiesById.Clear();
+        _debugLoadedAbilities.Clear();
+
+        foreach (PlayerAbilityModule module in modules)
+        {
+            RegisterAbilityModule(module);
+        }
+
+        IsLoaded = AllAbilitiesById.Count > 0;
+    }
+
+    // ==========================================
+    // 🌐 서버 데이터로 로컬 SkillModule의 수치만 최신화하기
     // ==========================================
     public void FetchAbilities(Action<bool> onComplete = null)
     {
-        IsLoaded = false;
+        // 서버 요청 중에도 이미 등록된 로컬 스킬 풀은 계속 사용할 수 있게 IsLoaded를 끄지 않는다.
+        if (!IsLoaded)
+        {
+            LoadLocalAbilityCatalog();
+        }
+
         StartCoroutine(FetchRoutine(onComplete));
     }
 
     private IEnumerator FetchRoutine(Action<bool> onComplete)
     {
-        string url = BackendManager.Instance.BASE_URL + "get_abilities.php";
+        BackendManager backendManager =
+            BackendManager.HasInstance ? BackendManager.Instance : null;
+        if (backendManager == null)
+        {
+            Debug.LogWarning("[AbilityManager] BackendManager가 없어 로컬 SkillModule만 사용합니다.");
+            onComplete?.Invoke(IsLoaded);
+            yield break;
+        }
+
+        string url = backendManager.BASE_URL + "get_abilities.php";
 
         using (UnityWebRequest www = UnityWebRequest.Get(url))
         {
@@ -64,38 +163,39 @@ public class AbilityManager : MonoSingleton<AbilityManager>
             {
                 AbilityDBResponse res = JsonUtility.FromJson<AbilityDBResponse>(www.downloadHandler.text);
 
-                if (res.status == "success")
+                if (res != null && res.status == "success" && res.data != null)
                 {
-                    AllAbilitiesDict.Clear();
-                    AllAbilitiesById.Clear();
-                    _debugLoadedAbilities.Clear();
-                    IsLoaded = false;
-
                     foreach (AbilityDBData dbData in res.data)
                     {
-                        // 🔥 지정된 경로(SkillModule)에서 미리 만들어둔 SO를 로드합니다.
-                        PlayerAbilityModule bakedModule = Resources.Load<PlayerAbilityModule>($"SkillModule/{dbData.ability_id}");
+                        if (dbData == null || string.IsNullOrWhiteSpace(dbData.ability_id))
+                        {
+                            Debug.LogWarning("[AbilityManager] AbilityId가 없는 서버 스킬 데이터는 건너뜁니다.");
+                            continue;
+                        }
+
+                        // 서버는 Unity 에셋 참조를 전달하지 않는다.
+                        // 시작 시 등록한 로컬 모듈을 AbilityId로 찾아 밸런스 수치만 덮어쓴다.
+                        PlayerAbilityModule bakedModule =
+                            FindByAbilityId(dbData.ability_id);
 
                         if (bakedModule != null)
                         {
-                            // 라이브 업데이트: 서버에서 바뀐 최신 데미지/쿨타임 수치만 덮어씌움! (클라이언트 패치 불필요)
+                            // InitializeFromDB는 데미지, 쿨타임 같은 서버 관리 값만 변경한다.
+                            // 로컬에 연결된 애니메이션, VFX, 히트박스, 사운드 참조는 그대로 유지된다.
                             bakedModule.InitializeFromDB(dbData);
-
-                            AllAbilitiesDict[dbData.bit_index] = bakedModule;
-                            if (!string.IsNullOrWhiteSpace(dbData.ability_id))
-                            {
-                                AllAbilitiesById[dbData.ability_id] = bakedModule;
-                            }
-                            _debugLoadedAbilities.Add(bakedModule);
                         }
                         else
                         {
-                            Debug.LogWarning($"[AbilityManager] '{dbData.ability_id}' 파일을 찾을 수 없습니다. 에디터에서 Bake 툴을 먼저 돌려주세요!");
+                            Debug.LogWarning(
+                                $"[AbilityManager] 서버 스킬 '{dbData.ability_id}'에 대응하는 로컬 SkillModule이 없습니다. Bake 후 에셋 참조를 설정해주세요.");
                         }
                     }
 
-                    Debug.Log($"<color=green>[AbilityManager] 서버 데이터 동기화 완료! {AllAbilitiesDict.Count}개 스킬 준비됨.</color>");
-                    IsLoaded = true;
+                    // 서버가 bit_index를 변경했을 가능성이 있으므로 최신 모듈 값으로 인덱스를 다시 만든다.
+                    RebuildCatalogIndexes();
+
+                    Debug.Log(
+                        $"<color=green>[AbilityManager] 서버 수치 동기화 완료! 로컬 SkillModule {AllAbilitiesDict.Count}개를 사용합니다.</color>");
 
                     // 🌟 조립이 끝나면 로그인 시 받아둔 유저 비트마스크를 해석해 각 SO의 보상 풀 포함 여부를 갱신
                     ApplyRewardPoolFromBitmask();
@@ -104,13 +204,18 @@ public class AbilityManager : MonoSingleton<AbilityManager>
                 }
                 else
                 {
-                    onComplete?.Invoke(false);
+                    // 서버 응답 형식이 잘못되어도 로컬 에셋이 준비되어 있으면 해당 데이터로 계속 진행한다.
+                    Debug.LogWarning(
+                        "[AbilityManager] 서버 스킬 응답이 올바르지 않아 로컬 SkillModule을 사용합니다.");
+                    onComplete?.Invoke(IsLoaded);
                 }
             }
             else
             {
-                Debug.LogError("스킬 로드 실패: " + www.error);
-                onComplete?.Invoke(false);
+                // 서버 최신화에 실패해도 로컬 SkillModule은 이미 준비되어 있으므로 게임 진행은 가능하다.
+                Debug.LogWarning(
+                    $"[AbilityManager] 서버 스킬 최신화 실패. 로컬 SkillModule을 사용합니다: {www.error}");
+                onComplete?.Invoke(IsLoaded);
             }
         }
     }
@@ -122,15 +227,28 @@ public class AbilityManager : MonoSingleton<AbilityManager>
     {
         List<PlayerAbilityModule> unlockedList = new List<PlayerAbilityModule>();
 
+        // 로그인하지 않은 로컬 실행에서는 서버 비트마스크가 없다.
+        // 이때는 SkillModule 에셋에서 includeInRewardPool이 켜진 항목을 로컬 스킬 풀로 사용한다.
+        bool usesLocalPool =
+            !BackendManager.HasInstance ||
+            string.IsNullOrWhiteSpace(BackendManager.Instance.CurrentLoginID);
+
         // 0번 비트부터 63번 비트까지 검사
         foreach (var kvp in AllAbilitiesDict)
         {
             int bitIndex = kvp.Key;
+            PlayerAbilityModule module = kvp.Value;
 
-            // 비트 연산 (AND): 해당 자리가 1인지 확인
-            if ((userBitmask & (1L << bitIndex)) != 0)
+            if (module == null)
             {
-                unlockedList.Add(kvp.Value);
+                continue;
+            }
+
+            // 로컬 실행은 에셋의 풀 설정을 사용하고, 로그인 상태는 서버 비트마스크를 사용한다.
+            if ((usesLocalPool && module.IncludeInRewardPool) ||
+                (!usesLocalPool && (userBitmask & (1L << bitIndex)) != 0))
+            {
+                unlockedList.Add(module);
             }
         }
 
