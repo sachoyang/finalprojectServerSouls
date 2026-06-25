@@ -108,6 +108,10 @@ public class NetworkBossCore : NetworkBehaviour
     // 기존의 CurrentAvailablePatterns를 프로퍼티로 변경하여, 현재 페이즈에 맞는 리스트를 자동으로 내뱉게 합니다.
     protected virtual List<BossPatternModule> CurrentAvailablePatterns => (CurrentPhase == 2) ? phase2Patterns : phase1Patterns;
 
+    // 🔥 [버그 픽스] 공중에 떠 있는지 여부. 기본 보스는 항상 false(지상).
+    //    PolarDragonBoss처럼 비행하는 보스가 IsFlightActive로 오버라이드해서, 중력/바닥밀착을 끄게 한다.
+    protected virtual bool IsAirborne => false;
+
     // ==========================================
     // [네트워크 동기화 변수들]
     // ==========================================
@@ -190,6 +194,10 @@ public class NetworkBossCore : NetworkBehaviour
         {
             UpdateAggroByDamage();
         }
+
+        // 🔥 [버그 픽스] 이동 연산 전에 현재 비행 상태를 컨트롤러에 주입.
+        //    비행 중이면 MoveWithWallSlide 내부의 StickToGround(중력/바닥밀착)가 통째로 스킵된다.
+        _movement.BypassGround = IsAirborne;
 
         UpdateBossAI();
         ProcessLocomotionPhysics();

@@ -49,22 +49,15 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
     // ==========================================
     // 매 프레임 높이 조절 (부드러운 공중부양)
     // ==========================================
-    private void Update()
+private void Update()
     {
         if (_bossCore == null) return;
-
-        // 코어를 폴라 드래곤으로 캐스팅해서 비행 정보를 가져옴
         PolarDragonBoss polarBoss = _bossCore as PolarDragonBoss;
         if (polarBoss == null) return;
 
-        // 비행 버프가 켜져있으면 설정된 높이(예: 3.5m)로, 꺼지면 0m(땅)으로 세팅
-        float targetHeight = polarBoss.HasStatus(polarBoss.flightBuffId) ? polarBoss.flightHeight : 0f;
-
-        // Lerp로 스르륵 자연스럽게 올라가고 내려오게 만듦
+        // 🔥 [수정됨] HasStatus 대신 안전하게 IsFlightActive 사용
+        float targetHeight = polarBoss.IsFlightActive ? polarBoss.flightHeight : 0f;
         _currentHeight = Mathf.Lerp(_currentHeight, targetHeight, Time.deltaTime * 2.5f);
-
-        // ★ Visual 모델의 로컬 좌표 Y축만 수정! 
-        // 뼈에 달린 콜라이더들이 모두 같이 딸려 올라갑니다.
         transform.localPosition = new Vector3(0f, _currentHeight, 0f);
     }
 
@@ -91,8 +84,19 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
     public void PlayGroggy(float speedMultiplier)
     {
         SetAnimSpeed(speedMultiplier);
-        // 올려주신 Animator 이미지에 있는 "GetHit1" State 사용
-        PlayAction(Animator.StringToHash("GetHit1")); 
+        
+        PolarDragonBoss polarBoss = _bossCore as PolarDragonBoss;
+        
+        // 🔥 [신규] 공중에 있을 땐 공중 전용 피격 모션 재생!
+        if (polarBoss != null && polarBoss.IsFlightActive)
+        {
+            PlayAction(Animator.StringToHash("FlyStationaryGetHit")); 
+        }
+        else
+        {
+            PlayAction(Animator.StringToHash("GetHit1")); 
+        }
+        
         if (groggySound != null) SoundManager.Instance.PlaySFX_3D(groggySound, transform.position, SoundCategory.BossGimmick);
     }
 
@@ -130,17 +134,18 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
     public void DoLocomotion()
     {
         PolarDragonBoss polarBoss = _bossCore as PolarDragonBoss;
-        bool isFlying = polarBoss != null && polarBoss.HasStatus(polarBoss.flightBuffId);
+        // 🔥 [수정] HasStatus(버프 유무)가 아니라 IsFlightActive(안전장치 포함)로 통일.
+        //    버프가 막 끝났어도 비행 패턴이 끝나기 전까지는 공중 Locomotion을 유지해야 한다.
+        bool isFlying = polarBoss != null && polarBoss.IsFlightActive;
 
-        // 방장(Core)이 알려주는 현재 페이즈를 확인합니다.
         if (isFlying)
         {
-            // 2페이즈: 체공 상태 (FlyStationary <-> Fly 블렌드 트리)
+            // 공중: 체공 상태 (FlyStationary <-> Fly 블렌드 트리)
             anim.CrossFade("FlyLocomotion", 0.2f);
         }
         else
         {
-            // 1페이즈: 지상 상태 (IdleBreathe <-> Walk 블렌드 트리)
+            // 지상: (IdleBreathe <-> Walk 블렌드 트리)
             anim.CrossFade("GroundLocomotion", 0.2f);
         }
     }
