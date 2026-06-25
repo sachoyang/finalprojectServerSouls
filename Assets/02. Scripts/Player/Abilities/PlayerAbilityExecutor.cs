@@ -39,6 +39,18 @@ public class PlayerAbilityExecutor : MonoBehaviour
         EquipModule(module, context);
     }
 
+    // 씬 이동 복구에서는 PlayerStats 스냅샷에 패시브 수치가 이미 포함되어 있다.
+    // 스탯/회복/애니메이션/VFX는 다시 실행하지 않고 콤보 해금 같은 영구 특수효과만 복구한다.
+    public void RestoreModule(PlayerAbilityModule module, PlayerAbilityContext context)
+    {
+        if (module == null)
+        {
+            return;
+        }
+
+        ApplySpecialEffect(module, context);
+    }
+
     public void Activate(PlayerAbilityModule module, PlayerAbilityContext context)
     {
         if (!CanActivate(module, context))
@@ -70,6 +82,7 @@ public class PlayerAbilityExecutor : MonoBehaviour
 
         PlayAnimation(module, context);
         SpawnLocalPrefab(context, module.EffectPrefab, module.EffectLocalOffset, module.ParentEffectToPlayer);
+        PlaySound(module, context);
     }
 
     private static void PlayAnimation(PlayerAbilityModule module, PlayerAbilityContext context)
@@ -97,6 +110,30 @@ public class PlayerAbilityExecutor : MonoBehaviour
         {
             instance.transform.SetParent(context.Transform, true);
         }
+    }
+
+    private static void PlaySound(PlayerAbilityModule module, PlayerAbilityContext context)
+    {
+        if (module.SoundClip == null || context.Transform == null)
+        {
+            return;
+        }
+
+        if (!SoundManager.HasInstance)
+        {
+            Debug.LogWarning(
+                $"[PlayerAbilityExecutor] '{module.AbilityId}' 사운드를 재생할 SoundManager가 없습니다.");
+            return;
+        }
+
+        // 스킬 표현 RPC는 각 클라이언트에서 한 번씩 실행되므로
+        // 캐릭터 위치 기준 3D 사운드도 각 클라이언트에서 한 번만 재생된다.
+        SoundManager.Instance.PlaySFX_3D(
+            module.SoundClip,
+            context.Transform.position,
+            SoundCategory.SkillEffect,
+            module.SoundVolume,
+            Mathf.Max(0f, module.SoundDelay));
     }
 
     private static void ApplyEffect(PlayerAbilityModule module, PlayerAbilityContext context)

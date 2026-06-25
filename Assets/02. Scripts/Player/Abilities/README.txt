@@ -80,7 +80,7 @@ Unity 전용 데이터:
 
 주의:
 - AbilityId를 비워두면 에셋 이름을 대신 사용하므로 에셋 이름 변경에 취약하다.
-- Sound 데이터는 현재 모듈에 저장되지만 PlayerAbilityExecutor의 실제 재생 호출은 아직 연결되지 않았다.
+- SoundClip/SoundVolume/SoundDelay는 스킬 표현 실행 시 SoundManager의 SkillEffect 카테고리로 3D 재생된다.
 
 
 3. Unity 데이터 DB로 올리기: Upload

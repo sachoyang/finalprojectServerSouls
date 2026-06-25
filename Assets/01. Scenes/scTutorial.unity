@@ -2880,6 +2880,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1251331810}
   - component: {fileID: 1251331809}
+  - component: {fileID: 1251331811}
   m_Layer: 0
   m_Name: DebugGame
   m_TagString: Untagged
@@ -2905,6 +2906,23 @@ MonoBehaviour:
   debugUserId: 
   guiPosition: {x: 10, y: 10}
   guiWidth: 260
+--- !u!114 &1251331811
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1251331808}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83d04f1f1f784adf91d9d66dc243435a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  killBossAndSkipCutsceneKey: 286
+  respawnChestKey: 287
+  teleportToChestKey: 288
+  loadPathSceneKey: 289
+  pathSceneName: scPath
 --- !u!4 &1251331810
 Transform:
   m_ObjectHideFlags: 0

@@ -25991,7 +25991,7 @@ Animator:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1315777014}
-  m_Enabled: 1
+  m_Enabled: 0
   m_Avatar: {fileID: 0}
   m_Controller: {fileID: 9100000, guid: c4102e3e3f48ea24fb16a6185ad65969, type: 2}
   m_CullingMode: 0
@@ -30286,7 +30286,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1793016324
 Transform:
   m_ObjectHideFlags: 0
@@ -31520,6 +31520,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1881547193}
   - component: {fileID: 1881547192}
+  - component: {fileID: 1881547194}
+  - component: {fileID: 1881547195}
   m_Layer: 0
   m_Name: DebugGame
   m_TagString: Untagged
@@ -31540,7 +31542,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   debugBossPool:
-  - {fileID: 11400000, guid: d7e46c98e98aec845b9c6865f2dec211, type: 2}
+  - {fileID: 11400000, guid: e99e869d0eaa98f489081edfaa900f92, type: 2}
   useRandomBoss: 0
   debugUserId: 
   guiPosition: {x: 10, y: 10}
@@ -31560,6 +31562,36 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1881547194
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1881547191}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ceca30047cb7c146854c3fb86faf96b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _debugLoadedAbilities: []
+--- !u!114 &1881547195
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1881547191}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83d04f1f1f784adf91d9d66dc243435a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  killBossAndSkipCutsceneKey: 286
+  respawnChestKey: 287
+  teleportToChestKey: 288
+  loadPathSceneKey: 289
+  pathSceneName: scPath
 --- !u!1 &1914055221
 GameObject:
   m_ObjectHideFlags: 0

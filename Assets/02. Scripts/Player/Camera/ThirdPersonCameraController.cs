@@ -52,6 +52,7 @@ public class ThirdPersonCameraController : MonoBehaviour
     private float _currentCollisionDistance = -1f;
     private float _collisionDistanceVelocity;
     private float _lastCollisionTime = -999f;
+    private bool _cursorReleasedByEscape;
 
     public Transform Target => target;
     public Vector3 TargetOffset => targetOffset;
@@ -82,7 +83,9 @@ public class ThirdPersonCameraController : MonoBehaviour
     {
         UpdateCursorState();
 
-        if (target == null)
+        // ESC, Alt 또는 UI에서 커서를 해제한 동안에는 카메라 Transform을 갱신하지 않는다.
+        // 락온 중에도 추적 보간을 멈춰 메뉴 조작 중 화면이 미세하게 움직이지 않게 한다.
+        if (target == null || Cursor.lockState != CursorLockMode.Locked)
         {
             return;
         }
@@ -391,8 +394,15 @@ public class ThirdPersonCameraController : MonoBehaviour
 
     private void UpdateCursorState()
     {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            _cursorReleasedByEscape = !_cursorReleasedByEscape;
+            _currentVelocity = Vector3.zero;
+            _collisionDistanceVelocity = 0f;
+        }
+
         bool altHeld = Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt);
-        if (ForceCursorVisible || altHeld)
+        if (ForceCursorVisible || altHeld || _cursorReleasedByEscape)
         {
             SetCursorLock(false);
             return;
