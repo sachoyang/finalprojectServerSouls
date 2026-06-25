@@ -112,8 +112,14 @@ public class HUDManager : MonoBehaviour
     private void UpdatePlayerHUD()
     {
         PlayerStats stats = localPlayerController != null ? localPlayerController.GetComponent<PlayerStats>() : null;
-        if (playerHUDView == null || stats == null || !stats.IsSpawnedReady)
+        if (playerHUDView == null ||
+            stats == null ||
+            !stats.IsSpawnedReady ||
+            stats.Object == null ||
+            !stats.Object.IsValid)
+        {
             return;
+        }
 
         PlayerHUDData hudData = stats.GetHUDData();
 
