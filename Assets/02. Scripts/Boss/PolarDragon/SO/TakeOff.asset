@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4087804678eb42f4d8f433cd34284ab0, type: 3}
-  m_Name: TurnLeft_Pattern
+  m_Name: TakeOff
   m_EditorClassIdentifier: 
   patternId: 
   displayName: 
@@ -18,11 +18,11 @@ MonoBehaviour:
   maxRange: 10
   weight: 0
   actions:
-  - animationClip: {fileID: 7400000, guid: 4fb52496adee2734dbff2db411a8828b, type: 3}
-    animationStateName: Turn90L_RM
-    animationHash: 1747651483
-    duration: 0.833
-    useRootMotion: 1
+  - animationClip: {fileID: 7400000, guid: bd6bd723d64eb65468eef542be8d1957, type: 3}
+    animationStateName: TakeOff
+    animationHash: -2014032391
+    duration: 1.833
+    useRootMotion: 0
     moveOffset: {x: 0, y: 0, z: 0}
     moveCurve:
       serializedVersion: 2

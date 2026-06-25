@@ -15,6 +15,8 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
     [Tooltip("BiteAttack 애니메이션에 사용할 입 부분의 판정")]
     public BossMeleeAttack biteAttack;
 
+    private float _currentHeight = 0f;
+
     [Header("얼음 마법(AoE) 프리팹")]
     public GameObject spitFrozenBallPrefab; // SpitFrozenBall 애니메이션용 투사체
     public GameObject spreadFrozenBreathPrefab; // SpreadFrozenBreath 애니메이션용 브레스
@@ -42,6 +44,28 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
         Vector3 currentLookDirection = lookAtGuide.forward;
         Quaternion rotationDelta = Quaternion.FromToRotation(currentLookDirection, targetDirection);
         headBone.rotation = Quaternion.Lerp(headBone.rotation, rotationDelta * headBone.rotation, _ikWeight);
+    }
+
+    // ==========================================
+    // 매 프레임 높이 조절 (부드러운 공중부양)
+    // ==========================================
+    private void Update()
+    {
+        if (_bossCore == null) return;
+
+        // 코어를 폴라 드래곤으로 캐스팅해서 비행 정보를 가져옴
+        PolarDragonBoss polarBoss = _bossCore as PolarDragonBoss;
+        if (polarBoss == null) return;
+
+        // 비행 버프가 켜져있으면 설정된 높이(예: 3.5m)로, 꺼지면 0m(땅)으로 세팅
+        float targetHeight = polarBoss.HasStatus(polarBoss.flightBuffId) ? polarBoss.flightHeight : 0f;
+
+        // Lerp로 스르륵 자연스럽게 올라가고 내려오게 만듦
+        _currentHeight = Mathf.Lerp(_currentHeight, targetHeight, Time.deltaTime * 2.5f);
+
+        // ★ Visual 모델의 로컬 좌표 Y축만 수정! 
+        // 뼈에 달린 콜라이더들이 모두 같이 딸려 올라갑니다.
+        transform.localPosition = new Vector3(0f, _currentHeight, 0f);
     }
 
     // ==========================================
@@ -105,8 +129,11 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
 
     public void DoLocomotion()
     {
+        PolarDragonBoss polarBoss = _bossCore as PolarDragonBoss;
+        bool isFlying = polarBoss != null && polarBoss.HasStatus(polarBoss.flightBuffId);
+
         // 방장(Core)이 알려주는 현재 페이즈를 확인합니다.
-        if (_bossCore != null && _bossCore.CurrentPhase == 2)
+        if (isFlying)
         {
             // 2페이즈: 체공 상태 (FlyStationary <-> Fly 블렌드 트리)
             anim.CrossFade("FlyLocomotion", 0.2f);
@@ -117,6 +144,7 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
             anim.CrossFade("GroundLocomotion", 0.2f);
         }
     }
+    
 
     public void SetRootMotionCapture(bool enabled) {}
     public Vector3 ConsumeRootMotionDelta() { return Vector3.zero; }

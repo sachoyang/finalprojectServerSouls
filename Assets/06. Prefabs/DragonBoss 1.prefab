@@ -3110,11 +3110,10 @@ MonoBehaviour:
   targetLayer:
     serializedVersion: 2
     m_Bits: 256
-  hitRadius: 1
+  hitRadius: 1.4
   weaponNodes:
-  - {fileID: 7649782068898426539}
+  - {fileID: 695492420836495950}
   - {fileID: 9193321572944028717}
-  - {fileID: 2120625476513252590}
 --- !u!1 &7044144980641931986
 GameObject:
   m_ObjectHideFlags: 0

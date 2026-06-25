@@ -16,12 +16,12 @@ MonoBehaviour:
   displayName: 
   minRange: 0
   maxRange: 10
-  weight: 10
+  weight: 0
   actions:
   - animationClip: {fileID: 0}
     animationStateName: Turn90R_RM
     animationHash: -655545545
-    duration: 0
+    duration: 0.833
     useRootMotion: 1
     moveOffset: {x: 0, y: 0, z: 0}
     moveCurve:

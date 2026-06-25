@@ -4866,18 +4866,44 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5695f8d50fc079f40bf1a4bef6077b7a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hitShape: 1
+  hitZones:
+  - hitShape: 0
+    hitRadius: 0.5
+    boxSize: {x: 0, y: 0, z: 0}
+    hitOffset: {x: 0, y: 0, z: 0.69}
+    startTime: 0.13
+    duration: 1
+  - hitShape: 0
+    hitRadius: 0.7
+    boxSize: {x: 0, y: 0, z: 0}
+    hitOffset: {x: 0, y: 0, z: 1.85}
+    startTime: 0.28
+    duration: 2
+  - hitShape: 0
+    hitRadius: 1
+    boxSize: {x: 0, y: 0, z: 0}
+    hitOffset: {x: 0, y: 0, z: 3.54}
+    startTime: 0.51
+    duration: 2
+  - hitShape: 0
+    hitRadius: 1.2
+    boxSize: {x: 0, y: 0, z: 0}
+    hitOffset: {x: 0, y: 0, z: 5.68}
+    startTime: 0.8
+    duration: 1.5
+  - hitShape: 0
+    hitRadius: 1.4
+    boxSize: {x: 0, y: 0, z: 0}
+    hitOffset: {x: 0, y: 0, z: 8.39}
+    startTime: 1.18
+    duration: 1
+  syncParticle: {fileID: 198637950067575458}
+  baseDamage: 2000
+  isMultiHit: 1
+  hitInterval: 1
   targetLayer:
     serializedVersion: 2
     m_Bits: 256
-  hitRadius: 5
-  boxSize: {x: 3, y: 3, z: 10}
-  hitOffset: {x: 0, y: 0, z: 5}
-  baseDamage: 2000
-  delayBeforeActive: 2
-  activeDuration: 4
-  isMultiHit: 1
-  hitInterval: 1
 --- !u!1 &1685911702664702
 GameObject:
   m_ObjectHideFlags: 0
