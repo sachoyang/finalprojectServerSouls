@@ -18,14 +18,6 @@ public class AbilityDBData
     public float damage_multiplier;
     public float duration;
     public string special_effect;
-    public string icon_key;
-    public string animation_key;
-    public string vfx_key;
-    public string hitbox_key;
-
-    public string sound_key;
-    public float sound_volume;
-    public float sound_delay;
 }
 
 [Serializable]
@@ -38,10 +30,6 @@ public class AbilityDBResponse
 // 2. 능력 모듈 생성 및 비트마스크 연동 매니저
 public class AbilityManager : MonoSingleton<AbilityManager>
 {
-    [Header("에셋 데이터베이스 연결")]
-    [Tooltip("아까 만든 Ability Asset Database SO 파일을 끌어다 넣으세요.")]
-    public AbilityAssetDatabase assetDatabase;
-
     // bit_index를 Key로 사용하는 전체 스킬 딕셔너리
     public Dictionary<int, PlayerAbilityModule> AllAbilitiesDict { get; private set; } = new Dictionary<int, PlayerAbilityModule>();
     public Dictionary<string, PlayerAbilityModule> AllAbilitiesById { get; private set; } = new Dictionary<string, PlayerAbilityModule>();
@@ -85,14 +73,14 @@ public class AbilityManager : MonoSingleton<AbilityManager>
 
                     foreach (AbilityDBData dbData in res.data)
                     {
-                        // 🔥 [핵심 변경] 새로 만들지 말고, Bake 툴이 만들어둔 실제 파일을 가져옵니다!
-                        PlayerAbilityModule bakedModule = Resources.Load<PlayerAbilityModule>($"GeneratedAbilities/{dbData.ability_id}");
-                        
+                        // 🔥 지정된 경로(SkillModule)에서 미리 만들어둔 SO를 로드합니다.
+                        PlayerAbilityModule bakedModule = Resources.Load<PlayerAbilityModule>($"SkillModule/{dbData.ability_id}");
+
                         if (bakedModule != null)
                         {
                             // 라이브 업데이트: 서버에서 바뀐 최신 데미지/쿨타임 수치만 덮어씌움! (클라이언트 패치 불필요)
-                            bakedModule.InitializeFromDB(dbData, assetDatabase);
-                            
+                            bakedModule.InitializeFromDB(dbData);
+
                             AllAbilitiesDict[dbData.bit_index] = bakedModule;
                             if (!string.IsNullOrWhiteSpace(dbData.ability_id))
                             {
@@ -138,7 +126,7 @@ public class AbilityManager : MonoSingleton<AbilityManager>
         foreach (var kvp in AllAbilitiesDict)
         {
             int bitIndex = kvp.Key;
-            
+
             // 비트 연산 (AND): 해당 자리가 1인지 확인
             if ((userBitmask & (1L << bitIndex)) != 0)
             {

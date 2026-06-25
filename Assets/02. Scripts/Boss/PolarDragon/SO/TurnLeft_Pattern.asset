@@ -10,19 +10,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4087804678eb42f4d8f433cd34284ab0, type: 3}
-  m_Name: Pattern3_Jump
+  m_Name: TurnLeft_Pattern
   m_EditorClassIdentifier: 
-  patternId: 3
-  displayName: Pattern3_Jump
+  patternId: 
+  displayName: 
   minRange: 0
   maxRange: 10
   weight: 10
   actions:
-  - animationClip: {fileID: 7400000, guid: 11710095629f7e044ad54abf1af7fc13, type: 3}
-    animationStateName: Jump
-    animationHash: 125937960
-    duration: 2
-    useRootMotion: 0
+  - animationClip: {fileID: 7400000, guid: 4fb52496adee2734dbff2db411a8828b, type: 3}
+    animationStateName: Turn90L_RM
+    animationHash: 1747651483
+    duration: 0.833
+    useRootMotion: 1
     moveOffset: {x: 0, y: 0, z: 0}
     moveCurve:
       serializedVersion: 2
@@ -33,5 +33,5 @@ MonoBehaviour:
     hitboxIndex: 0
     hasSuperArmor: 0
     enableTracking: 0
-    trackingStopPercent: 0.5
-    trackingSpeed: 3
+    trackingStopPercent: 0
+    trackingSpeed: 0

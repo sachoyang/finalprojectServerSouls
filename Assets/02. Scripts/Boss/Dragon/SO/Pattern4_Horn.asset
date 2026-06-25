@@ -22,6 +22,7 @@ MonoBehaviour:
     animationStateName: Horn Attack
     animationHash: 46661459
     duration: 3
+    useRootMotion: 0
     moveOffset: {x: 0, y: 0, z: 20}
     moveCurve:
       serializedVersion: 2
@@ -49,3 +50,6 @@ MonoBehaviour:
       m_RotationOrder: 4
     hitboxIndex: 0
     hasSuperArmor: 1
+    enableTracking: 0
+    trackingStopPercent: 0.5
+    trackingSpeed: 3

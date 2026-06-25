@@ -10,19 +10,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cbc39ac0e5f95d14fbd17eac508de1c4, type: 3}
-  m_Name: humble
+  m_Name: jump_attack
   m_EditorClassIdentifier: 
-  bitIndex: 5
-  abilityId: humble
-  displayName: humble
-  description: 
-  icon: {fileID: 0}
-  abilityType: 0
+  bitIndex: 6
+  abilityId: jump_attack
+  displayName: Jump Attack
+  description: Leaps into a great sword attack.
+  icon: {fileID: 721787287, guid: 7d4e7f6eb9b67bc4da7d17ee567dd146, type: 3}
+  abilityType: 1
   minBossStage: 1
   maxBossStage: 8
   includeInRewardPool: 1
-  staminaCost: 0
-  cooldownSeconds: 0
+  staminaCost: 400
+  cooldownSeconds: 8
   healthRestoreAmount: 0
   staminaRestoreAmount: 0
   specialEffect: 0
@@ -30,9 +30,13 @@ MonoBehaviour:
   maxStaminaBonus: 0
   defenseRateBonus: 0
   attackDamageBonusPercent: 0
-  animationClip: {fileID: 0}
+  animationClip: {fileID: -203655887218126122, guid: 2e360ce02ed05d04faec51172d19bb6d, type: 3}
   animationStateName: 
-  animationTrigger: 
+  animationTrigger: JumpAttack
+  rootMotionMode: 0
+  staminaRecoveryDelayMode: 0
+  opensComboInput: 0
+  comboInputOpenNormalizedTime: 0.72
   effectPrefab: {fileID: 0}
   effectLocalOffset: {x: 0, y: 0, z: 0}
   parentEffectToPlayer: 0

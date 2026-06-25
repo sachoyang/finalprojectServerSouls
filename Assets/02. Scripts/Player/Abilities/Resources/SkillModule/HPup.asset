@@ -10,19 +10,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cbc39ac0e5f95d14fbd17eac508de1c4, type: 3}
-  m_Name: heal
+  m_Name: HPup
   m_EditorClassIdentifier: 
-  bitIndex: 2
-  abilityId: heal
-  displayName: Heal
-  description: Restores player health.
-  icon: {fileID: 78065985, guid: 7d4e7f6eb9b67bc4da7d17ee567dd146, type: 3}
-  abilityType: 1
+  bitIndex: 4
+  abilityId: HPup
+  displayName: "\uCCB4\uB825\uC99D\uAC00"
+  description: Increase maxHp
+  icon: {fileID: -513147929, guid: 7d4e7f6eb9b67bc4da7d17ee567dd146, type: 3}
+  abilityType: 0
   minBossStage: 1
   maxBossStage: 8
   includeInRewardPool: 1
-  staminaCost: 400
-  cooldownSeconds: 8
+  staminaCost: 0
+  cooldownSeconds: 0
   healthRestoreAmount: 0
   staminaRestoreAmount: 0
   specialEffect: 0
@@ -30,9 +30,13 @@ MonoBehaviour:
   maxStaminaBonus: 0
   defenseRateBonus: 0
   attackDamageBonusPercent: 0
-  animationClip: {fileID: -203655887218126122, guid: b87c0223bacdbd840967e74c4a41288f, type: 3}
+  animationClip: {fileID: -203655887218126122, guid: f91d1ffc181042e45bdcbe560e4be586, type: 3}
   animationStateName: 
-  animationTrigger: Heal
+  animationTrigger: StaminaUp
+  rootMotionMode: 0
+  staminaRecoveryDelayMode: 0
+  opensComboInput: 0
+  comboInputOpenNormalizedTime: 0.72
   effectPrefab: {fileID: 0}
   effectLocalOffset: {x: 0, y: 0, z: 0}
   parentEffectToPlayer: 0

@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cbc39ac0e5f95d14fbd17eac508de1c4, type: 3}
-  m_Name: high_spin_attack
+  m_Name: heal
   m_EditorClassIdentifier: 
-  bitIndex: 3
-  abilityId: high_spin_attack
-  displayName: High Spin Attack
-  description: Performs a wide spinning great sword attack.
-  icon: {fileID: -1116392742, guid: 602013fcc1a5c4a48ad04a33a93cf811, type: 3}
+  bitIndex: 2
+  abilityId: heal
+  displayName: Heal
+  description: Restores player health.
+  icon: {fileID: 78065985, guid: 7d4e7f6eb9b67bc4da7d17ee567dd146, type: 3}
   abilityType: 1
   minBossStage: 1
   maxBossStage: 8
@@ -30,9 +30,13 @@ MonoBehaviour:
   maxStaminaBonus: 0
   defenseRateBonus: 0
   attackDamageBonusPercent: 0
-  animationClip: {fileID: -203655887218126122, guid: 6e2e5d6f257b702419afdb91532e3d2e, type: 3}
+  animationClip: {fileID: -203655887218126122, guid: b87c0223bacdbd840967e74c4a41288f, type: 3}
   animationStateName: 
-  animationTrigger: HighSpinAttack
+  animationTrigger: Heal
+  rootMotionMode: 0
+  staminaRecoveryDelayMode: 0
+  opensComboInput: 0
+  comboInputOpenNormalizedTime: 0.72
   effectPrefab: {fileID: 0}
   effectLocalOffset: {x: 0, y: 0, z: 0}
   parentEffectToPlayer: 0

@@ -20,15 +20,11 @@ public class AbilityUploadWindow : EditorWindow
 
     private void OnGUI()
     {
-        GUILayout.Label("유니티 ➔ DB 스킬 업로드", EditorStyles.boldLabel);
+        GUILayout.Label("유니티 ➔ DB 스킬 기획 데이터 업로드", EditorStyles.boldLabel);
         EditorGUILayout.Space();
 
-        // 값이 변경되었는지 감지 시작
         EditorGUI.BeginChangeCheck();
-
         settings.uploadUrl = EditorGUILayout.TextField("업로드 API 주소", settings.uploadUrl);
-
-        // 변경 사항이 있으면 에셋 저장 (Git 추적)
         if (EditorGUI.EndChangeCheck())
         {
             EditorUtility.SetDirty(settings);
@@ -37,12 +33,11 @@ public class AbilityUploadWindow : EditorWindow
 
         EditorGUILayout.Space();
         EditorGUILayout.HelpBox(
-            "선택한 PlayerAbilityModule(SO) 데이터를 DB로 덮어씌웁니다.\n" +
-            "보상 풀 포함 여부(include_in_reward_pool)는 서버로 전송하지 않습니다. (비트마스크로 별도 관리)\n" +
-            "업로드 전, SO 파일의 'Bit Index'가 제대로 설정되어 있는지 꼭 확인하세요!", MessageType.Warning);
+            "선택한 스킬 모듈(SO)의 기획 데이터(쿨타임, 데미지 등)를 DB로 업로드합니다.\n" +
+            "업로드 전, 'Bit Index'와 'Ability Id'가 정확히 입력되었는지 확인하세요!", MessageType.Warning);
         EditorGUILayout.Space();
 
-        if (GUILayout.Button("🔥 선택한 스킬들 DB로 업로드", GUILayout.Height(40)))
+        if (GUILayout.Button("🔥 선택한 스킬 데이터 DB로 업로드", GUILayout.Height(40)))
         {
             UploadSelectedAbilities();
         }
@@ -50,27 +45,16 @@ public class AbilityUploadWindow : EditorWindow
 
     private async void UploadSelectedAbilities()
     {
-        // 1. 에셋 데이터베이스 찾기
-        string[] dbGuids = AssetDatabase.FindAssets("t:AbilityAssetDatabase");
-        if (dbGuids.Length == 0)
-        {
-            Debug.LogError("[업로드 에러] AbilityAssetDatabase를 찾을 수 없습니다.");
-            return;
-        }
-        AbilityAssetDatabase assetDB = AssetDatabase.LoadAssetAtPath<AbilityAssetDatabase>(AssetDatabase.GUIDToAssetPath(dbGuids[0]));
-
-        // 2. 현재 유니티 프로젝트 창에서 선택된 SO들 가져오기
         Object[] selectedObjects = Selection.GetFiltered(typeof(PlayerAbilityModule), SelectionMode.Assets);
         
         if (selectedObjects.Length == 0)
         {
-            Debug.LogWarning("[업로드 알림] 업로드할 PlayerAbilityModule(SO) 파일을 선택해주세요!");
+            Debug.LogWarning("[업로드 알림] 업로드할 스킬 모듈(SO) 파일을 선택해주세요!");
             return;
         }
 
         int successCount = 0;
 
-        // 3. 선택된 SO들을 하나씩 서버로 전송
         foreach (Object obj in selectedObjects)
         {
             PlayerAbilityModule module = (PlayerAbilityModule)obj;
@@ -88,16 +72,8 @@ public class AbilityUploadWindow : EditorWindow
             form.AddField("duration", module.HitboxLifetime.ToString());
             form.AddField("special_effect", module.SpecialEffect.ToString());
 
-            form.AddField("icon_key", GetKey(module.Icon));
-            form.AddField("animation_key", GetKey(module.AnimationClip));
-            form.AddField("vfx_key", GetKey(module.EffectPrefab));
-            form.AddField("hitbox_key", GetKey(module.HitboxPrefab));
-            
-            form.AddField("sound_key", GetKey(module.SoundClip));
-            form.AddField("sound_volume", module.SoundVolume.ToString());
-            form.AddField("sound_delay", module.SoundDelay.ToString());
+            // 🔥 더 이상 icon_key, vfx_key 등은 서버로 보내지 않습니다!
 
-            // 세팅 파일의 업로드 주소 사용
             using (UnityWebRequest www = UnityWebRequest.Post(settings.uploadUrl, form))
             {
                 var operation = www.SendWebRequest();
@@ -115,7 +91,7 @@ public class AbilityUploadWindow : EditorWindow
             }
         }
 
-        Debug.Log($"✨ <b>총 {successCount}개의 스킬이 서버 DB에 업데이트 되었습니다.</b> 웹 관리자 페이지를 확인하세요!");
+        Debug.Log($"✨ <b>총 {successCount}개의 스킬 데이터가 서버 DB에 업데이트 되었습니다.</b>");
     }
 
     private string GetKey(UnityEngine.Object asset) => asset != null ? asset.name : "";
