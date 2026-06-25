@@ -211,7 +211,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 964d49de26953a645b50779ed915d07c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  baseDamage: 20
+  baseDamage: 3000
   knockbackPower: 10
   targetLayer:
     serializedVersion: 2
@@ -2031,7 +2031,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 964d49de26953a645b50779ed915d07c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  baseDamage: 20
+  baseDamage: 3000
   knockbackPower: 10
   targetLayer:
     serializedVersion: 2
@@ -2945,7 +2945,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 5b09769c6923a7f449e4c867f4b4ad05, type: 2}
   - {fileID: 11400000, guid: 3bac8bcfa74852b449ff45382c72c602, type: 2}
   - {fileID: 11400000, guid: cfc6972769a31d748bfb9b0844b93a59, type: 2}
-  _AllowedMaxPhase: 1
+  _AllowedMaxPhase: 2
   _DamageMultiplier: 1
   _CurrentPhase: 1
   _CurrentState: 0
@@ -3105,7 +3105,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 964d49de26953a645b50779ed915d07c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  baseDamage: 20
+  baseDamage: 3000
   knockbackPower: 10
   targetLayer:
     serializedVersion: 2

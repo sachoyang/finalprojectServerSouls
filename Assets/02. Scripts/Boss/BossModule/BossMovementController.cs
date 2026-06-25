@@ -22,6 +22,10 @@ public class BossMovementController
         _gravitySpeed = gravitySpeed;
     }
 
+    // 🔥 [버그 픽스] 비행(공중부양) 중에는 중력/바닥밀착을 통째로 끄기 위한 스위치.
+    //    NetworkBossCore가 매 틱 IsFlightActive 상태를 여기에 주입해 준다.
+    public bool BypassGround { get; set; }
+
     // 목표 이동량을 벽에 막히면 미끄러뜨려 안전하게 이동 후 지형에 밀착
     public void MoveWithWallSlide(Transform transform, Vector3 targetDisplacement, float deltaTime)
     {
@@ -64,6 +68,10 @@ public class BossMovementController
     // Y축을 바닥에 밀착, 바닥이 없으면 가짜 중력으로 낙하
     private void StickToGround(Transform transform, float deltaTime)
     {
+        // 🔥 [버그 픽스 핵심] 비행 중이면 레이캐스트(바닥 판정)도, 가짜 중력도 전부 건너뛴다.
+        //    이 한 줄이 없으면 공중에 떠 있는 보스를 매 틱 땅으로 끌어내린다.
+        if (BypassGround) return;
+
         Vector3 rayStart = transform.position + (Vector3.up * _stepHeight);
         if (Physics.Raycast(rayStart, Vector3.down, out RaycastHit hit, _stepHeight * 2f, _groundLayerMask))
         {
