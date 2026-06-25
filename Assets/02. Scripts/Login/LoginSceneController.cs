@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class LoginSceneController : MonoBehaviour
@@ -6,6 +7,7 @@ public class LoginSceneController : MonoBehaviour
     [Header("Panels")]
     [SerializeField] private GameObject loginPanel;
     [SerializeField] private GameObject registerPanel;
+    [SerializeField] private GameObject guestNoticePanel;
 
     [Header("Login Input")]
     [SerializeField] private InputField loginIdInput;
@@ -27,16 +29,16 @@ public class LoginSceneController : MonoBehaviour
 
     private bool isChangingScene;
 
-    // private const string AccountPasswordPrefix = "Account_Password_";
-    // private const string AccountNicknamePrefix = "Account_Nickname_";
-    // private const string CurrentLoginIdKey = "CurrentLoginId";
-    // private const string CurrentNicknameKey = "CurrentNickname";
-    // PlayerPrefab이제 안씀. db용으로 변경
+    public const string PlayerAccessModeKey = "PlayerAccessMode";
+    public const string LoggedInModeValue = "LoggedIn";
+    public const string GuestModeValue = "Guest";
 
     private void Start()
     {
         GameManager.GetOrCreate()?.SetLoginMode();
+
         ShowLoginPanel();
+        HideGuestNotice();
 
         if (loginPwInput != null)
             loginPwInput.contentType = InputField.ContentType.Password;
@@ -58,49 +60,45 @@ public class LoginSceneController : MonoBehaviour
 
         if (string.IsNullOrEmpty(id) || string.IsNullOrEmpty(pw))
         {
-            ShowSystemMessage("아이디 또는 PW를 확인해주세요");
+            ShowSystemMessage("ID 또는 PW를 확인해주세요.");
             return;
         }
 
         GameManager gameManager = GameManager.GetOrCreate();
         BackendManager backendManager = gameManager != null ? gameManager.Backend : null;
         AbilityManager abilityManager = gameManager != null ? gameManager.Ability : null;
+
         if (backendManager == null || abilityManager == null)
         {
             ShowSystemMessage("필수 매니저 초기화에 실패했습니다.");
             return;
         }
 
-        // [🔥 DB 연동 부분] BackendManager 호출
+        ShowSystemMessage("로그인 중입니다...");
+
         backendManager.LoginUser(id, pw, (isSuccess, message) =>
         {
-            if (isSuccess)
+            if (!isSuccess)
             {
-                Debug.Log($"DB 로그인 성공 ID: {id}, Nickname: {backendManager.CurrentNickname}");
-                
-                // 씬을 넘기기 전에 로딩 메시지를 띄우고 스킬 데이터를 요청합니다.
-                ShowSystemMessage("서버에서 스킬 데이터를 불러오는 중...");
-
-                // 스킬 모듈 데이터 패치!
-                abilityManager.FetchAbilities((isLoaded) => 
-                {
-                    if (isLoaded)
-                    {
-                        // 스킬 조립까지 완벽하게 끝났으면 메인 씬으로 이동!
-                        ChangeScene(titleSceneName);
-                    }
-                    else
-                    {
-                        // 서버에서 스킬을 못 가져오면 씬 이동을 막고 에러 띄움
-                        ShowSystemMessage("스킬 데이터를 불러오는데 실패했습니다.");
-                    }
-                });
-            }
-            else
-            {
-                Debug.Log($"DB 로그인 실패: {message}");
                 ShowSystemMessage(message);
+                return;
             }
+
+            ShowSystemMessage("스킬 데이터를 불러오는 중입니다...");
+
+            abilityManager.FetchAbilities((isLoaded) =>
+            {
+                if (!isLoaded)
+                {
+                    ShowSystemMessage("스킬 데이터를 불러오는데 실패했습니다.");
+                    return;
+                }
+
+                PlayerPrefs.SetString(PlayerAccessModeKey, LoggedInModeValue);
+                PlayerPrefs.Save();
+
+                ChangeScene(titleSceneName);
+            });
         });
     }
 
@@ -117,36 +115,38 @@ public class LoginSceneController : MonoBehaviour
 
         if (string.IsNullOrEmpty(id) || string.IsNullOrEmpty(pw) || string.IsNullOrEmpty(nickname))
         {
-            ShowSystemMessage("아이디, PW, 닉네임을 모두 입력해주세요");
+            ShowSystemMessage("ID, PW, 닉네임을 모두 입력해주세요.");
             return;
         }
 
         GameManager gameManager = GameManager.GetOrCreate();
         BackendManager backendManager = gameManager != null ? gameManager.Backend : null;
+
         if (backendManager == null)
         {
             ShowSystemMessage("서버 매니저 초기화에 실패했습니다.");
             return;
         }
 
-        // [🔥 DB 연동 부분] PlayerPrefs 대신 BackendManager로 가입 요청!
+        ShowSystemMessage("회원가입 중입니다...");
+
         backendManager.RegisterUser(id, pw, nickname, (isSuccess, message) =>
         {
-            if (isSuccess)
+            if (!isSuccess)
             {
-                Debug.Log($"DB 회원가입 완료 ID: {id}, Nickname: {nickname}");
-                ShowSystemMessage("계정이 생성되었습니다");
-
-                if (loginIdInput != null) loginIdInput.text = id;
-                if (loginPwInput != null) loginPwInput.text = "";
-
-                ShowLoginPanel();
+                ShowSystemMessage(message);
+                return;
             }
-            else
-            {
-                Debug.Log($"DB 회원가입 실패: {message}");
-                ShowSystemMessage(message); // "이미 존재하는 아이디입니다." 등 출력
-            }
+
+            ShowSystemMessage("계정이 생성되었습니다.");
+
+            if (loginIdInput != null)
+                loginIdInput.text = id;
+
+            if (loginPwInput != null)
+                loginPwInput.text = "";
+
+            ShowLoginPanel();
         });
     }
 
@@ -155,26 +155,30 @@ public class LoginSceneController : MonoBehaviour
         ShowLoginPanel();
     }
 
-    // private bool TryLogin(string id, string pw)
-    // {
-    //     string passwordKey = AccountPasswordPrefix + id;
+    public void OnClickGuestButton()
+    {
+        if (isChangingScene)
+            return;
 
-    //     if (!PlayerPrefs.HasKey(passwordKey))
-    //     {
-    //         Debug.Log("��ϵ��� ���� ���̵�: " + id);
-    //         return false;
-    //     }
+        HideSystemMessage();
+        ShowGuestNotice();
+    }
 
-    //     string savedPw = PlayerPrefs.GetString(passwordKey, "");
+    public void OnClickGuestConfirmYes()
+    {
+        if (isChangingScene)
+            return;
 
-    //     if (savedPw != pw)
-    //     {
-    //         Debug.Log("��й�ȣ ����ġ: " + id);
-    //         return false;
-    //     }
+        PlayerPrefs.SetString(PlayerAccessModeKey, GuestModeValue);
+        PlayerPrefs.Save();
 
-    //     return true;
-    // }
+        ChangeScene(titleSceneName);
+    }
+
+    public void OnClickGuestConfirmNo()
+    {
+        HideGuestNotice();
+    }
 
     private void ShowLoginPanel()
     {
@@ -184,6 +188,7 @@ public class LoginSceneController : MonoBehaviour
         if (registerPanel != null)
             registerPanel.SetActive(false);
 
+        HideGuestNotice();
         HideSystemMessage();
     }
 
@@ -195,23 +200,45 @@ public class LoginSceneController : MonoBehaviour
         if (registerPanel != null)
             registerPanel.SetActive(true);
 
+        HideGuestNotice();
         HideSystemMessage();
 
         if (registerIdInput != null)
             registerIdInput.Select();
     }
 
-   private void ChangeScene(string sceneName)
+    private void ShowGuestNotice()
     {
-        if (fadeManager == null)
+        if (guestNoticePanel != null)
+            guestNoticePanel.SetActive(true);
+    }
+
+    private void HideGuestNotice()
+    {
+        if (guestNoticePanel != null)
+            guestNoticePanel.SetActive(false);
+    }
+
+    private void ChangeScene(string sceneName)
+    {
+        if (isChangingScene)
+            return;
+
+        if (string.IsNullOrEmpty(sceneName))
         {
-            Debug.LogError("LoginSceneController: Fade Manager가 연결되지 않았습니다.");
+            ShowSystemMessage("이동할 씬 이름이 비어 있습니다.");
             return;
         }
-        if (string.IsNullOrEmpty(sceneName)) return;
 
         isChangingScene = true;
-        fadeManager.ChangeScene(sceneName);
+
+        if (fadeManager != null)
+        {
+            fadeManager.ChangeScene(sceneName);
+            return;
+        }
+
+        SceneManager.LoadScene(sceneName);
     }
 
     private void ShowSystemMessage(string message)
