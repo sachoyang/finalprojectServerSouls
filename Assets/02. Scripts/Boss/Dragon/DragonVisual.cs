@@ -145,6 +145,13 @@ public class DragonVisual : MonoBehaviour, IBossVisual
         anim.SetFloat("DirY", Mathf.Lerp(currentY, dirY, Time.deltaTime * 5f));
     }
 
+    // 제자리 회전 블렌딩. DragonVisual은 DirX/DirY(2D) 블렌드를 쓰므로,
+    // 제자리 턴 스텝을 쓰려면 Animator에 "Turn" 파라미터 + 턴 블렌드를 추가하면 됨. (없으면 무시)
+    public void SetTurn(float turnSign)
+    {
+        // 필요 시 여기에 anim.SetFloat("Turn", ...) 연결. 현재는 no-op(기존 동작 유지).
+    }
+
     // 2. 시선 처리 목표 위치 갱신
     public void SetLookAtTarget(Vector3 targetPos)
     {

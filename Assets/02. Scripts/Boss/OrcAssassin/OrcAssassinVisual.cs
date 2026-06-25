@@ -102,10 +102,15 @@ public class OrcAssassinVisual : MonoBehaviour, IBossVisual
         anim.SetFloat("MoveSpeed", Mathf.Lerp(currentSpeed, targetSpeed, Time.deltaTime * 5f));
     }
 
+    public void SetTurn(float turnSign)
+    {
+        // OrcAssassin은 제자리 턴 블렌드 미사용. 필요 시 anim.SetFloat("Turn", ...) 연결. (현재 no-op)
+    }
+
     public void SetLookAtTarget(Vector3 targetPos)
     {
         _ikLookAtPosition = targetPos;
-        _ikWeight = Mathf.Lerp(_ikWeight, 1f, Time.deltaTime * 2f); 
+        _ikWeight = Mathf.Lerp(_ikWeight, 1f, Time.deltaTime * 2f);
     }
 
     public void ResetLookAt()

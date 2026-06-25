@@ -6,6 +6,10 @@ public interface IBossVisual
     void PlayAction(int stateHash, float crossFadeTime = 0.1f);
 
     void SetDirection(float dirX, float dirY);
+
+    // 제자리 회전(Turn-in-place) 블렌딩용. turnSign: -1(좌) ~ 0(정면) ~ +1(우).
+    // Animator의 Turn 블렌드 트리에 연결해 발 스텝으로 회전을 표현(풋슬라이딩 제거).
+    void SetTurn(float turnSign);
     
     void SetLookAtTarget(Vector3 targetPos);
 
