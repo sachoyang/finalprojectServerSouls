@@ -1,4 +1,6 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
 using Fusion;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -6,6 +8,7 @@ using UnityEngine.SceneManagement;
 public class RewardManager : MonoBehaviour
 {
     private const string RewardSelectCanvasPrefabId = "RewardSelectCanvas";
+    public static RewardManager Active { get; private set; }
 
     [Header("Boss")]
     [SerializeField] private NetworkBossCore boss;
@@ -34,11 +37,28 @@ public class RewardManager : MonoBehaviour
     private bool _rewardOptionsOpened;
     private bool _sceneLoadRequested;
     private GameObject _spawnedChest;
+    private readonly List<PlayerAbilityModule> _pendingOptions = new List<PlayerAbilityModule>();
+
+    public int LastClearedBossStage => bossStage;
+    public IReadOnlyList<PlayerAbilityModule> PendingOptions => _pendingOptions;
+
+    // 보상 UI는 플레이어 프리팹을 찾지 않고 현재 스테이지의 RewardManager 이벤트만 구독한다.
+    public event Action<int, IReadOnlyList<PlayerAbilityModule>> BossRewardOffered;
+    public event Action<PlayerAbilityModule> BossRewardSelected;
 
     private void Awake()
     {
+        Active = this;
         chestOpenFallbackDuration = Mathf.Max(1.5f, chestOpenFallbackDuration);
         SetDistortionActive(false);
+    }
+
+    private void OnDestroy()
+    {
+        if (Active == this)
+        {
+            Active = null;
+        }
     }
 
     private void Update()
@@ -200,18 +220,58 @@ public class RewardManager : MonoBehaviour
             return;
         }
 
-        PlayerAbilityRewardController rewardController = FindLocalRewardController();
-        if (rewardController == null)
+        PlayerAbilityInventory inventory = FindLocalAbilityInventory();
+        if (inventory == null)
         {
-            Debug.LogWarning("[RewardManager] Local PlayerAbilityRewardController was not found.");
+            Debug.LogWarning("[RewardManager] 로컬 PlayerAbilityInventory를 찾지 못했습니다.");
+            return;
+        }
+
+        // 보상 후보와 선택 대기 상태는 스테이지 보상 흐름을 소유한 RewardManager가 관리한다.
+        _pendingOptions.Clear();
+        _pendingOptions.AddRange(inventory.GenerateRewardOptions(bossStage, 3));
+        if (_pendingOptions.Count == 0)
+        {
+            Debug.LogWarning("[RewardManager] 표시할 스킬 보상 후보가 없습니다.");
             return;
         }
 
         ShowRewardSelectCanvas();
 
         _rewardOptionsOpened = true;
-        rewardController.OfferBossReward(bossStage);
+        BossRewardOffered?.Invoke(bossStage, _pendingOptions);
         Debug.Log("[RewardManager] Boss reward offered to local player.");
+    }
+
+    // UI는 선택된 후보의 인덱스만 전달하고, 실제 플레이어별 장착과 저장은 해당 플레이어 컴포넌트에 위임한다.
+    public bool SelectPendingOption(int optionIndex)
+    {
+        if (optionIndex < 0 || optionIndex >= _pendingOptions.Count)
+        {
+            return false;
+        }
+
+        NetworkPlayerController localPlayer = PlayerRegistry.LocalPlayer;
+        PlayerAbilityInventory inventory =
+            localPlayer != null ? localPlayer.GetComponent<PlayerAbilityInventory>() : null;
+        if (inventory == null)
+        {
+            Debug.LogWarning("[RewardManager] 보상을 적용할 로컬 PlayerAbilityInventory를 찾지 못했습니다.");
+            return false;
+        }
+
+        PlayerAbilityModule selected = _pendingOptions[optionIndex];
+        if (!inventory.SelectRewardOption(selected))
+        {
+            return false;
+        }
+
+        // 선택 완료 여부는 플레이어별 네트워크/세션 데이터에 기록해 다음 씬 전환 조건에 사용한다.
+        localPlayer.GetComponent<NetworkPlayerData>()?.MarkRewardSelected(bossStage);
+
+        _pendingOptions.Clear();
+        BossRewardSelected?.Invoke(selected);
+        return true;
     }
 
     private static void ShowRewardSelectCanvas()
@@ -341,10 +401,10 @@ public class RewardManager : MonoBehaviour
         SceneManager.LoadScene(nextSceneName);
     }
 
-    private static PlayerAbilityRewardController FindLocalRewardController()
+    private static PlayerAbilityInventory FindLocalAbilityInventory()
     {
         NetworkPlayerController localPlayer = PlayerRegistry.LocalPlayer;
-        return localPlayer != null ? localPlayer.GetComponent<PlayerAbilityRewardController>() : null;
+        return localPlayer != null ? localPlayer.GetComponent<PlayerAbilityInventory>() : null;
     }
 
     private static NetworkRunner GetRunner()

@@ -63,9 +63,6 @@ public class PlayerAbilityInventory : MonoBehaviour
         }
     }
 
-    // UI가 보상 선택창을 띄우고 싶을 때 구독할 수 있는 이벤트.
-    public event Action<IReadOnlyList<PlayerAbilityModule>> RewardOptionsGenerated;
-
     // 능력 장착이 끝난 뒤 UI 갱신이나 효과음 재생 등에 사용할 수 있는 이벤트.
     public event Action<PlayerAbilityModule> AbilityEquipped;
 
@@ -92,9 +89,7 @@ public class PlayerAbilityInventory : MonoBehaviour
         if (abilityManager == null || !abilityManager.IsLoaded)
         {
             Debug.LogWarning("[PlayerAbilityInventory] AbilityManager가 아직 DB 스킬 데이터를 준비하지 못했습니다.");
-            List<PlayerAbilityModule> emptyOptions = new List<PlayerAbilityModule>();
-            RewardOptionsGenerated?.Invoke(emptyOptions);
-            return emptyOptions;
+            return new List<PlayerAbilityModule>();
         }
 
         List<PlayerAbilityModule> candidates = new List<PlayerAbilityModule>();
@@ -120,7 +115,6 @@ public class PlayerAbilityInventory : MonoBehaviour
         // 섞은 후보 중 앞에서부터 optionCount개만 보상 선택지로 사용한다.
         int count = Mathf.Min(Mathf.Max(0, optionCount), candidates.Count);
         List<PlayerAbilityModule> options = candidates.GetRange(0, count);
-        RewardOptionsGenerated?.Invoke(options);
         return options;
     }
 

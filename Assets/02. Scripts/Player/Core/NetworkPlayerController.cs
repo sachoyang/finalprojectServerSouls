@@ -162,7 +162,6 @@ public partial class NetworkPlayerController :
     private PlayerStats _playerStats;
     private PlayerStatusController _statusController;
     private PlayerAbilityInventory _abilityInventory;
-    private PlayerAbilityRewardController _abilityRewardController;
     private ChangeDetector _changeDetector;
     // 이동 입력이 없는 구르기에서도 마지막으로 움직이던 방향을 유지하기 위한 캐시.
     private Vector3 _lastMoveDirection = Vector3.forward;
@@ -217,7 +216,6 @@ public partial class NetworkPlayerController :
         _playerStats = GetComponent<PlayerStats>();
         _statusController = GetComponent<PlayerStatusController>();
         _abilityInventory = GetComponent<PlayerAbilityInventory>();
-        _abilityRewardController = GetComponent<PlayerAbilityRewardController>();
         lockOnTargetSelector ??= GetComponent<LockOnTargetSelector>();
         if (lockOnTargetSelector == null)
         {
