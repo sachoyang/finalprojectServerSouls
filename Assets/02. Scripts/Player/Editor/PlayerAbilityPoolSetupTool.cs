@@ -7,7 +7,8 @@ public static class PlayerAbilityPoolSetupTool
     // PlayerAbilityModule 에셋과 Player.prefab의 reward pool을 동기화하는 에디터 전용 도구.
     // Animator 동기화와 분리해, 보상 후보 등록만 필요할 때 prefab의 애니메이터 설정을 건드리지 않도록 한다.
     private const string PlayerPrefabPath = "Assets/06. Prefabs/Player.prefab";
-    private const string SkillModuleFolder = "Assets/02. Scripts/Player/Abilities/SkillModule";
+    // 런타임 AbilityManager가 읽는 Resources/SkillModule과 동일한 에셋 폴더를 사용한다.
+    private const string SkillModuleFolder = "Assets/02. Scripts/Player/Abilities/Resources/SkillModule";
     private const string AbilityPoolPropertyName = "abilityPool";
 
     [MenuItem("Tools/ServerSouls/Sync Ability Modules To Player Reward Pool")]
@@ -59,6 +60,14 @@ public static class PlayerAbilityPoolSetupTool
         // SkillModule 폴더에 있는 모듈 중 Include In Reward Pool이 켜진 것만 prefab pool 동기화 대상으로 삼는다.
         // 테스트용/미완성 모듈은 체크를 끄면 보상 후보에 섞이지 않는다.
         List<PlayerAbilityModule> modules = new List<PlayerAbilityModule>();
+
+        // 폴더가 이동 또는 삭제된 상태에서 실행되어도 AssetDatabase 오류를 발생시키지 않는다.
+        if (!AssetDatabase.IsValidFolder(SkillModuleFolder))
+        {
+            Debug.LogWarning($"SkillModule folder not found: {SkillModuleFolder}");
+            return modules;
+        }
+
         string[] moduleGuids = AssetDatabase.FindAssets("t:PlayerAbilityModule", new[] { SkillModuleFolder });
 
         foreach (string moduleGuid in moduleGuids)

@@ -76,7 +76,10 @@ Shader "Odin XVI/Original Material URP"
             Cull[_Cull]
 
             HLSLPROGRAM
-            #pragma target 3.0
+            // [Forward+ 지원]
+            // URP 14의 Forward+는 조명 목록을 GPU 버퍼에서 읽으므로 Shader Model 4.5가 필요하다.
+            // 이 셰이더는 플레이어 본체용이므로 Forward+를 사용하는 PC 품질 설정에 맞춘다.
+            #pragma target 4.5
             #pragma vertex OdinVertex
             #pragma fragment OdinFragment
 
@@ -87,6 +90,9 @@ Shader "Odin XVI/Original Material URP"
             #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
             #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
             #pragma multi_compile_fragment _ _SHADOWS_SOFT
+            // Forward+ Renderer가 활성화되면 이 변형에서 클러스터링된 추가 조명 목록을 사용한다.
+            // 이 키워드가 없으면 Point/Spot Light가 많은 씬에서 캐릭터만 추가 조명을 받지 못한다.
+            #pragma multi_compile _ _FORWARD_PLUS
             #pragma multi_compile_fog
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"

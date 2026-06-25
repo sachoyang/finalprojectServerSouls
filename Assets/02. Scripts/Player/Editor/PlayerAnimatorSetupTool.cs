@@ -38,14 +38,19 @@ public static class PlayerAnimatorSetupTool
     private const string TurnMachineName = "Turn Actions";
     private const string HitAndDeathMachineName = "Hit & Death";
     private const string SkillMachineName = "Skill Actions";
-    private const string SkillModuleFolder = "Assets/02. Scripts/Player/Abilities/SkillModule";
+    // SkillModule은 런타임 Resources.Load와 에디터 도구가 같은 에셋을 사용하도록
+    // 반드시 Resources/SkillModule 경로를 기준으로 검색한다.
+    private const string SkillModuleFolder = "Assets/02. Scripts/Player/Abilities/Resources/SkillModule";
     private const float TurnExitBlendDuration = 0.15f;
     private const float ComboInputOpenNormalizedTime = 0.72f;
 
-    [InitializeOnLoadMethod]
-    private static void ScheduleStateBehaviourMigration()
+    // 이전에는 Unity 스크립트 리로드 때마다 자동 마이그레이션을 실행했다.
+    // 폴더 이동이나 컴파일 중에는 에셋/스크립트 참조가 잠시 null이 될 수 있어
+    // Animator Controller가 의도치 않게 수정되거나 에디터 오류가 반복될 수 있으므로 수동 메뉴로만 실행한다.
+    [MenuItem("Tools/ServerSouls/Migrate Player Animator State Behaviours")]
+    private static void MigrateCombinedStateBehavioursFromMenu()
     {
-        EditorApplication.delayCall += MigrateCombinedStateBehaviours;
+        MigrateCombinedStateBehaviours();
     }
 
     [MenuItem("Tools/ServerSouls/Setup Player Base Animator")]
@@ -931,6 +936,13 @@ public static class PlayerAnimatorSetupTool
         string stateName,
         out PlayerAbilityModule matchingModule)
     {
+        // 폴더 이동이나 삭제 중 도메인 리로드가 발생해도 FindAssets가 반복 오류를 내지 않게 막는다.
+        if (!AssetDatabase.IsValidFolder(SkillModuleFolder))
+        {
+            matchingModule = null;
+            return false;
+        }
+
         string[] moduleGuids =
             AssetDatabase.FindAssets("t:PlayerAbilityModule", new[] { SkillModuleFolder });
         foreach (string moduleGuid in moduleGuids)
