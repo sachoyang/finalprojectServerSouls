@@ -216,6 +216,26 @@ public class NetworkBossCore : NetworkBehaviour
         }
     }
 
+    // 패턴 실행 중일 때 머리(헤드 IK)가 타겟을 쳐다봐도 되는지 판정.
+    // 비-패턴 상태(Idle/Walk)에서는 항상 true. 패턴 중에는 액션의 트래킹 규칙을 따른다.
+    private bool ShouldHeadTrackTarget()
+    {
+        if (CurrentState != BossState.ExecutingPattern) return true;
+        if (CurrentPatternIndex < 0 || CurrentStepIndex < 0) return true;
+        if (CurrentPatternIndex >= CurrentAvailablePatterns.Count) return true;
+
+        BossPatternModule pattern = CurrentAvailablePatterns[CurrentPatternIndex];
+        if (CurrentStepIndex >= pattern.ActionCount) return true; // 범위 밖 방어
+        BossActionModule action = pattern.GetAction(CurrentStepIndex);
+
+        if (!action.enableTracking) return false; // 트래킹 끈 패턴 → 머리도 고정
+
+        // 트래킹을 켰더라도 trackingStopPercent를 지나면 시선도 고정(몸통 트래킹과 동일 타이밍)
+        float remaining = StateTimer.RemainingTime(Runner) ?? 0f;
+        float progress = (action.duration > 0f) ? Mathf.Clamp01(1f - (remaining / action.duration)) : 1f;
+        return progress <= action.trackingStopPercent;
+    }
+
     // [신규 추가] 모든 클라이언트가 각자의 화면에서 애니메이터를 갱신하는 함수
     private void UpdateLocomotionVisuals()
     {
@@ -227,8 +247,14 @@ public class NetworkBossCore : NetworkBehaviour
             return;
         }
 
-        // 1. 고개 돌리기 (네트워크로 넘어온 타겟 위치를 바라봄)
-        _visual?.SetLookAtTarget(AggroTarget.transform.position);
+        // 1. 고개 돌리기 — 단, 패턴 중에는 그 액션의 트래킹 설정을 존중한다.
+        //    🔥 [버그 픽스] 기존엔 머리(헤드 IK)가 enableTracking과 무관하게 항상 타겟을 쳐다봤다.
+        //    이제 enableTracking=false 거나 trackingStopPercent를 지난 액션이면 머리도 따라가지 않는다.
+        //    (몸통 트래킹 ProcessPatternTracking과 동일한 조건 → 시선과 몸이 같은 타이밍에 고정됨)
+        if (ShouldHeadTrackTarget())
+            _visual?.SetLookAtTarget(AggroTarget.transform.position);
+        else
+            _visual?.ResetLookAt();
 
         // 2. 애니메이션 방향 블렌딩
         if (CurrentState == BossState.Walk)
@@ -376,6 +402,12 @@ public class NetworkBossCore : NetworkBehaviour
 
         BossPatternModule pattern = CurrentAvailablePatterns[CurrentPatternIndex];
         BossActionModule action = pattern.GetAction(CurrentStepIndex);
+
+        // 🔥 [회전 이중 적용 버그 픽스] 루트모션 액션(Turn90_RM 등)은 '루트모션 회전'이 방향을 전담한다.
+        //    여기서 트래킹 Slerp까지 같이 돌리면 (루트모션 + 트래킹) 회전이 합산되어 타겟을 지나쳐 과회전 →
+        //    패턴 종료 후 Idle 턴-인-플레이스가 되돌리면서 '휙 한 번 더 도는' 튕김이 발생했다.
+        //    → 루트모션 액션이면 트래킹을 완전히 배제한다. (둘 다 원하면 해당 액션을 비-루트모션으로 설계할 것)
+        if (action.useRootMotion) return;
 
         // 기획자가 이 패턴엔 트래킹(호밍)을 안 켰다면 패스
         if (!action.enableTracking) return;

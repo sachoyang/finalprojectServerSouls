@@ -80,6 +80,7 @@ public class PolarDragonBoss : NetworkBossCore
             {
                 IsFlightActive = false;
                 RemoveStatus(flightBuffId);
+                SnapToGroundOnDeath(); // 죽는 순간 현재 위치 바로 아래 지면으로 확정 안착 (공중 시체 방지)
             }
             return;
         }
@@ -104,6 +105,20 @@ public class PolarDragonBoss : NetworkBossCore
         if (CurrentState == BossState.PhaseTransition && !IsGimmickActive)
         {
             ActivatePhase2Gimmick();
+        }
+    }
+
+    // 죽는 순간 보스 루트를 바로 아래 지면으로 내려 공중 시체를 방지.
+    // (비행 중엔 FixedUpdateNetwork가 사망 후 조기 return하여 StickToGround가 더 못 돌기 때문에 여기서 1회 확정)
+    private void SnapToGroundOnDeath()
+    {
+        Vector3 start = transform.position + Vector3.up * 2f;
+        // 높이 띄워 날다 죽어도 한참 아래 지면까지 닿도록 충분히 긴 레이 사용
+        if (Physics.Raycast(start, Vector3.down, out RaycastHit hit, 300f, groundLayerMask))
+        {
+            Vector3 p = transform.position;
+            p.y = hit.point.y;
+            transform.position = p;
         }
     }
 

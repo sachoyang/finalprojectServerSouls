@@ -2048,18 +2048,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 992474550098228659, guid: 8834dc9c55ad8c748964fb9d77490052, type: 3}
-      propertyPath: flyingPatterns.Array.size
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 992474550098228659, guid: 8834dc9c55ad8c748964fb9d77490052, type: 3}
-      propertyPath: flyingPatterns.Array.data[0]
-      value: 
-      objectReference: {fileID: 11400000, guid: a65f9678f825bd24a9f724f001452f7e, type: 2}
-    - target: {fileID: 992474550098228659, guid: 8834dc9c55ad8c748964fb9d77490052, type: 3}
-      propertyPath: flyingPatterns.Array.data[1]
-      value: 
-      objectReference: {fileID: 11400000, guid: d5b3a7db690e0d94e8329f652cf59477, type: 2}
     - target: {fileID: 2402919297648847605, guid: 8834dc9c55ad8c748964fb9d77490052, type: 3}
       propertyPath: SortKey
       value: 845458223

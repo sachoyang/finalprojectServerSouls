@@ -8,6 +8,8 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
     [Header("수동 IK (고개 돌리기)")]
     public Transform headBone;
     public Transform lookAtGuide;
+    [Tooltip("몸통 정면 기준 고개가 돌아갈 수 있는 최대 각도(도). 이 이상은 클램프해서 목 꺾임 방지.")]
+    public float maxLookAngle = 70f;
     private Vector3 _ikLookAtPosition;
     private float _ikWeight = 0f;
 
@@ -16,6 +18,21 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
     public BossMeleeAttack biteAttack;
 
     private float _currentHeight = 0f;
+
+    [Header("이착륙 고도 연출 (모션 동기화)")]
+    [Tooltip("이륙 모션 길이(초). TakeOff 클립 길이와 맞추세요. 이 시간 동안 고도가 takeoffHeightCurve를 따라 올라갑니다.")]
+    public float takeoffDuration = 1.5f;
+    [Tooltip("착륙 모션 길이(초). Landing 클립 길이와 맞추세요.")]
+    public float landingDuration = 1.2f;
+    [Tooltip("이륙 진행(0~1) → 고도 비율(0~1). 앞부분을 평평하게 두면 '웅크렸다 도약'하는 앞동작 동안 안 떠서 땅에서 차고 오르는 느낌이 납니다.")]
+    public AnimationCurve takeoffHeightCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+    [Tooltip("착륙 진행(0~1) → 고도 비율(1~0).")]
+    public AnimationCurve landingHeightCurve = AnimationCurve.EaseInOut(0f, 1f, 1f, 0f);
+
+    // 이착륙 전환을 각 클라이언트가 IsFlightActive 변화로 감지해 로컬 타이머로 연출 (네트워크 변수 불필요)
+    private bool _prevFlight = false;
+    private float _transitionRemaining = 0f;
+    private bool _transitionIsTakeoff = false;
 
     [Header("얼음 마법(AoE) 프리팹")]
     public GameObject spitFrozenBallPrefab; // SpitFrozenBall 애니메이션용 투사체
@@ -64,9 +81,16 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
     private void LateUpdate()
     {
         if (headBone == null || lookAtGuide == null || _ikWeight <= 0.01f) return;
+
         Vector3 targetDirection = (_ikLookAtPosition - headBone.position).normalized;
+
+        // 🔥 [목 꺾임 방지] 몸통 정면(루트 forward) 기준 maxLookAngle 콘 안으로 시선 방향을 클램프.
+        //    타겟이 측후방에 있어도 고개가 콘 가장자리까지만 돌아간다.
+        Vector3 bodyForward = (_bossCore != null ? _bossCore.transform.forward : transform.forward);
+        Vector3 clampedDirection = Vector3.RotateTowards(bodyForward, targetDirection, maxLookAngle * Mathf.Deg2Rad, 0f);
+
         Vector3 currentLookDirection = lookAtGuide.forward;
-        Quaternion rotationDelta = Quaternion.FromToRotation(currentLookDirection, targetDirection);
+        Quaternion rotationDelta = Quaternion.FromToRotation(currentLookDirection, clampedDirection);
         headBone.rotation = Quaternion.Lerp(headBone.rotation, rotationDelta * headBone.rotation, _ikWeight);
     }
 
@@ -79,9 +103,34 @@ private void Update()
         PolarDragonBoss polarBoss = _bossCore as PolarDragonBoss;
         if (polarBoss == null) return;
 
-        // 🔥 [수정됨] HasStatus 대신 안전하게 IsFlightActive 사용
-        float targetHeight = polarBoss.IsFlightActive ? polarBoss.flightHeight : 0f;
-        _currentHeight = Mathf.Lerp(_currentHeight, targetHeight, Time.deltaTime * 2.5f);
+        bool flying = polarBoss.IsFlightActive;
+
+        // 🔥 [이착륙 동기화] IsFlightActive가 바뀌는 순간 이륙/착륙 전환 타이머 시작.
+        //    고정 속도 lerp 대신 '진행도(0~1)를 커브로 매핑'해서 모션과 같은 타임라인으로 고도를 움직인다.
+        if (flying != _prevFlight)
+        {
+            _transitionIsTakeoff = flying;
+            _transitionRemaining = flying ? takeoffDuration : landingDuration;
+            _prevFlight = flying;
+        }
+
+        float heightFrac;
+        if (_transitionRemaining > 0f)
+        {
+            _transitionRemaining -= Time.deltaTime;
+            float dur = _transitionIsTakeoff ? takeoffDuration : landingDuration;
+            float p = (dur > 0f) ? Mathf.Clamp01(1f - (_transitionRemaining / dur)) : 1f;
+            AnimationCurve curve = _transitionIsTakeoff ? takeoffHeightCurve : landingHeightCurve;
+            heightFrac = Mathf.Clamp01(curve.Evaluate(p));
+        }
+        else
+        {
+            heightFrac = flying ? 1f : 0f; // 전환이 끝나면 완전 비행고도/지상으로 고정
+        }
+
+        float targetHeight = polarBoss.flightHeight * heightFrac;
+        // 틱 단위 값의 미세 계단을 부드럽게(약한 스무딩). 커브가 이미 모양을 잡으므로 빠르게 추종.
+        _currentHeight = Mathf.Lerp(_currentHeight, targetHeight, Time.deltaTime * 12f);
         transform.localPosition = new Vector3(0f, _currentHeight, 0f);
     }
 
@@ -176,7 +225,7 @@ private void Update()
         if (isFlying)
         {
             // 공중: 체공 상태 (FlyStationary <-> Fly 블렌드 트리)
-            anim.CrossFade("FlyLocomotion", 0.2f);
+            anim.CrossFade("FlyLocomotion", 0.05f);
         }
         else
         {
