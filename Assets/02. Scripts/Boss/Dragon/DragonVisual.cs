@@ -115,7 +115,7 @@ public class DragonVisual : MonoBehaviour, IBossVisual
         }
     }
 
-    public void PlayGroggy(float speedMultiplier)
+    public void PlayGroggy(float speedMultiplier, float groggyDuration)
     {
         SetAnimSpeed(speedMultiplier);
         PlayAction(Animator.StringToHash("getHit"));
@@ -171,6 +171,11 @@ public class DragonVisual : MonoBehaviour, IBossVisual
     public Vector3 ConsumeRootMotionDelta()
     {
         return Vector3.zero;
+    }
+
+    public Quaternion ConsumeRootMotionRotation()
+    {
+        return Quaternion.identity;
     }
 
     // ==========================================

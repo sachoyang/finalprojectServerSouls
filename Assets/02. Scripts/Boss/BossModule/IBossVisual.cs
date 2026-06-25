@@ -16,7 +16,9 @@ public interface IBossVisual
 
     void PlayWakeUp(int wakeUpHash);
     void PlayPhaseTransition(int wakeUpHash);
-    void PlayGroggy(float speedMultiplier);
+    // speedMultiplier: 코어가 groggyAnimLength 기준으로 미리 계산한 배속(지상 기본값).
+    // groggyDuration: 그로기 총 지속시간(초). 비주얼이 자기 클립 길이가 다를 때 배속을 직접 재계산하는 용도.
+    void PlayGroggy(float speedMultiplier, float groggyDuration);
     void PlayDie();
 
     // 루트모션 이동 처리
@@ -24,4 +26,6 @@ public interface IBossVisual
     void SetRootMotionCapture(bool enabled);
     // 호스트가 매 틱 모아둔 루트모션 이동량을 가져간다(가져가면 0으로 리셋).
     Vector3 ConsumeRootMotionDelta();
+    // 호스트가 매 틱 모아둔 루트모션 회전량을 가져간다(90도 턴 등). 회전이 없으면 Quaternion.identity.
+    Quaternion ConsumeRootMotionRotation();
 }

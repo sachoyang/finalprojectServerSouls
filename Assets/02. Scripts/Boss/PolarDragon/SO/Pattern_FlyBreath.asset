@@ -10,19 +10,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4087804678eb42f4d8f433cd34284ab0, type: 3}
-  m_Name: TurnRight_Pattern
+  m_Name: Pattern_FlyBreath
   m_EditorClassIdentifier: 
   patternId: 
   displayName: 
   minRange: 0
   maxRange: 10
-  weight: 0
+  weight: 10
   actions:
-  - animationClip: {fileID: 7400000, guid: c3a0f6e0019864b4096ea3d9087ea5d5, type: 3}
-    animationStateName: Turn90R_RM
-    animationHash: -655545545
-    duration: 0.833
-    useRootMotion: 1
+  - animationClip: {fileID: 7400000, guid: 7e9693b27c8725e489abf58afa9f51a0, type: 3}
+    animationStateName: FlyStationarySpreadFrozenBreath
+    animationHash: -107701959
+    duration: 3
+    useRootMotion: 0
     moveOffset: {x: 0, y: 0, z: 0}
     moveCurve:
       serializedVersion: 2
@@ -32,6 +32,6 @@ MonoBehaviour:
       m_RotationOrder: 0
     hitboxIndex: 0
     hasSuperArmor: 0
-    enableTracking: 0
-    trackingStopPercent: 0
-    trackingSpeed: 0
+    enableTracking: 1
+    trackingStopPercent: 1
+    trackingSpeed: 2

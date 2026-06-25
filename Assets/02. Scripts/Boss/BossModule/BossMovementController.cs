@@ -72,8 +72,14 @@ public class BossMovementController
         //    이 한 줄이 없으면 공중에 떠 있는 보스를 매 틱 땅으로 끌어내린다.
         if (BypassGround) return;
 
-        Vector3 rayStart = transform.position + (Vector3.up * _stepHeight);
-        if (Physics.Raycast(rayStart, Vector3.down, out RaycastHit hit, _stepHeight * 2f, _groundLayerMask))
+        // 🔥 [버그 픽스] 레이 시작점을 발밑(stepHeight)이 아니라 몸통 위(castHeightOffset)에서 쏜다.
+        //    기존엔 보스가 한 번 지면 아래로 파고들면 rayStart 가 바닥 콜라이더 '안/아래'에 생겨
+        //    레이가 지면을 못 잡고 → 가짜 중력이 계속 적용 → 점점 더 박히는 런어웨이가 발생했다.
+        //    위에서 내려쏘면 파묻힌 상태에서도 지면을 다시 찾아 정상 높이로 복구된다.
+        float rayUp = Mathf.Max(_castHeightOffset, _stepHeight);
+        Vector3 rayStart = transform.position + (Vector3.up * rayUp);
+        float rayLength = rayUp + (_stepHeight * 2f); // 발밑 stepHeight*2 까지는 계단/경사로 따라 내려감
+        if (Physics.Raycast(rayStart, Vector3.down, out RaycastHit hit, rayLength, _groundLayerMask))
         {
             Vector3 newPosition = transform.position;
             newPosition.y = hit.point.y;
