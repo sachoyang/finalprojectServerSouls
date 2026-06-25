@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4087804678eb42f4d8f433cd34284ab0, type: 3}
-  m_Name: TurnRight_Pattern
+  m_Name: Pattern_Landing
   m_EditorClassIdentifier: 
   patternId: 
   displayName: 
@@ -18,11 +18,11 @@ MonoBehaviour:
   maxRange: 10
   weight: 0
   actions:
-  - animationClip: {fileID: 7400000, guid: c3a0f6e0019864b4096ea3d9087ea5d5, type: 3}
-    animationStateName: Turn90R_RM
-    animationHash: -655545545
-    duration: 0.833
-    useRootMotion: 1
+  - animationClip: {fileID: 7400000, guid: bdeab59f78196044b88b4d0fd37ee4e1, type: 3}
+    animationStateName: FlyStationaryToLannding
+    animationHash: -552397612
+    duration: 2.167
+    useRootMotion: 0
     moveOffset: {x: 0, y: 0, z: 0}
     moveCurve:
       serializedVersion: 2

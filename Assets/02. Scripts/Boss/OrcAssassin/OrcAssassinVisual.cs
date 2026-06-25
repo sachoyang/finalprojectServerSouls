@@ -142,7 +142,7 @@ public class OrcAssassinVisual : MonoBehaviour, IBossVisual
         if (smokeBombEffect != null) smokeBombEffect.Play();
     }
 
-    public void PlayGroggy(float speedMultiplier)
+    public void PlayGroggy(float speedMultiplier, float groggyDuration)
     {
         SetAnimSpeed(speedMultiplier);
         anim.CrossFade("gethit", 0.1f);
@@ -160,6 +160,11 @@ public class OrcAssassinVisual : MonoBehaviour, IBossVisual
     public Vector3 ConsumeRootMotionDelta()
     {
         return rootMotionCapture != null ? rootMotionCapture.ConsumeDelta() : Vector3.zero;
+    }
+
+    public Quaternion ConsumeRootMotionRotation()
+    {
+        return rootMotionCapture != null ? rootMotionCapture.ConsumeDeltaRotation() : Quaternion.identity;
     }
 
     // ==========================================

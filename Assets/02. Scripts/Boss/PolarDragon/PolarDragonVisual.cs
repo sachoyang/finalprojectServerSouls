@@ -29,12 +29,30 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
     public AudioClip walkSound;
     public AudioClip iceMagicSound;
 
+    [Header("공중 피격(Groggy) 설정")]
+    [Tooltip("FlyStationaryGetHit 클립의 원본 길이(초). 지상 GetHit1과 길이가 달라 별도 지정.")]
+    public float flyingGetHitLength = 0.833f;
+
+    [Header("루트모션 캡처")]
+    [Tooltip("Animator 가 붙은 오브젝트의 BossRootMotionCapture. 비워두면 자동으로 찾거나 부착합니다.")]
+    public BossRootMotionCapture rootMotionCapture;
+
     private NetworkBossCore _bossCore;
 
     private void Awake()
     {
         if (anim == null) anim = GetComponent<Animator>();
         _bossCore = GetComponentInParent<NetworkBossCore>();
+
+        // 🔥 [버그 픽스] 루트모션 캡처 컴포넌트 확보.
+        //    이게 Animator 오브젝트에 있어야 OnAnimatorMove 가 루트모션 자동적용을 가로채서
+        //    메쉬가 제멋대로 이동/회전(옆모습 버그)하는 것을 막고, 이동량만 코어에 넘겨준다.
+        if (rootMotionCapture == null && anim != null)
+        {
+            rootMotionCapture = anim.GetComponent<BossRootMotionCapture>();
+            if (rootMotionCapture == null)
+                rootMotionCapture = anim.gameObject.AddComponent<BossRootMotionCapture>();
+        }
     }
 
     private void LateUpdate()
@@ -81,22 +99,25 @@ private void Update()
             SoundManager.Instance.PlaySFX_3D(wakeUpSound, transform.position, SoundCategory.BossGimmick);
     }
 
-    public void PlayGroggy(float speedMultiplier)
+    public void PlayGroggy(float speedMultiplier, float groggyDuration)
     {
-        SetAnimSpeed(speedMultiplier);
-        
         PolarDragonBoss polarBoss = _bossCore as PolarDragonBoss;
-        
+
         // 🔥 [신규] 공중에 있을 땐 공중 전용 피격 모션 재생!
         if (polarBoss != null && polarBoss.IsFlightActive)
         {
-            PlayAction(Animator.StringToHash("FlyStationaryGetHit")); 
+            // 공중 피격 클립은 길이가 달라(예: 0.833s) 코어가 준 배속을 쓰면 엇박.
+            // groggyDuration 동안 이 클립을 꽉 채우도록 배속을 직접 재계산한다.
+            float flySpeed = (groggyDuration > 0f) ? flyingGetHitLength / groggyDuration : 1f;
+            SetAnimSpeed(flySpeed);
+            PlayAction(Animator.StringToHash("FlyStationaryGetHit"));
         }
         else
         {
-            PlayAction(Animator.StringToHash("GetHit1")); 
+            SetAnimSpeed(speedMultiplier);
+            PlayAction(Animator.StringToHash("GetHit1"));
         }
-        
+
         if (groggySound != null) SoundManager.Instance.PlaySFX_3D(groggySound, transform.position, SoundCategory.BossGimmick);
     }
 
@@ -151,8 +172,22 @@ private void Update()
     }
     
 
-    public void SetRootMotionCapture(bool enabled) {}
-    public Vector3 ConsumeRootMotionDelta() { return Vector3.zero; }
+    // 🔥 [버그 픽스] 빈 깡통이었던 부분. 이제 실제 캡처 컴포넌트로 위임한다.
+    public void SetRootMotionCapture(bool enabled)
+    {
+        if (rootMotionCapture != null) rootMotionCapture.SetCapture(enabled);
+    }
+
+    public Vector3 ConsumeRootMotionDelta()
+    {
+        return rootMotionCapture != null ? rootMotionCapture.ConsumeDelta() : Vector3.zero;
+    }
+
+    // 🔥 [버그 픽스] 90도 루트모션 턴은 회전이 핵심. deltaRotation 을 코어에 넘겨줘야 실제로 돈다.
+    public Quaternion ConsumeRootMotionRotation()
+    {
+        return rootMotionCapture != null ? rootMotionCapture.ConsumeDeltaRotation() : Quaternion.identity;
+    }
 
     // ==========================================
     // [애니메이션 이벤트용 함수] 애니메이션 클립에서 호출!

@@ -49,6 +49,20 @@ public class BossStatusEffectResolver
         return multiplier;
     }
 
+    // 이동속도 배율 (MoveSpeed 계열 상태이상 누적). 예: Boss_Flying(power 2) → 이동속도 2배
+    public float GetMoveSpeedMultiplier(NetworkArray<BossStatusData> active)
+    {
+        float multiplier = 1.0f;
+        for (int i = 0; i < active.Length; i++)
+        {
+            if (active[i].StatusId == 0) continue;
+            StatusEffectData data = GetData(active[i].StatusId);
+            if (data != null && data.effectTarget == StatusEffectTarget.MoveSpeed)
+                multiplier *= active[i].Power;
+        }
+        return multiplier;
+    }
+
     // UI 표시용 활성 상태이상 목록 빌드
     public List<ActiveStatusUIInfo> BuildUIList(NetworkArray<BossStatusData> active, float simulationTime)
     {

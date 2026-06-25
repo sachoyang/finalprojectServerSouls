@@ -107,8 +107,8 @@ MonoBehaviour:
   wakeUpAnimName: SpreadFrozenBreath
   wakeUpDuration: 2.8
   maxGroggy: 40
-  groggyDuration: 3
-  groggyAnimLength: 1.4
+  groggyDuration: 2
+  groggyAnimLength: 1
   _CurrentGroggy: 0
   baseMaxHP: 100000
   _maxHP: 0
@@ -120,19 +120,19 @@ MonoBehaviour:
   castHeightOffset: 2
   groundLayerMask:
     serializedVersion: 2
-    m_Bits: 256
+    m_Bits: 512
   stepHeight: 0.5
   gravitySpeed: 15
   phase1Patterns:
   - {fileID: 11400000, guid: 1ef1ef1103160124b96c461e2414180f, type: 2}
   - {fileID: 11400000, guid: 6685c723db89ca0429e428814d737e88, type: 2}
   - {fileID: 11400000, guid: a76f0382bfd4a204ea0829868d40d9ba, type: 2}
-  - {fileID: 11400000, guid: a65f9678f825bd24a9f724f001452f7e, type: 2}
+  - {fileID: 11400000, guid: fe10bd928a7cd0749890661072750de8, type: 2}
   phase2Patterns:
   - {fileID: 11400000, guid: 1ef1ef1103160124b96c461e2414180f, type: 2}
   - {fileID: 11400000, guid: 6685c723db89ca0429e428814d737e88, type: 2}
   - {fileID: 11400000, guid: a76f0382bfd4a204ea0829868d40d9ba, type: 2}
-  - {fileID: 11400000, guid: a65f9678f825bd24a9f724f001452f7e, type: 2}
+  - {fileID: 11400000, guid: fe10bd928a7cd0749890661072750de8, type: 2}
   _AllowedMaxPhase: 2
   _DamageMultiplier: 1
   _CurrentPhase: 1
@@ -146,15 +146,20 @@ MonoBehaviour:
   flightBuffId: 3
   flightHeight: 3
   flightRandomChance: 10
-  takeOffPatternIndex: 3
+  flyingTakeOffPatternIndex: 0
   flyingPatterns:
+  - {fileID: 11400000, guid: a65f9678f825bd24a9f724f001452f7e, type: 2}
   - {fileID: 11400000, guid: d5b3a7db690e0d94e8329f652cf59477, type: 2}
+  - {fileID: 11400000, guid: 45d4f56ea4713474393e2b7f6056ba7e, type: 2}
+  landingPatternIndex: 3
   turnAngleThreshold: 60
   turnLeftPatternIndex: 0
   turnRightPatternIndex: 1
   phase2FrostBuffId: 3
   longRangePatternIndex: 1
   longRangeThreshold: 15
+  _IsFlightActive:
+    _value: 0
 --- !u!1001 &5108428487193952013
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -207,6 +212,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 95782827657463394, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}
+      propertyPath: m_CullingMode
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
@@ -217,6 +226,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 1112051999470744, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8063045673467612749}
+    - targetCorrespondingSourceObject: {fileID: 1112051999470744, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1268043131240937855}
     - targetCorrespondingSourceObject: {fileID: 1331732712257986, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}
       insertIndex: -1
       addedObject: {fileID: 407747940684993647}
@@ -1441,7 +1453,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2290493e115a3554198c748f22f4bbc2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  anim: {fileID: 0}
+  anim: {fileID: 5165771012544231791}
   headBone: {fileID: 5112983107171697337}
   lookAtGuide: {fileID: 3803559768684446354}
   biteAttack: {fileID: 8203142184038528218}
@@ -1453,6 +1465,19 @@ MonoBehaviour:
   dieSound: {fileID: 0}
   walkSound: {fileID: 0}
   iceMagicSound: {fileID: 0}
+  rootMotionCapture: {fileID: 1268043131240937855}
+--- !u!114 &1268043131240937855
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5109118012922268565}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 25e4e7f8094ae5840b31cde4c06dc10a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &5109157919522334023 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1029874457172554, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}
@@ -1555,5 +1580,10 @@ Transform:
 --- !u!4 &5113253605218116969 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4826532483471972, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}
+  m_PrefabInstance: {fileID: 5108428487193952013}
+  m_PrefabAsset: {fileID: 0}
+--- !u!95 &5165771012544231791 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 95782827657463394, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}
   m_PrefabInstance: {fileID: 5108428487193952013}
   m_PrefabAsset: {fileID: 0}

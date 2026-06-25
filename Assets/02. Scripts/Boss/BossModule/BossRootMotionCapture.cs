@@ -16,6 +16,7 @@ public class BossRootMotionCapture : MonoBehaviour
     private Animator _anim;
     private bool _capturing;
     private Vector3 _accumulated;
+    private Quaternion _accumulatedRot = Quaternion.identity; // 🔥 루트모션 회전(90도 턴 등) 누적
 
     private void Awake()
     {
@@ -29,6 +30,7 @@ public class BossRootMotionCapture : MonoBehaviour
     {
         _capturing = enabled;
         _accumulated = Vector3.zero;
+        _accumulatedRot = Quaternion.identity;
     }
 
     /// 모아둔 이동량을 가져가고 0으로 리셋 (호스트가 매 틱 호출)
@@ -39,10 +41,19 @@ public class BossRootMotionCapture : MonoBehaviour
         return d;
     }
 
+    /// 🔥 모아둔 회전량을 가져가고 단위 회전으로 리셋 (90도 루트모션 턴 등에 사용)
+    public Quaternion ConsumeDeltaRotation()
+    {
+        Quaternion r = _accumulatedRot;
+        _accumulatedRot = Quaternion.identity;
+        return r;
+    }
+
     // Animator 가 루트모션을 계산할 때마다 호출(렌더 레이트). transform 은 건드리지 않고 누적만.
     private void OnAnimatorMove()
     {
         if (!_capturing) return;
-        _accumulated += _anim.deltaPosition; // 월드 공간 이동량
+        _accumulated += _anim.deltaPosition;            // 월드 공간 이동량
+        _accumulatedRot = _anim.deltaRotation * _accumulatedRot; // 월드 공간 회전량 (최신이 왼쪽)
     }
 }

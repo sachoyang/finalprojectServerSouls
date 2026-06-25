@@ -250,11 +250,17 @@ public class NetworkBossCore : NetworkBehaviour
         BossPatternModule pattern = CurrentAvailablePatterns[CurrentPatternIndex];
         BossActionModule action = pattern.GetAction(CurrentStepIndex);
 
-        // ★ 루트모션 모드: 비주얼이 모아둔 실제 이동량을 가져와 적용 (커브 무시)
+        // ★ 루트모션 모드: 비주얼이 모아둔 실제 이동량/회전량을 가져와 적용 (커브 무시)
         if (action.useRootMotion)
         {
             if (_visual != null)
             {
+                // 🔥 [버그 픽스] 회전 먼저 적용 — 90도 루트모션 턴(Turn90L/R_RM)이 실제로 몸을 돌리게 한다.
+                //    캡처가 OnAnimatorMove 로 자동적용을 가로채므로, 여기서 안 돌려주면 보스가 제자리에서 안 돈다.
+                Quaternion rmRot = _visual.ConsumeRootMotionRotation();
+                if (rmRot != Quaternion.identity)
+                    transform.rotation = rmRot * transform.rotation;
+
                 Vector3 rmDelta = _visual.ConsumeRootMotionDelta();
                 rmDelta.y = 0f; // 수직은 기존 지형/중력 로직에 맡김
                 if (rmDelta.sqrMagnitude > 0.0000001f)
@@ -292,23 +298,31 @@ public class NetworkBossCore : NetworkBehaviour
             return;
         }
 
+        // [개선] Idle/Walk 모두에서 타겟을 향해 부드럽게 몸통 회전.
+        //        → 평상시에도 항상 어그로 타겟을 향하므로, 큰 각도일 때만 90도 루트모션 턴이 나가고
+        //          작은 각도는 이 슬러프가 자연스럽게 흡수해 "딱딱 끊기는" 느낌을 줄인다.
+        if (CurrentState == BossState.Idle || CurrentState == BossState.Walk)
+        {
+            Vector3 targetDir = (AggroTarget.transform.position - transform.position);
+            targetDir.y = 0;
+            if (targetDir.sqrMagnitude > 0.0001f)
+            {
+                Quaternion targetRot = Quaternion.LookRotation(targetDir.normalized);
+                // Walk는 좀 더 빠르게, Idle(호버 포함)은 살짝 느리게 회전
+                float rotMul = (CurrentState == BossState.Walk) ? 0.4f : 0.25f;
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, (rotationSpeed * rotMul) * Runner.DeltaTime);
+            }
+        }
+
         if (CurrentState == BossState.Walk)
         {
-            // 몸통 회전 연산
-            Vector3 targetDir = (AggroTarget.transform.position - transform.position).normalized;
-            targetDir.y = 0;
-            if (targetDir != Vector3.zero)
-            {
-                Quaternion targetRot = Quaternion.LookRotation(targetDir);
-                transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, (rotationSpeed * 0.4f) * Runner.DeltaTime);
-            }
-
-            // 이동 연산
+            // 이동 연산 (이동속도 버프 반영: 비행 시 Boss_Flying power 2 → 2배)
             Vector3 localTargetPos = transform.InverseTransformPoint(AggroTarget.transform.position);
             localTargetPos.y = 0;
             Vector3 animDir = localTargetPos.normalized;
 
-            Vector3 worldMoveOffset = transform.TransformDirection(new Vector3(animDir.x, 0, animDir.z)) * moveSpeed * Runner.DeltaTime;
+            float speed = moveSpeed * GetMoveSpeedMultiplier();
+            Vector3 worldMoveOffset = transform.TransformDirection(new Vector3(animDir.x, 0, animDir.z)) * speed * Runner.DeltaTime;
             _movement.MoveWithWallSlide(transform, worldMoveOffset, Runner.DeltaTime);
         }
     }
@@ -551,7 +565,8 @@ public class NetworkBossCore : NetworkBehaviour
                 if (CurrentState == BossState.Groggy)
                 {
                     float speedMult = groggyAnimLength / groggyDuration;
-                    _visual.PlayGroggy(speedMult);
+                    // groggyDuration도 함께 넘겨, 비주얼이 자기 클립 길이에 맞춰 배속을 재계산할 수 있게 함
+                    _visual.PlayGroggy(speedMult, groggyDuration);
                 }
                 else if (CurrentState == BossState.Idle || CurrentState == BossState.Walk)
                 {
@@ -830,6 +845,10 @@ public class NetworkBossCore : NetworkBehaviour
 
     public float GetOutgoingDamageMultiplier()
         => _statusResolver.GetOutgoingMultiplier(ActiveStatuses, DamageMultiplier);
+
+    // 이동속도 배율 (MoveSpeed 상태이상). 비행 버프(Boss_Flying, power 2) 등이 여기에 반영됨.
+    public float GetMoveSpeedMultiplier()
+        => _statusResolver.GetMoveSpeedMultiplier(ActiveStatuses);
 
     // ==========================================
     // UI 쪽 스크립트에 전달할 함수
