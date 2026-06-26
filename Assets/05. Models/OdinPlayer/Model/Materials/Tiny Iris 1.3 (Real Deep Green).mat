@@ -96,21 +96,38 @@ Material:
     m_Ints: []
     m_Floats:
     - _AlphaClip: 0
+    - _BaseDetailAlpha: 0.5
+    - _BaseMetalnessStrength: 0
+    - _BlenderMaterialStrength: 0
     - _BumpScale: 1
     - _Cull: 0
     - _Cutoff: 0.5
+    - _DetailRoughnessStrength: 0
     - _EyeDisplacementStrength: 0
     - _EyeEmissionStrength: 2
     - _EyeIrisNormalStrength: 0.7
     - _EyeIrisStrength: 0
     - _EyeReflectionStrength: 0
     - _Metallic: 0
+    - _MetalnessScale: 0.25
     - _OcclusionStrength: 1
     - _RoughnessStrength: 0
+    - _ScleraRimAlpha: 0.08
+    - _ScleraRimPower: 2
+    - _ScleraShellStrength: 0
     - _SmoothnessBias: 0.5
+    - _Tile0DetailAlpha: 0.5
+    - _Tile0MetalnessStrength: 0
+    - _Tile1DetailAlpha: 0.5
+    - _Tile1MetalnessStrength: 0
+    - _Tile2DetailAlpha: 0.5
+    - _Tile2MetalnessStrength: 0
+    - _Tile3DetailAlpha: 0
+    - _Tile3MetalnessStrength: 0
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 0, g: 0.48, b: 0.54, a: 1}
+    - _BaseColor: {r: 0, g: 0.47999996, b: 0.53999996, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _EmissionColor: {r: 0, g: 8, b: 9, a: 1}
+    - _EmissionColor: {r: 0, g: 681.7745, b: 766.9963, a: 1}
+    - _ScleraRimColor: {r: 0.54999995, g: 0.75, b: 0.9, a: 1}
   m_BuildTextureStacks: []

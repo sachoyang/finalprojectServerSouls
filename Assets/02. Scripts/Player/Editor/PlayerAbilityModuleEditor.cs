@@ -11,6 +11,7 @@ public class PlayerAbilityModuleEditor : Editor
     private const string PreviewLoopPrefsKey = "ServerSouls.SkillPreview.Loop";
     private static readonly Color PreviewBackgroundColor = new Color(0.18f, 0.18f, 0.18f, 1f);
 
+    // 인스펙터 폴드아웃(Fold-out) 상태 저장 변수들
     private static bool _rewardOpen = true;
     private static bool _activeSettingsOpen = true;
     private static bool _effectOpen = true;
@@ -21,6 +22,7 @@ public class PlayerAbilityModuleEditor : Editor
     private static bool _previewOpen = true;
     private static bool _soundOpen = true;
 
+    // 프로퍼티 매핑용 변수들
     private SerializedProperty _abilityId;
     private SerializedProperty _displayName;
     private SerializedProperty _description;
@@ -57,10 +59,7 @@ public class PlayerAbilityModuleEditor : Editor
     private SerializedProperty _soundVolume;
     private SerializedProperty _soundDelay;
 
-
-
-
-
+    // 프리뷰 유틸리티 관련 변수들
     private PreviewRenderUtility _previewUtility;
     private GameObject _previewPlayerPrefab;
     private GameObject _previewPlayer;
@@ -68,9 +67,13 @@ public class PlayerAbilityModuleEditor : Editor
     private GameObject _previewFloor;
     private GameObject _previewVfx;
     private GameObject _hitboxVisual;
+
+    // 💡 최적화: 매 프레임 GetComponent 검색 및 GC Alloc(가비지 생성) 방지를 위한 캐싱 리스트
     private readonly List<GameObject> _hitEventVisuals = new List<GameObject>();
     private readonly List<Material> _hitEventMaterials = new List<Material>();
     private readonly List<Mesh> _hitEventMeshes = new List<Mesh>();
+    private readonly List<Renderer> _hitEventRenderers = new List<Renderer>(); // 추가: 실시간 렌더러 캐싱용
+
     private Material _floorMaterial;
     private Mesh _floorMesh;
     private Texture2D _floorTexture;
@@ -134,11 +137,14 @@ public class PlayerAbilityModuleEditor : Editor
         _soundVolume = serializedObject.FindProperty("soundVolume");
         _soundDelay = serializedObject.FindProperty("soundDelay");
 
+        // 에디터 세팅 데이터 로드
         string prefabGuid = EditorPrefs.GetString(PreviewPlayerPrefsKey, string.Empty);
         string prefabPath = AssetDatabase.GUIDToAssetPath(prefabGuid);
         _previewPlayerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
         _previewAutoPlay = EditorPrefs.GetBool(PreviewAutoPlayPrefsKey, false);
         _previewLoop = EditorPrefs.GetBool(PreviewLoopPrefsKey, true);
+
+        // 에디터 글로벌 업데이트 루프 연결 (실시간 프리뷰 재생용)
         EditorApplication.update += UpdatePreviewPlayback;
     }
 
@@ -158,6 +164,7 @@ public class PlayerAbilityModuleEditor : Editor
         EditorGUILayout.PropertyField(_abilityType);
         bool isActive = _abilityType.enumValueIndex == (int)AbilityType.Active;
 
+        // 섹션별 렌더링 코드들
         DrawSection("Reward", ref _rewardOpen, DrawReward);
 
         if (isActive)
@@ -183,6 +190,7 @@ public class PlayerAbilityModuleEditor : Editor
 
         serializedObject.ApplyModifiedProperties();
 
+        // 프리뷰 뷰포트 드로잉
         DrawSection("Preview", ref _previewOpen, DrawEmbeddedPreview);
     }
 
@@ -237,7 +245,8 @@ public class PlayerAbilityModuleEditor : Editor
     private void DrawHitbox()
     {
         DrawHitEventsList();
-        // 💡 Hit Events가 없을 때만(0개일 때만) 아래 레거시 필드들을 보여줍니다.
+
+        // 💡 UX 최적화: Hit Events 리스트에 데이터가 없을 때만 기존 레거시 입력 칸을 노출시킵니다.
         if (_hitEvents.arraySize == 0)
         {
             EditorGUILayout.Space(4f);
@@ -318,7 +327,7 @@ public class PlayerAbilityModuleEditor : Editor
         element.FindPropertyRelative("endNormalizedTime").floatValue = Mathf.Clamp01(0.45f + index * 0.15f);
         element.FindPropertyRelative("radius").floatValue = 1.4f;
         element.FindPropertyRelative("height").floatValue = 1.8f;
-        element.FindPropertyRelative("centerHeight").floatValue = 0.9f;
+        element.FindPropertyRelative("centerHeight").floatValue = 0f;
         element.FindPropertyRelative("groggyDamage").floatValue = 10f;
         element.FindPropertyRelative("revivePower").floatValue = 34f;
         element.FindPropertyRelative("previewColor").colorValue = new Color(1f, 0.2f, 0f, 0.3f);
@@ -400,6 +409,14 @@ public class PlayerAbilityModuleEditor : Editor
     private void TogglePreviewPlayback()
     {
         EnsurePreview();
+
+        // 💡 추가: 만약 재생 시간이 끝에 도달한 상태에서 Play를 누르면 0초부터 다시 시작
+        float duration = GetPreviewDuration();
+        if (_previewTime >= duration - 0.001f)
+        {
+            _previewTime = 0f;
+        }
+
         _previewPlaying = !_previewPlaying;
         _lastEditorTime = EditorApplication.timeSinceStartup;
         RefreshPreview();
@@ -414,8 +431,15 @@ public class PlayerAbilityModuleEditor : Editor
 
     private void UpdatePreviewPlayback()
     {
-        if (_previewAutoPlay && !_previewPlaying && _previewTime <= 0f)
+        float duration = GetPreviewDuration();
+
+        // 💡 수정: Auto가 켜져 있고 멈춰있을 때, 시간이 끝에 도달해 있다면 0초로 리셋하면서 재생 시작
+        if (_previewAutoPlay && !_previewPlaying)
         {
+            if (_previewTime >= duration - 0.001f)
+            {
+                _previewTime = 0f;
+            }
             _previewPlaying = true;
             _lastEditorTime = EditorApplication.timeSinceStartup;
         }
@@ -429,7 +453,6 @@ public class PlayerAbilityModuleEditor : Editor
         _previewTime += Mathf.Max(0f, (float)(now - _lastEditorTime));
         _lastEditorTime = now;
 
-        float duration = GetPreviewDuration();
         if (_previewTime > duration)
         {
             if (_previewLoop)
@@ -454,7 +477,8 @@ public class PlayerAbilityModuleEditor : Editor
         EditorGUI.DrawRect(rect, new Color(0.16f, 0.16f, 0.16f));
 
         AbilityHitEvent[] hitEvents = Module.HitEvents;
-        // 💡 변경점: hitEvents가 null이거나 비어있을 때만 기존 레거시 주황색 바를 그립니다.
+
+        // 💡 원본 형태 보존: 최적화에 안전한 가벼운 연산문으로 감싸, hitEvents 배열이 비어있을 때만 레거시 주황색 바를 그립니다.
         if (hitEvents == null || hitEvents.Length == 0)
         {
             float start = duration > 0f ? Module.HitboxDelay / duration : 0f;
@@ -746,6 +770,7 @@ public class PlayerAbilityModuleEditor : Editor
             return;
         }
 
+        // 네트워크 제어 컴포넌트 간섭 방지용 차단
         foreach (NetworkPlayerController controller in _previewPlayer.GetComponentsInChildren<NetworkPlayerController>(true))
         {
             controller.enabled = false;
@@ -869,14 +894,18 @@ public class PlayerAbilityModuleEditor : Editor
             visual.name = $"Hit Event Preview {i + 1}";
             visual.hideFlags = HideFlags.HideAndDontSave;
             visual.AddComponent<MeshFilter>().sharedMesh = mesh;
-            visual.AddComponent<MeshRenderer>();
+
+            // 💡 최적화: 빌드 타이밍에 Renderer를 미리 셋업하고 리스트에 추가합니다.
+            Renderer renderer = visual.AddComponent<MeshRenderer>();
 
             Material material = CreatePreviewMaterial(new Color(1f, 0.28f, 0.02f, 0.85f));
-            visual.GetComponent<MeshRenderer>().sharedMaterial = material;
+            renderer.sharedMaterial = material;
+
             _previewUtility.AddSingleGO(visual);
             _hitEventVisuals.Add(visual);
             _hitEventMaterials.Add(material);
             _hitEventMeshes.Add(mesh);
+            _hitEventRenderers.Add(renderer); // 추가: 렌더러 캐싱 리스트 채우기
         }
     }
 
@@ -889,9 +918,12 @@ public class PlayerAbilityModuleEditor : Editor
 
         AbilityHitEvent[] hitEvents = Module.HitEvents;
         int eventCount = hitEvents != null ? hitEvents.Length : 0;
+
+        // 💡 안전 예방 가드: 타이밍 꼬임으로 인한 무한 루프 빌드 크래시 방지 제어문 추가
         if (_hitEventVisuals.Count != eventCount)
         {
             RebuildHitEventVisuals();
+            if (_hitEventVisuals.Count != eventCount) return;
         }
 
         float normalizedTime = GetPreviewNormalizedTime();
@@ -906,13 +938,16 @@ public class PlayerAbilityModuleEditor : Editor
 
             bool active = normalizedTime >= hitEvent.StartNormalizedTime &&
                           normalizedTime <= hitEvent.EndNormalizedTime;
-            Renderer renderer = visual.GetComponent<Renderer>();
-            if (renderer != null && i < _hitEventMaterials.Count)
+
+            // 💡 초특급 최적화: 매 프레임 GetComponent<Renderer>() 조회를 파괴하고, 미리 캐싱한 _hitEventRenderers 데이터를 참조하여 연산 효율 극대화
+            if (i < _hitEventRenderers.Count && _hitEventRenderers[i] != null)
             {
                 Color color = GetHitEventPreviewColor(hitEvent, active);
                 _hitEventMaterials[i].color = color;
             }
 
+            // 💡 수정 전: GetPreviewGroundCenter() + Vector3.up * hitEvent.CenterHeight
+            // 💡 수정 후: 실린더 메쉬의 절반 높이를 보정하여 'CenterHeight = 0'일 때 딱 발바닥에 붙게 만듭니다.
             visual.transform.SetPositionAndRotation(
                 GetPreviewGroundCenter() + Vector3.up * (hitEvent.CenterHeight + hitEvent.Height * 0.5f),
                 GetPreviewPlayerRotation());
@@ -1191,24 +1226,20 @@ public class PlayerAbilityModuleEditor : Editor
 
     private void CleanupPreview()
     {
-        // 추가: 플레이어 오브젝트가 삭제되기 전에 애니메이션/플레이어블 그래프 상태를 안전하게 해제합니다.
         if (_previewPlayer != null)
         {
-            // 1. Animator 컴포넌트가 있다면 비활성화하여 내부 그래프 정리 유도
             if (_previewPlayer.TryGetComponent<Animator>(out var animator))
             {
-                animator.Rebind(); // 상태 초기화
+                animator.Rebind();
                 animator.enabled = false;
             }
 
-            // 2. 만약 기존 legacy Animation 컴포넌트를 쓰고 있다면 정지
             if (_previewPlayer.TryGetComponent<Animation>(out var animation))
             {
                 animation.Stop();
             }
         }
 
-        // 기존 파괴 로직 진행
         DestroyPreviewObject(_previewPlayer);
         DestroyPreviewObject(_previewFloor);
         DestroyPreviewObject(_floorMaterial);
@@ -1245,20 +1276,21 @@ public class PlayerAbilityModuleEditor : Editor
         {
             DestroyPreviewObject(_hitEventVisuals[i]);
         }
-
         _hitEventVisuals.Clear();
+
         for (int i = 0; i < _hitEventMaterials.Count; i++)
         {
             DestroyPreviewObject(_hitEventMaterials[i]);
         }
-
         _hitEventMaterials.Clear();
+
         for (int i = 0; i < _hitEventMeshes.Count; i++)
         {
             DestroyPreviewObject(_hitEventMeshes[i]);
         }
-
         _hitEventMeshes.Clear();
+
+        _hitEventRenderers.Clear(); // 추가: 캐싱 리스트 클리어
     }
 
     private static Texture2D CreateGridTexture(int size, int gridStep)

@@ -47,7 +47,17 @@ MonoBehaviour:
   hitboxRevivePower: 34
   hitboxDelay: 0
   hitboxLifetime: 0.3
-  hitEvents: []
+  hitEvents:
+  - label: Hit 1
+    startNormalizedTime: 0.496
+    endNormalizedTime: 0.823
+    radius: 1.6
+    height: 1.2
+    centerHeight: 0
+    damage: 4
+    groggyDamage: 10
+    revivePower: 34
+    previewColor: {r: 0, g: 0.0940752, b: 1, a: 0.3}
   soundClip: {fileID: 8300000, guid: ae210f395a6cd604b864754f03a1632a, type: 3}
   soundVolume: 1
   soundDelay: 0
