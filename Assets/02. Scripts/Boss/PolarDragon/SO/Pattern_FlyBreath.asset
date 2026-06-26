@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: 
   minRange: 0
   maxRange: 10
-  weight: 10
+  weight: 5
   actions:
   - animationClip: {fileID: 7400000, guid: 7e9693b27c8725e489abf58afa9f51a0, type: 3}
     animationStateName: FlyStationarySpreadFrozenBreath
@@ -32,6 +32,6 @@ MonoBehaviour:
       m_RotationOrder: 0
     hitboxIndex: 0
     hasSuperArmor: 0
-    enableTracking: 1
+    enableTracking: 0
     trackingStopPercent: 1
     trackingSpeed: 2
