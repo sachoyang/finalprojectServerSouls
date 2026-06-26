@@ -51,7 +51,9 @@ public class NextLevelPortal : NetworkBehaviour
         NetworkObject netObj = other.GetComponentInParent<NetworkObject>();
         
         // 내 캐릭터이고, 아직 포탈에 안 들어온 상태일 때만 등록 (다중 콜라이더 꼬임 방지)
-        if (netObj != null && netObj.HasInputAuthority && _localPlayerNetObj == null)
+        if (netObj != null &&
+            PlayerRegistry.IsLocalPlayer(netObj) &&
+            _localPlayerNetObj == null)
         {
             _localPlayerNetObj = netObj;
             _enteredCollider = other; // 들어온 정확한 부위를 기억함

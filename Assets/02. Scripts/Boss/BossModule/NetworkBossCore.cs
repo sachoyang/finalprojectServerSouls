@@ -509,8 +509,9 @@ public class NetworkBossCore : NetworkBehaviour
         // ==========================================
         // 4.타겟 유효성 검사 (평상시)
         // ==========================================
-        // 현재 잡고 있는 타겟이 죽어서 태그가 바뀌었다면 즉시 어그로 해제!
-        if (AggroTarget != null && !AggroTarget.gameObject.CompareTag("Player"))
+        // 현재 잡고 있는 타겟이 죽었거나 유효하지 않으면 즉시 어그로 해제한다.
+        // 플레이어 생존 판정은 PlayerRegistry에 통합한다.
+        if (!PlayerRegistry.IsAlivePlayer(AggroTarget))
         {
             AggroTarget = null;
         }
@@ -802,27 +803,14 @@ public class NetworkBossCore : NetworkBehaviour
 
     private void FindClosestTarget()
     {
-        float closestDistance = float.MaxValue;
         NetworkObject bestTarget = null;
 
-        // 1. 씬에 있는 태그가 "Player"인 모든 게임 오브젝트를 싹 긁어옵니다.
-        GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
-
-        foreach (var playerObj in players)
+        // 플레이어 조회는 PlayerRegistry로 통합한다.
+        // 보스는 PlayerRef/PlayerStats 세부 구조를 직접 알 필요 없이 "가장 가까운 살아있는 플레이어"만 요청한다.
+        NetworkPlayerController closestPlayer = PlayerRegistry.GetClosestAlivePlayer(transform.position);
+        if (closestPlayer != null)
         {
-            if (playerObj == null) continue;
-
-            // 2. 퓨전 네트워크 동기화를 위해 오브젝트에 붙은 NetworkObject 컴포넌트를 가져옵니다.
-            NetworkObject nObj = playerObj.GetComponent<NetworkObject>();
-            if (nObj == null) continue;
-
-            // 3. 거리를 계산해서 가장 가까운 대상을 선별합니다.
-            float dist = Vector3.Distance(transform.position, playerObj.transform.transform.position);
-            if (dist < closestDistance)
-            {
-                closestDistance = dist;
-                bestTarget = nObj; // 최종 어그로 대상 타겟팅
-            }
+            bestTarget = closestPlayer.Object;
         }
 
         AggroTarget = bestTarget;

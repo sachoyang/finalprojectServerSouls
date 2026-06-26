@@ -93,7 +93,8 @@ public class NetworkInputProvider : MonoBehaviour, INetworkRunnerCallbacks
         var data = new NetworkInputData
         {
             direction = GetCameraRelativeMove(ReadMoveInput()),
-            actionId = _pendingActionId
+            actionId = _pendingActionId,
+            inputAuthorityRaw = runner.LocalPlayer.RawEncoded
         };
 
         data.buttons.Set(NetworkInputData.MOUSEBUTTON0, _mouseButton0);

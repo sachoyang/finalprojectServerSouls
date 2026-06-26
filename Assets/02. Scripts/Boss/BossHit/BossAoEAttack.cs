@@ -37,7 +37,8 @@ public class BossAoEAttack : MonoBehaviour
     private float _bossDamageMultiplier = 1.0f;
     private float _maxEndTime = 0f; 
     
-    private Dictionary<Collider, float> _hitTargets = new Dictionary<Collider, float>();
+    // 자식 콜라이더가 여러 개 있어도 PlayerStats 기준으로 다단 히트 간격을 관리한다.
+    private Dictionary<PlayerStats, float> _hitTargets = new Dictionary<PlayerStats, float>();
 
     public void Initialize(float bossOutgoingMultiplier)
     {
@@ -99,23 +100,22 @@ public class BossAoEAttack : MonoBehaviour
 
             foreach (var hit in hits)
             {
-                if (_hitTargets.TryGetValue(hit, out float lastHitTime))
+                PlayerStats playerStats = hit.GetComponentInParent<PlayerStats>();
+                if (playerStats == null || playerStats.IsDead)
+                {
+                    continue;
+                }
+
+                if (_hitTargets.TryGetValue(playerStats, out float lastHitTime))
                 {
                     if (!isMultiHit) continue;
                     if (Time.time - lastHitTime < hitInterval) continue;
                 }
 
-                if (hit.CompareTag("Player"))
-                {
-                    PlayerStats playerStats = hit.GetComponent<PlayerStats>();
-                    if (playerStats != null)
-                    {
-                        float finalDamage = baseDamage * _bossDamageMultiplier;
-                        playerStats.TakeDamage(finalDamage);
-                        Debug.Log($"[AoE Hit] 광역 이펙트 연쇄 적중! 파티클 동기화 딜: {finalDamage}");
-                    }
-                    _hitTargets[hit] = Time.time;
-                }
+                float finalDamage = baseDamage * _bossDamageMultiplier;
+                playerStats.TakeDamage(finalDamage);
+                Debug.Log($"[AoE Hit] 광역 이펙트 연쇄 적중! 파티클 동기화 딜: {finalDamage}");
+                _hitTargets[playerStats] = Time.time;
             }
         }
     }

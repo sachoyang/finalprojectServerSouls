@@ -57,16 +57,20 @@ public class HUDManager : MonoBehaviour
 
         nextReferenceSearchTime = Time.time + referenceSearchInterval;
 
-        if (localPlayerController == null)
-            localPlayerController = PlayerRegistry.LocalPlayer;
-
-        if (localPlayerController != null)
+        if (PlayerRegistry.TryGetLocalHUDReferences(
+                out NetworkPlayerController localPlayer,
+                out PlayerAbilityInventory localInventory,
+                out PlayerStatusController localStatusController,
+                out _))
         {
+            if (localPlayerController == null)
+                localPlayerController = localPlayer;
+
             if (abilityInventory == null)
-                abilityInventory = localPlayerController.GetComponent<PlayerAbilityInventory>();
+                abilityInventory = localInventory;
 
             if (playerStatusController == null)
-                playerStatusController = localPlayerController.GetComponent<PlayerStatusController>();
+                playerStatusController = localStatusController;
         }
 
         if (boss == null || !boss.IsSpawnedReady || boss.CurrentState == BossState.Die)
@@ -111,17 +115,11 @@ public class HUDManager : MonoBehaviour
 
     private void UpdatePlayerHUD()
     {
-        PlayerStats stats = localPlayerController != null ? localPlayerController.GetComponent<PlayerStats>() : null;
         if (playerHUDView == null ||
-            stats == null ||
-            !stats.IsSpawnedReady ||
-            stats.Object == null ||
-            !stats.Object.IsValid)
+            !PlayerRegistry.TryGetHUDData(localPlayerController, out PlayerHUDData hudData))
         {
             return;
         }
-
-        PlayerHUDData hudData = stats.GetHUDData();
 
         playerHUDView.SetHp(hudData.CurrentHealth, hudData.MaxHealth);
         playerHUDView.SetSp(hudData.CurrentStamina, hudData.MaxStamina);
@@ -250,29 +248,8 @@ public class HUDManager : MonoBehaviour
         {
             NetworkPlayerController player = players[i];
 
-            if (player == null || player.Object == null)
+            if (!PlayerRegistry.TryGetPartyMemberUIData(player, out PartyMemberUIData uiData))
                 continue;
-
-            if (player.Object.HasInputAuthority)
-                continue;
-
-            PlayerStats stats = player.GetComponent<PlayerStats>();
-            if (stats == null || !stats.IsSpawnedReady)
-                continue;
-
-            PlayerHUDData hudData = stats.GetHUDData();
-            int playerKey = player.Object.InputAuthority.RawEncoded;
-
-            PartyMemberUIData uiData = new PartyMemberUIData(
-                playerKey,
-                $"Player {playerKey}",
-                hudData.CurrentHealth,
-                hudData.MaxHealth,
-                hudData.CurrentStamina,
-                hudData.MaxStamina,
-                !hudData.IsDead,
-                hudData.IsDead,
-                false);
 
             List<PartyMemberSkillUIData> skills = BuildPartyMemberSkillUIData(player);
 
@@ -289,13 +266,10 @@ public class HUDManager : MonoBehaviour
         if (player == null)
             return skills;
 
-        PlayerAbilityInventory inventory = player.GetComponent<PlayerAbilityInventory>();
-        NetworkPlayerData playerData = player.GetComponent<NetworkPlayerData>();
-
-        if (inventory == null)
+        if (!PlayerRegistry.TryGetAbilityInventory(player, out PlayerAbilityInventory inventory))
             return skills;
 
-        if (playerData != null)
+        if (PlayerRegistry.TryGetNetworkPlayerData(player, out NetworkPlayerData playerData))
         {
             for (int i = 0; i < playerData.SavedAbilityCount; i++)
             {
@@ -376,7 +350,11 @@ public class HUDManager : MonoBehaviour
 
     private void BindLocalStaminaEvents()
     {
-        PlayerStats stats = localPlayerController != null ? localPlayerController.GetComponent<PlayerStats>() : null;
+        PlayerRegistry.TryGetLocalHUDReferences(
+            out _,
+            out _,
+            out _,
+            out PlayerStats stats);
         if (subscribedStaminaStats == stats)
         {
             return;

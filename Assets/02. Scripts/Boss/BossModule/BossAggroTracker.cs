@@ -23,11 +23,20 @@ public class BossAggroTracker
         float maxDamage = 0f;
         foreach (var kvp in _damageTracker)
         {
-            if (kvp.Key != null && kvp.Key.gameObject.CompareTag("Player") && kvp.Value > maxDamage)
+            NetworkObject attacker = kvp.Key;
+            if (attacker == null || kvp.Value <= maxDamage)
             {
-                maxDamage = kvp.Value;
-                topDPSPlayer = kvp.Key;
+                continue;
             }
+
+            // 살아있는 플레이어 판정은 PlayerRegistry로 통합한다.
+            if (!PlayerRegistry.IsAlivePlayer(attacker))
+            {
+                continue;
+            }
+
+            maxDamage = kvp.Value;
+            topDPSPlayer = attacker;
         }
         return topDPSPlayer;
     }

@@ -152,11 +152,15 @@ public class InventoryPanelController : MonoBehaviour
         if (abilityInventory != null)
             return;
 
-        if (localPlayerController == null)
-            localPlayerController = FindLocalPlayerController();
-
-        if (localPlayerController != null)
-            abilityInventory = localPlayerController.GetComponent<PlayerAbilityInventory>();
+        if (PlayerRegistry.TryGetLocalHUDReferences(
+                out NetworkPlayerController localPlayer,
+                out PlayerAbilityInventory localInventory,
+                out _,
+                out _))
+        {
+            localPlayerController = localPlayer;
+            abilityInventory = localInventory;
+        }
     }
 
     private IEnumerator BindLocalInventoryRoutine()
@@ -186,10 +190,5 @@ public class InventoryPanelController : MonoBehaviour
         }
 
         spawnedObjects.Clear();
-    }
-
-    private NetworkPlayerController FindLocalPlayerController()
-    {
-        return PlayerRegistry.LocalPlayer;
     }
 }

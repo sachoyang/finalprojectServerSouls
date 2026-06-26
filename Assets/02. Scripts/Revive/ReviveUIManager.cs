@@ -65,9 +65,13 @@ public class ReviveUIManager : MonoBehaviour
             if (player == null)
                 continue;
 
-            PlayerStats stats = player.GetComponent<PlayerStats>();
-            if (stats == null || !stats.IsSpawnedReady || !stats.IsDead || ShouldHide(player))
+            if (!PlayerRegistry.TryGetStats(player.Object, out PlayerStats stats) ||
+                !stats.IsSpawnedReady ||
+                !stats.IsDead ||
+                ShouldHide(player))
+            {
                 continue;
+            }
 
             if (indicators.ContainsKey(stats))
                 continue;
@@ -94,7 +98,7 @@ public class ReviveUIManager : MonoBehaviour
         if (!hideLocalPlayerReviveUI)
             return false;
 
-        return controller != null && controller.Object != null && controller.Object.HasInputAuthority;
+        return PlayerRegistry.IsLocalPlayer(controller);
     }
 
     private ReviveScreenIndicator CreateIndicator(PlayerStats stats)

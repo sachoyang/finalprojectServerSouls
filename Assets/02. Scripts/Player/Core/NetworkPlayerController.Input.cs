@@ -48,6 +48,13 @@ public partial class NetworkPlayerController
             return;
         }
 
+        if (!IsInputForThisPlayer(data))
+        {
+            // Fusion PlayerRef 기준으로 내 오브젝트의 입력이 아니면 처리하지 않는다.
+            // 호스트/서버에서 한 플레이어 입력이 다른 플레이어 몸통 회전까지 건드리는 것을 막는다.
+            return;
+        }
+
         ProcessLockOnInput(data);
 
         // 입력 방향은 대각선 이동이 더 빨라지지 않도록 정규화한다.
@@ -323,4 +330,13 @@ public partial class NetworkPlayerController
         }
     }
 
+    private bool IsInputForThisPlayer(NetworkInputData data)
+    {
+        if (Object == null)
+        {
+            return false;
+        }
+
+        return data.inputAuthorityRaw == Object.InputAuthority.RawEncoded;
+    }
 }
