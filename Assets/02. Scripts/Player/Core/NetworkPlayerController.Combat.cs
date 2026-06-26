@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using System.Text;
 using Fusion;
 using UnityEngine;
 
@@ -452,107 +450,7 @@ public partial class NetworkPlayerController
 
     private void ApplyAttackDamage()
     {
-        // 기본 공격 판정은 범위 안의 보스 히트박스 중 배율이 가장 높은 부위 하나만 적용한다.
-        float damage = GetBasicAttackDamage();
-        if (damage <= 0f)
-        {
-            return;
-        }
-
-        Vector3 hitCenter = transform.TransformPoint(AttackHitLocalCenter);
-        int hitCount = Physics.OverlapSphereNonAlloc(
-            hitCenter,
-            attackHitRadius,
-            _attackHits,
-            attackTargetLayers,
-            QueryTriggerInteraction.Collide);
-
-        _bestBossHurtboxes.Clear(); // 🔥 이름 변경됨
-        _reviveHitPlayers.Clear();
-        
-        for (int i = 0; i < hitCount; i++)
-        {
-            // 한 번의 OverlapSphere 결과 안에는 보스, 제단, 죽은 플레이어가 섞여 들어올 수 있다.
-            // 대상 종류별로 서로 다른 처리 경로를 타기 때문에 위에서부터 우선순위를 나눠 검사한다.
-            Collider hit = _attackHits[i];
-            if (hit == null)
-            {
-                continue;
-            }
-
-            // 죽은 팀원을 공격하면 부활 게이지를 채운다.
-            // 같은 플레이어의 여러 Collider가 맞아도 HashSet으로 한 번만 처리한다.
-            PlayerStats hitPlayerStats = hit.GetComponentInParent<PlayerStats>();
-            if (hitPlayerStats != null && hitPlayerStats != _playerStats && hitPlayerStats.IsDead)
-            {
-                if (_reviveHitPlayers.Add(hitPlayerStats))
-                {
-                    hitPlayerStats.RegisterReviveHit(Object, basicAttackRevivePower);
-                }
-
-                continue;
-            }
-
-            GimmickAltar altar = hit.GetComponentInParent<GimmickAltar>();
-            if (altar != null)
-            {
-                // 제단은 보스 히트박스와 별도 대상이므로 즉시 데미지를 주고 다음 Collider로 넘어간다.
-                altar.RPC_TakeDamage(damage);
-                continue;
-            }
-
-            // 🔥 [수정 핵심] BossHitbox -> BossHurtbox 로 교체
-            BossHurtbox bossHurtbox = hit.GetComponentInParent<BossHurtbox>();
-            if (bossHurtbox == null)
-            {
-                continue;
-            }
-
-            NetworkBossCore boss = bossHurtbox.GetComponentInParent<NetworkBossCore>();
-            if (boss == null)
-            {
-                continue;
-            }
-
-            if (!_bestBossHurtboxes.TryGetValue(boss, out BossHurtbox bestHurtbox) ||
-                bossHurtbox.damageMultiplier > bestHurtbox.damageMultiplier)
-            {
-                // 같은 보스 안에서는 머리/몸통처럼 여러 부위가 동시에 잡힐 수 있다.
-                // 배율이 가장 높은 부위 하나만 남겨 한 공격이 같은 보스를 여러 번 때리지 않게 한다.
-                _bestBossHurtboxes[boss] = bossHurtbox;
-            }
-        }
-
-        foreach (BossHurtbox bossHurtbox in _bestBossHurtboxes.Values)
-        {
-            // 신형 파라미터 규격(데미지, 그로기 10f, 공격자) 적용
-            // 최종적으로 보스별 대표 히트박스 하나에만 데미지를 전달한다.
-            bossHurtbox.OnHitByPlayer(damage, 10f, Object);
-
-            // 피 이펙트 스폰
-            SpawnBloodOnHit(bossHurtbox.GetComponent<Collider>());
-        }
-    }
-
-    private void SpawnBloodOnHit(Collider hitCollider)
-    {
-        if (bloodEffectSpawner == null || hitCollider == null)
-        {
-            return;
-        }
-
-        Vector3 hitCenter = transform.TransformPoint(AttackHitLocalCenter);
-        Vector3 hitPoint = hitCollider.ClosestPoint(hitCenter);
-
-        Vector3 direction = hitPoint - transform.position;
-        direction.y = 0f;
-
-        if (direction.sqrMagnitude <= 0.001f)
-        {
-            direction = transform.forward;
-        }
-
-        bloodEffectSpawner.SpawnBlood(hitPoint, direction.normalized);
+        _combatSystem?.ProcessBasicAttackHit(Object, _playerStats, GetBasicAttackDamage());
     }
 
     private float GetBasicAttackDamage()

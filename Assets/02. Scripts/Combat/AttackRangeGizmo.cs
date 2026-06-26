@@ -1,7 +1,7 @@
 using UnityEngine;
 
 [ExecuteAlways]
-public class PlayerAttackRangeGizmo : MonoBehaviour
+public class AttackRangeGizmo : MonoBehaviour
 {
     public enum DrawMode { Always, OnlyWhenSelected }
 
@@ -14,6 +14,7 @@ public class PlayerAttackRangeGizmo : MonoBehaviour
     [SerializeField] private bool drawCenterLine = true;
 
     private NetworkPlayerController _player;
+    private CombatSystem _combat;
     private float _showUntilTime;
 
     private void Update()
@@ -66,8 +67,9 @@ public class PlayerAttackRangeGizmo : MonoBehaviour
 
         Gizmos.matrix = Matrix4x4.TRS(player.transform.position, player.transform.rotation, Vector3.one);
 
-        Vector3 center = player.AttackHitLocalCenter;
-        float radius = player.AttackHitRadius;
+        CombatSystem combat = GetCombat();
+        Vector3 center = combat != null ? combat.BasicAttackHitLocalCenter : player.AttackHitLocalCenter;
+        float radius = combat != null ? combat.BasicAttackHitRadius : player.AttackHitRadius;
 
         if (fillColor.a > 0f)
         {
@@ -96,5 +98,15 @@ public class PlayerAttackRangeGizmo : MonoBehaviour
         }
 
         return _player;
+    }
+
+    private CombatSystem GetCombat()
+    {
+        if (_combat == null)
+        {
+            _combat = GetComponent<CombatSystem>();
+        }
+
+        return _combat;
     }
 }

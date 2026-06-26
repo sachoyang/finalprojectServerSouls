@@ -41,3 +41,24 @@ Combat README
 - 머리 포인트 priority 0.
 - 몸통 포인트 priority 10.
 - 포인트가 없는 대상은 락온 후보가 되지 않으므로, 대상마다 최소 하나의 Point를 둔다.
+
+
+4. CombatSystem.cs
+
+역할:
+- 게임 공통 전투 판정과 대상별 전투 처리를 담당한다.
+- 공격 주체는 입력, 상태, Animator 액션 이벤트만 소유하고, 실제 타격 결과는 이 컴포넌트에 위임한다.
+- 기본 공격은 ProcessBasicAttackHit()로 처리한다.
+
+처리 대상:
+- 죽은 PlayerStats: RegisterReviveHit() 호출.
+- GimmickAltar: RPC_TakeDamage() 호출.
+- BossHurtbox: 같은 NetworkBossCore 안에서 damageMultiplier가 가장 높은 부위 하나만 선택해 OnHitByPlayer() 호출.
+- 보스 적중 시 BloodEffectSpawner로 피 이펙트를 생성한다.
+
+
+5. AttackRangeGizmo.cs
+
+역할:
+- CombatSystem의 기본 공격 범위를 Scene 뷰에 표시하는 디버그 전용 도구다.
+- 히트 판정, 피해 처리, 부활 도움, 이펙트 생성 같은 게임플레이 로직은 담당하지 않는다.

@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Text;
 using Fusion;
 using UnityEngine;
@@ -16,6 +15,7 @@ public enum PlayerControlLockFlags
 }
 
 [RequireComponent(typeof(NetworkCharacterController))]
+[RequireComponent(typeof(CombatSystem))]
 public partial class NetworkPlayerController :
     NetworkBehaviour,
     IActionLockStateReceiver,
@@ -117,16 +117,6 @@ public partial class NetworkPlayerController :
     [SerializeField, Range(0.5f, 1f)] private float runJumpSpeedRatio = 0.75f;
     [SerializeField] private bool useForwardJumpRootMotion = false;
 
-    [Header("Combat")]
-    // 기본 공격 판정 구체의 위치와 크기. Gizmo도 이 값을 사용한다.
-    [SerializeField] private float attackHitRadius = 1.4f;
-    [SerializeField] private float attackHitDistance = 1.8f;
-    [SerializeField] private float attackHitHeight = 1.1f;
-    [SerializeField] private LayerMask attackTargetLayers = ~0;
-    [SerializeField] private float basicAttackRevivePower = 34f;
-    //피 이펙트 스포너 변수
-    [SerializeField] private BloodEffectSpawner bloodEffectSpawner;
-
     [Header("Lock On")]
     // 락온 가능한 보스 포인트 탐색 범위와 락온 중 회전 속도.
     [SerializeField] private LockOnTargetSelector lockOnTargetSelector;
@@ -162,6 +152,7 @@ public partial class NetworkPlayerController :
     private PlayerStats _playerStats;
     private PlayerStatusController _statusController;
     private PlayerAbilityInventory _abilityInventory;
+    private CombatSystem _combatSystem;
     private ChangeDetector _changeDetector;
     // 이동 입력이 없는 구르기에서도 마지막으로 움직이던 방향을 유지하기 위한 캐시.
     private Vector3 _lastMoveDirection = Vector3.forward;
@@ -174,12 +165,6 @@ public partial class NetworkPlayerController :
     private Vector3 _queuedRootMotionDeltaPosition;
     private Quaternion _queuedRootMotionDeltaRotation = Quaternion.identity;
     private bool _hasQueuedRootMotion;
-    // 공격 판정은 매번 새 배열을 만들지 않고 재사용해 GC 할당을 줄인다.
-    private readonly Collider[] _attackHits = new Collider[16];
-    // 한 번의 공격에 같은 보스의 여러 히트박스가 들어오면 가장 높은 배율 부위만 남긴다.
-    private readonly Dictionary<NetworkBossCore, BossHurtbox> _bestBossHurtboxes = new Dictionary<NetworkBossCore, BossHurtbox>();
-    // 죽은 팀원이 여러 Collider로 겹쳐 맞아도 부활 게이지가 한 번만 오르게 막는다.
-    private readonly HashSet<PlayerStats> _reviveHitPlayers = new HashSet<PlayerStats>();
     // 보상 획득 직후 네트워크 값이 오기 전에도 내 입력/디버그에서 콤보 해금 상태를 즉시 반영한다.
     private bool _localBasicAttackComboUnlocked;
     // Animator State 진입/종료는 클라이언트마다 먼저 감지될 수 있어 로컬 락을 별도로 둔다.
@@ -199,8 +184,8 @@ public partial class NetworkPlayerController :
 
     public bool IsLockOnActive => IsLockOnNetworked;
     public Transform CurrentLockOnTarget => _lockOnTarget;
-    public float AttackHitRadius => attackHitRadius;
-    public Vector3 AttackHitLocalCenter => Vector3.up * attackHitHeight + Vector3.forward * attackHitDistance;
+    public float AttackHitRadius => _combatSystem != null ? _combatSystem.BasicAttackHitRadius : 0f;
+    public Vector3 AttackHitLocalCenter => _combatSystem != null ? _combatSystem.BasicAttackHitLocalCenter : Vector3.zero;
     public bool IsBasicAttackComboUnlocked => BasicAttackComboUnlocked || _localBasicAttackComboUnlocked;
     public bool IsActionAnimationLocked => ActionAnimationLocked || _localActionAnimationLocked;
     public bool IsDamageOrDeathActionActive =>
@@ -216,14 +201,15 @@ public partial class NetworkPlayerController :
         _playerStats = GetComponent<PlayerStats>();
         _statusController = GetComponent<PlayerStatusController>();
         _abilityInventory = GetComponent<PlayerAbilityInventory>();
+        _combatSystem = GetComponent<CombatSystem>();
+        if (_combatSystem == null)
+        {
+            _combatSystem = gameObject.AddComponent<CombatSystem>();
+        }
         lockOnTargetSelector ??= GetComponent<LockOnTargetSelector>();
         if (lockOnTargetSelector == null)
         {
             lockOnTargetSelector = gameObject.AddComponent<LockOnTargetSelector>();
-        }
-        if (bloodEffectSpawner == null)
-        {
-            bloodEffectSpawner = FindFirstObjectByType<BloodEffectSpawner>();
         }
         lockOnTargetSelector.SetSearchRadius(lockOnSearchRadius);
         viewCamera ??= Camera.main;
