@@ -333,14 +333,11 @@ public class CutsceneManager : MonoBehaviour
     {
         if (playerObject == null)
         {
-            NetworkObject[] networkObjects = FindObjectsOfType<NetworkObject>(true);
-            foreach (NetworkObject networkObject in networkObjects)
+            // 씬 전체 NetworkObject 탐색 대신 PlayerRegistry가 관리하는 로컬 플레이어를 사용한다.
+            NetworkPlayerController localPlayer = PlayerRegistry.LocalPlayer;
+            if (localPlayer != null)
             {
-                if (networkObject != null && networkObject.HasInputAuthority)
-                {
-                    playerObject = networkObject;
-                    break;
-                }
+                playerObject = localPlayer.Object;
             }
         }
 

@@ -44,11 +44,7 @@ public class RewardDistortionTrigger : MonoBehaviour
         }
 
         NetworkObject networkObject = other.GetComponentInParent<NetworkObject>();
-        if (networkObject != null)
-        {
-            return networkObject.HasInputAuthority;
-        }
-
-        return other.CompareTag("Player") || other.GetComponentInParent<NetworkPlayerController>() != null;
+        // 태그 fallback을 제거하고 Fusion PlayerRef 기준으로 로컬 플레이어만 통과시킨다.
+        return PlayerRegistry.IsLocalPlayer(networkObject);
     }
 }

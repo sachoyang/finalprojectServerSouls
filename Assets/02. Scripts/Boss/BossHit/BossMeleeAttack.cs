@@ -24,6 +24,8 @@ public class BossMeleeAttack : MonoBehaviour
     
     // 한 번 휘두를 때(다단히트 방지) 이미 맞은 대상을 기억하는 장부
     private HashSet<Collider> _alreadyHitTargets = new HashSet<Collider>();
+    // 자식 콜라이더가 여러 개 맞아도 같은 플레이어는 한 번만 피해를 받게 막는다.
+    private HashSet<PlayerStats> _alreadyHitPlayers = new HashSet<PlayerStats>();
 
     // 데미지 배율 등을 가져오기 위한 코어
     private NetworkBossCore _bossScript;
@@ -40,6 +42,7 @@ public class BossMeleeAttack : MonoBehaviour
 
         _isAttacking = true;
         _alreadyHitTargets.Clear(); // 때린 대상 초기화
+        _alreadyHitPlayers.Clear(); // 플레이어 단위 중복 타격 초기화
 
         // 배열 크기 초기화 및 첫 프레임의 노드 위치 저장
         if (_previousPositions == null || _previousPositions.Length != weaponNodes.Length)
@@ -80,22 +83,20 @@ public class BossMeleeAttack : MonoBehaviour
                 // 이미 이번 휘두르기에 맞은 녀석이면 무시 (더블 히트 방지!)
                 if (_alreadyHitTargets.Contains(hitCol)) continue;
 
-                if (hitCol.CompareTag("Player"))
+                PlayerStats playerStats = hitCol.GetComponentInParent<PlayerStats>();
+                if (playerStats != null && !playerStats.IsDead && !_alreadyHitPlayers.Contains(playerStats))
                 {
-                    PlayerStats playerStats = hitCol.GetComponent<PlayerStats>();
-                    if (playerStats != null)
-                    {
-                        // 보스 버프 배율 적용
-                        float finalDamage = baseDamage * _bossScript.GetOutgoingDamageMultiplier();
-                        
-                        playerStats.TakeDamage(finalDamage);
-                        Debug.Log($"[Melee Attack] 무기 궤적 타격 성공! 데미지: {finalDamage}");
-                        
-                        // 타격음 재생 (원한다면 여기에 사운드 코드 추가)
-                    }
-                    
+                    // 보스 버프 배율 적용
+                    float finalDamage = baseDamage * _bossScript.GetOutgoingDamageMultiplier();
+
+                    playerStats.TakeDamage(finalDamage);
+                    Debug.Log($"[Melee Attack] 무기 궤적 타격 성공! 데미지: {finalDamage}");
+
+                    // 타격음 재생 (원한다면 여기에 사운드 코드 추가)
+
                     // 명단에 등록해서 한 번 더 맞는 것을 방지
                     _alreadyHitTargets.Add(hitCol);
+                    _alreadyHitPlayers.Add(playerStats);
                 }
             }
 
