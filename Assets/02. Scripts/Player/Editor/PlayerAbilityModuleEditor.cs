@@ -237,14 +237,18 @@ public class PlayerAbilityModuleEditor : Editor
     private void DrawHitbox()
     {
         DrawHitEventsList();
-        EditorGUILayout.Space(4f);
-        EditorGUILayout.LabelField("Legacy Hitbox Prefab", EditorStyles.boldLabel);
-        EditorGUILayout.PropertyField(_hitboxPrefab);
-        EditorGUILayout.PropertyField(_hitboxLocalOffset);
-        EditorGUILayout.PropertyField(_hitboxDamage);
-        EditorGUILayout.PropertyField(_hitboxRevivePower);
-        EditorGUILayout.PropertyField(_hitboxDelay);
-        EditorGUILayout.PropertyField(_hitboxLifetime);
+        // 💡 Hit Events가 없을 때만(0개일 때만) 아래 레거시 필드들을 보여줍니다.
+        if (_hitEvents.arraySize == 0)
+        {
+            EditorGUILayout.Space(4f);
+            EditorGUILayout.LabelField("Legacy Hitbox Prefab", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(_hitboxPrefab);
+            EditorGUILayout.PropertyField(_hitboxLocalOffset);
+            EditorGUILayout.PropertyField(_hitboxDamage);
+            EditorGUILayout.PropertyField(_hitboxRevivePower);
+            EditorGUILayout.PropertyField(_hitboxDelay);
+            EditorGUILayout.PropertyField(_hitboxLifetime);
+        }
     }
 
     private void DrawHitEventsList()
@@ -449,16 +453,20 @@ public class PlayerAbilityModuleEditor : Editor
         Rect rect = GUILayoutUtility.GetRect(1f, 18f, GUILayout.ExpandWidth(true));
         EditorGUI.DrawRect(rect, new Color(0.16f, 0.16f, 0.16f));
 
-        float start = duration > 0f ? Module.HitboxDelay / duration : 0f;
-        float end = duration > 0f ? (Module.HitboxDelay + Module.HitboxLifetime) / duration : 0f;
-        Rect hitRect = new Rect(
-            rect.x + rect.width * Mathf.Clamp01(start),
-            rect.y + 3f,
-            rect.width * Mathf.Max(0.01f, Mathf.Clamp01(end) - Mathf.Clamp01(start)),
-            rect.height - 6f);
-        EditorGUI.DrawRect(hitRect, new Color(1f, 0.22f, 0.08f, 0.75f));
-
         AbilityHitEvent[] hitEvents = Module.HitEvents;
+        // 💡 변경점: hitEvents가 null이거나 비어있을 때만 기존 레거시 주황색 바를 그립니다.
+        if (hitEvents == null || hitEvents.Length == 0)
+        {
+            float start = duration > 0f ? Module.HitboxDelay / duration : 0f;
+            float end = duration > 0f ? (Module.HitboxDelay + Module.HitboxLifetime) / duration : 0f;
+            Rect hitRect = new Rect(
+                rect.x + rect.width * Mathf.Clamp01(start),
+                rect.y + 3f,
+                rect.width * Mathf.Max(0.01f, Mathf.Clamp01(end) - Mathf.Clamp01(start)),
+                rect.height - 6f);
+            EditorGUI.DrawRect(hitRect, new Color(1f, 0.22f, 0.08f, 0.75f));
+        }
+
         if (hitEvents != null)
         {
             for (int i = 0; i < hitEvents.Length; i++)
