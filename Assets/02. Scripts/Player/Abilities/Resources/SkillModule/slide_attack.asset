@@ -31,8 +31,9 @@ MonoBehaviour:
   defenseRateBonus: 0
   attackDamageBonusPercent: 0
   animationClip: {fileID: -203655887218126122, guid: 1a16ca6c2c59c904c8e31ebc395a3e96, type: 3}
-  animationStateName: 
+  animationStateName: SlideAttack
   animationTrigger: SlideAttack
+  animationSpeed: 1.5
   rootMotionMode: 0
   staminaRecoveryDelayMode: 0
   opensComboInput: 0
@@ -46,6 +47,7 @@ MonoBehaviour:
   hitboxRevivePower: 34
   hitboxDelay: 0
   hitboxLifetime: 0.3
+  hitEvents: []
   soundClip: {fileID: 8300000, guid: ae210f395a6cd604b864754f03a1632a, type: 3}
   soundVolume: 1
   soundDelay: 0

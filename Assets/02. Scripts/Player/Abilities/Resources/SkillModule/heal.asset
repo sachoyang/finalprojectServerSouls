@@ -31,8 +31,9 @@ MonoBehaviour:
   defenseRateBonus: 0
   attackDamageBonusPercent: 0
   animationClip: {fileID: -203655887218126122, guid: b87c0223bacdbd840967e74c4a41288f, type: 3}
-  animationStateName: 
+  animationStateName: Heal
   animationTrigger: Heal
+  animationSpeed: 1.7
   rootMotionMode: 0
   staminaRecoveryDelayMode: 0
   opensComboInput: 0
@@ -46,6 +47,7 @@ MonoBehaviour:
   hitboxRevivePower: 34
   hitboxDelay: 0
   hitboxLifetime: 0.3
+  hitEvents: []
   soundClip: {fileID: 0}
   soundVolume: 1
   soundDelay: 0

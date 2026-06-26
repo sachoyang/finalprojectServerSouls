@@ -115,6 +115,62 @@ public static class PlayerAnimatorSetupTool
         Debug.Log("Active ability modules synced to player animator.");
     }
 
+    [MenuItem("Tools/ServerSouls/Pull Animator Skill Speeds To Ability Modules")]
+    public static void PullAnimatorSkillSpeedsToAbilityModules()
+    {
+        if (!TryLoadController(out AnimatorController controller))
+        {
+            return;
+        }
+
+        AnimatorStateMachine root = controller.layers[0].stateMachine;
+        AnimatorStateMachine skillMachine = FindStateMachine(root, SkillMachineName);
+        if (skillMachine == null)
+        {
+            Debug.LogWarning($"Skill state machine not found: {SkillMachineName}");
+            return;
+        }
+
+        int updatedCount = 0;
+        string[] moduleGuids = AssetDatabase.FindAssets("t:PlayerAbilityModule", new[] { SkillModuleFolder });
+        foreach (string moduleGuid in moduleGuids)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(moduleGuid);
+            PlayerAbilityModule module = AssetDatabase.LoadAssetAtPath<PlayerAbilityModule>(path);
+            if (module == null)
+            {
+                continue;
+            }
+
+            AnimatorState state = FindState(skillMachine, GetModuleStateName(module));
+            if (state == null)
+            {
+                continue;
+            }
+
+            SerializedObject serializedModule = new SerializedObject(module);
+            SerializedProperty animationSpeed = serializedModule.FindProperty("animationSpeed");
+            if (animationSpeed == null)
+            {
+                continue;
+            }
+
+            float pulledSpeed = Mathf.Max(0.01f, state.speed);
+            if (Mathf.Approximately(animationSpeed.floatValue, pulledSpeed))
+            {
+                continue;
+            }
+
+            animationSpeed.floatValue = pulledSpeed;
+            serializedModule.ApplyModifiedProperties();
+            EditorUtility.SetDirty(module);
+            updatedCount++;
+        }
+
+        AssetDatabase.SaveAssets();
+        Debug.Log($"Animator skill state speeds pulled to ability modules. Updated: {updatedCount}");
+    }
+
     private static bool TryLoadController(out AnimatorController controller)
     {
         controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath);
@@ -222,6 +278,7 @@ public static class PlayerAnimatorSetupTool
             }
 
             state.motion = module.AnimationClip;
+            state.speed = module.AnimationSpeed;
             state.tag = "Action";
             // 스킬 모션 중에는 공격/패링/다른 스킬로 캔슬되지 않도록 Skill 타입 액션락 Behaviour를 자동 부착한다.
             EnsureActionBehaviour(

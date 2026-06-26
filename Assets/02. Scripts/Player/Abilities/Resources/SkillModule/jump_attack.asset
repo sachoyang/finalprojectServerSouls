@@ -31,8 +31,9 @@ MonoBehaviour:
   defenseRateBonus: 0
   attackDamageBonusPercent: 0
   animationClip: {fileID: -203655887218126122, guid: 2e360ce02ed05d04faec51172d19bb6d, type: 3}
-  animationStateName: 
+  animationStateName: JumpAttack
   animationTrigger: JumpAttack
+  animationSpeed: 1.5
   rootMotionMode: 0
   staminaRecoveryDelayMode: 0
   opensComboInput: 0
@@ -46,6 +47,7 @@ MonoBehaviour:
   hitboxRevivePower: 34
   hitboxDelay: 0
   hitboxLifetime: 0.3
+  hitEvents: []
   soundClip: {fileID: 8300000, guid: b701448ceb902694db4778af298a1374, type: 3}
   soundVolume: 1
-  soundDelay: 0
+  soundDelay: 1

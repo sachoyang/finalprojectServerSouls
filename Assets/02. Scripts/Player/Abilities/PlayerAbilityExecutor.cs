@@ -1,3 +1,4 @@
+using System.Collections;
 using Fusion;
 using UnityEngine;
 
@@ -59,6 +60,12 @@ public class PlayerAbilityExecutor : MonoBehaviour
         }
 
         ApplyEffect(module, context);
+        if (module.HitEvents != null && module.HitEvents.Length > 0)
+        {
+            StartCoroutine(ProcessHitEvents(context, module));
+            return;
+        }
+
         SpawnHitbox(context, module);
     }
 
@@ -156,6 +163,66 @@ public class PlayerAbilityExecutor : MonoBehaviour
         {
             context.Owner?.GetComponent<NetworkPlayerController>()?.UnlockBasicAttackCombo();
         }
+    }
+
+    private IEnumerator ProcessHitEvents(PlayerAbilityContext context, PlayerAbilityModule module)
+    {
+        if (context.Owner == null || context.Transform == null)
+        {
+            yield break;
+        }
+
+        NetworkObject attacker = context.Owner.GetComponent<NetworkObject>();
+        if (attacker != null && !attacker.HasStateAuthority)
+        {
+            yield break;
+        }
+
+        CombatSystem combatSystem = FindFirstObjectByType<CombatSystem>();
+        if (combatSystem == null)
+        {
+            Debug.LogWarning($"[PlayerAbilityExecutor] CombatSystem not found for ability '{module.AbilityId}'.");
+            yield break;
+        }
+
+        PlayerStatusController statusController = context.Owner.GetComponent<PlayerStatusController>();
+        float outgoingMultiplier = statusController != null ? statusController.GetOutgoingDamageMultiplier() : 1f;
+        float duration = GetAbilityRuntimeDuration(module);
+        float previousTime = 0f;
+
+        foreach (AbilityHitEvent hitEvent in module.HitEvents)
+        {
+            if (hitEvent == null)
+            {
+                continue;
+            }
+
+            float eventTime = Mathf.Clamp01(hitEvent.StartNormalizedTime) * duration;
+            float waitTime = Mathf.Max(0f, eventTime - previousTime);
+            if (waitTime > 0f)
+            {
+                yield return new WaitForSeconds(waitTime);
+            }
+
+            previousTime = eventTime;
+            combatSystem.ProcessAbilityHitEvent(
+                attacker,
+                context.Stats,
+                context.Transform,
+                hitEvent,
+                module.HitboxDamage,
+                outgoingMultiplier);
+        }
+    }
+
+    private static float GetAbilityRuntimeDuration(PlayerAbilityModule module)
+    {
+        if (module.AnimationClip == null)
+        {
+            return 1f;
+        }
+
+        return module.AnimationClip.length / Mathf.Max(0.01f, module.AnimationSpeed);
     }
 
     private static void SpawnHitbox(PlayerAbilityContext context, PlayerAbilityModule module)
