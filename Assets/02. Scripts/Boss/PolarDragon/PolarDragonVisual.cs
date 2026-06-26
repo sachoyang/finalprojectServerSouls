@@ -97,7 +97,7 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
     // ==========================================
     // 매 프레임 높이 조절 (부드러운 공중부양)
     // ==========================================
-private void Update()
+    private void Update()
     {
         if (_bossCore == null) return;
         PolarDragonBoss polarBoss = _bossCore as PolarDragonBoss;
@@ -131,7 +131,9 @@ private void Update()
         float targetHeight = polarBoss.flightHeight * heightFrac;
         // 틱 단위 값의 미세 계단을 부드럽게(약한 스무딩). 커브가 이미 모양을 잡으므로 빠르게 추종.
         _currentHeight = Mathf.Lerp(_currentHeight, targetHeight, Time.deltaTime * 12f);
-        transform.localPosition = new Vector3(0f, _currentHeight, 0f);
+        //transform.localPosition = new Vector3(0f, _currentHeight, 0f);
+        // _currentHeight(2페이즈 비행 버프)와 _patternYOffset(현재 패턴 공중부양 누적치)를 합산!
+        transform.localPosition = new Vector3(0f, _currentHeight + _patternYOffset, 0f);
     }
 
     // ==========================================
@@ -148,9 +150,9 @@ private void Update()
     public void PlayPhaseTransition(int wakeUpHash)
     {
         // 서버가 "체력 50% 이하! 변신해라!" 라고 명령하면 이륙 애니메이션을 틉니다.
-        PlayAction(Animator.StringToHash("TakeOff")); 
-        
-        if (wakeUpSound != null) 
+        PlayAction(Animator.StringToHash("TakeOff"));
+
+        if (wakeUpSound != null)
             SoundManager.Instance.PlaySFX_3D(wakeUpSound, transform.position, SoundCategory.BossGimmick);
     }
 
@@ -179,7 +181,7 @@ private void Update()
     public void PlayDie()
     {
         // 올려주신 Animator 이미지에 있는 "Death" State 사용
-        PlayAction(Animator.StringToHash("Death")); 
+        PlayAction(Animator.StringToHash("Death"));
         if (dieSound != null) SoundManager.Instance.PlaySFX_3D(dieSound, transform.position, SoundCategory.BossGimmick);
     }
 
@@ -187,7 +189,7 @@ private void Update()
     {
         // 서버에서 넘겨주는 방향 벡터의 길이(Magnitude)를 구해서 속도로 변환합니다.
         Vector2 dir = new Vector2(dirX, dirY);
-        float targetSpeed = dir.magnitude; 
+        float targetSpeed = dir.magnitude;
 
         float currentSpeed = anim.GetFloat("MoveSpeed");
         // 부드럽게 감속/가속되도록 Lerp 처리
@@ -233,7 +235,7 @@ private void Update()
             anim.CrossFade("GroundLocomotion", 0.2f);
         }
     }
-    
+
 
     // 🔥 [버그 픽스] 빈 깡통이었던 부분. 이제 실제 캡처 컴포넌트로 위임한다.
     public void SetRootMotionCapture(bool enabled)
@@ -250,6 +252,18 @@ private void Update()
     public Quaternion ConsumeRootMotionRotation()
     {
         return rootMotionCapture != null ? rootMotionCapture.ConsumeDeltaRotation() : Quaternion.identity;
+    }
+    private float _patternYOffset = 0f; // 누적용 변수
+
+    // 인터페이스 구현
+    public void AddPatternYOffset(float deltaY)
+    {
+        _patternYOffset += deltaY;
+    }
+
+    public void ResetPatternYOffset()
+    {
+        _patternYOffset = 0f; // 패턴 끝나면 바닥으로 복구
     }
 
     // ==========================================

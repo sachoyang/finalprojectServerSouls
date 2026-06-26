@@ -10,7 +10,7 @@ public interface IBossVisual
     // 제자리 회전(Turn-in-place) 블렌딩용. turnSign: -1(좌) ~ 0(정면) ~ +1(우).
     // Animator의 Turn 블렌드 트리에 연결해 발 스텝으로 회전을 표현(풋슬라이딩 제거).
     void SetTurn(float turnSign);
-    
+
     void SetLookAtTarget(Vector3 targetPos);
 
     void ResetLookAt();
@@ -32,4 +32,8 @@ public interface IBossVisual
     Vector3 ConsumeRootMotionDelta();
     // 호스트가 매 틱 모아둔 루트모션 회전량을 가져간다(90도 턴 등). 회전이 없으면 Quaternion.identity.
     Quaternion ConsumeRootMotionRotation();
+
+    // 패턴 Y축 높이 '누적' 및 '초기화' 함수
+    void AddPatternYOffset(float deltaY);
+    void ResetPatternYOffset();
 }
