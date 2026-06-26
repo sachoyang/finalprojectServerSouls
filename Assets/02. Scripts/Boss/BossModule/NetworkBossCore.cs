@@ -62,6 +62,9 @@ public class NetworkBossCore : NetworkBehaviour
     [Tooltip("포효 애니메이션의 지속 시간 (초)")]
     public float wakeUpDuration = 2.8f;
     private int _wakeUpAnimHash; // 최적화용 해시 변수
+    [Header("페이즈 전환 설정")]
+    [Tooltip("2페이즈 진입(PhaseTransition) 연출 애니메이션의 지속 시간 (초)")]
+    public float phaseTransitionDuration = 3.0f;
 
     [Header("그로기(Stagger) 설정")]
     public float maxGroggy = 40f;
@@ -752,7 +755,7 @@ public class NetworkBossCore : NetworkBehaviour
             ChangeState(BossState.PhaseTransition);
 
             // 3초 동안 무적 & 포효 연출 진행
-            StateTimer = TickTimer.CreateFromSeconds(Runner, 3.0f);
+            StateTimer = TickTimer.CreateFromSeconds(Runner, phaseTransitionDuration);
             Debug.Log("[보스] 체력 50% 이하! 2페이즈 돌입!");
 
             //ApplyStatus(1); // 광폭화 SO 만들어둔 거 부여
