@@ -269,9 +269,9 @@ public partial class NetworkPlayerController
             return;
         }
 
-        if (!_lockOnTarget.gameObject.activeInHierarchy)
+        if (!lockOnTargetSelector.IsCurrentTargetValid(transform, _lockOnTarget))
         {
-            // 보스나 락온 포인트가 비활성화되면 이전 Transform을 계속 바라보지 않도록 정리한다.
+            // 대상 Root가 비활성/비대상화되거나, 플레이어가 부활해 더 이상 락온 대상이 아니면 정리한다.
             ClearLockOn();
             return;
         }

@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 7255280101828741006}
   - component: {fileID: 4751999895946842085}
   - component: {fileID: 8203462782060850797}
+  - component: {fileID: 217673264805777073}
   m_Layer: 0
   m_Name: BossOrkAssasin
   m_TagString: Untagged
@@ -92,6 +93,8 @@ MonoBehaviour:
   wakeUpRange: 20
   aggroRefreshTime: 5
   patternCooldown: 2
+  facingDeadzoneAngle: 10
+  turnInPlaceSpeed: 80
   statusDatabase:
   - {fileID: 11400000, guid: 282b066d2cb931d40b08a8074ebc05c0, type: 2}
   wakeUpAnimName: atack17_awake
@@ -135,6 +138,19 @@ MonoBehaviour:
   gimmickDamageReduction: 0.3
   daggerThrowDistance: 8
   daggerThrowPatternIndex: 3
+--- !u!114 &217673264805777073
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2173268840119496611}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a7d1c4743c04d62bcbb00b1b15e2971, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetable: 1
 --- !u!1 &2993888719818258472
 GameObject:
   m_ObjectHideFlags: 0
@@ -259,9 +275,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5335830962687466791}
+  - component: {fileID: 6142520254312852062}
   m_Layer: 0
   m_Name: LockOnBody
-  m_TagString: LockOnBody
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -281,6 +298,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 8924072079126639115}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6142520254312852062
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7271403448906771455}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5044ce24cc7446ec8ee79a33d2093cc8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  priority: 10
 --- !u!1001 &5800700646694842395
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -9,13 +9,14 @@ Combat README
 
 역할:
 - Q 입력 시 카메라 시야 안의 락온 후보를 찾고, 화면 중심에 가장 가까운 대상부터 선택한다.
-- Q를 다시 누르면 정렬된 대상 목록에서 다음 대상으로 순회한다.
+- Q를 다시 누르면 현재 대상 Root 안의 LockOnTargetPoint를 priority 순서대로 먼저 순회하고, 그 다음 대상 Root로 넘어간다.
 - E 해제는 NetworkPlayerController가 처리하고, selector는 내부 순회 상태만 Clear()로 비운다.
 
-후보 수집 순서:
-- LockOnTargetPoint 컴포넌트가 붙은 포인트를 우선 사용한다.
-- 아직 컴포넌트가 없는 기존 프리팹은 LockOnHead/LockOnBody 태그를 fallback으로 사용한다.
-- DeadPlayer 태그 루트도 후보에 넣어 죽은 플레이어를 락온할 수 있게 한다.
+후보 수집:
+- LockOnTargetRoot가 붙은 대상만 락온 후보로 사용한다.
+- 각 Root 아래의 LockOnTargetPoint만 실제 조준 위치로 사용한다.
+- 태그 기반 LockOnHead/LockOnBody/DeadPlayer 탐색은 사용하지 않는다.
+- PlayerStats가 붙은 대상은 IsDead가 true일 때만 락온 후보가 된다.
 
 
 2. LockOn/LockOnTargetRoot.cs
@@ -27,6 +28,7 @@ Combat README
 사용:
 - 보스/일반 몬스터/죽은 플레이어 루트에 붙인다.
 - targetable을 끄면 런타임에서 락온 후보에서 제외된다.
+- 플레이어 루트에 붙인 경우, 플레이어가 살아있으면 selector에서 자동 제외된다.
 
 
 3. LockOn/LockOnTargetPoint.cs
@@ -38,4 +40,4 @@ Combat README
 권장:
 - 머리 포인트 priority 0.
 - 몸통 포인트 priority 10.
-- 포인트가 없는 대상은 루트 위치를 fallback으로 사용한다.
+- 포인트가 없는 대상은 락온 후보가 되지 않으므로, 대상마다 최소 하나의 Point를 둔다.

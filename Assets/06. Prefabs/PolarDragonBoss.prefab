@@ -9,9 +9,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1428720031021315423}
+  - component: {fileID: 3302915040086960663}
   m_Layer: 0
   m_Name: LockOnBody
-  m_TagString: LockOnBody
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -31,6 +32,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 5110409727619509645}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3302915040086960663
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 624488617771483369}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5044ce24cc7446ec8ee79a33d2093cc8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  priority: 10
 --- !u!1 &4396456449852380100
 GameObject:
   m_ObjectHideFlags: 0
@@ -184,6 +198,7 @@ GameObject:
   - component: {fileID: 150577676177912306}
   - component: {fileID: 2402919297648847605}
   - component: {fileID: 992474550098228659}
+  - component: {fileID: 7614925232187989671}
   m_Layer: 0
   m_Name: PolarDragonBoss
   m_TagString: Untagged
@@ -303,6 +318,19 @@ MonoBehaviour:
   longRangeThreshold: 15
   _IsFlightActive:
     _value: 0
+--- !u!114 &7614925232187989671
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8521524127431077655}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a7d1c4743c04d62bcbb00b1b15e2971, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetable: 1
 --- !u!1001 &5108428487193952013
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1607,6 +1635,56 @@ MonoBehaviour:
   lookAtGuide: {fileID: 3803559768684446354}
   maxLookAngle: 70
   biteAttack: {fileID: 8203142184038528218}
+  takeoffDuration: 1.5
+  landingDuration: 1.2
+  takeoffHeightCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  landingHeightCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
   spitFrozenBallPrefab: {fileID: 0}
   spreadFrozenBreathPrefab: {fileID: 0}
   breathSpawnPoint: {fileID: 0}
