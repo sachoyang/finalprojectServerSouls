@@ -39,6 +39,14 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
     public GameObject spreadFrozenBreathPrefab; // SpreadFrozenBreath 애니메이션용 브레스
     public Transform breathSpawnPoint; // 입 뼈(Bone) 위치
 
+    [Header("얼음창(IceLance) 투사체")]
+    [Tooltip("발사할 얼음창 프리팹 (icelance_one). IceLanceProjectile 컴포넌트가 붙어 있어야 함.")]
+    public GameObject iceLancePrefab;
+    [Tooltip("얼음창이 땅/플레이어에 맞았을 때 생성할 폭발 프리팹 (EnergyExplosion). BossAoEAttack로 데미지 처리.")]
+    public GameObject energyExplosionPrefab;
+    [Tooltip("조준 높이 보정. 어그로 플레이어의 발 기준 위치에서 이만큼 올려 조준(몸통/가슴을 노림).")]
+    public float lanceAimHeightOffset = 1.0f;
+
     [Header("사운드")]
     public AudioClip wakeUpSound;
     public AudioClip groggySound;
@@ -288,6 +296,39 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
             if (aoe != null && _bossCore != null) aoe.Initialize(_bossCore.GetOutgoingDamageMultiplier());
             if (iceMagicSound != null) SoundManager.Instance.PlaySFX_3D(iceMagicSound, transform.position, SoundCategory.BossGimmick);
         }
+    }
+
+    // ==========================================
+    // [애니메이션 이벤트] 얼음창 발사 — SpitFrozenBall / FlyStationarySpitFrozenBall 클립의 발사 프레임에 연결.
+    //  지상/공중 두 SpitBall 패턴 모두 이 함수 하나로 처리됨.
+    //  목적지 = 호출(발사) 시점의 어그로 플레이어 위치(고정, 따라가지 않음).
+    // ==========================================
+    public void SpawnIceLance()
+    {
+        if (iceLancePrefab == null || breathSpawnPoint == null) return;
+
+        // 1) 목적지 = 지금 이 순간 어그로 플레이어 위치 (없으면 입 정면으로 폴백)
+        Vector3 targetPos;
+        if (_bossCore != null && _bossCore.AggroTarget != null)
+            targetPos = _bossCore.AggroTarget.transform.position + Vector3.up * lanceAimHeightOffset;
+        else
+            targetPos = breathSpawnPoint.position + breathSpawnPoint.forward * 20f;
+
+        // 2) 입에서 생성 (월드 공간 — 날아가야 하므로 부모 없음)
+        Vector3 dir = (targetPos - breathSpawnPoint.position).normalized;
+        Quaternion rot = (dir != Vector3.zero) ? Quaternion.LookRotation(dir) : breathSpawnPoint.rotation;
+        GameObject lance = Instantiate(iceLancePrefab, breathSpawnPoint.position, rot);
+
+        // 3) 발사 지시. 데미지는 보스 권한(호스트)에서만 → 멀티 중복 데미지 방지.
+        IceLanceProjectile proj = lance.GetComponent<IceLanceProjectile>();
+        if (proj != null)
+        {
+            bool applyDamage = _bossCore != null && _bossCore.HasStateAuthority;
+            float mult = _bossCore != null ? _bossCore.GetOutgoingDamageMultiplier() : 1f;
+            proj.Launch(targetPos, energyExplosionPrefab, applyDamage, mult);
+        }
+
+        if (iceMagicSound != null) SoundManager.Instance.PlaySFX_3D(iceMagicSound, transform.position, SoundCategory.BossGimmick);
     }
 
     // 애니메이션: SpreadFrozenBreath 프레임에 맞춤

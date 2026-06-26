@@ -67,7 +67,7 @@ MonoBehaviour:
       m_RotationOrder: 0
     hitboxIndex: 0
     hasSuperArmor: 0
-    enableTracking: 1
+    enableTracking: 0
     trackingStopPercent: 1
     trackingSpeed: 1
   - animationClip: {fileID: 7400000, guid: 356ee6b81c24e0d479ec34763ac66b8e, type: 3}
@@ -102,7 +102,7 @@ MonoBehaviour:
       m_RotationOrder: 4
     hitboxIndex: 0
     hasSuperArmor: 0
-    enableTracking: 1
+    enableTracking: 0
     trackingStopPercent: 1
     trackingSpeed: 1
   - animationClip: {fileID: 7400000, guid: 979950bb5271581458ad8d4c8423586e, type: 3}
