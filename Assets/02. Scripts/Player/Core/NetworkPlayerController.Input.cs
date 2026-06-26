@@ -290,8 +290,9 @@ public partial class NetworkPlayerController
             return;
         }
 
-        // 대상 검색/순환은 선택 전용 컴포넌트가 맡고, 컨트롤러는 전투 상태만 갱신한다.
-        _lockOnTarget = lockOnTargetSelector.SelectNextTarget(transform, _lockOnTarget);
+        // 대상 검색/순환은 선택 전용 컴포넌트가 맡고, 컨트롤러는 전투 상태와 카메라 전달만 갱신한다.
+        // viewCamera를 넘겨 화면 중심에 가장 가까운 후보를 우선 락온하도록 한다.
+        _lockOnTarget = lockOnTargetSelector.SelectNextTarget(transform, _lockOnTarget, viewCamera);
         if (_lockOnTarget == null)
         {
             ClearLockOn();

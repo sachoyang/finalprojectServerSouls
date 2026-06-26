@@ -1,7 +1,8 @@
 Player/Camera README
 
 목적:
-- 3인칭 카메라, 락온 카메라, 컷씬 카메라, 카메라 포인트 구조 설명.
+- 3인칭 카메라, 락온 상태의 카메라 반응, 컷씬 카메라, 카메라 포인트 구조 설명.
+- 락온 대상 탐색/순회 규칙은 Combat/LockOn으로 분리되어 있고, 카메라는 선택된 대상만 전달받아 바라본다.
 
 
 1. ThirdPersonCameraController.cs
@@ -53,23 +54,7 @@ Player/Camera README
 - NetworkPlayerController 락온 흐름에서 SetLockOnTarget/ClearLockOnTarget을 호출한다.
 
 
-3. LockOnTargetSelector.cs
-
-역할:
-- 락온 가능한 대상 후보를 찾고 다음 대상을 선택한다.
-
-주요 필드:
-- searchRadius: 탐색 반경.
-- headTag: 우선 락온 지점 태그. 기본 LockOnHead.
-- bodyTag: 보조 락온 지점 태그. 기본 LockOnBody.
-
-외부에서 호출할 함수:
-- SetSearchRadius(float radius): 탐색 반경 변경.
-- SelectNextTarget(Transform player, Transform currentTarget): 다음 락온 대상 선택.
-- Clear(): 내부 상태 초기화.
-
-
-4. CameraPointManager.cs
+3. CameraPointManager.cs
 
 역할:
 - 컷씬 카메라 포인트를 전역으로 제공한다.

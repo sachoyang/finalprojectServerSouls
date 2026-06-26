@@ -159,6 +159,7 @@ GameObject:
   - component: {fileID: 1745647009342870012}
   - component: {fileID: 3157636954750617142}
   - component: {fileID: 3532236537947503394}
+  - component: {fileID: 224571615926617238}
   m_Layer: 8
   m_Name: Player2
   m_TagString: Player
@@ -501,6 +502,19 @@ MonoBehaviour:
   foundRootBoneCount: 5
   foundColliderCount: 23
   simulatedNodeCount: 0
+--- !u!114 &224571615926617238
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5093928462932519886}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a7d1c4743c04d62bcbb00b1b15e2971, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetable: 1
 --- !u!1001 &2732368445395510690
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -594,6 +608,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5524357496402786692, guid: 033a3d9b8fb69dc43b0a6f84a29ca4ec, type: 3}
       insertIndex: -1
       addedObject: {fileID: 5312276369627772550}
+    - targetCorrespondingSourceObject: {fileID: -788769877499125634, guid: 033a3d9b8fb69dc43b0a6f84a29ca4ec, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3417364670790528231}
     - targetCorrespondingSourceObject: {fileID: -2237898583773686168, guid: 033a3d9b8fb69dc43b0a6f84a29ca4ec, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4017122181798045110}
@@ -853,6 +870,24 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 0.0015
   m_Center: {x: 0, y: 0.0007, z: 0}
+--- !u!1 &5829605592832656860 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -788769877499125634, guid: 033a3d9b8fb69dc43b0a6f84a29ca4ec, type: 3}
+  m_PrefabInstance: {fileID: 2732368445395510690}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &3417364670790528231
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5829605592832656860}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5044ce24cc7446ec8ee79a33d2093cc8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  priority: 10
 --- !u!1 &6093455459038380327 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -1046207392948362107, guid: 033a3d9b8fb69dc43b0a6f84a29ca4ec, type: 3}

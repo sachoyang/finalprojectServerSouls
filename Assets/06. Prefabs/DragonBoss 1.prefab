@@ -102,9 +102,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3809209794358930184}
+  - component: {fileID: 4905877672027192522}
   m_Layer: 0
   m_Name: LockOnHead
-  m_TagString: LockOnHead
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -124,6 +125,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 7649782068898426539}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4905877672027192522
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 264932015058822258}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5044ce24cc7446ec8ee79a33d2093cc8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  priority: 5
 --- !u!1 &404197330762550811
 GameObject:
   m_ObjectHideFlags: 0
@@ -2874,6 +2888,7 @@ GameObject:
   - component: {fileID: 3262892183010469501}
   - component: {fileID: 4410727452468581993}
   - component: {fileID: 1280597557237772811}
+  - component: {fileID: 8193329986447285239}
   m_Layer: 0
   m_Name: DragonBoss 1
   m_TagString: Untagged
@@ -2916,6 +2931,8 @@ MonoBehaviour:
   wakeUpRange: 15
   aggroRefreshTime: 5
   patternCooldown: 2
+  facingDeadzoneAngle: 10
+  turnInPlaceSpeed: 80
   statusDatabase:
   - {fileID: 11400000, guid: 31c5858a67b3f3e4ab6c0f5e8e5eda30, type: 2}
   wakeUpAnimName: Scream
@@ -3015,6 +3032,19 @@ MonoBehaviour:
   radius: 7
   boxSize: {x: 1, y: 1, z: 1}
   rayLength: 5
+--- !u!114 &8193329986447285239
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6914082606777652867}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a7d1c4743c04d62bcbb00b1b15e2971, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetable: 1
 --- !u!1 &6965907121915588567
 GameObject:
   m_ObjectHideFlags: 0
@@ -3499,9 +3529,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3216130064777231415}
+  - component: {fileID: 8342900559028599105}
   m_Layer: 0
   m_Name: LockOnBody
-  m_TagString: LockOnBody
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -3521,6 +3552,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 3242593637178239826}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8342900559028599105
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7844214484005167830}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5044ce24cc7446ec8ee79a33d2093cc8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  priority: 10
 --- !u!1 &7859019862636660710
 GameObject:
   m_ObjectHideFlags: 0
