@@ -18,12 +18,12 @@ MonoBehaviour:
   maxRange: 10
   weight: 0
   actions:
-  - animationClip: {fileID: 7400000, guid: 1ee60951e75b6204c994addc372f454f, type: 3}
-    animationStateName: Walk
-    animationHash: 765711723
-    duration: 2
+  - animationClip: {fileID: 7400000, guid: bd6bd723d64eb65468eef542be8d1957, type: 3}
+    animationStateName: TakeOff
+    animationHash: -2014032391
+    duration: 1.5
     useRootMotion: 0
-    moveOffset: {x: 0, y: 0, z: -10}
+    moveOffset: {x: 0, y: 3, z: 0}
     moveCurve:
       serializedVersion: 2
       m_Curve:
@@ -52,7 +52,112 @@ MonoBehaviour:
     hasSuperArmor: 0
     enableTracking: 1
     trackingStopPercent: 1
-    trackingSpeed: 0
+    trackingSpeed: 2
+  - animationClip: {fileID: 7400000, guid: 7f10852d43ede7f459338eb637d3ad61, type: 3}
+    animationStateName: Fly
+    animationHash: 1808254291
+    duration: 2
+    useRootMotion: 0
+    moveOffset: {x: 0, y: 0, z: -15}
+    moveCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 1
+        outSlope: 1
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 1
+        outSlope: 1
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    hitboxIndex: 0
+    hasSuperArmor: 0
+    enableTracking: 1
+    trackingStopPercent: 1
+    trackingSpeed: 2
+  - animationClip: {fileID: 7400000, guid: 06c5792ce5bb88642b939b8d5ce9c51e, type: 3}
+    animationStateName: FlyStationary
+    animationHash: -746261695
+    duration: 0.8
+    useRootMotion: 0
+    moveOffset: {x: 0, y: 0, z: 0}
+    moveCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    hitboxIndex: 0
+    hasSuperArmor: 0
+    enableTracking: 1
+    trackingStopPercent: 1
+    trackingSpeed: 2
+  - animationClip: {fileID: 7400000, guid: bdeab59f78196044b88b4d0fd37ee4e1, type: 3}
+    animationStateName: FlyStationaryToLanding
+    animationHash: 761871033
+    duration: 1
+    useRootMotion: 0
+    moveOffset: {x: 0, y: -3, z: 0}
+    moveCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 2
+        outSlope: 2
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    hitboxIndex: 0
+    hasSuperArmor: 0
+    enableTracking: 1
+    trackingStopPercent: 1
+    trackingSpeed: 2
   - animationClip: {fileID: 7400000, guid: a9d396f0b5a179c468b4a6ca901f8031, type: 3}
     animationStateName: SpreadFrozenBreath
     animationHash: 2017910308
@@ -64,7 +169,7 @@ MonoBehaviour:
       m_Curve: []
       m_PreInfinity: 0
       m_PostInfinity: 0
-      m_RotationOrder: 0
+      m_RotationOrder: 4
     hitboxIndex: 0
     hasSuperArmor: 0
     enableTracking: 0

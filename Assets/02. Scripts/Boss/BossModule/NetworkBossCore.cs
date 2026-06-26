@@ -336,12 +336,22 @@ public class NetworkBossCore : NetworkBehaviour
 
         if (deltaCurve > 0.001f && action.moveOffset != Vector3.zero)
         {
-            // 목표 이동량(Vector3)에 이번 프레임 비율을 곱해 실제 이동 거리 도출
-            Vector3 worldMoveOffset = transform.TransformDirection(action.moveOffset);
-            Vector3 frameDisplacement = worldMoveOffset * deltaCurve;
+            // 이번 틱에 움직일 전체 로컬 이동량
+            Vector3 localDisplacement = action.moveOffset * deltaCurve;
 
-            // 벽 미끄러짐 연산을 헬퍼에 위임하여 안전하게 이동
-            _movement.MoveWithWallSlide(transform, frameDisplacement, Runner.DeltaTime);
+            // 🔥 [신규 핵심] 1. Y축(높이)은 누적해서 비주얼(모델)만 공중에 띄움!
+            if (localDisplacement.y != 0f)
+            {
+                _visual?.AddPatternYOffset(localDisplacement.y);
+            }
+
+            // 🔥 2. X, Z축은 부모가 지형을 따라 물리적으로 이동!
+            Vector3 flatOffset = new Vector3(localDisplacement.x, 0f, localDisplacement.z);
+            if (flatOffset != Vector3.zero)
+            {
+                Vector3 worldMoveOffset = transform.TransformDirection(flatOffset);
+                _movement.MoveWithWallSlide(transform, worldMoveOffset, Runner.DeltaTime);
+            }
         }
     }
 
@@ -589,10 +599,12 @@ public class NetworkBossCore : NetworkBehaviour
     // ==========================================
     protected void ChangeState(BossState newState)
     {
-        // ★ 패턴 실행 상태를 벗어나면 루트모션 캡처를 끈다
-        if (newState != BossState.ExecutingPattern)
+        // 패턴이 끝나거나 그로기 등으로 강제 취소되었을 때 높이를 0으로 초기화
+        if (CurrentState == BossState.ExecutingPattern && newState != BossState.ExecutingPattern)
+        {
             _visual?.SetRootMotionCapture(false);
-
+            _visual?.ResetPatternYOffset(); 
+        }
         CurrentState = newState;
     }
 

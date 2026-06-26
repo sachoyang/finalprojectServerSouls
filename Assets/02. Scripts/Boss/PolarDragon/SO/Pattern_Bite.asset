@@ -18,10 +18,27 @@ MonoBehaviour:
   maxRange: 10
   weight: 10
   actions:
+  - animationClip: {fileID: 7400000, guid: 1e8f032d6458c5a47a778c68df4f9201, type: 3}
+    animationStateName: GetHit2
+    animationHash: -762764960
+    duration: 1.333
+    useRootMotion: 0
+    moveOffset: {x: 0, y: 0, z: 0}
+    moveCurve:
+      serializedVersion: 2
+      m_Curve: []
+      m_PreInfinity: 0
+      m_PostInfinity: 0
+      m_RotationOrder: 0
+    hitboxIndex: 0
+    hasSuperArmor: 0
+    enableTracking: 0
+    trackingStopPercent: 0
+    trackingSpeed: 0
   - animationClip: {fileID: 7400000, guid: ca98f50ccc6d58447972c6b9cbe14276, type: 3}
     animationStateName: BiteAttack_RM
     animationHash: -241013570
-    duration: 1.333
+    duration: 1.5
     useRootMotion: 1
     moveOffset: {x: 0, y: 0, z: 0}
     moveCurve:

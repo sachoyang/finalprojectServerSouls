@@ -1727,6 +1727,58 @@ MonoBehaviour:
   m_LightCookieSize: {x: 1, y: 1}
   m_LightCookieOffset: {x: 0, y: 0}
   m_SoftShadowQuality: 0
+--- !u!1 &1429067348
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1429067350}
+  - component: {fileID: 1429067349}
+  m_Layer: 0
+  m_Name: CombatManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1429067349
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1429067348}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c7b6db9ab8a4fb48ad2f48344b4f0c1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  basicAttackHitRadius: 1.4
+  basicAttackHitDistance: 1.8
+  basicAttackHitHeight: 1.1
+  basicAttackTargetLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  basicAttackRevivePower: 34
+  bloodEffectSpawner: {fileID: 21222148}
+--- !u!4 &1429067350
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1429067348}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1484418656
 GameObject:
   m_ObjectHideFlags: 0
@@ -1905,8 +1957,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 83d04f1f1f784adf91d9d66dc243435a, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   killBossAndSkipCutsceneKey: 286
   respawnChestKey: 287
   teleportToChestKey: 288
@@ -2877,3 +2929,4 @@ SceneRoots:
   - {fileID: 1034669675}
   - {fileID: 516942650}
   - {fileID: 1806190065974283644}
+  - {fileID: 1429067350}

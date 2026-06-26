@@ -314,6 +314,7 @@ MonoBehaviour:
   flyingPatterns:
   - {fileID: 11400000, guid: a65f9678f825bd24a9f724f001452f7e, type: 2}
   - {fileID: 11400000, guid: d5b3a7db690e0d94e8329f652cf59477, type: 2}
+  - {fileID: 11400000, guid: 45d4f56ea4713474393e2b7f6056ba7e, type: 2}
   landingPatternIndex: 3
   turnAngleThreshold: 60
   turnLeftPatternIndex: 0
@@ -1643,8 +1644,8 @@ MonoBehaviour:
   lookAtGuide: {fileID: 3803559768684446354}
   maxLookAngle: 70
   biteAttack: {fileID: 8203142184038528218}
-  takeoffDuration: 1.5
-  landingDuration: 1.2
+  takeoffDuration: 1.833
+  landingDuration: 2.167
   takeoffHeightCurve:
     serializedVersion: 2
     m_Curve:

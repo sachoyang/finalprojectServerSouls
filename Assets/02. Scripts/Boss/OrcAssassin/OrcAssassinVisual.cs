@@ -69,7 +69,7 @@ public class OrcAssassinVisual : MonoBehaviour, IBossVisual
             Material[] stealthMats = new Material[r.sharedMaterials.Length];
             for (int i = 0; i < stealthMats.Length; i++)
             {
-                stealthMats[i] = stealthMaterial; 
+                stealthMats[i] = stealthMaterial;
             }
             r.sharedMaterials = stealthMats;
         }
@@ -97,7 +97,7 @@ public class OrcAssassinVisual : MonoBehaviour, IBossVisual
     public void SetDirection(float dirX, float dirY)
     {
         Vector2 dir = new Vector2(dirX, dirY);
-        float targetSpeed = dir.magnitude; 
+        float targetSpeed = dir.magnitude;
         float currentSpeed = anim.GetFloat("MoveSpeed");
         anim.SetFloat("MoveSpeed", Mathf.Lerp(currentSpeed, targetSpeed, Time.deltaTime * 5f));
     }
@@ -170,6 +170,20 @@ public class OrcAssassinVisual : MonoBehaviour, IBossVisual
     public Quaternion ConsumeRootMotionRotation()
     {
         return rootMotionCapture != null ? rootMotionCapture.ConsumeDeltaRotation() : Quaternion.identity;
+    }
+    
+    // ==========================================
+    // [IBossVisual 인터페이스 구현 - 빈 껍데기]
+    // 이 보스는 패턴 중 Y축(공중) 이동 기믹을 사용하지 않으므로 비워둡니다.
+    // ==========================================
+    public void AddPatternYOffset(float deltaY)
+    {
+        // 내용 없음
+    }
+
+    public void ResetPatternYOffset()
+    {
+        // 내용 없음
     }
 
     // ==========================================
