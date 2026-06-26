@@ -65,7 +65,7 @@ Revive README
 4. 부활 게이지를 줄이는 호출
 
 기본 공격:
-- CombatSystem.ProcessBasicAttackHit()
+- CombatSystem.ProcessBasicAttackHit(attacker, attackerStats, attackOrigin, damage)
 - 죽은 PlayerStats를 맞추면 RegisterReviveHit(attacker, basicAttackRevivePower)
 
 스킬 히트박스:

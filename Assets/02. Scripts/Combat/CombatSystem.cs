@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using Fusion;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 /// <summary>
 /// 게임 전투 판정과 대상별 피해 처리를 담당한다.
@@ -11,13 +10,9 @@ using UnityEngine.Serialization;
 public class CombatSystem : MonoBehaviour
 {
     [Header("Basic Attack Hit")]
-    [FormerlySerializedAs("attackHitRadius")]
     [SerializeField] private float basicAttackHitRadius = 1.4f;
-    [FormerlySerializedAs("attackHitDistance")]
     [SerializeField] private float basicAttackHitDistance = 1.8f;
-    [FormerlySerializedAs("attackHitHeight")]
     [SerializeField] private float basicAttackHitHeight = 1.1f;
-    [FormerlySerializedAs("attackTargetLayers")]
     [SerializeField] private LayerMask basicAttackTargetLayers = ~0;
 
     [Header("Revive")]
@@ -41,23 +36,24 @@ public class CombatSystem : MonoBehaviour
     public void ProcessBasicAttackHit(
         NetworkObject attacker,
         PlayerStats attackerStats,
+        Transform attackOrigin,
         float damage,
         float groggyDamage = 10f)
     {
-        if (damage <= 0f)
+        if (attackOrigin == null || damage <= 0f)
         {
             return;
         }
 
         ResolveReferences();
-        int hitCount = CollectBasicAttackHits();
+        int hitCount = CollectBasicAttackHits(attackOrigin);
         ResolveBasicAttackTargets(attacker, attackerStats, damage, hitCount);
-        ApplyBossHits(attacker, damage, groggyDamage);
+        ApplyBossHits(attackOrigin, attacker, damage, groggyDamage);
     }
 
-    private int CollectBasicAttackHits()
+    private int CollectBasicAttackHits(Transform attackOrigin)
     {
-        Vector3 hitCenter = transform.TransformPoint(BasicAttackHitLocalCenter);
+        Vector3 hitCenter = attackOrigin.TransformPoint(BasicAttackHitLocalCenter);
         return Physics.OverlapSphereNonAlloc(
             hitCenter,
             basicAttackHitRadius,
@@ -97,12 +93,12 @@ public class CombatSystem : MonoBehaviour
         }
     }
 
-    private void ApplyBossHits(NetworkObject attacker, float damage, float groggyDamage)
+    private void ApplyBossHits(Transform attackOrigin, NetworkObject attacker, float damage, float groggyDamage)
     {
         foreach (BossHurtbox bossHurtbox in _bestBossHurtboxes.Values)
         {
             bossHurtbox.OnHitByPlayer(damage, groggyDamage, attacker);
-            SpawnBloodOnHit(bossHurtbox.GetComponent<Collider>());
+            SpawnBloodOnHit(attackOrigin, bossHurtbox.GetComponent<Collider>());
         }
     }
 
@@ -155,22 +151,22 @@ public class CombatSystem : MonoBehaviour
         }
     }
 
-    private void SpawnBloodOnHit(Collider hitCollider)
+    private void SpawnBloodOnHit(Transform attackOrigin, Collider hitCollider)
     {
-        if (bloodEffectSpawner == null || hitCollider == null)
+        if (attackOrigin == null || bloodEffectSpawner == null || hitCollider == null)
         {
             return;
         }
 
-        Vector3 hitCenter = transform.TransformPoint(BasicAttackHitLocalCenter);
+        Vector3 hitCenter = attackOrigin.TransformPoint(BasicAttackHitLocalCenter);
         Vector3 hitPoint = hitCollider.ClosestPoint(hitCenter);
 
-        Vector3 direction = hitPoint - transform.position;
+        Vector3 direction = hitPoint - attackOrigin.position;
         direction.y = 0f;
 
         if (direction.sqrMagnitude <= 0.001f)
         {
-            direction = transform.forward;
+            direction = attackOrigin.forward;
         }
 
         bloodEffectSpawner.SpawnBlood(hitPoint, direction.normalized);

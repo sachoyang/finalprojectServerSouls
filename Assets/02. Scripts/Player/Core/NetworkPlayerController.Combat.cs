@@ -450,7 +450,12 @@ public partial class NetworkPlayerController
 
     private void ApplyAttackDamage()
     {
-        _combatSystem?.ProcessBasicAttackHit(Object, _playerStats, GetBasicAttackDamage());
+        if (_combatSystem == null)
+        {
+            _combatSystem = FindFirstObjectByType<CombatSystem>();
+        }
+
+        _combatSystem?.ProcessBasicAttackHit(Object, _playerStats, transform, GetBasicAttackDamage());
     }
 
     private float GetBasicAttackDamage()

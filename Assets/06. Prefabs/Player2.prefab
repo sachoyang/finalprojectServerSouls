@@ -152,7 +152,6 @@ GameObject:
   - component: {fileID: 6101401309907565006}
   - component: {fileID: 1030391917968561869}
   - component: {fileID: 5309229396765972019}
-  - component: {fileID: 7652143098714620521}
   - component: {fileID: 3032183278010389585}
   - component: {fileID: 8342556580354120391}
   - component: {fileID: 6580439990751833769}
@@ -312,26 +311,6 @@ MonoBehaviour:
   lockOnTargetSelector: {fileID: 0}
   lockOnSearchRadius: 80
   lockOnRotationSpeed: 900
---- !u!114 &7652143098714620521
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5093928462932519886}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9c7b6db9ab8a4fb48ad2f48344b4f0c1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  basicAttackHitRadius: 1.4
-  basicAttackHitDistance: 1.8
-  basicAttackHitHeight: 1.1
-  basicAttackTargetLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  basicAttackRevivePower: 34
-  bloodEffectSpawner: {fileID: 0}
 --- !u!114 &3032183278010389585
 MonoBehaviour:
   m_ObjectHideFlags: 0

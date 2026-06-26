@@ -48,7 +48,7 @@ PlayerSessionStore
 - moveSpeedAcceleration/moveSpeedDeceleration, moveStartSpeed/moveStopSpeed, minimumMoveAnimationBlend: 이동 애니메이션 속도 보간, 출발 최소 속도, 정지 스냅 기준, 이동 중 최소 Walk 블렌드.
 - jumpHeight/jumpAirTime, forwardJumpHeight/forwardJumpAirTime: 점프 최고 높이와 체공 시간.
 - 기본 공격 콤보 입력 가능 구간은 PlayerActionStateBehaviour가 Animator State 진행률 기준으로 연다.
-- CombatSystem: 기본 공격 히트 판정, 대상별 데미지 처리, 죽은 플레이어 부활 도움, 보스 피 이펙트.
+- CombatSystem: 씬의 별도 Combat Manager 게임오브젝트에 붙는 전투 처리 컴포넌트. 기본 공격 히트 판정, 대상별 데미지 처리, 죽은 플레이어 부활 도움, 보스 피 이펙트 담당.
 - lockOnTargetSelector/lockOnSearchRadius: 락온 대상 탐색.
 
 주요 Networked 값:

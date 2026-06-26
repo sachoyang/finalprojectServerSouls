@@ -15,7 +15,6 @@ public enum PlayerControlLockFlags
 }
 
 [RequireComponent(typeof(NetworkCharacterController))]
-[RequireComponent(typeof(CombatSystem))]
 public partial class NetworkPlayerController :
     NetworkBehaviour,
     IActionLockStateReceiver,
@@ -201,11 +200,7 @@ public partial class NetworkPlayerController :
         _playerStats = GetComponent<PlayerStats>();
         _statusController = GetComponent<PlayerStatusController>();
         _abilityInventory = GetComponent<PlayerAbilityInventory>();
-        _combatSystem = GetComponent<CombatSystem>();
-        if (_combatSystem == null)
-        {
-            _combatSystem = gameObject.AddComponent<CombatSystem>();
-        }
+        _combatSystem = FindFirstObjectByType<CombatSystem>();
         lockOnTargetSelector ??= GetComponent<LockOnTargetSelector>();
         if (lockOnTargetSelector == null)
         {

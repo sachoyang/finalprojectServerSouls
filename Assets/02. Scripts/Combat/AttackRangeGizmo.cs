@@ -12,6 +12,9 @@ public class AttackRangeGizmo : MonoBehaviour
     [SerializeField] private Color wireColor = new Color(1f, 0.1f, 0f, 1f);
     [SerializeField] private bool showWireframe = true;
     [SerializeField] private bool drawCenterLine = true;
+    [SerializeField] private float fallbackRadius = 1.4f;
+    [SerializeField] private float fallbackDistance = 1.8f;
+    [SerializeField] private float fallbackHeight = 1.1f;
 
     private NetworkPlayerController _player;
     private CombatSystem _combat;
@@ -68,8 +71,10 @@ public class AttackRangeGizmo : MonoBehaviour
         Gizmos.matrix = Matrix4x4.TRS(player.transform.position, player.transform.rotation, Vector3.one);
 
         CombatSystem combat = GetCombat();
-        Vector3 center = combat != null ? combat.BasicAttackHitLocalCenter : player.AttackHitLocalCenter;
-        float radius = combat != null ? combat.BasicAttackHitRadius : player.AttackHitRadius;
+        Vector3 center = combat != null
+            ? combat.BasicAttackHitLocalCenter
+            : Vector3.up * fallbackHeight + Vector3.forward * fallbackDistance;
+        float radius = combat != null ? combat.BasicAttackHitRadius : fallbackRadius;
 
         if (fillColor.a > 0f)
         {
@@ -104,7 +109,7 @@ public class AttackRangeGizmo : MonoBehaviour
     {
         if (_combat == null)
         {
-            _combat = GetComponent<CombatSystem>();
+            _combat = FindFirstObjectByType<CombatSystem>();
         }
 
         return _combat;
