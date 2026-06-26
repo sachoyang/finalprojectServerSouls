@@ -265,6 +265,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 8c8688582eb99df44918048cce32c47e, type: 2}
   wakeUpAnimName: SpreadFrozenBreath
   wakeUpDuration: 2.8
+  phaseTransitionDuration: 1.8
   maxGroggy: 40
   groggyDuration: 2
   groggyAnimLength: 1
