@@ -26,11 +26,11 @@ Transform:
   m_GameObject: {fileID: 624488617771483369}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 2.4150136, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 5110409727619509645}
+  m_Father: {fileID: 5110417372715785809}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &3302915040086960663
 MonoBehaviour:
@@ -288,11 +288,13 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 6685c723db89ca0429e428814d737e88, type: 2}
   - {fileID: 11400000, guid: a76f0382bfd4a204ea0829868d40d9ba, type: 2}
   - {fileID: 11400000, guid: fe10bd928a7cd0749890661072750de8, type: 2}
+  - {fileID: 11400000, guid: c36c884abbabd5c409b6b27ef52aef9c, type: 2}
   phase2Patterns:
   - {fileID: 11400000, guid: 1ef1ef1103160124b96c461e2414180f, type: 2}
   - {fileID: 11400000, guid: 6685c723db89ca0429e428814d737e88, type: 2}
   - {fileID: 11400000, guid: a76f0382bfd4a204ea0829868d40d9ba, type: 2}
   - {fileID: 11400000, guid: fe10bd928a7cd0749890661072750de8, type: 2}
+  - {fileID: 11400000, guid: c36c884abbabd5c409b6b27ef52aef9c, type: 2}
   _AllowedMaxPhase: 2
   _DamageMultiplier: 1
   _CurrentPhase: 1
@@ -305,7 +307,7 @@ MonoBehaviour:
   gimmickDamageReduction: 1
   flightBuffId: 3
   flightHeight: 3
-  flightRandomChance: 10
+  flightRandomChance: 5
   flyingTakeOffPatternIndex: 0
   flyingPatterns:
   - {fileID: 11400000, guid: a65f9678f825bd24a9f724f001452f7e, type: 2}
@@ -315,8 +317,11 @@ MonoBehaviour:
   turnLeftPatternIndex: 0
   turnRightPatternIndex: 1
   phase2FrostBuffId: 3
-  longRangePatternIndex: 1
-  longRangeThreshold: 15
+  longRangePatternIndices: 04000000
+  longRangeChance: 33
+  approachCommitTime: 1.2
+  retreatSpitPatternIndex: -1
+  retreatSpitChance: 5
   _IsFlightActive:
     _value: 0
 --- !u!114 &7614925232187989671
@@ -394,7 +399,7 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 4240964543308124, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}
       insertIndex: -1
       addedObject: {fileID: 3442646164305620493}
-    - targetCorrespondingSourceObject: {fileID: 4250946244203136, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}
+    - targetCorrespondingSourceObject: {fileID: 4240964543308124, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1428720031021315423}
     - targetCorrespondingSourceObject: {fileID: 4949944609400506, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}
@@ -1792,11 +1797,6 @@ MonoBehaviour:
   bodyPart: 3
   damageMultiplier: 1
   groggyMultiplier: 1
---- !u!4 &5110409727619509645 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 4250946244203136, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}
-  m_PrefabInstance: {fileID: 5108428487193952013}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &5110417372715785809 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4240964543308124, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}

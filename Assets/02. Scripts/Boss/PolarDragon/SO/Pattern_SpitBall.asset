@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4087804678eb42f4d8f433cd34284ab0, type: 3}
+  m_Name: Pattern_SpitBall
+  m_EditorClassIdentifier: 
+  patternId: 
+  displayName: 
+  minRange: 5
+  maxRange: 12
+  weight: 10
+  actions:
+  - animationClip: {fileID: 7400000, guid: 92ddc87c2a6c07e479b4e72b1c45b32e, type: 3}
+    animationStateName: SpitFrozenBall
+    animationHash: 1282953879
+    duration: 1
+    useRootMotion: 0
+    moveOffset: {x: 0, y: 0, z: 0}
+    moveCurve:
+      serializedVersion: 2
+      m_Curve: []
+      m_PreInfinity: 0
+      m_PostInfinity: 0
+      m_RotationOrder: 0
+    hitboxIndex: 0
+    hasSuperArmor: 0
+    enableTracking: 1
+    trackingStopPercent: 1
+    trackingSpeed: 2
