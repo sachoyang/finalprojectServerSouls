@@ -47,8 +47,34 @@ public class CombatSystem : MonoBehaviour
 
         ResolveReferences();
         int hitCount = CollectBasicAttackHits(attackOrigin);
-        ResolveBasicAttackTargets(attacker, attackerStats, damage, hitCount);
+        ResolveHitTargets(attacker, attackerStats, damage, basicAttackRevivePower, hitCount);
         ApplyBossHits(attackOrigin, attacker, damage, groggyDamage);
+    }
+
+    public void ProcessAbilityHitEvent(
+        NetworkObject attacker,
+        PlayerStats attackerStats,
+        Transform attackOrigin,
+        AbilityHitEvent hitEvent,
+        float fallbackDamage,
+        float outgoingDamageMultiplier = 1f)
+    {
+        if (attackOrigin == null || hitEvent == null)
+        {
+            return;
+        }
+
+        float baseDamage = hitEvent.Damage > 0f ? hitEvent.Damage : fallbackDamage;
+        float damage = baseDamage * Mathf.Max(0f, outgoingDamageMultiplier);
+        if (damage <= 0f)
+        {
+            return;
+        }
+
+        ResolveReferences();
+        int hitCount = CollectCylinderHits(attackOrigin, hitEvent);
+        ResolveHitTargets(attacker, attackerStats, damage, hitEvent.RevivePower, hitCount);
+        ApplyBossHits(attackOrigin, attacker, damage, hitEvent.GroggyDamage);
     }
 
     private int CollectBasicAttackHits(Transform attackOrigin)
@@ -62,10 +88,57 @@ public class CombatSystem : MonoBehaviour
             QueryTriggerInteraction.Collide);
     }
 
-    private void ResolveBasicAttackTargets(
+    private int CollectCylinderHits(Transform attackOrigin, AbilityHitEvent hitEvent)
+    {
+        float halfHeight = Mathf.Max(0.01f, hitEvent.Height) * 0.5f;
+        Vector3 center = attackOrigin.position + Vector3.up * (hitEvent.CenterHeight + halfHeight);
+        Vector3 halfExtents = new Vector3(
+            hitEvent.Radius,
+            halfHeight,
+            hitEvent.Radius);
+
+        int rawCount = Physics.OverlapBoxNonAlloc(
+            center,
+            halfExtents,
+            _hitBuffer,
+            Quaternion.identity,
+            basicAttackTargetLayers,
+            QueryTriggerInteraction.Collide);
+
+        int filteredCount = 0;
+        float radiusSqr = hitEvent.Radius * hitEvent.Radius;
+        for (int i = 0; i < rawCount; i++)
+        {
+            Collider hit = _hitBuffer[i];
+            if (hit == null)
+            {
+                continue;
+            }
+
+            Vector3 closest = hit.ClosestPoint(center);
+            Vector3 delta = closest - center;
+            if (Mathf.Abs(delta.y) > halfHeight)
+            {
+                continue;
+            }
+
+            Vector2 horizontal = new Vector2(delta.x, delta.z);
+            if (horizontal.sqrMagnitude > radiusSqr)
+            {
+                continue;
+            }
+
+            _hitBuffer[filteredCount++] = hit;
+        }
+
+        return filteredCount;
+    }
+
+    private void ResolveHitTargets(
         NetworkObject attacker,
         PlayerStats attackerStats,
         float damage,
+        float revivePower,
         int hitCount)
     {
         _bestBossHurtboxes.Clear();
@@ -79,7 +152,7 @@ public class CombatSystem : MonoBehaviour
                 continue;
             }
 
-            if (TryApplyReviveHit(hit, attacker, attackerStats))
+            if (TryApplyReviveHit(hit, attacker, attackerStats, revivePower))
             {
                 continue;
             }
@@ -102,7 +175,7 @@ public class CombatSystem : MonoBehaviour
         }
     }
 
-    private bool TryApplyReviveHit(Collider hit, NetworkObject attacker, PlayerStats attackerStats)
+    private bool TryApplyReviveHit(Collider hit, NetworkObject attacker, PlayerStats attackerStats, float revivePower)
     {
         PlayerStats hitPlayerStats = hit.GetComponentInParent<PlayerStats>();
         if (hitPlayerStats == null || hitPlayerStats == attackerStats || !hitPlayerStats.IsDead)
@@ -112,7 +185,7 @@ public class CombatSystem : MonoBehaviour
 
         if (_reviveHitPlayers.Add(hitPlayerStats))
         {
-            hitPlayerStats.RegisterReviveHit(attacker, basicAttackRevivePower);
+            hitPlayerStats.RegisterReviveHit(attacker, revivePower);
         }
 
         return true;

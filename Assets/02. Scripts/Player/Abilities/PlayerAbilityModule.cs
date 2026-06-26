@@ -1,5 +1,31 @@
 using UnityEngine;
 
+[System.Serializable]
+public class AbilityHitEvent
+{
+    [SerializeField] private string label = "Hit";
+    [SerializeField, Range(0f, 1f)] private float startNormalizedTime = 0.35f;
+    [SerializeField, Range(0f, 1f)] private float endNormalizedTime = 0.45f;
+    [SerializeField] private float radius = 1.4f;
+    [SerializeField] private float height = 1.8f;
+    [SerializeField] private float centerHeight = 0.9f;
+    [SerializeField] private float damage;
+    [SerializeField] private float groggyDamage = 10f;
+    [SerializeField] private float revivePower = 34f;
+    [SerializeField] private Color previewColor = new Color(1f, 0.2f, 0f, 0.3f);
+
+    public string Label => label;
+    public float StartNormalizedTime => startNormalizedTime;
+    public float EndNormalizedTime => Mathf.Max(startNormalizedTime, endNormalizedTime);
+    public float Radius => Mathf.Max(0f, radius);
+    public float Height => Mathf.Max(0f, height);
+    public float CenterHeight => centerHeight;
+    public float Damage => damage;
+    public float GroggyDamage => groggyDamage;
+    public float RevivePower => revivePower;
+    public Color PreviewColor => previewColor;
+}
+
 public enum AbilityType
 {
     // 획득 즉시 효과를 적용하고 액티브 슬롯에는 들어가지 않는 능력.
@@ -93,6 +119,9 @@ public class PlayerAbilityModule : ScriptableObject
     // Animator Trigger 파라미터로 재생할 때 사용하는 트리거 이름.
     [SerializeField] private string animationTrigger;
 
+    // Animator State의 Speed 값. 프리뷰와 Animator 동기화 도구가 같은 값을 사용한다.
+    [SerializeField, Min(0.01f)] private float animationSpeed = 1f;
+
     [Header("Animation State Behaviour")]
     [Tooltip("Auto uses the animation clip's root curves. Override it when clip import settings make detection unreliable.")]
     [SerializeField] private AnimatorStateFeatureMode rootMotionMode = AnimatorStateFeatureMode.Auto;
@@ -130,6 +159,9 @@ public class PlayerAbilityModule : ScriptableObject
 
     [SerializeField] private float hitboxLifetime = 0.3f;
 
+    [Header("Hit Events")]
+    [SerializeField] private AbilityHitEvent[] hitEvents = System.Array.Empty<AbilityHitEvent>();
+
     [Header("Sound")]
     [Tooltip("능력 사용 시 재생할 사운드 클립 (에셋 DB의 Key로 연동됨)")]
     [SerializeField] private AudioClip soundClip;
@@ -155,6 +187,7 @@ public class PlayerAbilityModule : ScriptableObject
     public AnimationClip AnimationClip => animationClip;
     public string AnimationStateName => animationStateName;
     public string AnimationTrigger => animationTrigger;
+    public float AnimationSpeed => Mathf.Max(0.01f, animationSpeed);
     public bool UsesRootMotion =>
         rootMotionMode == AnimatorStateFeatureMode.Enabled ||
         (rootMotionMode == AnimatorStateFeatureMode.Auto &&
@@ -177,6 +210,7 @@ public class PlayerAbilityModule : ScriptableObject
     public float HitboxRevivePower => hitboxRevivePower;
     public float HitboxDelay => hitboxDelay;
     public float HitboxLifetime => hitboxLifetime;
+    public AbilityHitEvent[] HitEvents => hitEvents;
 
     public AudioClip SoundClip => soundClip;
     public float SoundVolume => soundVolume;

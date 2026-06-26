@@ -31,8 +31,9 @@ MonoBehaviour:
   defenseRateBonus: 0
   attackDamageBonusPercent: 0
   animationClip: {fileID: -203655887218126122, guid: 6e2e5d6f257b702419afdb91532e3d2e, type: 3}
-  animationStateName: 
+  animationStateName: HighSpinAttack
   animationTrigger: HighSpinAttack
+  animationSpeed: 1.3
   rootMotionMode: 0
   staminaRecoveryDelayMode: 0
   opensComboInput: 0
@@ -45,7 +46,28 @@ MonoBehaviour:
   hitboxDamage: 0
   hitboxRevivePower: 34
   hitboxDelay: 0
-  hitboxLifetime: 0.3
+  hitboxLifetime: 0
+  hitEvents:
+  - label: Hit 1
+    startNormalizedTime: 0.42
+    endNormalizedTime: 0.454
+    radius: 1.4
+    height: 1.8
+    centerHeight: 0.5
+    damage: 0
+    groggyDamage: 10
+    revivePower: 34
+    previewColor: {r: 1, g: 0.2, b: 0, a: 0.3}
+  - label: Hit 2
+    startNormalizedTime: 0.541
+    endNormalizedTime: 0.6
+    radius: 1.4
+    height: 1.8
+    centerHeight: 0.5
+    damage: 0
+    groggyDamage: 10
+    revivePower: 34
+    previewColor: {r: 1, g: 0.8135679, b: 0, a: 0.3}
   soundClip: {fileID: 0}
   soundVolume: 1
   soundDelay: 0
