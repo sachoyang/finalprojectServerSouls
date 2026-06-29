@@ -431,6 +431,12 @@ public class PlayerAbilityModuleEditor : Editor
 
     private void UpdatePreviewPlayback()
     {
+        // 프리뷰가 완전히 멈춰 있으면 매 에디터 프레임 길이 계산과 후속 작업을 생략한다.
+        if (!_previewPlaying && !_previewAutoPlay)
+        {
+            return;
+        }
+
         float duration = GetPreviewDuration();
 
         // 💡 수정: Auto가 켜져 있고 멈춰있을 때, 시간이 끝에 도달해 있다면 0초로 리셋하면서 재생 시작

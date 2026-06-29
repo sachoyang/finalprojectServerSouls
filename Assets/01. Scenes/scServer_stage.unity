@@ -245,6 +245,7 @@ MonoBehaviour:
   bloodEffectPrefab: {fileID: 5686874741564713218, guid: 9109dc39405e94241b88fba387ab4297, type: 3}
   destroyDelay: 5
   spawnOffset: {x: 0, y: 0, z: 0}
+  attachedBloodDecalPrefab: {fileID: 3136605153214515430, guid: 45eef0a861a8a8946b4c23fb9f4f779a, type: 3}
 --- !u!1001 &164583458
 PrefabInstance:
   m_ObjectHideFlags: 0

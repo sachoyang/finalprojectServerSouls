@@ -4,22 +4,18 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using Object = UnityEngine.Object;
 
-
 namespace BFX
 {
     public partial class GlobalUpdate : MonoBehaviour
     {
-        public static GlobalUpdate          Instance;
+        public static GlobalUpdate Instance;
         public static HashSet<IScriptInstance> ScriptInstances = new HashSet<IScriptInstance>();
-
-
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void RunOnStart()
         {
             Destroy(Instance);
             Instance = null;
-
             ScriptInstances.Clear();
         }
 
@@ -31,7 +27,6 @@ namespace BFX
             if (existing.Length > 0)
             {
                 Instance = existing[0];
-
                 for (int i = 1; i < existing.Length; i++)
                     Object.Destroy(existing[i].gameObject);
                 return;
@@ -48,19 +43,20 @@ namespace BFX
         {
             if (Instance != this) return;
 
-            foreach (var iScriptInstance in ScriptInstances)
+            foreach (var scriptInstance in ScriptInstances)
             {
-                if (iScriptInstance.CanUpdate) iScriptInstance.ManualUpdate();
+                if (scriptInstance != null && scriptInstance.CanUpdate)
+                {
+                    scriptInstance.ManualUpdate();
+                }
             }
-           
         }
 
-    
         void OnEnable()
         {
             if (GraphicsSettings.currentRenderPipeline == null)
             {
-                Camera.onPreCull    += OnBeforeCameraRendering;
+                Camera.onPreCull += OnBeforeCameraRendering;
             }
         }
 
@@ -68,15 +64,13 @@ namespace BFX
         {
             if (GraphicsSettings.currentRenderPipeline == null)
             {
-                Camera.onPreCull    -= OnBeforeCameraRendering;
+                Camera.onPreCull -= OnBeforeCameraRendering;
             }
-           
         }
 
         private void OnBeforeCameraRendering(Camera cam)
         {
             if (cam.renderingPath == RenderingPath.Forward) cam.depthTextureMode |= DepthTextureMode.Depth;
         }
-        
     }
 }

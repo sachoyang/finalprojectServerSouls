@@ -25,7 +25,6 @@ namespace BFX
 
         internal abstract void OnEnableExtended();
         internal abstract void OnDisableExtended();
-
         internal abstract void ManualUpdate();
     }
 }

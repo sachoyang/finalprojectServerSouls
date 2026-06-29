@@ -1,9 +1,10 @@
 using UnityEngine;
 using System;
-
+using UnityEngine.Rendering.Universal;
 
 namespace BFX
 {
+
     public class BFX_ShaderProperies : IScriptInstance
     {
         public BFX_BloodSettings BloodSettings;
@@ -12,7 +13,7 @@ namespace BFX
         public float          GraphTimeMultiplier = 1, GraphIntensityMultiplier = 1;
         public float          TimeDelay           = 0;
 
-
+ 
         bool          isFrized;
         private float startTime;
 
@@ -23,23 +24,24 @@ namespace BFX
         float         _animationTimeLapsed;
         private float _timeLapsedBeforeFadeout;
 
-        private Renderer decal;
+        private DecalProjector decal;
         private Material       decalMat;
 
         public event Action OnAnimationFinished;
 
         private void Awake()
         {
-            decal          = GetComponent<Renderer>();
+            decal          = GetComponent<DecalProjector>();
             decalMat       = new Material(decal.material);
             decal.material = decalMat;
+
         }
 
         internal override void OnEnableExtended()
         {
             startTime = Time.time + TimeDelay;
 
-            decal.enabled = true;
+            GetComponent<DecalProjector>().enabled = true;
 
             var eval = FloatCurve.Evaluate(0) * GraphIntensityMultiplier;
             decalMat.SetFloat(cutoutPropertyID, eval);
@@ -56,8 +58,10 @@ namespace BFX
         }
 
 
+
         internal override void ManualUpdate()
         {
+
             var deltaTime = BloodSettings == null ? Time.deltaTime : Time.deltaTime * BloodSettings.AnimationSpeed;
             _timeLapsedBeforeFadeout += deltaTime;
 

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 
 namespace BFX
 {
@@ -23,58 +24,50 @@ namespace BFX
         private Vector3 startScale;
         private float   timeDelay;
 
-        Transform           t;
+        Transform           t, tParent;
         BFX_ShaderProperies shaderProperies;
-        private Renderer    _decal;
 
-        Vector3         averageRay;
-        bool            isPositionInitialized;
-        private Vector3 initializedPosition;
-        private bool    isInitialized;
+        Vector3                averageRay;
+        bool                   isPositionInitialized;
+        private Vector3        initializedPosition;
+        private DecalProjector decal;
 
-        private void Initialize()
+        private void Awake()
         {
+            decal                               =  GetComponent<DecalProjector>();
             startOffset                         =  transform.localPosition;
             startScale                          =  transform.localScale;
             t                                   =  transform;
+            tParent                             =  parent.transform;
             shaderProperies                     =  GetComponent<BFX_ShaderProperies>();
             shaderProperies.OnAnimationFinished += ShaderCurve_OnAnimationFinished;
-            isInitialized                       =  true;
-            _decal                              =  GetComponent<Renderer>();
-            _decal.enabled                      =  false;
         }
 
         private void ShaderCurve_OnAnimationFinished()
         {
-            _decal.enabled = false;
+            decal.enabled = false;
         }
 
         internal override void ManualUpdate()
         {
-            if (!isInitialized) Initialize();
             if (!isPositionInitialized) InitializePosition();
             if (shaderProperies.CanUpdate && initializedPosition.x < float.PositiveInfinity) transform.position = initializedPosition;
         }
 
         void InitializePosition()
         {
-            var currentHeight = parent.position.y;
 
-            float ground = currentHeight;
+            decal.enabled = false;
+
+            var   currentHeight = parent.position.y;
+            float ground        = currentHeight;
             if (BloodSettings.AutomaticGroundHeightDetection)
             {
-                var   raycasts = Physics.RaycastAll((parent.position + parent.right), Vector3.down, 5);
-                float max      = float.MinValue;
-                foreach (var raycast in raycasts)
+                var raycasts = Physics.RaycastAll(parent.position, Vector3.down, 5);
+                foreach (var raycastHit in raycasts)
                 {
-                    if (raycast.point.y > max)
-                    {
-                        max = raycast.point.y;
-                    }
+                    if (raycastHit.point.y < ground) ground = raycastHit.point.y;
                 }
-
-                if (raycasts.Length == 0) max        = ground;
-                if (max             < ground) ground = max;
             }
             else
             {
@@ -87,22 +80,22 @@ namespace BFX
 
             if (currentHeight - ground >= scaledTimeHeightMax || currentHeight - ground <= scaledTimeHeightMin)
             {
-                _decal.enabled = false;
+                decal.enabled = false;
             }
             else
             {
-                _decal.enabled = true;
+                decal.enabled = true;
             }
 
-            float diff = (parent.position.y - ground) / scaledTimeHeightMax;
+            float diff = (tParent.position.y - ground) / scaledTimeHeightMax;
             diff = Mathf.Abs(diff);
 
             var scaleMul = Vector3.Lerp(TimeScaleMin, TimeScaleMax, diff);
-            t.localScale = new Vector3(scaleMul.x * startScale.x, startScale.y, scaleMul.z * startScale.z);
+            decal.size = new Vector3(scaleMul.x * startScale.x, scaleMul.z * startScale.z, startScale.y);
 
             var lastOffset = Vector3.Lerp(TimeOffsetMin, TimeOffsetMax, diff);
             t.localPosition = startOffset + lastOffset;
-            t.position      = new Vector3(t.position.x, ground + 0.01f, t.position.z);
+            t.position      = new Vector3(t.position.x, ground + 0.05f, t.position.z);
 
 
             timeDelay = TimeByHeight.Evaluate(diff);
@@ -110,13 +103,9 @@ namespace BFX
             shaderProperies.CanUpdate = false;
             Invoke(nameof(EnableDecalAnimation), Mathf.Max(0, timeDelay / BloodSettings.AnimationSpeed));
 
-           
+      
+
             isPositionInitialized = true;
-        }
-        
-        internal override void OnEnableExtended()
-        {
-          
         }
 
         internal override void OnDisableExtended()
@@ -125,13 +114,19 @@ namespace BFX
             initializedPosition   = Vector3.positiveInfinity;
         }
 
+        internal override void OnEnableExtended()
+        {
+          
+        }
+
+  
         void EnableDecalAnimation()
         {
             shaderProperies.CanUpdate = true;
-            initializedPosition     = transform.position;
+            initializedPosition       = transform.position;
         }
 
-        private void OnDrawGizmos()
+        private void OnDrawGizmosSelected()
         {
             if (t == null) t = transform;
             Gizmos.color  = new Color(49 / 255.0f, 136 / 255.0f, 1, 0.03f);
@@ -140,6 +135,8 @@ namespace BFX
 
             Gizmos.color = new Color(49 / 255.0f, 136 / 255.0f, 1, 0.85f);
             Gizmos.DrawWireCube(Vector3.zero, Vector3.one);
+
+
         }
     }
 }
