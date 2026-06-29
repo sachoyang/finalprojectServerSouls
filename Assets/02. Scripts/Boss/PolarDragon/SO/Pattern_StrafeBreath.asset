@@ -15,8 +15,8 @@ MonoBehaviour:
   patternId: 
   displayName: 
   minRange: 0
-  maxRange: 20
-  weight: 30
+  maxRange: 10
+  weight: 5
   actions:
   - animationClip: {fileID: 7400000, guid: bd6bd723d64eb65468eef542be8d1957, type: 3}
     animationStateName: TakeOff

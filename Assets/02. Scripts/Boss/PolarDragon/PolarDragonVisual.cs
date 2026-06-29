@@ -320,7 +320,8 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
         GameObject lance = Instantiate(iceLancePrefab, breathSpawnPoint.position, rot);
 
         // 3) 발사 지시. 데미지는 보스 권한(호스트)에서만 → 멀티 중복 데미지 방지.
-        IceLanceProjectile proj = lance.GetComponent<IceLanceProjectile>();
+        //    스크립트가 루트가 아닌 자식 파티클(TinyShards 등)에 붙어 있어도 찾도록 InChildren 사용.
+        IceLanceProjectile proj = lance.GetComponentInChildren<IceLanceProjectile>();
         if (proj != null)
         {
             bool applyDamage = _bossCore != null && _bossCore.HasStateAuthority;

@@ -326,7 +326,7 @@ MonoBehaviour:
   longRangeChance: 33
   approachCommitTime: 1.2
   retreatSpitPatternIndex: 5
-  retreatSpitChance: 5
+  retreatSpitChance: 0
   _IsFlightActive:
     _value: 0
 --- !u!114 &7614925232187989671
@@ -354,6 +354,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: PolarDragon_PBR
       objectReference: {fileID: 0}
+    - target: {fileID: 1893503068234912, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}
+      propertyPath: m_Icon
+      value: 
+      objectReference: {fileID: 5132851093641282708, guid: 0000000000000000d000000000000000, type: 0}
     - target: {fileID: 4240964543308124, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -1696,9 +1700,9 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  spitFrozenBallPrefab: {fileID: 0}
+  spitFrozenBallPrefab: {fileID: 1820680284854294, guid: 5537c81202b24a247970c22b8b6c911a, type: 3}
   spreadFrozenBreathPrefab: {fileID: 0}
-  breathSpawnPoint: {fileID: 0}
+  breathSpawnPoint: {fileID: 5112963571751928741}
   iceLancePrefab: {fileID: 1820680284854294, guid: 5537c81202b24a247970c22b8b6c911a, type: 3}
   energyExplosionPrefab: {fileID: 1329845292236604, guid: 9bba9cf244c53c5439505dfc96fdd11c, type: 3}
   lanceAimHeightOffset: 1
@@ -1808,6 +1812,11 @@ MonoBehaviour:
 --- !u!4 &5110417372715785809 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4240964543308124, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}
+  m_PrefabInstance: {fileID: 5108428487193952013}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &5112963571751928741 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4554056238841000, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}
   m_PrefabInstance: {fileID: 5108428487193952013}
   m_PrefabAsset: {fileID: 0}
 --- !u!4 &5112983107171697337 stripped

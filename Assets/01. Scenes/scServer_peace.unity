@@ -600,15 +600,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4897860267909952, guid: 5537c81202b24a247970c22b8b6c911a, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -33.9
+      value: -21.05
       objectReference: {fileID: 0}
     - target: {fileID: 4897860267909952, guid: 5537c81202b24a247970c22b8b6c911a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 2.13
+      value: 1.05
       objectReference: {fileID: 0}
     - target: {fileID: 4897860267909952, guid: 5537c81202b24a247970c22b8b6c911a, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 40.6
+      value: 33.7
       objectReference: {fileID: 0}
     - target: {fileID: 4897860267909952, guid: 5537c81202b24a247970c22b8b6c911a, type: 3}
       propertyPath: m_LocalRotation.w
@@ -651,12 +651,24 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 198433943929519872, guid: 5537c81202b24a247970c22b8b6c911a, type: 3}
+      propertyPath: InitialModule.startLifetime.scalar
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 198433943929519872, guid: 5537c81202b24a247970c22b8b6c911a, type: 3}
       propertyPath: CollisionModule.collidesWith.m_Bits
       value: 896
       objectReference: {fileID: 0}
     - target: {fileID: 198433943929519872, guid: 5537c81202b24a247970c22b8b6c911a, type: 3}
       propertyPath: CollisionModule.multiplyColliderForceByParticleSize
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 198549077654335888, guid: 5537c81202b24a247970c22b8b6c911a, type: 3}
+      propertyPath: InitialModule.startLifetime.scalar
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 2804788555382122355, guid: 5537c81202b24a247970c22b8b6c911a, type: 3}
+      propertyPath: freezeOnImpact
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
