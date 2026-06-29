@@ -154,9 +154,32 @@ EffectPoolManager.Instance.Spawn(bloodPrefab, pos, rot);
 - **scLoading + LoadingSceneController**: 예열 + 풀 사전생성 화면 (로비/디버그 오버레이, 비네트워크 전환). `minDisplayTime` 최소 노출.
 - **TransitionLoadingScreen**: 네트워크 씬 전환(방장 Start) 가림. 자동 동작/자동 생성.
 
+## 셰이더 컴파일 / 빌드 최적화 (현재 설정)
+
+런타임 이펙트 끊김의 핵심 원인은 **셰이더 변형 컴파일**. 두 가지를 구분할 것:
+- **런타임 예열** = ShaderVariantCollection(SVC)을 미리 컴파일. SVC: `Assets/10. Renderings/NewShaderVariants.shadervariants`.
+- **빌드 컴파일 시간** = 빌드에 포함되는 변형 전체. SVC와 무관, **스트리핑/포함 변형**이 결정.
+
+**현재 적용 상태**
+- SVC는 **`Project Settings → Graphics → Preloaded Shaders`(m_PreloadedShaders)** 에만 등록(앱 시작 시 자동 예열). `WarmupLibrary.shaderVariants`는 **비움** — `WarmUp()`이 동기 블로킹이라 중복/프리즈 유발했음.
+- `m_PreloadShadersBatchTimeLimit: 16` (프레임 분산, 논블로킹). `EditorSettings.m_AsyncShaderCompilation: 1` (에디터 on-demand 백그라운드 컴파일).
+- **빌드 스트리핑 켬**: `m_FogStripping: 1`(Automatic), `m_LightmapStripping: 1`(Automatic), URP Global `m_StripUnusedPostProcessingVariants: 1` (+ `m_StripUnusedVariants`는 원래 1).
+  - ⚠️ Automatic 포그/라이트맵 스트리핑은 **Build Settings의 씬 기준**으로 유지 변형 결정. 새 게임플레이 씬은 반드시 Build Settings에 추가.
+- 품질 Low/Medium/High 모두 기본 URP_Medium 사용(레벨별 오버라이드 없음). TerrainLit 쓰는 머티리얼 0개.
+
+**SVC 재녹화(슬림화) 방법**: `Project Settings → Graphics → Shader Loading → Clear` → 실제 게임 플레이(보스/이펙트 다 발동) → `Save to asset`. (빌드 시간엔 영향 없음, 런타임 예열만)
+
 ## TODO (다음 작업 — 단계별)
 - [x] 로딩 흐름: **최소 표시시간** + 방장 Start 네트워크 전환 커버.
-- [x] 보스 이펙트(정적/머리부착 AoE + 얼음창 폭발) 풀 교체.
-- [ ] 투사체/경고표식 풀 교체 (ProjectileMover·WarningIndicator 풀 인식화 후).
-- [ ] 피 이펙트 풀 교체 — **다른 작업자**.
-- [ ] (나중) Project Settings → Graphics → **Preloaded Shaders**에 녹화한 ShaderVariantCollection 등록.
+- [x] 보스 이펙트(정적/머리부착 AoE + 얼음창 폭발) 풀 교체. BossAoEAttack 풀 재사용 버그 수정.
+- [x] 셰이더 preload 단일화(PreloadedShaders) + 빌드 스트리핑 + 에디터 Async.
+- [x] Gothic_Stage를 Build Settings에 추가(Fusion SceneRef 에러 해결).
+- [ ] **빌드 재실행해서 빌드 시간/변형 수 감소 확인** (URP Global `Shader Variant Log Level`로 로그 확인 가능).
+- [ ] (선택) SVC 슬림화: 재녹화 또는 SSAO/DBufferClear 제거(해당 렌더러 기능 미사용 시).
+- [ ] (선택) 투사체/경고표식 풀 교체 — 단, **ProjectileMover 쓰는 프리팹 없음**. "투사체"=icelance_one(IceLanceProjectile, Destroy(transform.root)). 풀링하려면 IceLanceProjectile를 풀 반환형으로 + OnEnable 상태리셋. 현재 잘 동작 중이라 보류.
+- [ ] 피 이펙트 풀 교체 — **다른 작업자 담당**.
+- [ ] WarmupLibrary effectPrefabs에 icelance_one 중복 1개 제거.
+
+## 다음 세션 이어가기 메모
+- 미해결 핵심: **빌드 재측정**(스트리핑 효과 확인)이 다음 1순위.
+- 코드/설정 모두 `Assets/02. Scripts/Optimization/`(코드) + ProjectSettings(Graphics/Editor) + `Assets/10. Renderings/`(URP·SVC)에 있음.
