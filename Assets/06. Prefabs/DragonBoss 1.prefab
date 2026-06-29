@@ -2937,6 +2937,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 31c5858a67b3f3e4ab6c0f5e8e5eda30, type: 2}
   wakeUpAnimName: Scream
   wakeUpDuration: 2.8
+  phaseTransitionDuration: 3
   maxGroggy: 40
   groggyDuration: 3
   groggyAnimLength: 1.4
@@ -3448,10 +3449,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 107.23
-  m_Height: 461.6
+  m_Radius: 132.97
+  m_Height: 502.9
   m_Direction: 0
-  m_Center: {x: -20, y: -72, z: 0}
+  m_Center: {x: -61.3, y: -72, z: 0}
 --- !u!114 &1994853022844583524
 MonoBehaviour:
   m_ObjectHideFlags: 0
