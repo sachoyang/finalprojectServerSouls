@@ -21,12 +21,15 @@ public class CombatSystem : MonoBehaviour
     [Header("Effects")]
     [SerializeField] private BloodEffectSpawner bloodEffectSpawner;
 
-    private readonly Collider[] _hitBuffer = new Collider[16];
+    private readonly Collider[] _hitBuffer = new Collider[128];
     private readonly Dictionary<NetworkBossCore, BossHurtbox> _bestBossHurtboxes = new Dictionary<NetworkBossCore, BossHurtbox>();
     private readonly HashSet<PlayerStats> _reviveHitPlayers = new HashSet<PlayerStats>();
 
     public float BasicAttackHitRadius => basicAttackHitRadius;
     public Vector3 BasicAttackHitLocalCenter => Vector3.up * basicAttackHitHeight + Vector3.forward * basicAttackHitDistance;
+    public int LastAbilityRawHitCount { get; private set; }
+    public int LastAbilityFilteredHitCount { get; private set; }
+    public int LastAbilityBossHurtboxCount { get; private set; }
 
     private void Awake()
     {
@@ -48,10 +51,10 @@ public class CombatSystem : MonoBehaviour
         ResolveReferences();
         int hitCount = CollectBasicAttackHits(attackOrigin);
         ResolveHitTargets(attacker, attackerStats, damage, basicAttackRevivePower, hitCount);
-        ApplyBossHits(attackOrigin, attacker, damage, groggyDamage);
+        ApplyBossHits(attackOrigin, attackOrigin.TransformPoint(BasicAttackHitLocalCenter), attacker, damage, groggyDamage);
     }
 
-    public void ProcessAbilityHitEvent(
+    public bool ProcessAbilityHitEvent(
         NetworkObject attacker,
         PlayerStats attackerStats,
         Transform attackOrigin,
@@ -61,20 +64,28 @@ public class CombatSystem : MonoBehaviour
     {
         if (attackOrigin == null || hitEvent == null)
         {
-            return;
+            return false;
         }
 
-        float baseDamage = hitEvent.Damage > 0f ? hitEvent.Damage : fallbackDamage;
-        float damage = baseDamage * Mathf.Max(0f, outgoingDamageMultiplier);
+        float damageMultiplier = hitEvent.DamageRate > 0f ? hitEvent.DamageRate : fallbackDamage;
+        float attackPower = attackerStats != null ? attackerStats.AttackPower : 0f;
+        float damage = attackPower * damageMultiplier * Mathf.Max(0f, outgoingDamageMultiplier);
         if (damage <= 0f)
         {
-            return;
+            return false;
         }
 
         ResolveReferences();
+        LastAbilityRawHitCount = 0;
+        LastAbilityFilteredHitCount = 0;
+        LastAbilityBossHurtboxCount = 0;
         int hitCount = CollectCylinderHits(attackOrigin, hitEvent);
         ResolveHitTargets(attacker, attackerStats, damage, hitEvent.RevivePower, hitCount);
-        ApplyBossHits(attackOrigin, attacker, damage, hitEvent.GroggyDamage);
+        LastAbilityFilteredHitCount = hitCount;
+        LastAbilityBossHurtboxCount = _bestBossHurtboxes.Count;
+        bool hitBoss = _bestBossHurtboxes.Count > 0;
+        ApplyBossHits(attackOrigin, GetAbilityHitCenter(attackOrigin, hitEvent), attacker, damage, hitEvent.GroggyDamage);
+        return hitBoss;
     }
 
     private int CollectBasicAttackHits(Transform attackOrigin)
@@ -91,7 +102,7 @@ public class CombatSystem : MonoBehaviour
     private int CollectCylinderHits(Transform attackOrigin, AbilityHitEvent hitEvent)
     {
         float halfHeight = Mathf.Max(0.01f, hitEvent.Height) * 0.5f;
-        Vector3 center = attackOrigin.position + Vector3.up * (hitEvent.CenterHeight + halfHeight);
+        Vector3 center = GetAbilityHitCenter(attackOrigin, hitEvent);
         Vector3 halfExtents = new Vector3(
             hitEvent.Radius,
             halfHeight,
@@ -104,6 +115,7 @@ public class CombatSystem : MonoBehaviour
             Quaternion.identity,
             basicAttackTargetLayers,
             QueryTriggerInteraction.Collide);
+        LastAbilityRawHitCount = rawCount;
 
         int filteredCount = 0;
         float radiusSqr = hitEvent.Radius * hitEvent.Radius;
@@ -115,7 +127,7 @@ public class CombatSystem : MonoBehaviour
                 continue;
             }
 
-            Vector3 closest = hit.ClosestPoint(center);
+            Vector3 closest = GetClosestPointSafe(hit, center);
             Vector3 delta = closest - center;
             if (Mathf.Abs(delta.y) > halfHeight)
             {
@@ -132,6 +144,25 @@ public class CombatSystem : MonoBehaviour
         }
 
         return filteredCount;
+    }
+
+    private static Vector3 GetClosestPointSafe(Collider collider, Vector3 position)
+    {
+        if (collider is BoxCollider ||
+            collider is SphereCollider ||
+            collider is CapsuleCollider ||
+            collider is MeshCollider meshCollider && meshCollider.convex)
+        {
+            return collider.ClosestPoint(position);
+        }
+
+        return collider.bounds.ClosestPoint(position);
+    }
+
+    private static Vector3 GetAbilityHitCenter(Transform attackOrigin, AbilityHitEvent hitEvent)
+    {
+        float halfHeight = Mathf.Max(0.01f, hitEvent.Height) * 0.5f;
+        return attackOrigin.position + Vector3.up * (hitEvent.CenterHeight + halfHeight);
     }
 
     private void ResolveHitTargets(
@@ -166,12 +197,17 @@ public class CombatSystem : MonoBehaviour
         }
     }
 
-    private void ApplyBossHits(Transform attackOrigin, NetworkObject attacker, float damage, float groggyDamage)
+    private void ApplyBossHits(
+        Transform attackOrigin,
+        Vector3 hitCenter,
+        NetworkObject attacker,
+        float damage,
+        float groggyDamage)
     {
         foreach (BossHurtbox bossHurtbox in _bestBossHurtboxes.Values)
         {
             bossHurtbox.OnHitByPlayer(damage, groggyDamage, attacker);
-            SpawnBloodOnHit(attackOrigin, bossHurtbox.GetComponent<Collider>());
+            SpawnBloodOnHit(attackOrigin, hitCenter, bossHurtbox.GetComponentInChildren<Collider>());
         }
     }
 
@@ -224,15 +260,14 @@ public class CombatSystem : MonoBehaviour
         }
     }
 
-    private void SpawnBloodOnHit(Transform attackOrigin, Collider hitCollider)
+    private void SpawnBloodOnHit(Transform attackOrigin, Vector3 hitCenter, Collider hitCollider)
     {
         if (attackOrigin == null || bloodEffectSpawner == null || hitCollider == null)
         {
             return;
         }
 
-        Vector3 hitCenter = attackOrigin.TransformPoint(BasicAttackHitLocalCenter);
-        Vector3 hitPoint = hitCollider.ClosestPoint(hitCenter);
+        Vector3 hitPoint = GetClosestPointSafe(hitCollider, hitCenter);
 
         Vector3 direction = hitPoint - attackOrigin.position;
         direction.y = 0f;

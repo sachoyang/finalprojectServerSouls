@@ -23,6 +23,8 @@ public partial class NetworkPlayerController
     {
         UpdateAnimatorRootMotionMode();
         RestoreDefaultGravityIfGrounded();
+        UpdateJumpGroundContact();
+        UpdateJumpActionLockFromGrounding();
 
         if (HasControlLock(PlayerControlLockFlags.Movement))
         {
@@ -89,6 +91,15 @@ public partial class NetworkPlayerController
         bool jumpPressed = canUseActionInput && rawJumpPressed;
         bool attackPressed = canUseActionInput && !rawJumpPressed && rawAttackPressed;
         bool parryPressed = canUseActionInput && !rawJumpPressed && !rawAttackPressed && rawParryPressed;
+        if (jumpPressed)
+        {
+            BufferedJumpActionId = data.actionId;
+            BufferedJumpExpireTime = Runner.SimulationTime + jumpInputBufferSeconds;
+        }
+        else if (BufferedJumpActionId != 0 && Runner.SimulationTime > BufferedJumpExpireTime)
+        {
+            BufferedJumpActionId = 0;
+        }
 
         if (rawJumpPressed)
         {
@@ -131,7 +142,7 @@ public partial class NetworkPlayerController
         {
             // 액션 입력은 서버 권한에서만 확정한다.
             // 비호스트 클라이언트는 입력만 보내고, 애니메이션은 ActionSequence 수신 후 재생한다.
-            if (jumpPressed && _networkCharacterController.Grounded)
+            if (BufferedJumpActionId != 0 && CanJumpFromGround())
             {
                 if (TrySpendJumpStamina())
                 {
@@ -147,13 +158,19 @@ public partial class NetworkPlayerController
                         ForwardJumpDirection = Vector3.zero;
                     }
 
+                    _jumpAirborneObserved = false;
                     ApplyJumpPhysics(useForwardJump);
-                    StartAction(useForwardJump ? ActionJumpForward : ActionJump, data.actionId);
+                    StartAction(useForwardJump ? ActionJumpForward : ActionJump, BufferedJumpActionId);
+                    BufferedJumpActionId = 0;
                     isActing = true;
                     isBusy = true;
                 }
+                else
+                {
+                    BufferedJumpActionId = 0;
+                }
             }
-            else if (attackPressed)
+            else if (!isBusy && attackPressed)
             {
                 // 기본 공격은 StateAuthority에서 최종 스태미나와 피격 판정을 처리한다.
                 if (TrySpendBasicAttackStamina())
@@ -163,7 +180,7 @@ public partial class NetworkPlayerController
                     isBusy = true;
                 }
             }
-            else if (parryPressed)
+            else if (!isBusy && parryPressed)
             {
                 // 패링 중 피격되면 PlayerStats가 Impact2 액션을 요청한다.
                 if (TrySpendParryStamina())
@@ -173,7 +190,7 @@ public partial class NetworkPlayerController
                     isBusy = true;
                 }
             }
-            else if (shiftReleased && ShiftHoldTime < shiftHoldThreshold)
+            else if (!isBusy && shiftReleased && ShiftHoldTime < shiftHoldThreshold)
             {
                 // Shift를 짧게 뗐을 때 구르기, 오래 누르면 달리기로 처리한다.
                 if (_playerStats == null || _playerStats.TryUseActionStamina(_playerStats.RollStaminaCost))
@@ -252,6 +269,58 @@ public partial class NetworkPlayerController
         {
             ShiftHoldTime = 0f;
         }
+    }
+
+    private void UpdateJumpGroundContact()
+    {
+        if (!HasStateAuthority || Runner == null || !IsDirectlyGrounded())
+        {
+            return;
+        }
+
+        LastGroundedSimulationTime = Runner.SimulationTime;
+        HasRecordedGroundContact = true;
+    }
+
+    private bool CanJumpFromGround()
+    {
+        if (IsDirectlyGrounded())
+        {
+            return true;
+        }
+
+        return HasRecordedGroundContact &&
+               Runner != null &&
+               Runner.SimulationTime - LastGroundedSimulationTime <= jumpGroundGraceSeconds;
+    }
+
+    private bool IsDirectlyGrounded()
+    {
+        return (_networkCharacterController != null && _networkCharacterController.Grounded) ||
+               (_characterController != null && _characterController.isGrounded);
+    }
+
+    private void UpdateJumpActionLockFromGrounding()
+    {
+        if (!IsJumpAction(LastAction) || !IsActionAnimationLocked)
+        {
+            _jumpAirborneObserved = false;
+            return;
+        }
+
+        if (!IsDirectlyGrounded())
+        {
+            _jumpAirborneObserved = true;
+            return;
+        }
+
+        if (!_jumpAirborneObserved)
+        {
+            return;
+        }
+
+        EndActionAnimation(StateActionLockType.Jump);
+        _jumpAirborneObserved = false;
     }
 
     private void ProcessLockOnInput(NetworkInputData data)

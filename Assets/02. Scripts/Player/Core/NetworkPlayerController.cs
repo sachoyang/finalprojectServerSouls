@@ -115,6 +115,8 @@ public partial class NetworkPlayerController :
     [SerializeField] private float forwardJumpAirTime = 0.68f;
     [SerializeField, Range(0.5f, 1f)] private float runJumpSpeedRatio = 0.75f;
     [SerializeField] private bool useForwardJumpRootMotion = false;
+    [SerializeField, Min(0f)] private float jumpGroundGraceSeconds = 0.12f;
+    [SerializeField, Min(0f)] private float jumpInputBufferSeconds = 0.12f;
 
     [Header("Lock On")]
     // 락온 가능한 보스 포인트 탐색 범위와 락온 중 회전 속도.
@@ -145,6 +147,10 @@ public partial class NetworkPlayerController :
     [Networked] private float CurrentMoveSpeed { get; set; }
     [Networked] private float MoveSpeedBlendNetworked { get; set; }
     [Networked] private Vector3 ForwardJumpDirection { get; set; }
+    [Networked] private float LastGroundedSimulationTime { get; set; }
+    [Networked] private NetworkBool HasRecordedGroundContact { get; set; }
+    [Networked] private int BufferedJumpActionId { get; set; }
+    [Networked] private float BufferedJumpExpireTime { get; set; }
 
     private NetworkCharacterController _networkCharacterController;
     private CharacterController _characterController;
@@ -153,6 +159,7 @@ public partial class NetworkPlayerController :
     private PlayerAbilityInventory _abilityInventory;
     private CombatSystem _combatSystem;
     private ChangeDetector _changeDetector;
+    private bool _jumpAirborneObserved;
     // 이동 입력이 없는 구르기에서도 마지막으로 움직이던 방향을 유지하기 위한 캐시.
     private Vector3 _lastMoveDirection = Vector3.forward;
     // 락온 대상 Transform은 로컬에만 들고, 네트워크에는 바라볼 위치와 상태만 보낸다.

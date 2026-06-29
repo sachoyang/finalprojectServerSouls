@@ -5,6 +5,15 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class PlayerAbilityExecutor : MonoBehaviour
 {
+    public PlayerAbilityModule ActiveHitEventModule { get; private set; }
+    public AbilityHitEvent ActiveHitEvent { get; private set; }
+
+    private void OnDisable()
+    {
+        ActiveHitEventModule = null;
+        ActiveHitEvent = null;
+    }
+
     public bool CanEquip(PlayerAbilityModule module, PlayerAbilityContext context)
     {
         return module != null && context.Owner != null;
@@ -60,13 +69,12 @@ public class PlayerAbilityExecutor : MonoBehaviour
         }
 
         ApplyEffect(module, context);
-        if (module.HitEvents != null && module.HitEvents.Length > 0)
+        if (module.HitEvents == null || module.HitEvents.Length == 0)
         {
-            StartCoroutine(ProcessHitEvents(context, module));
             return;
         }
 
-        SpawnHitbox(context, module);
+        StartCoroutine(ProcessHitEvents(context, module));
     }
 
     public void PlayPresentation(PlayerAbilityModule module, PlayerAbilityContext context)
@@ -205,14 +213,48 @@ public class PlayerAbilityExecutor : MonoBehaviour
             }
 
             previousTime = eventTime;
-            combatSystem.ProcessAbilityHitEvent(
-                attacker,
-                context.Stats,
-                context.Transform,
-                hitEvent,
-                module.HitboxDamage,
-                outgoingMultiplier);
+            float eventEndTime = Mathf.Clamp01(hitEvent.EndNormalizedTime) * duration;
+            float sampleTime = eventTime;
+            bool hitBoss = false;
+            int maxRawHits = 0;
+            int maxFilteredHits = 0;
+            int maxBossHurtboxes = 0;
+            ActiveHitEventModule = module;
+            ActiveHitEvent = hitEvent;
+            do
+            {
+                if (!hitBoss)
+                {
+                    hitBoss = combatSystem.ProcessAbilityHitEvent(
+                        attacker,
+                        context.Stats,
+                        context.Transform,
+                        hitEvent,
+                        module.HitboxDamage,
+                        outgoingMultiplier);
+                }
+
+                maxRawHits = Mathf.Max(maxRawHits, combatSystem.LastAbilityRawHitCount);
+                maxFilteredHits = Mathf.Max(maxFilteredHits, combatSystem.LastAbilityFilteredHitCount);
+                maxBossHurtboxes = Mathf.Max(maxBossHurtboxes, combatSystem.LastAbilityBossHurtboxCount);
+                yield return new WaitForFixedUpdate();
+                sampleTime += Time.fixedDeltaTime;
+            }
+            while (sampleTime <= eventEndTime);
+
+            Debug.Log(
+                $"[SkillHitEvent] {module.AbilityId}/{hitEvent.Label} " +
+                $"damageRate={hitEvent.DamageRate}, attackPower={context.Stats?.AttackPower ?? 0f}, " +
+                $"raw={maxRawHits}, cylinder={maxFilteredHits}, " +
+                $"bossHurtbox={maxBossHurtboxes}, applied={hitBoss}",
+                context.Owner);
+            ActiveHitEventModule = null;
+            ActiveHitEvent = null;
+            previousTime = Mathf.Min(sampleTime, eventEndTime);
         }
+
+        ActiveHitEventModule = null;
+        ActiveHitEvent = null;
     }
 
     private static float GetAbilityRuntimeDuration(PlayerAbilityModule module)
@@ -225,59 +267,4 @@ public class PlayerAbilityExecutor : MonoBehaviour
         return module.AnimationClip.length / Mathf.Max(0.01f, module.AnimationSpeed);
     }
 
-    private static void SpawnHitbox(PlayerAbilityContext context, PlayerAbilityModule module)
-    {
-        GameObject hitbox = SpawnPrefab(context, module.HitboxPrefab, module.HitboxLocalOffset, false);
-        if (hitbox == null)
-        {
-            return;
-        }
-
-        NetworkObject attacker = context.Owner != null ? context.Owner.GetComponent<NetworkObject>() : null;
-        PlayerStatusController statusController = context.Owner != null ? context.Owner.GetComponent<PlayerStatusController>() : null;
-        float damage = module.HitboxDamage;
-        if (statusController != null)
-        {
-            damage *= statusController.GetOutgoingDamageMultiplier();
-        }
-
-        PlayerSkillHitbox skillHitbox = hitbox.GetComponent<PlayerSkillHitbox>();
-        if (skillHitbox != null)
-        {
-            skillHitbox.Initialize(
-                context.Owner,
-                attacker,
-                damage,
-                module.HitboxRevivePower,
-                module.HitboxDelay,
-                module.HitboxLifetime);
-        }
-    }
-
-    private static GameObject SpawnPrefab(PlayerAbilityContext context, GameObject prefab, Vector3 localOffset, bool parentToPlayer)
-    {
-        if (prefab == null || context.Transform == null)
-        {
-            return null;
-        }
-
-        Vector3 position = context.Transform.TransformPoint(localOffset);
-        Quaternion rotation = context.Transform.rotation;
-
-        NetworkRunner runner = context.Runner;
-        NetworkObject networkPrefab = prefab.GetComponent<NetworkObject>();
-        if (runner != null && networkPrefab != null)
-        {
-            NetworkObject networkInstance = runner.Spawn(networkPrefab, position, rotation, null);
-            return networkInstance != null ? networkInstance.gameObject : null;
-        }
-
-        GameObject instance = Instantiate(prefab, position, rotation);
-        if (parentToPlayer)
-        {
-            instance.transform.SetParent(context.Transform, true);
-        }
-
-        return instance;
-    }
 }
