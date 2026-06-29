@@ -22,6 +22,7 @@ MonoBehaviour:
     animationStateName: idle01
     animationHash: 1140807941
     duration: 1
+    useRootMotion: 0
     moveOffset: {x: 0, y: 0, z: 0}
     moveCurve:
       serializedVersion: 2
@@ -31,10 +32,14 @@ MonoBehaviour:
       m_RotationOrder: 0
     hitboxIndex: 0
     hasSuperArmor: 0
+    enableTracking: 1
+    trackingStopPercent: 0.5
+    trackingSpeed: 3
   - animationClip: {fileID: 7400000, guid: f882585276163954fbc547e18dea9d6b, type: 3}
     animationStateName: Basic Attack
     animationHash: -1155614474
     duration: 1.5
+    useRootMotion: 0
     moveOffset: {x: 0, y: 0, z: 0}
     moveCurve:
       serializedVersion: 2
@@ -44,10 +49,14 @@ MonoBehaviour:
       m_RotationOrder: 0
     hitboxIndex: 0
     hasSuperArmor: 0
+    enableTracking: 0
+    trackingStopPercent: 0.5
+    trackingSpeed: 3
   - animationClip: {fileID: 7400000, guid: f882585276163954fbc547e18dea9d6b, type: 3}
     animationStateName: Basic Attack
     animationHash: -1155614474
     duration: 1.5
+    useRootMotion: 0
     moveOffset: {x: 0, y: 0, z: 0}
     moveCurve:
       serializedVersion: 2
@@ -57,3 +66,6 @@ MonoBehaviour:
       m_RotationOrder: 0
     hitboxIndex: 0
     hasSuperArmor: 0
+    enableTracking: 0
+    trackingStopPercent: 0.5
+    trackingSpeed: 3

@@ -1699,6 +1699,9 @@ MonoBehaviour:
   spitFrozenBallPrefab: {fileID: 0}
   spreadFrozenBreathPrefab: {fileID: 0}
   breathSpawnPoint: {fileID: 0}
+  iceLancePrefab: {fileID: 1820680284854294, guid: 5537c81202b24a247970c22b8b6c911a, type: 3}
+  energyExplosionPrefab: {fileID: 1329845292236604, guid: 9bba9cf244c53c5439505dfc96fdd11c, type: 3}
+  lanceAimHeightOffset: 1
   wakeUpSound: {fileID: 0}
   groggySound: {fileID: 0}
   dieSound: {fileID: 0}

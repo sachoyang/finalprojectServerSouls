@@ -48,7 +48,7 @@ ParticleSystem:
   ringBufferMode: 0
   ringBufferLoopRange: {x: 0, y: 1}
   emitterVelocityMode: 0
-  looping: 1
+  looping: 0
   prewarm: 0
   playOnAwake: 1
   useUnscaledTime: 0
@@ -4758,7 +4758,6 @@ ParticleSystemRenderer:
   m_RendererPriority: 0
   m_Materials:
   - {fileID: 2100000, guid: 776677ab3818fb249adaca05f4e04545, type: 2}
-  - {fileID: 0}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -4822,6 +4821,7 @@ GameObject:
   - component: {fileID: 4865135451303388}
   - component: {fileID: 198856239026640498}
   - component: {fileID: 199756426985724656}
+  - component: {fileID: 262023779673124614}
   m_Layer: 0
   m_Name: EnergyExplosion
   m_TagString: Untagged
@@ -6378,8 +6378,8 @@ ParticleSystem:
     rowMode: 1
     sprites:
     - sprite: {fileID: 0}
-    flipU: 0.5
-    flipV: 0.5
+    flipU: 0
+    flipV: 0
   VelocityModule:
     enabled: 1
     x:
@@ -9689,7 +9689,6 @@ ParticleSystemRenderer:
   m_RendererPriority: 0
   m_Materials:
   - {fileID: 2100000, guid: bf88af72084132746823869f28b070f8, type: 2}
-  - {fileID: 0}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -9723,7 +9722,7 @@ ParticleSystemRenderer:
   m_ShadowBias: 0
   m_RenderAlignment: 0
   m_Pivot: {x: 0, y: 0, z: 0}
-  m_Flip: {x: 0, y: 0, z: 0}
+  m_Flip: {x: 0.5, y: 0.5, z: 0}
   m_EnableGPUInstancing: 1
   m_ApplyActiveColorSpace: 0
   m_AllowRoll: 1
@@ -9742,6 +9741,32 @@ ParticleSystemRenderer:
   m_MeshWeighting2: 1
   m_MeshWeighting3: 1
   m_MaskInteraction: 0
+--- !u!114 &262023779673124614
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1329845292236604}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5695f8d50fc079f40bf1a4bef6077b7a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hitZones:
+  - hitShape: 0
+    hitRadius: 3
+    boxSize: {x: 0, y: 0, z: 0}
+    hitOffset: {x: 0, y: 0, z: 0}
+    startTime: 0
+    duration: 1
+  syncParticle: {fileID: 198856239026640498}
+  baseDamage: 3000
+  isMultiHit: 0
+  hitInterval: 0.5
+  targetLayer:
+    serializedVersion: 2
+    m_Bits: 0
 --- !u!1 &1367458547200666
 GameObject:
   m_ObjectHideFlags: 0
@@ -9790,7 +9815,7 @@ ParticleSystem:
   ringBufferMode: 0
   ringBufferLoopRange: {x: 0, y: 1}
   emitterVelocityMode: 0
-  looping: 1
+  looping: 0
   prewarm: 0
   playOnAwake: 1
   useUnscaledTime: 0
@@ -14590,7 +14615,6 @@ ParticleSystemRenderer:
   m_RendererPriority: 0
   m_Materials:
   - {fileID: 2100000, guid: 0b1b6a2d22d96564f9037ae143ea84cf, type: 2}
-  - {fileID: 0}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -14691,7 +14715,7 @@ ParticleSystem:
   ringBufferMode: 0
   ringBufferLoopRange: {x: 0, y: 1}
   emitterVelocityMode: 0
-  looping: 1
+  looping: 0
   prewarm: 0
   playOnAwake: 1
   useUnscaledTime: 0
@@ -19491,7 +19515,6 @@ ParticleSystemRenderer:
   m_RendererPriority: 0
   m_Materials:
   - {fileID: 2100000, guid: 65586f2fde3974c4e9469dfe6cf89338, type: 2}
-  - {fileID: 0}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
