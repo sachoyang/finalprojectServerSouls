@@ -48382,19 +48382,69 @@ MonoBehaviour:
   bloodEffects:
   - effectId: BasicAttack1
     prefab: {fileID: 764304066602274965, guid: 4a322f29a9e1fa54f90223de8bcf3a28, type: 3}
-    hitSound: {fileID: 0}
-    soundVolume: 0
-    scale: 0
-    randomScaleRange: {x: 0, y: 0}
+    hitSound: {fileID: 8300000, guid: 0b65be7dcd3038443bbd217ef9ce661c, type: 3}
+    soundVolume: 1
+    scale: 1
+    randomScaleMin: 0.9
+    randomScaleMax: 1.1
+    legacyRandomScaleRange: {x: 0.9, y: 1.1}
     overrideColor: 0
-    color: {r: 0, g: 0, b: 0, a: 0}
-    lifetime: 0
+    color: {r: 1, g: 1, b: 1, a: 0}
+  - effectId: high_spin_attack
+    prefab: {fileID: 6463355840203370170, guid: 70ead61ff20b23b4e97b90d8e8997ecd, type: 3}
+    hitSound: {fileID: 8300000, guid: 0b65be7dcd3038443bbd217ef9ce661c, type: 3}
+    soundVolume: 1
+    scale: 1
+    randomScaleMin: 0.9
+    randomScaleMax: 1.1
+    legacyRandomScaleRange: {x: 0.9, y: 1.1}
+    overrideColor: 0
+    color: {r: 1, g: 1, b: 1, a: 0}
+  - effectId: jump_attack
+    prefab: {fileID: 2629016494315086251, guid: 5776aed3bb070e54cb09a11c8a6a5831, type: 3}
+    hitSound: {fileID: 8300000, guid: 0b65be7dcd3038443bbd217ef9ce661c, type: 3}
+    soundVolume: 1
+    scale: 1
+    randomScaleMin: 0.9
+    randomScaleMax: 1.1
+    legacyRandomScaleRange: {x: 0.9, y: 1.1}
+    overrideColor: 0
+    color: {r: 1, g: 1, b: 1, a: 0}
+  - effectId: slide_attack
+    prefab: {fileID: 2629016494315086251, guid: 5776aed3bb070e54cb09a11c8a6a5831, type: 3}
+    hitSound: {fileID: 8300000, guid: 0b65be7dcd3038443bbd217ef9ce661c, type: 3}
+    soundVolume: 1
+    scale: 1
+    randomScaleMin: 0.9
+    randomScaleMax: 1.1
+    legacyRandomScaleRange: {x: 0.9, y: 1.1}
+    overrideColor: 0
+    color: {r: 1, g: 1, b: 1, a: 0}
+  - effectId: BasicAttack2
+    prefab: {fileID: 2629016494315086251, guid: 5776aed3bb070e54cb09a11c8a6a5831, type: 3}
+    hitSound: {fileID: 8300000, guid: 0b65be7dcd3038443bbd217ef9ce661c, type: 3}
+    soundVolume: 1
+    scale: 1
+    randomScaleMin: 0.9
+    randomScaleMax: 1.1
+    legacyRandomScaleRange: {x: 0.9, y: 1.1}
+    overrideColor: 0
+    color: {r: 1, g: 1, b: 1, a: 0}
+  - effectId: BasicAttack3
+    prefab: {fileID: 2629016494315086251, guid: 5776aed3bb070e54cb09a11c8a6a5831, type: 3}
+    hitSound: {fileID: 8300000, guid: 0b65be7dcd3038443bbd217ef9ce661c, type: 3}
+    soundVolume: 1
+    scale: 1
+    randomScaleMin: 0.9
+    randomScaleMax: 1.1
+    legacyRandomScaleRange: {x: 0.9, y: 1.1}
+    overrideColor: 0
+    color: {r: 1, g: 1, b: 1, a: 0}
   spawnOffset: {x: 0, y: 0, z: 0}
   globalScaleMultiplier: 1
   animationSpeedMultiplier: 1
-  attachedBloodDecalPrefab: {fileID: 0}
-  fallbackBloodEffectPrefab: {fileID: 0}
-  fallbackLifetime: 5
+  attachedBloodDecalPrefab: {fileID: 3136605153214515430, guid: 45eef0a861a8a8946b4c23fb9f4f779a, type: 3}
+  fallbackBloodEffectPrefab: {fileID: 4288107571095694937, guid: c3f8938673a07704e93ac52eee18f410, type: 3}
 --- !u!114 &1863837994
 MonoBehaviour:
   m_ObjectHideFlags: 0

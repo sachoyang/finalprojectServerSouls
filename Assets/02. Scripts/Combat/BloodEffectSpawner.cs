@@ -38,23 +38,25 @@ public class BloodEffectSpawner : MonoBehaviour
         [Tooltip("피 이펙트가 생성될 때 같은 위치에서 재생할 3D 사운드입니다.")]
         public AudioClip hitSound;
         [InspectorName("사운드 볼륨")]
-        [Tooltip("SoundManager의 CombatHit 카테고리 볼륨에 추가로 곱할 값입니다.")]
-        [Range(0f, 2f)] public float soundVolume = 1f;
+        [Tooltip("SoundManager의 CombatHit 카테고리 볼륨에 추가로 곱할 값입니다. 기본값은 1입니다.")]
+        [Range(0.01f, 2f)] public float soundVolume = 1f;
         [InspectorName("기본 크기")]
         [Tooltip("프리팹 원본 크기에 곱할 배율입니다.")]
         [Min(0.01f)] public float scale = 1f;
-        [InspectorName("무작위 크기 범위")]
-        [Tooltip("생성할 때 기본 크기에 곱할 최소·최대 무작위 배율입니다.")]
-        public Vector2 randomScaleRange = new Vector2(0.9f, 1.1f);
+        [InspectorName("무작위 크기 최소")]
+        [Tooltip("생성할 때 기본 크기에 곱할 최소 무작위 배율입니다.")]
+        [Min(0.01f)] public float randomScaleMin = 0.9f;
+        [InspectorName("무작위 크기 최대")]
+        [Tooltip("생성할 때 기본 크기에 곱할 최대 무작위 배율입니다.")]
+        [Min(0.01f)] public float randomScaleMax = 1.1f;
+        [FormerlySerializedAs("randomScaleRange")]
+        [HideInInspector] public Vector2 legacyRandomScaleRange;
         [InspectorName("색상 변경")]
         [Tooltip("체크한 경우에만 아래 색상으로 원본 KriptoFX 색상을 덮어씁니다.")]
         public bool overrideColor;
         [InspectorName("피 색상")]
         [Tooltip("색상 변경을 체크했을 때 피 분출 메시와 URP 데칼에 적용할 색상입니다.")]
         public Color color = new Color(0.5f, 0f, 0f, 1f);
-        [InspectorName("유지 시간")]
-        [Tooltip("생성된 피 이펙트가 삭제되기까지의 시간입니다.")]
-        [Min(0.1f)] public float lifetime = 5f;
     }
 
     [Header("피격 종류별 이펙트 설정")]
@@ -83,10 +85,6 @@ public class BloodEffectSpawner : MonoBehaviour
     [InspectorName("기본 피 이펙트 프리팹")]
     [Tooltip("효과 ID가 목록에 없을 때 사용할 기본 피 이펙트입니다.")]
     [SerializeField] private GameObject fallbackBloodEffectPrefab;
-    [FormerlySerializedAs("destroyDelay")]
-    [InspectorName("기본 유지 시간")]
-    [Tooltip("미등록 ID에 기본 피 이펙트를 사용할 때의 유지 시간입니다.")]
-    [SerializeField, Min(0.1f)] private float fallbackLifetime = 5f;
     private static readonly int ColorProperty = Shader.PropertyToID("_Color");
     private static readonly int TintColorProperty = Shader.PropertyToID("_TintColor");
 
@@ -97,14 +95,59 @@ public class BloodEffectSpawner : MonoBehaviour
 
     private void Awake()
     {
+        NormalizeUnsetValues();
         RebuildCache();
     }
 
     private void OnValidate()
     {
+        NormalizeUnsetValues();
+
         if (Application.isPlaying)
         {
             RebuildCache();
+        }
+    }
+
+    /// <summary>
+    /// Unity가 새 리스트 항목을 모두 0으로 직렬화한 경우에만 사용 가능한 기본값으로 보정한다.
+    /// 이미 사용자가 설정한 0 볼륨은 사운드 클립이 등록된 뒤에는 그대로 유지한다.
+    /// </summary>
+    private void NormalizeUnsetValues()
+    {
+        for (int i = 0; i < bloodEffects.Count; i++)
+        {
+            BloodEffectData data = bloodEffects[i];
+            if (data == null)
+            {
+                continue;
+            }
+
+            if (data.soundVolume <= 0f)
+            {
+                data.soundVolume = 1f;
+            }
+
+            if (data.scale <= 0f)
+            {
+                data.scale = 1f;
+            }
+
+            if (data.randomScaleMin <= 0f && data.randomScaleMax <= 0f)
+            {
+                if (data.legacyRandomScaleRange.x > 0f &&
+                    data.legacyRandomScaleRange.y > 0f)
+                {
+                    data.randomScaleMin = data.legacyRandomScaleRange.x;
+                    data.randomScaleMax = data.legacyRandomScaleRange.y;
+                }
+                else
+                {
+                    data.randomScaleMin = 0.9f;
+                    data.randomScaleMax = 1.1f;
+                }
+            }
+
         }
     }
 
@@ -127,7 +170,6 @@ public class BloodEffectSpawner : MonoBehaviour
             ? surfaceNormal.normalized
             : transform.forward;
         float scale = GetScale(data);
-        float lifetime = data != null ? data.lifetime : fallbackLifetime;
 
         GameObject instance = SpawnSplash(prefab, position, normal, scale);
 
@@ -136,8 +178,8 @@ public class BloodEffectSpawner : MonoBehaviour
             ApplyBloodColor(instance, data.color);
         }
 
-        ApplyKriptoSettings(instance, lifetime);
-        Destroy(instance, Mathf.Max(0.1f, lifetime));
+        ApplyKriptoSettings(instance);
+        AddNaturalCleanup(instance);
     }
 
     /// <summary>
@@ -160,7 +202,6 @@ public class BloodEffectSpawner : MonoBehaviour
             ? surfaceNormal.normalized
             : transform.forward;
         float scale = GetScale(data);
-        float lifetime = data != null ? data.lifetime : fallbackLifetime;
 
         GameObject instance = SpawnAttachedDecal(
             attachedBloodDecalPrefab,
@@ -174,8 +215,8 @@ public class BloodEffectSpawner : MonoBehaviour
             ApplyBloodColor(instance, data.color);
         }
 
-        ApplyKriptoSettings(instance, lifetime);
-        Destroy(instance, Mathf.Max(0.1f, lifetime));
+        ApplyKriptoSettings(instance);
+        AddNaturalCleanup(instance);
     }
 
     private GameObject SpawnSplash(
@@ -236,7 +277,7 @@ public class BloodEffectSpawner : MonoBehaviour
             data.soundVolume);
     }
 
-    private void ApplyKriptoSettings(GameObject instance, float lifetime)
+    private void ApplyKriptoSettings(GameObject instance)
     {
         BFX_BloodSettings settings =
             instance.GetComponent<BFX_BloodSettings>() ??
@@ -247,8 +288,15 @@ public class BloodEffectSpawner : MonoBehaviour
             return;
         }
 
-        settings.DecalLifeTimeSeconds = Mathf.Max(5f, lifetime);
         settings.AnimationSpeed *= animationSpeedMultiplier;
+    }
+
+    private static void AddNaturalCleanup(GameObject instance)
+    {
+        if (instance.GetComponent<BloodEffectAutoCleanup>() == null)
+        {
+            instance.AddComponent<BloodEffectAutoCleanup>();
+        }
     }
 
     private void ApplyBloodColor(GameObject effectRoot, Color color)
@@ -296,8 +344,8 @@ public class BloodEffectSpawner : MonoBehaviour
             return globalScaleMultiplier;
         }
 
-        float min = Mathf.Min(data.randomScaleRange.x, data.randomScaleRange.y);
-        float max = Mathf.Max(data.randomScaleRange.x, data.randomScaleRange.y);
+        float min = Mathf.Min(data.randomScaleMin, data.randomScaleMax);
+        float max = Mathf.Max(data.randomScaleMin, data.randomScaleMax);
         return Mathf.Max(0.01f, data.scale * Random.Range(min, max) * globalScaleMultiplier);
     }
 
