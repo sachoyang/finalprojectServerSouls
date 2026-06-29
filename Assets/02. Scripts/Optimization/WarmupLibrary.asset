@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 350fe85b92d80834eb84022a6f543431, type: 3}
+  m_Name: WarmupLibrary
+  m_EditorClassIdentifier: 
+  effectPrefabs:
+  - {fileID: 1820680284854294, guid: 5537c81202b24a247970c22b8b6c911a, type: 3}
+  - {fileID: 1314945738539566, guid: 32c9fd11a72259d45aa26ae41c34c5aa, type: 3}
+  - {fileID: 1634767862067424, guid: 007c57e2df8e9b144b99f471b84f3d56, type: 3}
+  - {fileID: 1820680284854294, guid: 5537c81202b24a247970c22b8b6c911a, type: 3}
+  - {fileID: 1543693566691686547, guid: 687762c3782af1047872e0b2ee3a78ec, type: 3}
+  - {fileID: 1901245927194888, guid: bb98861c48ad2024ca93498c7dd93a6c, type: 3}
+  - {fileID: 1972207730512856, guid: ea4fb55d0227e604386f44f905cfe7c0, type: 3}
+  - {fileID: 6117522121999580243, guid: 0d47c36199aafbd4e851dbc6a74ea775, type: 3}
+  - {fileID: 1956197547661106, guid: f293a2dcc753a4a489fefe7f8f312d69, type: 3}
+  shaderVariants: {fileID: 20000000, guid: 9191328bee4c10a489abadba432912b6, type: 2}
+  warmupAllLoadedCollections: 0
+  framesPerPrefab: 2

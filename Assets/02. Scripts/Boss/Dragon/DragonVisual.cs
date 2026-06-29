@@ -278,7 +278,8 @@ public class DragonVisual : MonoBehaviour, IBossVisual
         if (jumpSlamEffectPrefab != null && jumpSlamSpawnPoint != null)
         {
             // 부모 없이 월드에 덩그러니 생성합니다. (보스가 도망가도 그 자리에 폭발)
-            GameObject effect = Instantiate(jumpSlamEffectPrefab, jumpSlamSpawnPoint.position, jumpSlamSpawnPoint.rotation);
+            // 풀에서 꺼내 재사용(파티클 끝나면 자동 회수). 풀 없으면 폴백 생성.
+            GameObject effect = EffectPoolManager.SpawnPooled(jumpSlamEffectPrefab, jumpSlamSpawnPoint.position, jumpSlamSpawnPoint.rotation);
 
             // 방장의 공격력 배율을 이펙트 스크립트에 주입!
             BossAoEAttack aoe = effect.GetComponent<BossAoEAttack>();
@@ -293,9 +294,9 @@ public class DragonVisual : MonoBehaviour, IBossVisual
     {
         if (fireBreath != null && fireBreathPoint != null)
         {
-            // 🔥 [핵심 수정] Instantiate의 4번째 인자로 fireBreathPoint(입 뼈)를 부모로 넣어줍니다!
-            // 이렇게 하면 고개를 돌리거나 몸을 틀 때 브레스가 입술에 딱 붙어서 완벽하게 따라갑니다.
-            GameObject effect = Instantiate(fireBreath, fireBreathPoint.position, fireBreathPoint.rotation, fireBreathPoint);
+            // 🔥 [핵심 수정] fireBreathPoint(입 뼈)를 부모로 넣어 고개를 돌려도 브레스가 입에 붙어 따라갑니다.
+            // 풀에서 꺼내 재사용(파티클 끝나면 자동 회수). 풀 없으면 폴백 생성.
+            GameObject effect = EffectPoolManager.SpawnPooled(fireBreath, fireBreathPoint.position, fireBreathPoint.rotation, fireBreathPoint);
 
             // 🔥 [데미지 연동] 방장의 공격력 배율을 이펙트 스크립트에 주입!
             BossAoEAttack aoe = effect.GetComponent<BossAoEAttack>();

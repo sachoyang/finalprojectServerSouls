@@ -337,8 +337,9 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
     {
         if (spreadFrozenBreathPrefab != null && breathSpawnPoint != null)
         {
-            // 브레스는 고개를 따라가야 하므로 breathSpawnPoint를 부모로 지정
-            GameObject effect = Instantiate(spreadFrozenBreathPrefab, breathSpawnPoint.position, breathSpawnPoint.rotation, breathSpawnPoint);
+            // 브레스는 고개를 따라가야 하므로 breathSpawnPoint를 부모로 지정.
+            // 풀에서 꺼내 재사용(파티클 끝나면 자동 회수). 풀 없으면 폴백 생성.
+            GameObject effect = EffectPoolManager.SpawnPooled(spreadFrozenBreathPrefab, breathSpawnPoint.position, breathSpawnPoint.rotation, breathSpawnPoint);
             BossAoEAttack aoe = effect.GetComponent<BossAoEAttack>();
             if (aoe != null && _bossCore != null) aoe.Initialize(_bossCore.GetOutgoingDamageMultiplier());
             if (iceMagicSound != null) SoundManager.Instance.PlaySFX_3D(iceMagicSound, transform.position, SoundCategory.BossGimmick);

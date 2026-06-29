@@ -1,4 +1,5 @@
 using Fusion;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -43,6 +44,11 @@ public class DebugQuickEntry : MonoBehaviour
     [Tooltip("플레이어 구분용 임시 ID. 비워두면 실행 시 랜덤 생성됩니다.")]
     [SerializeField] private string debugUserId = "";
 
+    [Header("셰이더 예열")]
+    [Tooltip("ON: 세션에서 처음 시작할 때 scLoading(예열 씬)을 한 번 거친 뒤 현재 전투씬으로 돌아와 자동으로 세션을 시작.\n" +
+             "→ 보스/피 이펙트가 처음 뜰 때의 컴파일 끊김을 로딩 화면으로 옮긴다. 두 번째부터는 이미 예열돼 바로 시작.")]
+    [SerializeField] private bool warmupThroughLoadingScene = true;
+
     [Header("GUI 위치 / 너비")]
     [SerializeField] private Vector2 guiPosition = new Vector2(10, 10);
     [SerializeField] private float guiWidth = 260f;
@@ -58,6 +64,34 @@ public class DebugQuickEntry : MonoBehaviour
     {
         if (string.IsNullOrEmpty(debugUserId))
             debugUserId = "Debug_" + UnityEngine.Random.Range(1000, 9999);
+    }
+
+    // 시작 진입점. 첫 시작이면 로딩 오버레이(scLoading)로 예열/풀 사전생성을 끝낸 뒤 '현재 씬 그대로' 시작.
+    private void BeginStart(GameMode mode, string code)
+    {
+        if (warmupThroughLoadingScene && !ShaderWarmupRunner.HasWarmedUp)
+            StartCoroutine(WarmThenStart(mode, code));
+        else
+            StartFusion(mode, code);
+    }
+
+    // scLoading을 additive(오버레이)로 띄워 예열 → 오버레이가 스스로 Unload되면 → 같은 씬에서 바로 세션 시작.
+    // 씬을 다시 로드하지 않으므로 버튼을 다시 누를 필요가 없다. (로비와 동일한 로딩 로직)
+    private IEnumerator WarmThenStart(GameMode mode, string code)
+    {
+        _isConnecting = true;   // 예열 동안 버튼 잠금
+        _status = "셰이더 예열 중...";
+
+        string loadingScene = LoadingRouter.LoadingSceneName;
+        if (!SceneManager.GetSceneByName(loadingScene).isLoaded)
+            yield return SceneManager.LoadSceneAsync(loadingScene, LoadSceneMode.Additive);
+
+        // 오버레이(LoadingSceneController, Overlay 모드)가 예열을 끝내고 자기 씬을 Unload할 때까지 대기.
+        while (SceneManager.GetSceneByName(loadingScene).isLoaded)
+            yield return null;
+
+        _isConnecting = false;
+        StartFusion(mode, code); // 같은 씬에서 바로 시작
     }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -84,10 +118,10 @@ public class DebugQuickEntry : MonoBehaviour
         GUILayout.Space(2);
 
         if (GUILayout.Button("자동매칭", GUILayout.Height(28)))
-            StartFusion(GameMode.AutoHostOrClient, "");
+            BeginStart(GameMode.AutoHostOrClient, "");
 
         if (GUILayout.Button("1인 솔로 (오프라인)", GUILayout.Height(28)))
-            StartFusion(GameMode.Single, "");
+            BeginStart(GameMode.Single, "");
 
         GUI.enabled = true;
 
@@ -102,7 +136,7 @@ public class DebugQuickEntry : MonoBehaviour
     {
         string code = string.IsNullOrEmpty(_roomCode) ? GenerateRoomCode() : _roomCode.Trim().ToUpper();
         _roomCode = code; // 상대에게 알려줄 코드 화면 표시
-        StartFusion(GameMode.Host, code);
+        BeginStart(GameMode.Host, code);
     }
 
     private void OnClickJoin()
@@ -113,7 +147,7 @@ public class DebugQuickEntry : MonoBehaviour
             _status = "방 코드를 입력하세요.";
             return;
         }
-        StartFusion(GameMode.Client, code);
+        BeginStart(GameMode.Client, code);
     }
 
     // 임시 유저 정보 세팅

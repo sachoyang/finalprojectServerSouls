@@ -15,8 +15,8 @@ MonoBehaviour:
   patternId: 3
   displayName: Pattern3_Jump
   minRange: 0
-  maxRange: 10
-  weight: 10
+  maxRange: 20
+  weight: 30
   actions:
   - animationClip: {fileID: 7400000, guid: 11710095629f7e044ad54abf1af7fc13, type: 3}
     animationStateName: Jump

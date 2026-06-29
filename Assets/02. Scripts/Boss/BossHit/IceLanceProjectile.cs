@@ -19,10 +19,6 @@ public class IceLanceProjectile : MonoBehaviour
     [Tooltip("폭발 생성 후 얼음창 오브젝트 전체를 정리하기까지의 여유 시간(초). 조각/미스트가 자연스럽게 끝나도록.")]
     public float cleanupDelay = 3f;
 
-    [Tooltip("생성한 폭발 프리팹을 자동 파괴하기까지의 시간(초). EnergyExplosion이 스스로 파괴되지 않아 누적되는 것을 막는다.\n" +
-             "폭발 파티클 길이(약 2초) + 데미지 판정 시간보다 넉넉히 둔다.")]
-    public float explosionLifetime = 3f;
-
     private ParticleSystem _ps;            // 사라짐 조각 파티클(TinyShards) — 이 오브젝트에 있는 것
     private bool _applyDamage;             // 이 인스턴스가 데미지를 줄 권한(호스트)인지
     private float _damageMultiplier = 1f;  // 보스 외부 데미지 배율
@@ -99,11 +95,9 @@ public class IceLanceProjectile : MonoBehaviour
 
         if (explosionPrefab != null)
         {
-            GameObject fx = Instantiate(explosionPrefab, pos, Quaternion.identity);
-
-            // EnergyExplosion 프리팹은 스스로 파괴되지 않으므로(파티클 StopAction=None, 자동 파괴 스크립트 없음)
-            // 여기서 일정 시간 뒤 파괴해 씬에 누적되는 것을 막는다.
-            Destroy(fx, explosionLifetime);
+            // 풀에서 꺼내 재사용(파티클 끝나면 자동 회수). 풀이 없으면 폴백 생성.
+            // → 더 이상 Destroy로 직접 정리하지 않는다(풀이 수명 관리).
+            GameObject fx = EffectPoolManager.SpawnPooled(explosionPrefab, pos, Quaternion.identity);
 
             BossAoEAttack aoe = fx.GetComponent<BossAoEAttack>();
             if (aoe != null)

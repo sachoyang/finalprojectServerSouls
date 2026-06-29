@@ -637,6 +637,11 @@ MonoBehaviour:
   wireColor: {r: 1, g: 0.1, b: 0, a: 1}
   showWireframe: 1
   drawCenterLine: 1
+  showEquippedSkillRanges: 1
+  showSkillLabels: 1
+  fallbackRadius: 1.4
+  fallbackDistance: 1.8
+  fallbackHeight: 1.1
 --- !u!114 &258220973
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -649,10 +654,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8dbef57a70044702933c40d2132aa99e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  offerRewardKey: 286
-  selectFirstOptionKey: 287
-  selectSecondOptionKey: 288
-  selectThirdOptionKey: 289
 --- !u!114 &258220974
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -665,8 +666,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 357844ce8518c914b965ef6e9364f05c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lastClearedBossStage: 1
-  pendingOptions: []
 --- !u!114 &258220975
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -793,20 +792,17 @@ MonoBehaviour:
   moveStartSpeed: 1.2
   moveStopSpeed: 0.18
   minimumMoveAnimationBlend: 0.5
+  maximumStepUpHeight: 0.35
+  minimumStepUpHeight: 0.01
+  activeAnimatorStateEndThreshold: 0.98
   jumpHeight: 1.15
   jumpAirTime: 0.68
   forwardJumpHeight: 1.15
   forwardJumpAirTime: 0.68
   runJumpSpeedRatio: 0.75
   useForwardJumpRootMotion: 0
-  attackHitRadius: 1.4
-  attackHitDistance: 1.8
-  attackHitHeight: 1.1
-  attackTargetLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  basicAttackRevivePower: 34
-  bloodEffectSpawner: {fileID: 0}
+  jumpGroundGraceSeconds: 0.12
+  jumpInputBufferSeconds: 0.12
   lockOnTargetSelector: {fileID: 0}
   lockOnSearchRadius: 80
   lockOnRotationSpeed: 900
@@ -1676,6 +1672,11 @@ MonoBehaviour:
   wireColor: {r: 1, g: 0.1, b: 0, a: 1}
   showWireframe: 1
   drawCenterLine: 1
+  showEquippedSkillRanges: 1
+  showSkillLabels: 1
+  fallbackRadius: 1.4
+  fallbackDistance: 1.8
+  fallbackHeight: 1.1
 --- !u!114 &405316499
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1688,10 +1689,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8dbef57a70044702933c40d2132aa99e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  offerRewardKey: 286
-  selectFirstOptionKey: 287
-  selectSecondOptionKey: 288
-  selectThirdOptionKey: 289
 --- !u!114 &405316500
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1704,8 +1701,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 357844ce8518c914b965ef6e9364f05c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lastClearedBossStage: 1
-  pendingOptions: []
 --- !u!114 &405316501
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1832,20 +1827,17 @@ MonoBehaviour:
   moveStartSpeed: 1.2
   moveStopSpeed: 0.18
   minimumMoveAnimationBlend: 0.5
+  maximumStepUpHeight: 0.35
+  minimumStepUpHeight: 0.01
+  activeAnimatorStateEndThreshold: 0.98
   jumpHeight: 1.15
   jumpAirTime: 0.68
   forwardJumpHeight: 1.15
   forwardJumpAirTime: 0.68
   runJumpSpeedRatio: 0.75
   useForwardJumpRootMotion: 0
-  attackHitRadius: 1.4
-  attackHitDistance: 1.8
-  attackHitHeight: 1.1
-  attackTargetLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  basicAttackRevivePower: 34
-  bloodEffectSpawner: {fileID: 0}
+  jumpGroundGraceSeconds: 0.12
+  jumpInputBufferSeconds: 0.12
   lockOnTargetSelector: {fileID: 0}
   lockOnSearchRadius: 80
   lockOnRotationSpeed: 900
@@ -27344,6 +27336,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1683641379}
   - component: {fileID: 1683641378}
+  - component: {fileID: 1683641380}
   m_Layer: 0
   m_Name: GameProgressionManager
   m_TagString: Untagged
@@ -27366,6 +27359,8 @@ MonoBehaviour:
   bossPool:
   - {fileID: 11400000, guid: d7e46c98e98aec845b9c6865f2dec211, type: 2}
   - {fileID: 11400000, guid: ad6568c9a99aefb4d8821e3c31f42f1d, type: 2}
+  - {fileID: 11400000, guid: 96df1c5f1bcdd344cab8ecd91e9892ca, type: 2}
+  - {fileID: 11400000, guid: e99e869d0eaa98f489081edfaa900f92, type: 2}
 --- !u!4 &1683641379
 Transform:
   m_ObjectHideFlags: 0
@@ -27381,6 +27376,20 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1683641380
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1683641377}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: edc4257b61b541449af0c5b5f36e5920, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  loadingSceneName: scLoading
+  onlyOncePerSession: 1
 --- !u!4 &1700336958 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -7709109359806533452, guid: 033a3d9b8fb69dc43b0a6f84a29ca4ec, type: 3}
@@ -34377,8 +34386,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 357844ce8518c914b965ef6e9364f05c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lastClearedBossStage: 1
-  pendingOptions: []
 --- !u!4 &1821748239150746490
 Transform:
   m_ObjectHideFlags: 0
@@ -38702,6 +38709,11 @@ MonoBehaviour:
   wireColor: {r: 1, g: 0.1, b: 0, a: 1}
   showWireframe: 1
   drawCenterLine: 1
+  showEquippedSkillRanges: 1
+  showSkillLabels: 1
+  fallbackRadius: 1.4
+  fallbackDistance: 1.8
+  fallbackHeight: 1.1
 --- !u!1 &3169025713151608571
 GameObject:
   m_ObjectHideFlags: 0
@@ -54742,20 +54754,17 @@ MonoBehaviour:
   moveStartSpeed: 1.2
   moveStopSpeed: 0.18
   minimumMoveAnimationBlend: 0.5
+  maximumStepUpHeight: 0.35
+  minimumStepUpHeight: 0.01
+  activeAnimatorStateEndThreshold: 0.98
   jumpHeight: 1.15
   jumpAirTime: 0.68
   forwardJumpHeight: 1.15
   forwardJumpAirTime: 0.68
   runJumpSpeedRatio: 0.75
   useForwardJumpRootMotion: 0
-  attackHitRadius: 1.4
-  attackHitDistance: 1.8
-  attackHitHeight: 1.1
-  attackTargetLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  basicAttackRevivePower: 34
-  bloodEffectSpawner: {fileID: 0}
+  jumpGroundGraceSeconds: 0.12
+  jumpInputBufferSeconds: 0.12
   lockOnTargetSelector: {fileID: 0}
   lockOnSearchRadius: 80
   lockOnRotationSpeed: 900
@@ -56727,10 +56736,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8dbef57a70044702933c40d2132aa99e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  offerRewardKey: 286
-  selectFirstOptionKey: 287
-  selectSecondOptionKey: 288
-  selectThirdOptionKey: 289
 --- !u!1 &5876471049284171448
 GameObject:
   m_ObjectHideFlags: 0
