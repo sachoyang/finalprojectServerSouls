@@ -30,6 +30,15 @@ public static class CrawlingCapeResetInstaller
         {
             if (existing is AnimatorStateResetBehaviour existingReset)
             {
+                // 도메인 리로드마다 같은 값을 다시 쓰고 전체 에셋을 저장하지 않는다.
+                SerializedObject serializedReset = new SerializedObject(existingReset);
+                SerializedProperty resetKey = serializedReset.FindProperty("resetKey");
+                if (resetKey != null && resetKey.stringValue == "Crawling")
+                {
+                    return;
+                }
+
+                Undo.RecordObject(existingReset, "Configure Crawling State Reset");
                 existingReset.Configure("Crawling");
                 EditorUtility.SetDirty(existingReset);
                 EditorUtility.SetDirty(controller);
@@ -40,6 +49,7 @@ public static class CrawlingCapeResetInstaller
 
         AnimatorStateResetBehaviour behaviour =
             crawlingState.AddStateMachineBehaviour<AnimatorStateResetBehaviour>();
+        Undo.RegisterCreatedObjectUndo(behaviour, "Add Crawling State Reset");
         behaviour.Configure("Crawling");
         EditorUtility.SetDirty(behaviour);
         EditorUtility.SetDirty(controller);

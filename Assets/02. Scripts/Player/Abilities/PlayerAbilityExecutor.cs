@@ -230,6 +230,7 @@ public class PlayerAbilityExecutor : MonoBehaviour
                         context.Stats,
                         context.Transform,
                         hitEvent,
+                        module.AbilityId,
                         module.HitboxDamage,
                         outgoingMultiplier);
                 }

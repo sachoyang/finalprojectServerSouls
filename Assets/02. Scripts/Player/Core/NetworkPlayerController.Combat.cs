@@ -455,7 +455,22 @@ public partial class NetworkPlayerController
             _combatSystem = FindFirstObjectByType<CombatSystem>();
         }
 
-        _combatSystem?.ProcessBasicAttackHit(Object, _playerStats, transform, GetBasicAttackDamage());
+        _combatSystem?.ProcessBasicAttackHit(
+            Object,
+            _playerStats,
+            transform,
+            GetBasicAttackDamage(),
+            GetBasicAttackEffectId());
+    }
+
+    private string GetBasicAttackEffectId()
+    {
+        return BasicAttackComboIndex switch
+        {
+            1 => BloodEffectSpawner.BasicAttack2Id,
+            2 => BloodEffectSpawner.BasicAttack3Id,
+            _ => BloodEffectSpawner.BasicAttack1Id
+        };
     }
 
     private float GetBasicAttackDamage()

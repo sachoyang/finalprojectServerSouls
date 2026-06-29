@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 public class AbilityUploadWindow : EditorWindow
 {
     private SoulRushApiSettings settings;
+    private bool settingsDirty;
+    private bool isUploading;
 
     [MenuItem("Soul Rush/🚀 스킬 DB로 업로드 (Upload)")]
     public static void ShowWindow()
@@ -18,6 +20,11 @@ public class AbilityUploadWindow : EditorWindow
         settings = SoulRushApiSettings.GetOrCreateSettings();
     }
 
+    private void OnDisable()
+    {
+        SaveSettingsIfRequired();
+    }
+
     private void OnGUI()
     {
         GUILayout.Label("유니티 ➔ DB 스킬 기획 데이터 업로드", EditorStyles.boldLabel);
@@ -28,7 +35,7 @@ public class AbilityUploadWindow : EditorWindow
         if (EditorGUI.EndChangeCheck())
         {
             EditorUtility.SetDirty(settings);
-            AssetDatabase.SaveAssets();
+            settingsDirty = true;
         }
 
         EditorGUILayout.Space();
@@ -37,14 +44,24 @@ public class AbilityUploadWindow : EditorWindow
             "업로드 전, 'Bit Index'와 'Ability Id'가 정확히 입력되었는지 확인하세요!", MessageType.Warning);
         EditorGUILayout.Space();
 
-        if (GUILayout.Button("🔥 선택한 스킬 데이터 DB로 업로드", GUILayout.Height(40)))
+        using (new EditorGUI.DisabledScope(isUploading))
         {
-            UploadSelectedAbilities();
+            if (GUILayout.Button(
+                    isUploading ? "업로드 중..." : "🔥 선택한 스킬 데이터 DB로 업로드",
+                    GUILayout.Height(40)))
+            {
+                UploadSelectedAbilities();
+            }
         }
     }
 
     private async void UploadSelectedAbilities()
     {
+        if (isUploading)
+        {
+            return;
+        }
+
         Object[] selectedObjects = Selection.GetFiltered(typeof(PlayerAbilityModule), SelectionMode.Assets);
         
         if (selectedObjects.Length == 0)
@@ -53,46 +70,61 @@ public class AbilityUploadWindow : EditorWindow
             return;
         }
 
+        isUploading = true;
+        Repaint();
         int successCount = 0;
-
-        foreach (Object obj in selectedObjects)
+        try
         {
-            PlayerAbilityModule module = (PlayerAbilityModule)obj;
-
-            WWWForm form = new WWWForm();
-            form.AddField("bit_index", module.BitIndex);
-            form.AddField("ability_id", module.AbilityId ?? "");
-            form.AddField("display_name", module.DisplayName ?? "");
-            form.AddField("description", module.Description ?? "");
-            form.AddField("ability_type", module.AbilityType.ToString());
-            
-            form.AddField("stamina_cost", module.StaminaCost.ToString());
-            form.AddField("cooldown_seconds", module.CooldownSeconds.ToString());
-            form.AddField("damage_multiplier", module.HitboxDamage.ToString());
-            form.AddField("duration", module.HitboxLifetime.ToString());
-            form.AddField("special_effect", module.SpecialEffect.ToString());
-
-            // 🔥 더 이상 icon_key, vfx_key 등은 서버로 보내지 않습니다!
-
-            using (UnityWebRequest www = UnityWebRequest.Post(settings.uploadUrl, form))
+            foreach (Object obj in selectedObjects)
             {
-                var operation = www.SendWebRequest();
-                while (!operation.isDone) await Task.Delay(10); 
+                PlayerAbilityModule module = (PlayerAbilityModule)obj;
 
-                if (www.result == UnityWebRequest.Result.Success)
+                WWWForm form = new WWWForm();
+                form.AddField("bit_index", module.BitIndex);
+                form.AddField("ability_id", module.AbilityId ?? "");
+                form.AddField("display_name", module.DisplayName ?? "");
+                form.AddField("description", module.Description ?? "");
+                form.AddField("ability_type", module.AbilityType.ToString());
+                form.AddField("stamina_cost", module.StaminaCost.ToString());
+                form.AddField("cooldown_seconds", module.CooldownSeconds.ToString());
+                form.AddField("damage_multiplier", module.HitboxDamage.ToString());
+                form.AddField("duration", module.HitboxLifetime.ToString());
+                form.AddField("special_effect", module.SpecialEffect.ToString());
+
+                using (UnityWebRequest www = UnityWebRequest.Post(settings.uploadUrl, form))
                 {
-                    Debug.Log($"<color=green>[업로드 성공]</color> {module.name} ➔ DB 전송 완료!");
-                    successCount++;
-                }
-                else
-                {
-                    Debug.LogError($"<color=red>[업로드 실패]</color> {module.name} ➔ {www.error}");
+                    var operation = www.SendWebRequest();
+                    while (!operation.isDone) await Task.Delay(10);
+
+                    if (www.result == UnityWebRequest.Result.Success)
+                    {
+                        Debug.Log($"<color=green>[업로드 성공]</color> {module.name} ➔ DB 전송 완료!");
+                        successCount++;
+                    }
+                    else
+                    {
+                        Debug.LogError($"<color=red>[업로드 실패]</color> {module.name} ➔ {www.error}");
+                    }
                 }
             }
-        }
 
-        Debug.Log($"✨ <b>총 {successCount}개의 스킬 데이터가 서버 DB에 업데이트 되었습니다.</b>");
+            Debug.Log($"✨ <b>총 {successCount}개의 스킬 데이터가 서버 DB에 업데이트 되었습니다.</b>");
+        }
+        finally
+        {
+            isUploading = false;
+            Repaint();
+        }
     }
 
-    private string GetKey(UnityEngine.Object asset) => asset != null ? asset.name : "";
+    private void SaveSettingsIfRequired()
+    {
+        if (!settingsDirty)
+        {
+            return;
+        }
+
+        settingsDirty = false;
+        AssetDatabase.SaveAssets();
+    }
 }

@@ -9,22 +9,29 @@ using UnityEngine;
 /// </summary>
 public class CombatSystem : MonoBehaviour
 {
-    [Header("Basic Attack Hit")]
+    [Header("기본 공격 판정")]
+    [InspectorName("판정 반지름")]
+    [Tooltip("기본 공격 판정 구체의 반지름입니다.")]
     [SerializeField] private float basicAttackHitRadius = 1.4f;
+    [InspectorName("전방 거리")]
+    [Tooltip("플레이어 기준으로 판정 중심이 앞쪽에 떨어진 거리입니다.")]
     [SerializeField] private float basicAttackHitDistance = 1.8f;
+    [InspectorName("판정 높이")]
+    [Tooltip("플레이어 발 위치에서 판정 중심까지의 높이입니다.")]
     [SerializeField] private float basicAttackHitHeight = 1.1f;
+    [InspectorName("공격 대상 레이어")]
+    [Tooltip("기본 공격으로 감지할 물리 레이어입니다.")]
     [SerializeField] private LayerMask basicAttackTargetLayers = ~0;
 
-    [Header("Revive")]
+    [Header("부활 공격")]
+    [InspectorName("기본 공격 부활 수치")]
+    [Tooltip("죽은 아군을 기본 공격으로 맞혔을 때 누적할 부활 수치입니다.")]
     [SerializeField] private float basicAttackRevivePower = 34f;
 
-    [Header("Effects")]
+    [Header("피격 연출")]
+    [InspectorName("피 이펙트 관리자")]
+    [Tooltip("표면 피격 위치에 피 이펙트와 타격음을 생성합니다. 비어 있으면 실행 중 자동으로 찾습니다.")]
     [SerializeField] private BloodEffectSpawner bloodEffectSpawner;
-
-    [Header("Blood Raycast Settings")]
-    [Tooltip("플레이어의 눈높이나 머리 위치를 나타내는 Transform을 넣어주세요. 비어있으면 캐릭터 중심에서 발사됩니다.")]
-    [SerializeField] private Transform playerRaycastOrigin;
-
 
     private readonly Collider[] _hitBuffer = new Collider[128];
     private readonly Dictionary<NetworkBossCore, BossHurtbox> _bestBossHurtboxes = new Dictionary<NetworkBossCore, BossHurtbox>();
@@ -41,11 +48,13 @@ public class CombatSystem : MonoBehaviour
         ResolveReferences();
     }
 
+    // 기본 공격 한 번의 대상 탐색, 피해, 피격 연출을 처리한다.
     public void ProcessBasicAttackHit(
         NetworkObject attacker,
         PlayerStats attackerStats,
         Transform attackOrigin,
         float damage,
+        string effectId,
         float groggyDamage = 10f)
     {
         if (attackOrigin == null || damage <= 0f)
@@ -56,14 +65,18 @@ public class CombatSystem : MonoBehaviour
         ResolveReferences();
         int hitCount = CollectBasicAttackHits(attackOrigin);
         ResolveHitTargets(attacker, attackerStats, damage, basicAttackRevivePower, hitCount);
-        ApplyBossHits(attackOrigin, attackOrigin.TransformPoint(BasicAttackHitLocalCenter), attacker, damage, groggyDamage);
+
+        // 현재 콤보 타수의 효과 ID를 피격 연출까지 전달한다.
+        ApplyBossHits(attackOrigin, attackOrigin.TransformPoint(BasicAttackHitLocalCenter), attacker, damage, groggyDamage, effectId);
     }
 
+    // 스킬의 시간 구간별 범위 판정과 피해를 처리한다.
     public bool ProcessAbilityHitEvent(
         NetworkObject attacker,
         PlayerStats attackerStats,
         Transform attackOrigin,
         AbilityHitEvent hitEvent,
+        string abilityId,
         float fallbackDamage,
         float outgoingDamageMultiplier = 1f)
     {
@@ -89,7 +102,9 @@ public class CombatSystem : MonoBehaviour
         LastAbilityFilteredHitCount = hitCount;
         LastAbilityBossHurtboxCount = _bestBossHurtboxes.Count;
         bool hitBoss = _bestBossHurtboxes.Count > 0;
-        ApplyBossHits(attackOrigin, GetAbilityHitCenter(attackOrigin, hitEvent), attacker, damage, hitEvent.GroggyDamage);
+
+        // PlayerAbilityModule의 AbilityId를 피격 연출까지 전달한다.
+        ApplyBossHits(attackOrigin, GetAbilityHitCenter(attackOrigin, hitEvent), attacker, damage, hitEvent.GroggyDamage, abilityId);
         return hitBoss;
     }
 
@@ -207,12 +222,15 @@ public class CombatSystem : MonoBehaviour
         Vector3 hitCenter,
         NetworkObject attacker,
         float damage,
-        float groggyDamage)
+        float groggyDamage,
+        string effectId)
     {
         foreach (BossHurtbox bossHurtbox in _bestBossHurtboxes.Values)
         {
             bossHurtbox.OnHitByPlayer(damage, groggyDamage, attacker);
-            SpawnBloodOnHit(attackOrigin, hitCenter, bossHurtbox.GetComponentInChildren<Collider>());
+
+            // 선택된 피격 부위의 표면에서 해당 ID의 피 연출을 생성한다.
+            SpawnBloodOnHitExtended(attackOrigin, hitCenter, bossHurtbox.GetComponentInChildren<Collider>(), bossHurtbox, effectId);
         }
     }
 
@@ -265,44 +283,42 @@ public class CombatSystem : MonoBehaviour
         }
     }
 
-    private void SpawnBloodOnHit(Transform attackOrigin, Vector3 hitCenter, Collider hitCollider)
+    // 공격자에서 피격 콜라이더로 레이를 쏴 정확한 표면 위치와 법선을 구한다.
+    private void SpawnBloodOnHitExtended(Transform attackOrigin, Vector3 hitCenter, Collider hitCollider, BossHurtbox bossHurtbox, string effectId)
     {
         if (attackOrigin == null || bloodEffectSpawner == null || hitCollider == null)
         {
             return;
         }
 
-        // 1. [기존 방식 리스펙] 기본값은 기존 로직처럼 attackOrigin의 위치를 기반으로 잡습니다.
-        // (필요에 따라 기존처럼 hitCenter를 참고하거나, attackOrigin.position의 가슴 높이를 기본값으로 사용)
+        // 기본 레이 시작점은 캐릭터의 공격 판정 높이로 잡는다.
         Vector3 rayStart = attackOrigin.position + Vector3.up * basicAttackHitHeight;
 
-        // 2. [레지스트리 최적화 연동] attackOrigin에서 컨트롤러를 꺼내 머리 본(Bone)이 있는지 검사합니다.
+        // 머리 위치가 등록되어 있으면 더 자연스러운 공격 방향을 사용한다.
         if (attackOrigin.TryGetComponent<NetworkPlayerController>(out var attacker))
         {
-            // 프리팹 인스펙터에 머리 조인트가 잘 등록되어 있다면, 정밀한 머리(눈높이) 좌표로 덮어씁니다.
             if (attacker.PlayerHeadTransform != null)
             {
                 rayStart = attacker.PlayerHeadTransform.position;
             }
         }
 
-        // 3. 레이 목적지 및 방향 설정 (보스의 피격용 정밀 Hurtbox 중심)
+        // 선택된 피격 콜라이더 중심을 향해 레이를 만든다.
         Vector3 targetPoint = hitCollider.bounds.center;
         Vector3 rayDirection = (targetPoint - rayStart).normalized;
 
         Vector3 hitPoint;
         Vector3 hitNormal;
 
-        // 4. 타겟팅된 보스의 특정 Hurtbox 하나만 조준 사격
+        // 충돌하면 실제 표면 좌표와 바깥쪽 법선을 사용한다.
         Ray ray = new Ray(rayStart, rayDirection);
         if (hitCollider.Raycast(ray, out RaycastHit hitInfo, 15f))
         {
-            hitPoint = hitInfo.point;      // 보스 살점 표면의 정확한 좌표
-            hitNormal = hitInfo.normal;    // 피가 뿜어져 나갈 표면 각도
+            hitPoint = hitInfo.point;
+            hitNormal = hitInfo.normal;
         }
         else
         {
-            // 레이가 비껴가는 극단적인 예외 상황을 위한 기존 안전장치 유지
             hitPoint = GetClosestPointSafe(hitCollider, hitCenter);
             hitNormal = (hitPoint - attackOrigin.position).normalized;
             hitNormal.y = 0f;
@@ -313,9 +329,24 @@ public class CombatSystem : MonoBehaviour
             hitNormal = attackOrigin.forward;
         }
 
-        // 5. KriptoFX 스폰러에 최종 연산된 값 전달
-        bloodEffectSpawner.SpawnBlood(hitPoint, hitNormal);
+        Transform attachRoot = bossHurtbox != null
+            ? bossHurtbox.GetComponentInParent<NetworkBossCore>()?.transform
+            : null;
+
+        // 피 분출과 타격음은 같은 호출에서 처리한다.
+        bloodEffectSpawner.SpawnBlood(effectId, hitPoint, hitNormal);
+
+        // 공통 부착 혈흔 프리팹이 있으면 움직이는 보스의 가장 가까운 본에 상처를 붙인다.
+        if (attachRoot != null)
+        {
+            bloodEffectSpawner.SpawnAttachedBloodDecal(
+                effectId,
+                hitPoint,
+                hitNormal,
+                attachRoot);
+        }
     }
+
     private void ResolveReferences()
     {
         if (bloodEffectSpawner == null)

@@ -18,9 +18,11 @@ public class SoulRushApiSettings : ScriptableObject
         // 파일이 없으면 자동으로 생성해 줍니다.
         if (settings == null)
         {
-            if (!Directory.Exists("Assets/Editor"))
+            string settingsDirectory = Path.GetDirectoryName(SettingPath);
+            if (!string.IsNullOrEmpty(settingsDirectory) &&
+                !Directory.Exists(settingsDirectory))
             {
-                Directory.CreateDirectory("Assets/Editor");
+                Directory.CreateDirectory(settingsDirectory);
             }
             settings = ScriptableObject.CreateInstance<SoulRushApiSettings>();
             AssetDatabase.CreateAsset(settings, SettingPath);
