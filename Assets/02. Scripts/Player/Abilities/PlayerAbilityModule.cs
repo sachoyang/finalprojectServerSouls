@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [System.Serializable]
 public class AbilityHitEvent
@@ -9,7 +10,8 @@ public class AbilityHitEvent
     [SerializeField] private float radius = 1.4f;
     [SerializeField] private float height = 1.8f;
     [SerializeField] private float centerHeight = 0.9f;
-    [SerializeField] private float damage;
+    [FormerlySerializedAs("damage")]
+    [SerializeField] private float damageRate;
     [SerializeField] private float groggyDamage = 10f;
     [SerializeField] private float revivePower = 34f;
     [SerializeField] private Color previewColor = new Color(1f, 0.2f, 0f, 0.3f);
@@ -20,7 +22,7 @@ public class AbilityHitEvent
     public float Radius => Mathf.Max(0f, radius);
     public float Height => Mathf.Max(0f, height);
     public float CenterHeight => centerHeight;
-    public float Damage => damage;
+    public float DamageRate => damageRate;
     public float GroggyDamage => groggyDamage;
     public float RevivePower => revivePower;
     public Color PreviewColor => previewColor;

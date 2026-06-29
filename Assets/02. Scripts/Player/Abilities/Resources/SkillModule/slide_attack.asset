@@ -51,10 +51,10 @@ MonoBehaviour:
   - label: Hit 1
     startNormalizedTime: 0.496
     endNormalizedTime: 0.823
-    radius: 1.6
-    height: 1.2
+    radius: 2
+    height: 3
     centerHeight: 0
-    damage: 4
+    damageRate: 4
     groggyDamage: 10
     revivePower: 34
     previewColor: {r: 0, g: 0.0940752, b: 1, a: 0.3}

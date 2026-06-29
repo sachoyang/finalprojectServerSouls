@@ -303,7 +303,7 @@ public class PlayerAbilityModuleEditor : Editor
                     EditorGUILayout.PropertyField(element.FindPropertyRelative("radius"));
                     EditorGUILayout.PropertyField(element.FindPropertyRelative("height"));
                     EditorGUILayout.PropertyField(element.FindPropertyRelative("centerHeight"));
-                    EditorGUILayout.PropertyField(element.FindPropertyRelative("damage"));
+                    EditorGUILayout.PropertyField(element.FindPropertyRelative("damageRate"));
                     EditorGUILayout.PropertyField(element.FindPropertyRelative("groggyDamage"));
                     EditorGUILayout.PropertyField(element.FindPropertyRelative("revivePower"));
                     EditorGUILayout.PropertyField(element.FindPropertyRelative("previewColor"));
@@ -1226,14 +1226,14 @@ public class PlayerAbilityModuleEditor : Editor
 
     private void CleanupPreview()
     {
+        if (_previewAnimator != null)
+        {
+            _previewAnimator.Rebind();
+            _previewAnimator.enabled = false;
+        }
+
         if (_previewPlayer != null)
         {
-            if (_previewPlayer.TryGetComponent<Animator>(out var animator))
-            {
-                animator.Rebind();
-                animator.enabled = false;
-            }
-
             if (_previewPlayer.TryGetComponent<Animation>(out var animation))
             {
                 animation.Stop();

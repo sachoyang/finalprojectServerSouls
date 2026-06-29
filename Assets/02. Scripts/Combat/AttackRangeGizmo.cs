@@ -1,4 +1,7 @@
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 [ExecuteAlways]
 public class AttackRangeGizmo : MonoBehaviour
@@ -12,11 +15,15 @@ public class AttackRangeGizmo : MonoBehaviour
     [SerializeField] private Color wireColor = new Color(1f, 0.1f, 0f, 1f);
     [SerializeField] private bool showWireframe = true;
     [SerializeField] private bool drawCenterLine = true;
+    [Header("Skill Hit Events")]
+    [SerializeField] private bool showEquippedSkillRanges = true;
+    [SerializeField] private bool showSkillLabels = true;
     [SerializeField] private float fallbackRadius = 1.4f;
     [SerializeField] private float fallbackDistance = 1.8f;
     [SerializeField] private float fallbackHeight = 1.1f;
 
     private NetworkPlayerController _player;
+    private PlayerAbilityExecutor _abilityExecutor;
     private CombatSystem _combat;
     private float _showUntilTime;
 
@@ -45,6 +52,8 @@ public class AttackRangeGizmo : MonoBehaviour
         {
             DrawAttackRangeIfAllowed();
         }
+
+        DrawEquippedSkillRanges();
     }
 
     private void OnDrawGizmosSelected()
@@ -113,5 +122,108 @@ public class AttackRangeGizmo : MonoBehaviour
         }
 
         return _combat;
+    }
+
+    private void DrawEquippedSkillRanges()
+    {
+        if (!showEquippedSkillRanges || !Application.isPlaying)
+        {
+            return;
+        }
+
+        PlayerAbilityExecutor executor = GetAbilityExecutor();
+        if (executor == null)
+        {
+            DrawSkillStatusLabel("PlayerAbilityExecutor 없음", Color.red);
+            return;
+        }
+
+        PlayerAbilityModule module = executor.ActiveHitEventModule;
+        AbilityHitEvent hitEvent = executor.ActiveHitEvent;
+        if (module == null || hitEvent == null)
+        {
+            return;
+        }
+
+        DrawSkillEventCylinder(module, hitEvent, GetHitEventIndex(module, hitEvent));
+    }
+
+    private void DrawSkillEventCylinder(
+        PlayerAbilityModule module,
+        AbilityHitEvent hitEvent,
+        int eventIndex)
+    {
+#if UNITY_EDITOR
+        float radius = hitEvent.Radius;
+        float bottomHeight = hitEvent.CenterHeight;
+        float topHeight = bottomHeight + hitEvent.Height;
+        Vector3 bottom = transform.position + Vector3.up * bottomHeight;
+        Vector3 top = transform.position + Vector3.up * topHeight;
+        Color color = hitEvent.PreviewColor;
+        color.a = 1f;
+
+        Handles.color = color;
+        Handles.DrawWireDisc(bottom, Vector3.up, radius);
+        Handles.DrawWireDisc(top, Vector3.up, radius);
+        Handles.DrawLine(bottom + Vector3.forward * radius, top + Vector3.forward * radius);
+        Handles.DrawLine(bottom - Vector3.forward * radius, top - Vector3.forward * radius);
+        Handles.DrawLine(bottom + Vector3.right * radius, top + Vector3.right * radius);
+        Handles.DrawLine(bottom - Vector3.right * radius, top - Vector3.right * radius);
+
+        if (showSkillLabels)
+        {
+            CombatSystem combat = GetCombat();
+            string diagnostics = combat != null
+                ? $"\nPhysics {combat.LastAbilityRawHitCount} / Cylinder {combat.LastAbilityFilteredHitCount} / Boss {combat.LastAbilityBossHurtboxCount}"
+                : "\nCombatSystem 없음";
+            Handles.Label(
+                top + Vector3.up * 0.1f,
+                $"{module.AbilityId} / Hit {eventIndex + 1}\n" +
+                $"R {radius:0.00}, H {hitEvent.Height:0.00}, Damage Rate x{hitEvent.DamageRate:0.##}" +
+                diagnostics);
+        }
+#endif
+    }
+
+    private void DrawSkillStatusLabel(string message, Color color)
+    {
+#if UNITY_EDITOR
+        if (!showSkillLabels)
+        {
+            return;
+        }
+
+        Handles.color = color;
+        Handles.Label(transform.position + Vector3.up * 2.2f, message);
+#endif
+    }
+
+    private PlayerAbilityExecutor GetAbilityExecutor()
+    {
+        if (_abilityExecutor == null)
+        {
+            _abilityExecutor = GetComponent<PlayerAbilityExecutor>();
+        }
+
+        return _abilityExecutor;
+    }
+
+    private static int GetHitEventIndex(PlayerAbilityModule module, AbilityHitEvent activeEvent)
+    {
+        AbilityHitEvent[] hitEvents = module.HitEvents;
+        if (hitEvents == null)
+        {
+            return 0;
+        }
+
+        for (int i = 0; i < hitEvents.Length; i++)
+        {
+            if (ReferenceEquals(hitEvents[i], activeEvent))
+            {
+                return i;
+            }
+        }
+
+        return 0;
     }
 }
