@@ -308,9 +308,12 @@ MonoBehaviour:
   forwardJumpAirTime: 0.68
   runJumpSpeedRatio: 0.75
   useForwardJumpRootMotion: 0
+  jumpGroundGraceSeconds: 0.12
+  jumpInputBufferSeconds: 0.12
   lockOnTargetSelector: {fileID: 0}
   lockOnSearchRadius: 80
   lockOnRotationSpeed: 900
+  playerHeadTransform: {fileID: 9088794026333411282}
 --- !u!114 &3032183278010389585
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -430,6 +433,11 @@ MonoBehaviour:
   wireColor: {r: 0.764151, g: 0.764151, b: 0.764151, a: 1}
   showWireframe: 1
   drawCenterLine: 1
+  showEquippedSkillRanges: 1
+  showSkillLabels: 1
+  fallbackRadius: 1.4
+  fallbackDistance: 1.8
+  fallbackHeight: 1.1
 --- !u!114 &3532236537947503394
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11083,6 +11091,11 @@ CapsuleCollider:
   m_Height: 0.005
   m_Direction: 1
   m_Center: {x: 0, y: 0.002, z: 0}
+--- !u!4 &9088794026333411282 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6614293190684095088, guid: 033a3d9b8fb69dc43b0a6f84a29ca4ec, type: 3}
+  m_PrefabInstance: {fileID: 2732368445395510690}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &7241635500123955596
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -1,16 +1,22 @@
-﻿
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Rendering;
+
+#if UNITY_6000_0_OR_NEWER && ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 public class BFX_DemoTest : MonoBehaviour
 {
-
     public bool InfiniteDecal;
     public Light DirLight;
     public bool isVR = true;
     public GameObject BloodAttach;
     public GameObject[] BloodFX;
 
+    public Vector3 direction;
+
+    int effectIdx;
+    int activeBloods;
 
     Transform GetNearestObject(Transform hit, Vector3 hitPos)
     {
@@ -34,90 +40,74 @@ public class BFX_DemoTest : MonoBehaviour
             closestPos = distRoot;
             closestBone = hit;
         }
+
         return closestBone;
     }
 
-    public Vector3 direction;
-    int effectIdx;
-    int activeBloods;
     void Update()
     {
-        //if (isVR)
-        //{
+        if (!TryGetLeftMouseClickPosition(out var mousePosition)) return;
 
-        //    if (OVRInput.GetDown(OVRInput.Button.PrimaryIndexTrigger) || OVRInput.GetDown(OVRInput.Button.PrimaryIndexTrigger))
-        //    {
-        //        RaycastHit hit;
-        //        if (Physics.Raycast(Dir.position, Dir.forward, out hit))
-        //        {
-        //            // var randRotation = new Vector3(0, Random.value * 360f, 0);
-        //            // var dir = CalculateAngle(Vector3.forward, hit.normal);
-        //            float angle = Mathf.Atan2(hit.normal.x, hit.normal.z) * Mathf.Rad2Deg + 180;
+        var cam = Camera.main;
+        if (cam == null) return;
 
-        //            var effectIdx = Random.Range(0, BloodFX.Length);
-        //            var instance = Instantiate(BloodFX[effectIdx], hit.point, Quaternion.Euler(0, angle + 90, 0));
-        //            var settings = instance.GetComponent<BFX_BloodSettings>();
-        //            settings.DecalLiveTimeInfinite = InfiniteDecal;
-        //            settings.LightIntencityMultiplier = DirLight.intensity;
+        var ray = cam.ScreenPointToRay(mousePosition);
 
-        //            if (!InfiniteDecal) Destroy(instance, 20);
-
-        //        }
-
-        //    }
-        //}
-      //  else
+        if (Physics.Raycast(ray, out var hit))
         {
-            if (Input.GetMouseButtonDown(0))
+            float angle = Mathf.Atan2(hit.normal.x, hit.normal.z) * Mathf.Rad2Deg + 180;
+
+            if (effectIdx == BloodFX.Length) effectIdx = 0;
+
+            var instance = Instantiate(BloodFX[effectIdx], hit.point, Quaternion.Euler(0, angle + 90, 0));
+            effectIdx++;
+            activeBloods++;
+
+            var settings = instance.GetComponent<BFX_BloodSettings>();
+            if (settings != null && DirLight != null) settings.LightIntensityMultiplier = DirLight.intensity;
+
+            var nearestBone = GetNearestObject(hit.transform.root, hit.point);
+            if (nearestBone != null)
             {
-                var ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-                RaycastHit hit;
-                if (Physics.Raycast(ray, out hit))
-                {
-                    // var randRotation = new Vector3(0, Random.value * 360f, 0);
-                    // var dir = CalculateAngle(Vector3.forward, hit.normal);
-                    float angle = Mathf.Atan2(hit.normal.x, hit.normal.z) * Mathf.Rad2Deg + 180;
+                var attachBloodInstance = Instantiate(BloodAttach);
+                var bloodT = attachBloodInstance.transform;
 
-                    //var effectIdx = Random.Range(0, BloodFX.Length);
-                    if (effectIdx == BloodFX.Length) effectIdx = 0;
-
-                    var instance = Instantiate(BloodFX[effectIdx], hit.point, Quaternion.Euler(0, angle + 90, 0));
-                    effectIdx++;
-                    activeBloods++;
-                    var settings = instance.GetComponent<BFX_BloodSettings>();
-                    //settings.FreezeDecalDisappearance = InfiniteDecal;
-                    settings.LightIntensityMultiplier = DirLight.intensity;
-
-
-                    var nearestBone = GetNearestObject(hit.transform.root, hit.point);
-                    if(nearestBone != null)
-                    {
-                        var attachBloodInstance = Instantiate(BloodAttach);
-                        var bloodT = attachBloodInstance.transform;
-                        bloodT.position = hit.point;
-                        bloodT.localRotation = Quaternion.identity;
-                        bloodT.localScale = Vector3.one * Random.Range(0.75f, 1.2f);
-                        bloodT.LookAt(hit.point + hit.normal, direction);
-                        bloodT.Rotate(90, 0, 0);
-                        bloodT.transform.parent = nearestBone;
-                        //Destroy(attachBloodInstance, 20);
-                    }
-                  
-                   // if (!InfiniteDecal) Destroy(instance, 20);
-
-                }
-
+                bloodT.position = hit.point;
+                bloodT.localRotation = Quaternion.identity;
+                bloodT.localScale = Vector3.one * Random.Range(0.75f, 1.2f);
+                bloodT.LookAt(hit.point + hit.normal, direction);
+                bloodT.Rotate(90, 0, 0);
+                bloodT.parent = nearestBone;
             }
         }
-
     }
 
+    static bool TryGetLeftMouseClickPosition(out Vector2 mousePosition)
+    {
+#if UNITY_6000_0_OR_NEWER && ENABLE_INPUT_SYSTEM
+        var mouse = Mouse.current;
+        if (mouse == null || !mouse.leftButton.wasPressedThisFrame)
+        {
+            mousePosition = default;
+            return false;
+        }
+
+        mousePosition = mouse.position.ReadValue();
+        return true;
+#else
+        if (!Input.GetMouseButtonDown(0))
+        {
+            mousePosition = default;
+            return false;
+        }
+
+        mousePosition = Input.mousePosition;
+        return true;
+#endif
+    }
 
     public float CalculateAngle(Vector3 from, Vector3 to)
     {
-
         return Quaternion.FromToRotation(Vector3.up, to - from).eulerAngles.z;
-
     }
-
 }

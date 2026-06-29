@@ -124,6 +124,14 @@ public partial class NetworkPlayerController :
     [SerializeField] private float lockOnSearchRadius = 80f;
     [SerializeField] private float lockOnRotationSpeed = 900f;
 
+    // NetworkPlayerController.cs 내부에 추가
+    [Header("Combat Raycast Point")]
+    [Tooltip("캐릭터 프리팹 내부의 Head 혹은 눈높이 조인트를 여기에 드래그 앤 드롭 하세요.")]
+    [SerializeField] private Transform playerHeadTransform;
+
+    // 외부 CombatSystem에서 읽어갈 읽기 전용 프로퍼티
+    public Transform PlayerHeadTransform => playerHeadTransform;
+
     // 네트워크로 동기화되는 이동/액션 상태. Render에서 애니메이션으로 변환된다.
     [Networked] private bool IsMovingNetworked { get; set; }
     [Networked] private bool IsRunningNetworked { get; set; }
