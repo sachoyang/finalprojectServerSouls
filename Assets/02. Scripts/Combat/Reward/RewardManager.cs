@@ -61,25 +61,14 @@ public class RewardManager : MonoBehaviour
         }
     }
 
-    private void Update()
+    public void BeginReward()
     {
         if (_rewardStarted)
-        {
             return;
-        }
 
-        boss ??= FindObjectOfType<NetworkBossCore>();
-        if (boss == null || !boss.IsSpawnedReady)
-        {
-            return;
-        }
-
-        if (boss.CurrentState == BossState.Die || (boss.CurrentHP <= 0f && boss.CurrentState != BossState.Sleep))
-        {
-            _rewardStarted = true;
-            bossStage = GetCurrentBossStage();
-            StartCoroutine(PlayRewardSequence());
-        }
+        _rewardStarted = true;
+        bossStage = GetCurrentBossStage();
+        StartCoroutine(PlayRewardSequence());
     }
 
     private int GetCurrentBossStage()
