@@ -75,10 +75,27 @@ public class BloodEffectSpawner : MonoBehaviour
     [Tooltip("KriptoFX 피 애니메이션 속도에 공통으로 곱합니다.")]
     [SerializeField, Min(0.01f)] private float animationSpeedMultiplier = 1f;
 
+    [Header("피 분출 및 바닥 혈흔 제한")]
+    [InspectorName("피 이펙트 최대 개수")]
+    [Tooltip("피 분출과 그 안의 바닥 혈흔을 동시에 유지할 최대 개수입니다. 초과하면 가장 오래된 이펙트를 풀로 반환합니다.")]
+    [SerializeField, Min(1)] private int maxActiveBloodEffects = 30;
+    [InspectorName("피 이펙트 최대 수명")]
+    [Tooltip("BFX 자연 종료가 되지 않아도 풀로 반환할 최대 시간(초)입니다.")]
+    [SerializeField, Min(0.1f)] private float bloodEffectMaxLifetime = 30f;
+
     [Header("공통 부착 혈흔")]
     [InspectorName("부착 혈흔 프리팹")]
     [Tooltip("모든 공격에서 공통으로 사용할 AttachedBloodDecal 프리팹입니다. 비워두면 부착 혈흔을 생성하지 않습니다.")]
     [SerializeField] private GameObject attachedBloodDecalPrefab;
+    [InspectorName("부착 혈흔 표면 거리")]
+    [Tooltip("계산된 표면 법선 방향으로 혈흔을 이동시킵니다. 묻히면 양수 값을, 너무 떠 보이면 값을 줄이세요.")]
+    [SerializeField, Range(-0.1f, 0.1f)] private float attachedDecalSurfaceOffset = 0.01f;
+    [InspectorName("부착 혈흔 최대 개수")]
+    [Tooltip("이 스포너가 동시에 유지할 부착 혈흔 수입니다. 초과하면 가장 오래된 혈흔을 풀로 반환합니다.")]
+    [SerializeField, Min(1)] private int maxAttachedBloodDecals = 30;
+    [InspectorName("부착 혈흔 유지 시간")]
+    [Tooltip("부착 혈흔을 표시한 뒤 풀로 반환할 시간(초)입니다.")]
+    [SerializeField, Min(0.1f)] private float attachedBloodDecalLifetime = 15f;
 
     [Header("기존 씬 호환 및 미등록 ID 대체값")]
     [FormerlySerializedAs("bloodEffectPrefab")]
@@ -91,12 +108,30 @@ public class BloodEffectSpawner : MonoBehaviour
     private readonly Dictionary<string, BloodEffectData> _effectIdCache =
         new Dictionary<string, BloodEffectData>();
     private readonly List<Transform> _boneCache = new List<Transform>(128);
+    private readonly LinkedList<GameObject> _activeAttachedDecals =
+        new LinkedList<GameObject>();
+    private readonly Dictionary<GameObject, LinkedListNode<GameObject>> _attachedDecalNodes =
+        new Dictionary<GameObject, LinkedListNode<GameObject>>();
+    private readonly LinkedList<GameObject> _activeBloodEffects =
+        new LinkedList<GameObject>();
+    private readonly Dictionary<GameObject, LinkedListNode<GameObject>> _bloodEffectNodes =
+        new Dictionary<GameObject, LinkedListNode<GameObject>>();
     private MaterialPropertyBlock _propertyBlock;
 
     private void Awake()
     {
         NormalizeUnsetValues();
         RebuildCache();
+    }
+
+    private void OnEnable()
+    {
+        PlayerStats.DamageRendered += HandlePlayerDamageRendered;
+    }
+
+    private void OnDisable()
+    {
+        PlayerStats.DamageRendered -= HandlePlayerDamageRendered;
     }
 
     private void OnValidate()
@@ -179,7 +214,7 @@ public class BloodEffectSpawner : MonoBehaviour
         }
 
         ApplyKriptoSettings(instance);
-        AddNaturalCleanup(instance);
+        RegisterBloodEffect(instance);
     }
 
     /// <summary>
@@ -216,7 +251,45 @@ public class BloodEffectSpawner : MonoBehaviour
         }
 
         ApplyKriptoSettings(instance);
-        AddNaturalCleanup(instance);
+        RegisterAttachedDecal(instance);
+    }
+
+    private void HandlePlayerDamageRendered(PlayerStats playerStats)
+    {
+        if (playerStats == null)
+        {
+            return;
+        }
+
+        Vector3 sourcePosition = playerStats.transform.position - playerStats.transform.forward;
+        NetworkBossCore boss = FindFirstObjectByType<NetworkBossCore>();
+        if (boss != null)
+        {
+            sourcePosition = boss.transform.position;
+        }
+
+        PlayerRegistry.TryGetClosestHitCollider(
+            playerStats.Object,
+            sourcePosition,
+            out Collider hitCollider);
+        Vector3 hitPoint = hitCollider != null
+            ? hitCollider.ClosestPoint(sourcePosition)
+            : playerStats.transform.position + Vector3.up;
+        Vector3 center = hitCollider != null
+            ? hitCollider.bounds.center
+            : playerStats.transform.position + Vector3.up;
+        Vector3 hitNormal = hitPoint - center;
+        if (hitNormal.sqrMagnitude <= 0.001f)
+        {
+            hitNormal = playerStats.transform.forward;
+        }
+
+        SpawnBlood(BasicAttack1Id, hitPoint, hitNormal.normalized);
+        SpawnAttachedBloodDecal(
+            BasicAttack1Id,
+            hitPoint,
+            hitNormal.normalized,
+            playerStats.transform);
     }
 
     private GameObject SpawnSplash(
@@ -228,7 +301,9 @@ public class BloodEffectSpawner : MonoBehaviour
         // 피가 옆으로 눕지 않도록 KriptoFX 데모처럼 표면 법선의 수평 방향만 사용한다.
         float angle = Mathf.Atan2(surfaceNormal.x, surfaceNormal.z) * Mathf.Rad2Deg + 180f;
         Quaternion rotation = Quaternion.Euler(0f, angle + 90f, 0f);
-        GameObject instance = Instantiate(prefab, position + spawnOffset, rotation);
+        GameObject instance = EffectPoolManager.Instance != null
+            ? EffectPoolManager.Instance.Get(prefab, position + spawnOffset, rotation)
+            : Instantiate(prefab, position + spawnOffset, rotation);
         instance.transform.localScale = prefab.transform.localScale * scale;
         return instance;
     }
@@ -247,9 +322,13 @@ public class BloodEffectSpawner : MonoBehaviour
             nearestBone = attachRoot;
         }
 
-        GameObject instance = Instantiate(prefab);
+        Vector3 decalPosition =
+            position + spawnOffset + surfaceNormal * attachedDecalSurfaceOffset;
+        GameObject instance = EffectPoolManager.Instance != null
+            ? EffectPoolManager.Instance.Get(prefab, decalPosition, Quaternion.identity)
+            : Instantiate(prefab);
         Transform instanceTransform = instance.transform;
-        instanceTransform.position = position + spawnOffset;
+        instanceTransform.position = decalPosition;
         instanceTransform.localRotation = Quaternion.identity;
         instanceTransform.localScale = prefab.transform.localScale * scale;
 
@@ -261,6 +340,121 @@ public class BloodEffectSpawner : MonoBehaviour
         instanceTransform.Rotate(90f, 0f, 0f);
         instanceTransform.SetParent(nearestBone, true);
         return instance;
+    }
+
+    private void RegisterAttachedDecal(GameObject instance)
+    {
+        int limit = Mathf.Max(1, maxAttachedBloodDecals);
+        while (_activeAttachedDecals.Count >= limit)
+        {
+            GameObject oldest = _activeAttachedDecals.First.Value;
+            RemoveAttachedDecalTracking(oldest);
+            ReturnAttachedDecal(oldest);
+        }
+
+        LinkedListNode<GameObject> node = _activeAttachedDecals.AddLast(instance);
+        _attachedDecalNodes[instance] = node;
+
+        AttachedBloodDecalPoolLifetime lifetime =
+            instance.GetComponent<AttachedBloodDecalPoolLifetime>();
+        if (lifetime == null)
+        {
+            lifetime = instance.AddComponent<AttachedBloodDecalPoolLifetime>();
+        }
+
+        lifetime.Begin(this, Mathf.Max(0.1f, attachedBloodDecalLifetime));
+    }
+
+    internal void ReturnAttachedDecal(GameObject instance)
+    {
+        if (instance == null)
+        {
+            return;
+        }
+
+        RemoveAttachedDecalTracking(instance);
+
+        PooledInstance pooledInstance = instance.GetComponent<PooledInstance>();
+        if (pooledInstance != null && pooledInstance.manager != null)
+        {
+            pooledInstance.ReturnToPool();
+        }
+        else
+        {
+            Destroy(instance);
+        }
+    }
+
+    internal void NotifyAttachedDecalDisabled(GameObject instance)
+    {
+        RemoveAttachedDecalTracking(instance);
+    }
+
+    private void RemoveAttachedDecalTracking(GameObject instance)
+    {
+        if (instance != null &&
+            _attachedDecalNodes.TryGetValue(instance, out LinkedListNode<GameObject> node))
+        {
+            _activeAttachedDecals.Remove(node);
+            _attachedDecalNodes.Remove(instance);
+        }
+    }
+
+    private void RegisterBloodEffect(GameObject instance)
+    {
+        int limit = Mathf.Max(1, maxActiveBloodEffects);
+        while (_activeBloodEffects.Count >= limit)
+        {
+            GameObject oldest = _activeBloodEffects.First.Value;
+            RemoveBloodEffectTracking(oldest);
+            ReturnBloodEffect(oldest);
+        }
+
+        LinkedListNode<GameObject> node = _activeBloodEffects.AddLast(instance);
+        _bloodEffectNodes[instance] = node;
+
+        BloodEffectAutoCleanup cleanup = instance.GetComponent<BloodEffectAutoCleanup>();
+        if (cleanup == null)
+        {
+            cleanup = instance.AddComponent<BloodEffectAutoCleanup>();
+        }
+
+        cleanup.Begin(this, Mathf.Max(0.1f, bloodEffectMaxLifetime));
+    }
+
+    internal void ReturnBloodEffect(GameObject instance)
+    {
+        if (instance == null)
+        {
+            return;
+        }
+
+        RemoveBloodEffectTracking(instance);
+
+        PooledInstance pooledInstance = instance.GetComponent<PooledInstance>();
+        if (pooledInstance != null && pooledInstance.manager != null)
+        {
+            pooledInstance.ReturnToPool();
+        }
+        else
+        {
+            Destroy(instance);
+        }
+    }
+
+    internal void NotifyBloodEffectDisabled(GameObject instance)
+    {
+        RemoveBloodEffectTracking(instance);
+    }
+
+    private void RemoveBloodEffectTracking(GameObject instance)
+    {
+        if (instance != null &&
+            _bloodEffectNodes.TryGetValue(instance, out LinkedListNode<GameObject> node))
+        {
+            _activeBloodEffects.Remove(node);
+            _bloodEffectNodes.Remove(instance);
+        }
     }
 
     private void PlayHitSound(BloodEffectData data, Vector3 position)
@@ -289,14 +483,6 @@ public class BloodEffectSpawner : MonoBehaviour
         }
 
         settings.AnimationSpeed *= animationSpeedMultiplier;
-    }
-
-    private static void AddNaturalCleanup(GameObject instance)
-    {
-        if (instance.GetComponent<BloodEffectAutoCleanup>() == null)
-        {
-            instance.AddComponent<BloodEffectAutoCleanup>();
-        }
     }
 
     private void ApplyBloodColor(GameObject effectRoot, Color color)

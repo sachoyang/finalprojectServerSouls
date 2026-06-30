@@ -119,6 +119,12 @@ public class BossAoEAttack : MonoBehaviour
 
             foreach (var hit in hits)
             {
+                PlayerHitbox playerHitbox = hit.GetComponentInParent<PlayerHitbox>();
+                if (playerHitbox == null || !playerHitbox.Matches(hit))
+                {
+                    continue;
+                }
+
                 PlayerStats playerStats = hit.GetComponentInParent<PlayerStats>();
                 if (playerStats == null || playerStats.IsDead)
                 {

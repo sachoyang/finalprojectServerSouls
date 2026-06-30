@@ -80,6 +80,9 @@ public class BossMeleeAttack : MonoBehaviour
 
             foreach (var hitCol in hits)
             {
+                PlayerHitbox playerHitbox = hitCol.GetComponentInParent<PlayerHitbox>();
+                if (playerHitbox == null || !playerHitbox.Matches(hitCol)) continue;
+
                 // 이미 이번 휘두르기에 맞은 녀석이면 무시 (더블 히트 방지!)
                 if (_alreadyHitTargets.Contains(hitCol)) continue;
 

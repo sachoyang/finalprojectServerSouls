@@ -5,6 +5,8 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class PlayerStats : NetworkBehaviour
 {
+    public static event Action<PlayerStats> DamageRendered;
+
     public bool IsSpawnedReady { get; private set; }
 
     public readonly struct SessionSnapshot
@@ -137,6 +139,7 @@ public class PlayerStats : NetworkBehaviour
     public event Action<PlayerStats, float, float> StaminaUseFailed;
 
     private ChangeDetector _changeDetector;
+    private float _lastRenderedHealth;
     private PlayerStatusController _statusController;
 
     public SessionSnapshot CreateSessionSnapshot()
@@ -199,6 +202,7 @@ public class PlayerStats : NetworkBehaviour
 
         _changeDetector = GetChangeDetector(ChangeDetector.Source.SimulationState);
         _statusController = GetComponent<PlayerStatusController>();
+        _lastRenderedHealth = CurrentHealth;
 
         // 체력/기력 같은 판정 값은 상태 권한을 가진 쪽에서만 초기화한다.
         // 프록시 클라이언트는 네트워크로 동기화된 값을 받기만 한다.
@@ -227,6 +231,8 @@ public class PlayerStats : NetworkBehaviour
             return;
         }
 
+        bool reviveStateChanged = false;
+        bool healthChanged = false;
         foreach (string change in _changeDetector.DetectChanges(this))
         {
             if (change == nameof(IsDead) ||
@@ -235,9 +241,28 @@ public class PlayerStats : NetworkBehaviour
                 change == nameof(ReviveGaugePerSegment) ||
                 change == nameof(ReviveProgress))
             {
-                ReviveStateChanged?.Invoke(this);
-                break;
+                reviveStateChanged = true;
             }
+
+            if (change == nameof(CurrentHealth))
+            {
+                healthChanged = true;
+            }
+        }
+
+        if (reviveStateChanged)
+        {
+            ReviveStateChanged?.Invoke(this);
+        }
+
+        if (healthChanged)
+        {
+            if (CurrentHealth < _lastRenderedHealth)
+            {
+                DamageRendered?.Invoke(this);
+            }
+
+            _lastRenderedHealth = CurrentHealth;
         }
     }
 

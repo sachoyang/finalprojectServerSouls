@@ -46,6 +46,82 @@ public static class PlayerRegistry
         return stats != null;
     }
 
+    /// 플레이어 NetworkObject에서 대표 피격 표면을 가져옵니다.
+    public static bool TryGetHitbox(NetworkObject networkObject, out PlayerHitbox hitbox)
+    {
+        hitbox = null;
+        if (!TryGetHitboxes(networkObject, out PlayerHitbox[] hitboxes))
+        {
+            return false;
+        }
+
+        for (int i = 0; i < hitboxes.Length; i++)
+        {
+            if (hitboxes[i] != null && hitboxes[i].HitCollider != null)
+            {
+                hitbox = hitboxes[i];
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static bool TryGetHitboxes(NetworkObject networkObject, out PlayerHitbox[] hitboxes)
+    {
+        hitboxes = networkObject != null
+            ? networkObject.GetComponentsInChildren<PlayerHitbox>(true)
+            : null;
+        return hitboxes != null && hitboxes.Length > 0;
+    }
+
+    public static bool TryGetClosestHitCollider(
+        NetworkObject networkObject,
+        Vector3 sourcePosition,
+        out Collider hitCollider)
+    {
+        hitCollider = null;
+        if (!TryGetHitboxes(networkObject, out PlayerHitbox[] hitboxes))
+        {
+            return false;
+        }
+
+        float closestSqrDistance = float.PositiveInfinity;
+        for (int i = 0; i < hitboxes.Length; i++)
+        {
+            Collider candidate = hitboxes[i] != null ? hitboxes[i].HitCollider : null;
+            if (candidate == null || !candidate.enabled)
+            {
+                continue;
+            }
+
+            Vector3 closestPoint = candidate.ClosestPoint(sourcePosition);
+            float sqrDistance = (closestPoint - sourcePosition).sqrMagnitude;
+            if (sqrDistance >= closestSqrDistance)
+            {
+                continue;
+            }
+
+            closestSqrDistance = sqrDistance;
+            hitCollider = candidate;
+        }
+
+        return hitCollider != null;
+    }
+
+    /// 플레이어의 몸통 판정에 사용할 대표 Collider를 가져옵니다.
+    public static bool TryGetHitCollider(NetworkObject networkObject, out Collider hitCollider)
+    {
+        hitCollider = null;
+        if (!TryGetHitbox(networkObject, out PlayerHitbox hitbox))
+        {
+            return false;
+        }
+
+        hitCollider = hitbox.HitCollider;
+        return hitCollider != null;
+    }
+
     /// HUD가 PlayerStats 네트워크 값을 읽어도 안전한 상태인지 확인합니다.
     public static bool TryGetHUDData(NetworkPlayerController player, out PlayerHUDData hudData)
     {
