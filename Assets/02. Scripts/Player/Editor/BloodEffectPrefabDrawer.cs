@@ -4,14 +4,12 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// 06. Prefabs/BloodEffect 폴더의 피 분출 프리팹만 선택 목록으로 보여준다.
-/// 공통 부착 혈흔으로 따로 사용하는 AttachedBloodDecal은 목록에서 제외한다.
+/// 06. Prefabs/BloodEffect 폴더의 피 이펙트 프리팹을 선택 목록으로 보여준다.
 /// </summary>
 [CustomPropertyDrawer(typeof(BloodEffectPrefabAttribute))]
 public sealed class BloodEffectPrefabDrawer : PropertyDrawer
 {
     private const string BloodEffectFolder = "Assets/06. Prefabs/BloodEffect";
-    private const string AttachedBloodDecalName = "AttachedBloodDecal";
 
     private static readonly List<string> DisplayNames = new List<string>();
     private static readonly List<GameObject> Prefabs = new List<GameObject>();
@@ -85,8 +83,7 @@ public sealed class BloodEffectPrefabDrawer : PropertyDrawer
         {
             string path = AssetDatabase.GUIDToAssetPath(guids[i]);
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
-            if (prefab == null ||
-                string.Equals(prefab.name, AttachedBloodDecalName, StringComparison.OrdinalIgnoreCase))
+            if (prefab == null)
             {
                 continue;
             }

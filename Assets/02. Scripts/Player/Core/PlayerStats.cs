@@ -92,6 +92,8 @@ public class PlayerStats : NetworkBehaviour
 
     // 현재 체력. 네트워크 상태로 동기화되어 모든 클라이언트가 같은 값을 본다.
     [Networked] public float CurrentHealth { get; private set; }
+    [Networked] public Vector3 LastDamageHitPoint { get; private set; }
+    [Networked] public Vector3 LastDamageHitNormal { get; private set; }
     // 현재 기력. 달리기/구르기/스킬 코스트 적용 결과가 네트워크로 공유된다.
     [Networked] public float CurrentStamina { get; private set; }
     // 사망 여부. 컨트롤러는 이 값을 보고 입력과 이동을 막는다.
@@ -397,6 +399,7 @@ public class PlayerStats : NetworkBehaviour
         // 상태 권한이 있으면 바로 처리하고, 권한이 없는 클라이언트에서 호출되면 RPC로 상태 권한에 요청한다.
         if (HasStateAuthority)
         {
+            LastDamageHitNormal = Vector3.zero;
             ApplyDamage(damage);
         }
         else
@@ -409,6 +412,30 @@ public class PlayerStats : NetworkBehaviour
     {
         // 보스 쪽에서 의미가 더 명확한 이름으로 호출할 수 있도록 남겨둔 래퍼 함수.
         TakeDamage(damage);
+    }
+
+    public void TakeDamage(
+        float damage,
+        Vector3 hitPoint,
+        Vector3 hitNormal)
+    {
+        if (damage <= 0f)
+        {
+            return;
+        }
+
+        if (HasStateAuthority)
+        {
+            LastDamageHitPoint = hitPoint;
+            LastDamageHitNormal = hitNormal.sqrMagnitude > 0.000001f
+                ? hitNormal.normalized
+                : Vector3.zero;
+            ApplyDamage(damage);
+        }
+        else
+        {
+            TakeDamage(damage);
+        }
     }
 
     public void SetAnimationInvincible(bool isInvincible)
@@ -517,6 +544,7 @@ public class PlayerStats : NetworkBehaviour
     private void RPC_RequestTakeDamage(float damage)
     {
         // 클라이언트에서 감지한 피격 요청을 상태 권한이 최종 판정한다.
+        LastDamageHitNormal = Vector3.zero;
         ApplyDamage(damage);
     }
 

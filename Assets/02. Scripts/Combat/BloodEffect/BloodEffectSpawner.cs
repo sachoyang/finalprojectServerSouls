@@ -83,19 +83,9 @@ public class BloodEffectSpawner : MonoBehaviour
     [Tooltip("BFX 자연 종료가 되지 않아도 풀로 반환할 최대 시간(초)입니다.")]
     [SerializeField, Min(0.1f)] private float bloodEffectMaxLifetime = 30f;
 
-    [Header("공통 부착 혈흔")]
-    [InspectorName("부착 혈흔 프리팹")]
-    [Tooltip("모든 공격에서 공통으로 사용할 AttachedBloodDecal 프리팹입니다. 비워두면 부착 혈흔을 생성하지 않습니다.")]
-    [SerializeField] private GameObject attachedBloodDecalPrefab;
-    [InspectorName("부착 혈흔 표면 거리")]
-    [Tooltip("계산된 표면 법선 방향으로 혈흔을 이동시킵니다. 묻히면 양수 값을, 너무 떠 보이면 값을 줄이세요.")]
-    [SerializeField, Range(-0.1f, 0.1f)] private float attachedDecalSurfaceOffset = 0.01f;
-    [InspectorName("부착 혈흔 최대 개수")]
-    [Tooltip("이 스포너가 동시에 유지할 부착 혈흔 수입니다. 초과하면 가장 오래된 혈흔을 풀로 반환합니다.")]
-    [SerializeField, Min(1)] private int maxAttachedBloodDecals = 30;
-    [InspectorName("부착 혈흔 유지 시간")]
-    [Tooltip("부착 혈흔을 표시한 뒤 풀로 반환할 시간(초)입니다.")]
-    [SerializeField, Min(0.1f)] private float attachedBloodDecalLifetime = 15f;
+    [InspectorName("플레이어 피격 연출 최소 간격")]
+    [Tooltip("여러 보스 Hitbox가 거의 동시에 맞아도 피와 부착 혈흔은 이 간격마다 한 번만 생성합니다. 데미지 판정에는 영향이 없습니다.")]
+    [SerializeField, Min(0f)] private float playerBloodSpawnInterval = 0.12f;
 
     [Header("기존 씬 호환 및 미등록 ID 대체값")]
     [FormerlySerializedAs("bloodEffectPrefab")]
@@ -107,15 +97,12 @@ public class BloodEffectSpawner : MonoBehaviour
 
     private readonly Dictionary<string, BloodEffectData> _effectIdCache =
         new Dictionary<string, BloodEffectData>();
-    private readonly List<Transform> _boneCache = new List<Transform>(128);
-    private readonly LinkedList<GameObject> _activeAttachedDecals =
-        new LinkedList<GameObject>();
-    private readonly Dictionary<GameObject, LinkedListNode<GameObject>> _attachedDecalNodes =
-        new Dictionary<GameObject, LinkedListNode<GameObject>>();
     private readonly LinkedList<GameObject> _activeBloodEffects =
         new LinkedList<GameObject>();
     private readonly Dictionary<GameObject, LinkedListNode<GameObject>> _bloodEffectNodes =
         new Dictionary<GameObject, LinkedListNode<GameObject>>();
+    private readonly Dictionary<PlayerStats, float> _lastPlayerBloodSpawnTimes =
+        new Dictionary<PlayerStats, float>();
     private MaterialPropertyBlock _propertyBlock;
 
     private void Awake()
@@ -217,49 +204,22 @@ public class BloodEffectSpawner : MonoBehaviour
         RegisterBloodEffect(instance);
     }
 
-    /// <summary>
-    /// 데모의 BloodAttach 방식처럼 공통 혈흔 하나를 피격점과 가장 가까운 본에 붙인다.
-    /// 색상, 크기, 유지 시간은 해당 공격 ID의 설정을 함께 사용한다.
-    /// </summary>
-    public void SpawnAttachedBloodDecal(
-        string effectId,
-        Vector3 position,
-        Vector3 surfaceNormal,
-        Transform attachRoot)
-    {
-        if (attachedBloodDecalPrefab == null || attachRoot == null)
-        {
-            return;
-        }
-
-        BloodEffectData data = GetEffectData(effectId);
-        Vector3 normal = surfaceNormal.sqrMagnitude > 0.001f
-            ? surfaceNormal.normalized
-            : transform.forward;
-        float scale = GetScale(data);
-
-        GameObject instance = SpawnAttachedDecal(
-            attachedBloodDecalPrefab,
-            position,
-            normal,
-            attachRoot,
-            scale);
-
-        if (data != null && data.overrideColor)
-        {
-            ApplyBloodColor(instance, data.color);
-        }
-
-        ApplyKriptoSettings(instance);
-        RegisterAttachedDecal(instance);
-    }
-
     private void HandlePlayerDamageRendered(PlayerStats playerStats)
     {
         if (playerStats == null)
         {
             return;
         }
+
+        if (_lastPlayerBloodSpawnTimes.TryGetValue(
+                playerStats,
+                out float lastSpawnTime) &&
+            Time.time - lastSpawnTime < playerBloodSpawnInterval)
+        {
+            return;
+        }
+
+        _lastPlayerBloodSpawnTimes[playerStats] = Time.time;
 
         Vector3 sourcePosition = playerStats.transform.position - playerStats.transform.forward;
         NetworkBossCore boss = FindFirstObjectByType<NetworkBossCore>();
@@ -272,24 +232,20 @@ public class BloodEffectSpawner : MonoBehaviour
             playerStats.Object,
             sourcePosition,
             out Collider hitCollider);
-        Vector3 hitPoint = hitCollider != null
-            ? hitCollider.ClosestPoint(sourcePosition)
-            : playerStats.transform.position + Vector3.up;
-        Vector3 center = hitCollider != null
-            ? hitCollider.bounds.center
-            : playerStats.transform.position + Vector3.up;
-        Vector3 hitNormal = hitPoint - center;
-        if (hitNormal.sqrMagnitude <= 0.001f)
+        Vector3 hitPoint = playerStats.LastDamageHitPoint;
+        Vector3 hitNormal = playerStats.LastDamageHitNormal;
+        if (hitNormal.sqrMagnitude <= 0.000001f &&
+            !TryGetSurfaceHit(
+                hitCollider,
+                sourcePosition,
+                out hitPoint,
+                out hitNormal))
         {
+            hitPoint = playerStats.transform.position + Vector3.up;
             hitNormal = playerStats.transform.forward;
         }
 
         SpawnBlood(BasicAttack1Id, hitPoint, hitNormal.normalized);
-        SpawnAttachedBloodDecal(
-            BasicAttack1Id,
-            hitPoint,
-            hitNormal.normalized,
-            playerStats.transform);
     }
 
     private GameObject SpawnSplash(
@@ -304,99 +260,72 @@ public class BloodEffectSpawner : MonoBehaviour
         GameObject instance = EffectPoolManager.Instance != null
             ? EffectPoolManager.Instance.Get(prefab, position + spawnOffset, rotation)
             : Instantiate(prefab, position + spawnOffset, rotation);
+        ResetBloodVisuals(instance);
         instance.transform.localScale = prefab.transform.localScale * scale;
         return instance;
     }
 
-    private GameObject SpawnAttachedDecal(
-        GameObject prefab,
-        Vector3 position,
-        Vector3 surfaceNormal,
-        Transform attachRoot,
-        float scale)
+    private static bool TryGetSurfaceHit(
+        Collider hitCollider,
+        Vector3 sourcePosition,
+        out Vector3 hitPoint,
+        out Vector3 hitNormal)
     {
-        // 움직이는 보스를 따라가도록 피격점과 가장 가까운 본을 찾는다.
-        Transform nearestBone = GetNearestObjectCached(attachRoot, position);
-        if (nearestBone == null)
+        hitPoint = default;
+        hitNormal = default;
+        if (hitCollider == null)
         {
-            nearestBone = attachRoot;
+            return false;
         }
 
-        Vector3 decalPosition =
-            position + spawnOffset + surfaceNormal * attachedDecalSurfaceOffset;
-        GameObject instance = EffectPoolManager.Instance != null
-            ? EffectPoolManager.Instance.Get(prefab, decalPosition, Quaternion.identity)
-            : Instantiate(prefab);
-        Transform instanceTransform = instance.transform;
-        instanceTransform.position = decalPosition;
-        instanceTransform.localRotation = Quaternion.identity;
-        instanceTransform.localScale = prefab.transform.localScale * scale;
+        Vector3 toCenter = hitCollider.bounds.center - sourcePosition;
+        float distance = toCenter.magnitude;
+        if (distance > 0.0001f)
+        {
+            Ray ray = new Ray(sourcePosition, toCenter / distance);
+            float maxDistance = distance + hitCollider.bounds.extents.magnitude;
+            if (hitCollider.Raycast(ray, out RaycastHit hit, maxDistance))
+            {
+                hitPoint = hit.point;
+                hitNormal = hit.normal;
+                return true;
+            }
+        }
 
-        // 데칼 앞면이 피격 표면 바깥쪽을 향하도록 법선에 맞춰 회전한다.
-        Vector3 up = Mathf.Abs(Vector3.Dot(surfaceNormal, Vector3.up)) > 0.98f
-            ? Vector3.forward
-            : Vector3.up;
-        instanceTransform.LookAt(instanceTransform.position + surfaceNormal, up);
-        instanceTransform.Rotate(90f, 0f, 0f);
-        instanceTransform.SetParent(nearestBone, true);
-        return instance;
+        hitPoint = hitCollider.ClosestPoint(sourcePosition);
+        hitNormal = hitPoint - hitCollider.bounds.center;
+        if (hitNormal.sqrMagnitude <= 0.000001f)
+        {
+            hitNormal = -toCenter;
+        }
+
+        return hitNormal.sqrMagnitude > 0.000001f;
     }
 
-    private void RegisterAttachedDecal(GameObject instance)
-    {
-        int limit = Mathf.Max(1, maxAttachedBloodDecals);
-        while (_activeAttachedDecals.Count >= limit)
-        {
-            GameObject oldest = _activeAttachedDecals.First.Value;
-            RemoveAttachedDecalTracking(oldest);
-            ReturnAttachedDecal(oldest);
-        }
-
-        LinkedListNode<GameObject> node = _activeAttachedDecals.AddLast(instance);
-        _attachedDecalNodes[instance] = node;
-
-        AttachedBloodDecalPoolLifetime lifetime =
-            instance.GetComponent<AttachedBloodDecalPoolLifetime>();
-        if (lifetime == null)
-        {
-            lifetime = instance.AddComponent<AttachedBloodDecalPoolLifetime>();
-        }
-
-        lifetime.Begin(this, Mathf.Max(0.1f, attachedBloodDecalLifetime));
-    }
-
-    internal void ReturnAttachedDecal(GameObject instance)
+    private static void ResetBloodVisuals(GameObject instance)
     {
         if (instance == null)
         {
             return;
         }
 
-        RemoveAttachedDecalTracking(instance);
-
-        PooledInstance pooledInstance = instance.GetComponent<PooledInstance>();
-        if (pooledInstance != null && pooledInstance.manager != null)
+        Renderer[] renderers = instance.GetComponentsInChildren<Renderer>(true);
+        for (int i = 0; i < renderers.Length; i++)
         {
-            pooledInstance.ReturnToPool();
+            if (renderers[i] != null)
+            {
+                renderers[i].enabled = true;
+            }
         }
-        else
-        {
-            Destroy(instance);
-        }
-    }
 
-    internal void NotifyAttachedDecalDisabled(GameObject instance)
-    {
-        RemoveAttachedDecalTracking(instance);
-    }
-
-    private void RemoveAttachedDecalTracking(GameObject instance)
-    {
-        if (instance != null &&
-            _attachedDecalNodes.TryGetValue(instance, out LinkedListNode<GameObject> node))
+        DecalProjector[] projectors =
+            instance.GetComponentsInChildren<DecalProjector>(true);
+        for (int i = 0; i < projectors.Length; i++)
         {
-            _activeAttachedDecals.Remove(node);
-            _attachedDecalNodes.Remove(instance);
+            if (projectors[i] != null)
+            {
+                projectors[i].enabled = true;
+            }
         }
     }
 
@@ -567,30 +496,4 @@ public class BloodEffectSpawner : MonoBehaviour
         }
     }
 
-    private Transform GetNearestObjectCached(Transform root, Vector3 hitPosition)
-    {
-        _boneCache.Clear();
-        root.GetComponentsInChildren(true, _boneCache);
-
-        float closestDistanceSqr = float.MaxValue;
-        Transform closest = root;
-        for (int i = 0; i < _boneCache.Count; i++)
-        {
-            Transform child = _boneCache[i];
-            if (child == null)
-            {
-                continue;
-            }
-
-            float distanceSqr = (child.position - hitPosition).sqrMagnitude;
-            if (distanceSqr < closestDistanceSqr)
-            {
-                closestDistanceSqr = distanceSqr;
-                closest = child;
-            }
-        }
-
-        _boneCache.Clear();
-        return closest;
-    }
 }

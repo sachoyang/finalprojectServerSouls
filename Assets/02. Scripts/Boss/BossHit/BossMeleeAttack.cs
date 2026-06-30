@@ -77,6 +77,7 @@ public class BossMeleeAttack : MonoBehaviour
             // 이전 위치(previousPos)와 현재 위치(currentPos)를 양 끝점으로 하는 두께(hitRadius)의 알약 형태 공간을 싹 긁어옵니다.
             // 거리가 가깝든 멀든, 안에서 출발하든 밖에서 출발하든 100% 잡아냅니다.
             Collider[] hits = Physics.OverlapCapsule(previousPos, currentPos, hitRadius, targetLayer);
+            SortBySurfaceDistance(hits, currentPos);
 
             foreach (var hitCol in hits)
             {
@@ -92,7 +93,12 @@ public class BossMeleeAttack : MonoBehaviour
                     // 보스 버프 배율 적용
                     float finalDamage = baseDamage * _bossScript.GetOutgoingDamageMultiplier();
 
-                    playerStats.TakeDamage(finalDamage);
+                    GetHitSurface(
+                        hitCol,
+                        currentPos,
+                        out Vector3 hitPoint,
+                        out Vector3 hitNormal);
+                    playerStats.TakeDamage(finalDamage, hitPoint, hitNormal);
                     Debug.Log($"[Melee Attack] 무기 궤적 타격 성공! 데미지: {finalDamage}");
 
                     // 타격음 재생 (원한다면 여기에 사운드 코드 추가)
@@ -105,6 +111,57 @@ public class BossMeleeAttack : MonoBehaviour
 
             // 다음 프레임을 위해 현재 위치를 이전 위치로 갱신
             _previousPositions[i] = currentPos;
+        }
+    }
+
+    private static void GetHitSurface(
+        Collider hitCollider,
+        Vector3 sourcePosition,
+        out Vector3 hitPoint,
+        out Vector3 hitNormal)
+    {
+        Vector3 toCenter = hitCollider.bounds.center - sourcePosition;
+        float distance = toCenter.magnitude;
+        if (distance > 0.0001f &&
+            hitCollider.Raycast(
+                new Ray(sourcePosition, toCenter / distance),
+                out RaycastHit hit,
+                distance + hitCollider.bounds.extents.magnitude))
+        {
+            hitPoint = hit.point;
+            hitNormal = hit.normal;
+            return;
+        }
+
+        hitPoint = hitCollider.ClosestPoint(sourcePosition);
+        hitNormal = (hitPoint - hitCollider.bounds.center).normalized;
+    }
+
+    private static void SortBySurfaceDistance(
+        Collider[] colliders,
+        Vector3 sourcePosition)
+    {
+        for (int i = 1; i < colliders.Length; i++)
+        {
+            Collider value = colliders[i];
+            float valueDistance =
+                (value.ClosestPoint(sourcePosition) - sourcePosition).sqrMagnitude;
+            int j = i - 1;
+            while (j >= 0)
+            {
+                float currentDistance =
+                    (colliders[j].ClosestPoint(sourcePosition) - sourcePosition)
+                    .sqrMagnitude;
+                if (currentDistance <= valueDistance)
+                {
+                    break;
+                }
+
+                colliders[j + 1] = colliders[j];
+                j--;
+            }
+
+            colliders[j + 1] = value;
         }
     }
 

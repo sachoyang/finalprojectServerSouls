@@ -117,6 +117,7 @@ public class BossAoEAttack : MonoBehaviour
                 hits = Physics.OverlapBox(centerPosition, zone.boxSize / 2f, transform.rotation, targetLayer);
             }
 
+            SortBySurfaceDistance(hits, centerPosition);
             foreach (var hit in hits)
             {
                 PlayerHitbox playerHitbox = hit.GetComponentInParent<PlayerHitbox>();
@@ -138,10 +139,66 @@ public class BossAoEAttack : MonoBehaviour
                 }
 
                 float finalDamage = baseDamage * _bossDamageMultiplier;
-                playerStats.TakeDamage(finalDamage);
+                GetHitSurface(
+                    hit,
+                    centerPosition,
+                    out Vector3 hitPoint,
+                    out Vector3 hitNormal);
+                playerStats.TakeDamage(finalDamage, hitPoint, hitNormal);
                 Debug.Log($"[AoE Hit] 광역 이펙트 연쇄 적중! 파티클 동기화 딜: {finalDamage}");
                 _hitTargets[playerStats] = Time.time;
             }
+        }
+    }
+
+    private static void GetHitSurface(
+        Collider hitCollider,
+        Vector3 sourcePosition,
+        out Vector3 hitPoint,
+        out Vector3 hitNormal)
+    {
+        Vector3 toCenter = hitCollider.bounds.center - sourcePosition;
+        float distance = toCenter.magnitude;
+        if (distance > 0.0001f &&
+            hitCollider.Raycast(
+                new Ray(sourcePosition, toCenter / distance),
+                out RaycastHit hit,
+                distance + hitCollider.bounds.extents.magnitude))
+        {
+            hitPoint = hit.point;
+            hitNormal = hit.normal;
+            return;
+        }
+
+        hitPoint = hitCollider.ClosestPoint(sourcePosition);
+        hitNormal = (hitPoint - hitCollider.bounds.center).normalized;
+    }
+
+    private static void SortBySurfaceDistance(
+        Collider[] colliders,
+        Vector3 sourcePosition)
+    {
+        for (int i = 1; i < colliders.Length; i++)
+        {
+            Collider value = colliders[i];
+            float valueDistance =
+                (value.ClosestPoint(sourcePosition) - sourcePosition).sqrMagnitude;
+            int j = i - 1;
+            while (j >= 0)
+            {
+                float currentDistance =
+                    (colliders[j].ClosestPoint(sourcePosition) - sourcePosition)
+                    .sqrMagnitude;
+                if (currentDistance <= valueDistance)
+                {
+                    break;
+                }
+
+                colliders[j + 1] = colliders[j];
+                j--;
+            }
+
+            colliders[j + 1] = value;
         }
     }
 

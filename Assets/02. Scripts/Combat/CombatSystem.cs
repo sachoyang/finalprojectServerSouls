@@ -34,8 +34,22 @@ public class CombatSystem : MonoBehaviour
     [SerializeField] private BloodEffectSpawner bloodEffectSpawner;
 
     private readonly Collider[] _hitBuffer = new Collider[128];
-    private readonly Dictionary<NetworkBossCore, BossHurtbox> _bestBossHurtboxes = new Dictionary<NetworkBossCore, BossHurtbox>();
+    private readonly Dictionary<NetworkBossCore, BossHitCandidate> _bestBossHurtboxes = new Dictionary<NetworkBossCore, BossHitCandidate>();
     private readonly HashSet<PlayerStats> _reviveHitPlayers = new HashSet<PlayerStats>();
+
+    private readonly struct BossHitCandidate
+    {
+        public readonly BossHurtbox Hurtbox;
+        public readonly Collider Collider;
+        public readonly float SqrDistance;
+
+        public BossHitCandidate(BossHurtbox hurtbox, Collider collider, float sqrDistance)
+        {
+            Hurtbox = hurtbox;
+            Collider = collider;
+            SqrDistance = sqrDistance;
+        }
+    }
 
     public float BasicAttackHitRadius => basicAttackHitRadius;
     public Vector3 BasicAttackHitLocalCenter => Vector3.up * basicAttackHitHeight + Vector3.forward * basicAttackHitDistance;
@@ -63,11 +77,12 @@ public class CombatSystem : MonoBehaviour
         }
 
         ResolveReferences();
+        Vector3 hitCenter = attackOrigin.TransformPoint(BasicAttackHitLocalCenter);
         int hitCount = CollectBasicAttackHits(attackOrigin);
-        ResolveHitTargets(attacker, attackerStats, damage, basicAttackRevivePower, hitCount);
+        ResolveHitTargets(attacker, attackerStats, damage, basicAttackRevivePower, hitCount, hitCenter);
 
         // 현재 콤보 타수의 효과 ID를 피격 연출까지 전달한다.
-        ApplyBossHits(attackOrigin, attackOrigin.TransformPoint(BasicAttackHitLocalCenter), attacker, damage, groggyDamage, effectId);
+        ApplyBossHits(attackOrigin, hitCenter, attacker, damage, groggyDamage, effectId);
     }
 
     // 스킬의 시간 구간별 범위 판정과 피해를 처리한다.
@@ -97,14 +112,15 @@ public class CombatSystem : MonoBehaviour
         LastAbilityRawHitCount = 0;
         LastAbilityFilteredHitCount = 0;
         LastAbilityBossHurtboxCount = 0;
+        Vector3 hitCenter = GetAbilityHitCenter(attackOrigin, hitEvent);
         int hitCount = CollectCylinderHits(attackOrigin, hitEvent);
-        ResolveHitTargets(attacker, attackerStats, damage, hitEvent.RevivePower, hitCount);
+        ResolveHitTargets(attacker, attackerStats, damage, hitEvent.RevivePower, hitCount, hitCenter);
         LastAbilityFilteredHitCount = hitCount;
         LastAbilityBossHurtboxCount = _bestBossHurtboxes.Count;
         bool hitBoss = _bestBossHurtboxes.Count > 0;
 
         // PlayerAbilityModule의 AbilityId를 피격 연출까지 전달한다.
-        ApplyBossHits(attackOrigin, GetAbilityHitCenter(attackOrigin, hitEvent), attacker, damage, hitEvent.GroggyDamage, abilityId);
+        ApplyBossHits(attackOrigin, hitCenter, attacker, damage, hitEvent.GroggyDamage, abilityId);
         return hitBoss;
     }
 
@@ -190,7 +206,8 @@ public class CombatSystem : MonoBehaviour
         PlayerStats attackerStats,
         float damage,
         float revivePower,
-        int hitCount)
+        int hitCount,
+        Vector3 hitCenter)
     {
         _bestBossHurtboxes.Clear();
         _reviveHitPlayers.Clear();
@@ -213,7 +230,7 @@ public class CombatSystem : MonoBehaviour
                 continue;
             }
 
-            TryCollectBestBossHurtbox(hit);
+            TryCollectBestBossHurtbox(hit, hitCenter);
         }
     }
 
@@ -225,12 +242,13 @@ public class CombatSystem : MonoBehaviour
         float groggyDamage,
         string effectId)
     {
-        foreach (BossHurtbox bossHurtbox in _bestBossHurtboxes.Values)
+        foreach (BossHitCandidate candidate in _bestBossHurtboxes.Values)
         {
+            BossHurtbox bossHurtbox = candidate.Hurtbox;
             bossHurtbox.OnHitByPlayer(damage, groggyDamage, attacker);
 
-            // 선택된 피격 부위의 표면에서 해당 ID의 피 연출을 생성한다.
-            SpawnBloodOnHitExtended(attackOrigin, hitCenter, bossHurtbox.GetComponentInChildren<Collider>(), bossHurtbox, effectId);
+            // 범위 판정에서 실제로 검출된 가장 가까운 콜라이더 표면에 피 연출을 생성한다.
+            SpawnBloodOnHitExtended(attackOrigin, hitCenter, candidate.Collider, bossHurtbox, effectId);
         }
     }
 
@@ -262,7 +280,7 @@ public class CombatSystem : MonoBehaviour
         return true;
     }
 
-    private void TryCollectBestBossHurtbox(Collider hit)
+    private void TryCollectBestBossHurtbox(Collider hit, Vector3 hitCenter)
     {
         BossHurtbox bossHurtbox = hit.GetComponentInParent<BossHurtbox>();
         if (bossHurtbox == null)
@@ -276,10 +294,14 @@ public class CombatSystem : MonoBehaviour
             return;
         }
 
-        if (!_bestBossHurtboxes.TryGetValue(boss, out BossHurtbox bestHurtbox) ||
-            bossHurtbox.damageMultiplier > bestHurtbox.damageMultiplier)
+        Vector3 closestPoint = GetClosestPointSafe(hit, hitCenter);
+        float sqrDistance = (closestPoint - hitCenter).sqrMagnitude;
+        if (!_bestBossHurtboxes.TryGetValue(boss, out BossHitCandidate best) ||
+            sqrDistance < best.SqrDistance ||
+            (Mathf.Approximately(sqrDistance, best.SqrDistance) &&
+             bossHurtbox.damageMultiplier > best.Hurtbox.damageMultiplier))
         {
-            _bestBossHurtboxes[boss] = bossHurtbox;
+            _bestBossHurtboxes[boss] = new BossHitCandidate(bossHurtbox, hit, sqrDistance);
         }
     }
 
@@ -329,22 +351,8 @@ public class CombatSystem : MonoBehaviour
             hitNormal = attackOrigin.forward;
         }
 
-        Transform attachRoot = bossHurtbox != null
-            ? bossHurtbox.GetComponentInParent<NetworkBossCore>()?.transform
-            : null;
-
         // 피 분출과 타격음은 같은 호출에서 처리한다.
         bloodEffectSpawner.SpawnBlood(effectId, hitPoint, hitNormal);
-
-        // 공통 부착 혈흔 프리팹이 있으면 움직이는 보스의 가장 가까운 본에 상처를 붙인다.
-        if (attachRoot != null)
-        {
-            bloodEffectSpawner.SpawnAttachedBloodDecal(
-                effectId,
-                hitPoint,
-                hitNormal,
-                attachRoot);
-        }
     }
 
     private void ResolveReferences()
