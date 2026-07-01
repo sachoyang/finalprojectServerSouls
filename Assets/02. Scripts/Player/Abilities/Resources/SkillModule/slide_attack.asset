@@ -14,8 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   bitIndex: 7
   abilityId: slide_attack
-  displayName: Slide Attack
-  description: Slides forward with a great sword attack.
+  displayName: "\uC2AC\uB77C\uC774\uB4DC \uC2A4\uB9E4\uC2DC"
+  description: "\uC2AC\uB77C\uC774\uB4DC \uD558\uACE0 \uAC80\uC744 \uBE60\uB974\uAC8C
+    \uD718\uB458\uB7EC \uD55C\uBC14\uD034 \uBCA0\uC5B4 3\uBC30\uC758 \uB370\uBBF8\uC9C0\uB97C
+    \uC900\uB2E4"
   icon: {fileID: -684497504, guid: 602013fcc1a5c4a48ad04a33a93cf811, type: 3}
   abilityType: 1
   minBossStage: 1
@@ -54,7 +56,7 @@ MonoBehaviour:
     radius: 2
     height: 3
     centerHeight: 0
-    damageRate: 4
+    damageRate: 3
     groggyDamage: 10
     revivePower: 34
     previewColor: {r: 0, g: 0.0940752, b: 1, a: 0.3}

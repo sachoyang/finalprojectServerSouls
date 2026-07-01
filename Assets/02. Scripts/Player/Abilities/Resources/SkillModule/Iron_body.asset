@@ -13,14 +13,14 @@ MonoBehaviour:
   m_Name: Iron_body
   m_EditorClassIdentifier: 
   bitIndex: 9
-  abilityId: iron_body
-  displayName: IRON BODY
-  description: "\uBC29\uC5B4\uB825\uC744 10\uD504\uB85C \uD5A5\uC0C1\uC2DC\uD0A8\uB2E4"
+  abilityId: Iron_body
+  displayName: "\uC544\uC774\uC5B8 \uBC14\uB514"
+  description: "\uBC29\uC5B4\uB825\uC744 10\uD504\uB85C \uC99D\uAC00\uC2DC\uD0A8\uB2E4"
   icon: {fileID: 1990943920, guid: 7d4e7f6eb9b67bc4da7d17ee567dd146, type: 3}
   abilityType: 0
   minBossStage: 1
   maxBossStage: 8
-  includeInRewardPool: 0
+  includeInRewardPool: 1
   staminaCost: 0
   cooldownSeconds: 0
   healthRestoreAmount: 0

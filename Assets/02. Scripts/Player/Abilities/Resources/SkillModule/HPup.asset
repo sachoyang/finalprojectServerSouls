@@ -15,7 +15,7 @@ MonoBehaviour:
   bitIndex: 4
   abilityId: HPup
   displayName: "\uCCB4\uB825\uC99D\uAC00"
-  description: Increase maxHp
+  description: "\uCD5C\uB300 \uCCB4\uB825\uC744 3000\uB9CC\uD07C \uC62C\uB9B0\uB2E4"
   icon: {fileID: -513147929, guid: 7d4e7f6eb9b67bc4da7d17ee567dd146, type: 3}
   abilityType: 0
   minBossStage: 1
@@ -31,9 +31,9 @@ MonoBehaviour:
   defenseRateBonus: 0
   attackDamageBonusPercent: 0
   animationClip: {fileID: 0}
-  animationStateName: StaminaUp
-  animationTrigger: StaminaUp
-  animationSpeed: 1.7
+  animationStateName: 
+  animationTrigger: 
+  animationSpeed: 0.01
   rootMotionMode: 0
   staminaRecoveryDelayMode: 0
   opensComboInput: 0
