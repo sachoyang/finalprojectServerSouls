@@ -14,13 +14,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   bitIndex: 6
   abilityId: jump_attack
-  displayName: Jump Attack
+  displayName: "\uC810\uD504 \uC5B4\uD0DD"
   description: Leaps into a great sword attack.
   icon: {fileID: 721787287, guid: 7d4e7f6eb9b67bc4da7d17ee567dd146, type: 3}
   abilityType: 1
   minBossStage: 1
   maxBossStage: 8
   includeInRewardPool: 1
+  basicSkill: 1
   staminaCost: 400
   cooldownSeconds: 8
   healthRestoreAmount: 0
@@ -54,7 +55,7 @@ MonoBehaviour:
     radius: 2
     height: 3
     centerHeight: 0
-    damageRate: 5
+    damageRate: 3
     groggyDamage: 10
     revivePower: 34
     previewColor: {r: 0, g: 0.8264365, b: 1, a: 0.3}

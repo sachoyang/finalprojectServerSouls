@@ -13,6 +13,7 @@ public class AbilityDBData
     public string display_name;
     public string description;
     public string ability_type;
+    public int basic_skill;
     public float stamina_cost;
     public float cooldown_seconds;
     public float damage_multiplier;
@@ -197,7 +198,7 @@ public class AbilityManager : MonoSingleton<AbilityManager>
                     Debug.Log(
                         $"<color=green>[AbilityManager] 서버 수치 동기화 완료! 로컬 SkillModule {AllAbilitiesDict.Count}개를 사용합니다.</color>");
 
-                    // 🌟 조립이 끝나면 로그인 시 받아둔 유저 비트마스크를 해석해 각 SO의 보상 풀 포함 여부를 갱신
+                    // DB 기본 스킬과 로그인 유저의 개인 해금 비트를 합쳐 최종 보상 풀을 갱신한다.
                     ApplyRewardPoolFromBitmask();
 
                     onComplete?.Invoke(true);
@@ -244,9 +245,11 @@ public class AbilityManager : MonoSingleton<AbilityManager>
                 continue;
             }
 
-            // 로컬 실행은 에셋의 풀 설정을 사용하고, 로그인 상태는 서버 비트마스크를 사용한다.
+            // 로컬 실행은 에셋의 테스트 풀 설정을 사용한다.
+            // 로그인 상태에서는 DB의 전체 유저 기본 스킬 또는 개인 해금 비트를 사용한다.
             if ((usesLocalPool && module.IncludeInRewardPool) ||
-                (!usesLocalPool && (userBitmask & (1L << bitIndex)) != 0))
+                (!usesLocalPool &&
+                 (module.BasicSkill || (userBitmask & (1L << bitIndex)) != 0)))
             {
                 unlockedList.Add(module);
             }
@@ -255,13 +258,13 @@ public class AbilityManager : MonoSingleton<AbilityManager>
         return unlockedList;
     }
 
-    // ==========================================
-    // 🌟 [핵심] 유저 비트마스크 해석 → SO의 includeInRewardPool 런타임 갱신
-    // 서버는 "기본 해금 + 유저 추가 해금"이 합산된 단일 비트마스크 하나만 던져준다.
-    // ==========================================
+    // 모든 유저 공통 Basic Skill과 유저별 해금 비트를 합쳐
+    // 런타임 IncludeInRewardPool 값을 갱신한다.
     public void ApplyRewardPoolFromBitmask()
     {
-        long userBitmask = BackendManager.HasInstance ? BackendManager.Instance.CurrentSkillsBitmask : 0L;
+        long userBitmask = BackendManager.HasInstance
+            ? BackendManager.Instance.CurrentSkillsBitmask
+            : 0L;
         ApplyRewardPoolFromBitmask(userBitmask);
     }
 
@@ -275,9 +278,10 @@ public class AbilityManager : MonoSingleton<AbilityManager>
                 continue;
             }
 
-            // 해당 비트가 켜져 있으면 true, 꺼져 있으면 false로 덮어쓴다.
-            bool unlocked = (userBitmask & (1L << module.BitIndex)) != 0L;
-            module.SetIncludeInRewardPool(unlocked);
+            bool personallyUnlocked =
+                (userBitmask & (1L << module.BitIndex)) != 0L;
+            module.SetIncludeInRewardPool(
+                module.BasicSkill || personallyUnlocked);
         }
     }
 
@@ -310,7 +314,7 @@ public class AbilityManager : MonoSingleton<AbilityManager>
         long newBitmask = BackendManager.Instance.CurrentSkillsBitmask | (1L << bitIndex);
         BackendManager.Instance.SetCurrentSkillsBitmask(newBitmask);
 
-        // 2. 해당 SO의 보상 풀 포함 여부 즉시 갱신
+        // 2. 개인 해금 결과를 런타임 보상 풀에 즉시 반영
         module.SetIncludeInRewardPool(true);
 
         // 3. 변경된 비트마스크를 서버로 즉시 영구 저장

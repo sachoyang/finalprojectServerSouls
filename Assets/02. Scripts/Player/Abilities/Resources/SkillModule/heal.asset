@@ -14,13 +14,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   bitIndex: 2
   abilityId: heal
-  displayName: Heal
-  description: Restores player health.
+  displayName: "\uC790\uC560\uC758 \uC190\uAE38"
+  description: "\uCCB4\uB825\uC744 3000 \uD68C\uBCF5\uD55C\uB2E4"
   icon: {fileID: 78065985, guid: 7d4e7f6eb9b67bc4da7d17ee567dd146, type: 3}
   abilityType: 1
   minBossStage: 1
   maxBossStage: 8
   includeInRewardPool: 1
+  basicSkill: 1
   staminaCost: 400
   cooldownSeconds: 8
   healthRestoreAmount: 3000

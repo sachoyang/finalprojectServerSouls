@@ -80,6 +80,10 @@ public class PlayerAbilityModule : ScriptableObject
     // 테스트용 또는 미완성 모듈은 체크를 끄면 보스 보상 후보에서 제외된다.
     [SerializeField] private bool includeInRewardPool = false;
 
+    // 모든 로그인 유저가 개인 해금 비트 없이도 보상 후보로 사용할 기본 스킬.
+    // 서버 DB의 basic_skill 컬럼과 동기화된다.
+    [SerializeField] private bool basicSkill;
+
     [Header("Active Settings")]
     // 액티브 능력을 사용할 때 소모하는 스태미나. 0이면 무료다.
     [SerializeField] private float staminaCost;
@@ -182,6 +186,7 @@ public class PlayerAbilityModule : ScriptableObject
     public float StaminaCost => staminaCost;
     public float CooldownSeconds => cooldownSeconds;
     public bool IncludeInRewardPool => includeInRewardPool;
+    public bool BasicSkill => basicSkill;
     public float MaxHealthBonus => maxHealthBonus;
     public float MaxStaminaBonus => maxStaminaBonus;
     public float DefenseRateBonus => defenseRateBonus;
@@ -223,10 +228,7 @@ public class PlayerAbilityModule : ScriptableObject
         return bossStage >= minBossStage && bossStage <= maxBossStage;
     }
 
-    // ==========================================
-    // 🌟 includeInRewardPool 런타임 Setter
-    // 서버 JSON으로 받지 않고, AbilityManager가 비트마스크를 해석해 이 값을 덮어쓴다.
-    // ==========================================
+    // Basic Skill과 유저별 해금 비트를 합산한 런타임 보상 풀 결과를 반영한다.
     public void SetIncludeInRewardPool(bool value)
     {
         includeInRewardPool = value;
@@ -246,6 +248,7 @@ public class PlayerAbilityModule : ScriptableObject
         this.description = dbData.description;
 
         this.abilityType = (dbData.ability_type == "Active") ? AbilityType.Active : AbilityType.Passive;
+        this.basicSkill = dbData.basic_skill != 0;
 
         this.staminaCost = dbData.stamina_cost;
         this.cooldownSeconds = dbData.cooldown_seconds;
