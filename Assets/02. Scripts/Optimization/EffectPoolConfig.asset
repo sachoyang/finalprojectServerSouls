@@ -37,6 +37,18 @@ MonoBehaviour:
   - name: BloodEffect
     maxActive: 60
     prefabs:
-    - prefab: {fileID: 3136605153214515430, guid: 45eef0a861a8a8946b4c23fb9f4f779a, type: 3}
-      prewarmCount: 10
-      autoReturnAfter: 15
+    - prefab: {fileID: 6463355840203370170, guid: 70ead61ff20b23b4e97b90d8e8997ecd, type: 3}
+      prewarmCount: 2
+      autoReturnAfter: 0
+    - prefab: {fileID: 2629016494315086251, guid: 5776aed3bb070e54cb09a11c8a6a5831, type: 3}
+      prewarmCount: 2
+      autoReturnAfter: 0
+    - prefab: {fileID: 764304066602274965, guid: 4a322f29a9e1fa54f90223de8bcf3a28, type: 3}
+      prewarmCount: 2
+      autoReturnAfter: 0
+    - prefab: {fileID: 7935733108997359171, guid: e822d59151d3597428b0b63bf25355e7, type: 3}
+      prewarmCount: 2
+      autoReturnAfter: 0
+    - prefab: {fileID: 4288107571095694937, guid: c3f8938673a07704e93ac52eee18f410, type: 3}
+      prewarmCount: 2
+      autoReturnAfter: 0

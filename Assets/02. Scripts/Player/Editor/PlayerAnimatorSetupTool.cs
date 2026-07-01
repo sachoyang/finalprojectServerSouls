@@ -251,7 +251,7 @@ public static class PlayerAnimatorSetupTool
         {
             string path = AssetDatabase.GUIDToAssetPath(moduleGuid);
             PlayerAbilityModule module = AssetDatabase.LoadAssetAtPath<PlayerAbilityModule>(path);
-            if (module == null || !module.IncludeInRewardPool)
+            if (module == null || !module.UnlockedSkill)
             {
                 continue;
             }
@@ -306,7 +306,7 @@ public static class PlayerAnimatorSetupTool
         {
             string path = AssetDatabase.GUIDToAssetPath(moduleGuid);
             PlayerAbilityModule module = AssetDatabase.LoadAssetAtPath<PlayerAbilityModule>(path);
-            if (module == null || module.IncludeInRewardPool)
+            if (module == null || module.UnlockedSkill)
             {
                 continue;
             }
@@ -383,7 +383,7 @@ public static class PlayerAnimatorSetupTool
             string path = AssetDatabase.GUIDToAssetPath(moduleGuid);
             PlayerAbilityModule module = AssetDatabase.LoadAssetAtPath<PlayerAbilityModule>(path);
             if (module != null &&
-                module.IncludeInRewardPool &&
+                module.UnlockedSkill &&
                 module.AnimationTrigger == triggerName)
             {
                 return true;

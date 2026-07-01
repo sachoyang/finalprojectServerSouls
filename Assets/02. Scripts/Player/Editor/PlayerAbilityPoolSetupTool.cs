@@ -74,7 +74,7 @@ public static class PlayerAbilityPoolSetupTool
         {
             string path = AssetDatabase.GUIDToAssetPath(moduleGuid);
             PlayerAbilityModule module = AssetDatabase.LoadAssetAtPath<PlayerAbilityModule>(path);
-            if (module == null || !module.IncludeInRewardPool)
+            if (module == null || !module.UnlockedSkill)
             {
                 continue;
             }

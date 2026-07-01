@@ -96,7 +96,7 @@ public class PlayerAbilityInventory : MonoBehaviour
         foreach (PlayerAbilityModule module in abilityManager.GetUnlockedAbilitiesList(GetUnlockedSkillsBitmask()))
         {
             // 빈 항목이거나 현재 보스 단계에 등장할 수 없는 능력은 제외한다.
-            if (module == null || !module.IncludeInRewardPool || !module.CanAppearAtStage(bossStage))
+            if (module == null || !module.UnlockedSkill || !module.CanAppearAtStage(bossStage))
             {
                 continue;
             }

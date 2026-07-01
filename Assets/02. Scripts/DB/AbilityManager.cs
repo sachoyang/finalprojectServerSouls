@@ -229,7 +229,7 @@ public class AbilityManager : MonoSingleton<AbilityManager>
         List<PlayerAbilityModule> unlockedList = new List<PlayerAbilityModule>();
 
         // 로그인하지 않은 로컬 실행에서는 서버 비트마스크가 없다.
-        // 이때는 SkillModule 에셋에서 includeInRewardPool이 켜진 항목을 로컬 스킬 풀로 사용한다.
+        // 이때는 SkillModule 에셋에서 Unlocked Skill이 켜진 항목을 로컬 스킬 풀로 사용한다.
         bool usesLocalPool =
             !BackendManager.HasInstance ||
             string.IsNullOrWhiteSpace(BackendManager.Instance.CurrentLoginID);
@@ -247,7 +247,7 @@ public class AbilityManager : MonoSingleton<AbilityManager>
 
             // 로컬 실행은 에셋의 테스트 풀 설정을 사용한다.
             // 로그인 상태에서는 DB의 전체 유저 기본 스킬 또는 개인 해금 비트를 사용한다.
-            if ((usesLocalPool && module.IncludeInRewardPool) ||
+            if ((usesLocalPool && module.UnlockedSkill) ||
                 (!usesLocalPool &&
                  (module.BasicSkill || (userBitmask & (1L << bitIndex)) != 0)))
             {
@@ -259,7 +259,7 @@ public class AbilityManager : MonoSingleton<AbilityManager>
     }
 
     // 모든 유저 공통 Basic Skill과 유저별 해금 비트를 합쳐
-    // 런타임 IncludeInRewardPool 값을 갱신한다.
+    // 런타임 UnlockedSkill 값을 갱신한다.
     public void ApplyRewardPoolFromBitmask()
     {
         long userBitmask = BackendManager.HasInstance
@@ -280,7 +280,7 @@ public class AbilityManager : MonoSingleton<AbilityManager>
 
             bool personallyUnlocked =
                 (userBitmask & (1L << module.BitIndex)) != 0L;
-            module.SetIncludeInRewardPool(
+            module.SetUnlockedSkill(
                 module.BasicSkill || personallyUnlocked);
         }
     }
@@ -315,7 +315,7 @@ public class AbilityManager : MonoSingleton<AbilityManager>
         BackendManager.Instance.SetCurrentSkillsBitmask(newBitmask);
 
         // 2. 개인 해금 결과를 런타임 보상 풀에 즉시 반영
-        module.SetIncludeInRewardPool(true);
+        module.SetUnlockedSkill(true);
 
         // 3. 변경된 비트마스크를 서버로 즉시 영구 저장
         BackendManager.Instance.UpdateSkills(newBitmask);

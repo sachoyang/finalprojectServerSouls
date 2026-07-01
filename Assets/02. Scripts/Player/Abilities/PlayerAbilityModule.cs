@@ -76,9 +76,9 @@ public class PlayerAbilityModule : ScriptableObject
     [SerializeField, Range(1, 8)] private int minBossStage = 1;
     [SerializeField, Range(1, 8)] private int maxBossStage = 8;
 
-    // Player reward pool 동기화 도구가 이 값을 보고 Player.prefab의 abilityPool에 포함할지 결정한다.
-    // 테스트용 또는 미완성 모듈은 체크를 끄면 보스 보상 후보에서 제외된다.
-    [SerializeField] private bool includeInRewardPool = false;
+    // Basic Skill 또는 개인 해금 상태가 반영된 최종 스킬 해금 여부.
+    // Player reward pool 동기화 도구는 이 값을 보고 Player.prefab의 abilityPool에 포함할지 결정한다.
+    [SerializeField] private bool unlockedSkill;
 
     // 모든 로그인 유저가 개인 해금 비트 없이도 보상 후보로 사용할 기본 스킬.
     // 서버 DB의 basic_skill 컬럼과 동기화된다.
@@ -185,7 +185,7 @@ public class PlayerAbilityModule : ScriptableObject
     public bool IsActive => abilityType == AbilityType.Active;
     public float StaminaCost => staminaCost;
     public float CooldownSeconds => cooldownSeconds;
-    public bool IncludeInRewardPool => includeInRewardPool;
+    public bool UnlockedSkill => unlockedSkill;
     public bool BasicSkill => basicSkill;
     public float MaxHealthBonus => maxHealthBonus;
     public float MaxStaminaBonus => maxStaminaBonus;
@@ -229,9 +229,9 @@ public class PlayerAbilityModule : ScriptableObject
     }
 
     // Basic Skill과 유저별 해금 비트를 합산한 런타임 보상 풀 결과를 반영한다.
-    public void SetIncludeInRewardPool(bool value)
+    public void SetUnlockedSkill(bool value)
     {
-        includeInRewardPool = value;
+        unlockedSkill = value;
     }
 
     // ==========================================
