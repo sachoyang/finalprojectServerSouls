@@ -121,6 +121,21 @@ public class NetworkBossCore : NetworkBehaviour
     //    PolarDragonBoss처럼 비행하는 보스가 IsFlightActive로 오버라이드해서, 중력/바닥밀착을 끄게 한다.
     protected virtual bool IsAirborne => false;
 
+    // 현재 실행 중인 액션(BossActionModule). 패턴 실행 중이 아니거나 인덱스가 범위 밖이면 null.
+    // 모든 [Networked] 인덱스/상태 기반이라 클라이언트에서도 안전하게 읽을 수 있다(예: 네이팜 융단폭격 연출).
+    public BossActionModule CurrentAction
+    {
+        get
+        {
+            if (CurrentState != BossState.ExecutingPattern) return null;
+            var patterns = CurrentAvailablePatterns;
+            if (patterns == null || CurrentPatternIndex < 0 || CurrentPatternIndex >= patterns.Count) return null;
+            var pattern = patterns[CurrentPatternIndex];
+            if (pattern == null || CurrentStepIndex < 0 || CurrentStepIndex >= pattern.ActionCount) return null;
+            return pattern.GetAction(CurrentStepIndex);
+        }
+    }
+
     // ==========================================
     // [네트워크 동기화 변수들]
     // ==========================================

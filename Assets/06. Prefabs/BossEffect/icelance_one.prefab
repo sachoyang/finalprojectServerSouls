@@ -4753,7 +4753,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   explosionPrefab: {fileID: 0}
   cleanupDelay: 3
-  explosionLifetime: 3
 --- !u!1 &1820680284854294
 GameObject:
   m_ObjectHideFlags: 0
@@ -8558,7 +8557,7 @@ ParticleSystem:
     m_EnergyLossOnCollision:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 0.8
+      scalar: 0.4
       minScalar: 0
       maxCurve:
         serializedVersion: 2
