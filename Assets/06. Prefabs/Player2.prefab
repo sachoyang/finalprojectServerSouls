@@ -354,7 +354,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4d548f7d4bc549d6a9b9f9f95ec2f9c1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 100000
+  maxHealth: 10000
   maxStamina: 1000
   staminaRegenPerSecond: 200
   staminaRegenDelay: 0.5
@@ -364,7 +364,7 @@ MonoBehaviour:
   maxReviveSegments: 3
   reviveProgressDecayDelay: 2
   reviveProgressDecayPerSecond: 30
-  defenseRate: 0.762
+  defenseRate: 0.5
   firstAttackDamage: 7000
   secondAttackDamage: 9000
   thirdAttackDamage: 11000
@@ -378,6 +378,8 @@ MonoBehaviour:
   powerUpStaminaCost: 500
   slideSlashStaminaCost: 400
   _CurrentHealth: 0
+  _LastDamageHitPoint: {x: 0, y: 0, z: 0}
+  _LastDamageHitNormal: {x: 0, y: 0, z: 0}
   _CurrentStamina: 0
   _IsDead: 0
   _IsAnimationInvincible: 0

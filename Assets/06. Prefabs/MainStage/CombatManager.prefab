@@ -1,0 +1,145 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &3129219821398243864
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5220701444796421129}
+  - component: {fileID: 8474888080787693599}
+  - component: {fileID: 7777160495376634603}
+  m_Layer: 0
+  m_Name: CombatManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5220701444796421129
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3129219821398243864}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8474888080787693599
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3129219821398243864}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c7b6db9ab8a4fb48ad2f48344b4f0c1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  basicAttackHitRadius: 1.4
+  basicAttackHitDistance: 1.8
+  basicAttackHitHeight: 1.1
+  basicAttackTargetLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  basicAttackRevivePower: 34
+  bloodEffectSpawner: {fileID: 0}
+--- !u!114 &7777160495376634603
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3129219821398243864}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bab80632eccb49d4eaf84c3054e7a81d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bloodEffects:
+  - effectId: BasicAttack1
+    prefab: {fileID: 764304066602274965, guid: 4a322f29a9e1fa54f90223de8bcf3a28, type: 3}
+    hitSound: {fileID: 8300000, guid: 0b65be7dcd3038443bbd217ef9ce661c, type: 3}
+    soundVolume: 1
+    scale: 1
+    randomScaleMin: 1
+    randomScaleMax: 1
+    legacyRandomScaleRange: {x: 0.9, y: 1.1}
+    overrideColor: 0
+    color: {r: 0, g: 0.05740881, b: 1, a: 1}
+  - effectId: high_spin_attack
+    prefab: {fileID: 6463355840203370170, guid: 70ead61ff20b23b4e97b90d8e8997ecd, type: 3}
+    hitSound: {fileID: 8300000, guid: 0b65be7dcd3038443bbd217ef9ce661c, type: 3}
+    soundVolume: 1
+    scale: 2
+    randomScaleMin: 2
+    randomScaleMax: 2.2
+    legacyRandomScaleRange: {x: 0.9, y: 1.1}
+    overrideColor: 0
+    color: {r: 1, g: 1, b: 1, a: 0}
+  - effectId: jump_attack
+    prefab: {fileID: 2629016494315086251, guid: 5776aed3bb070e54cb09a11c8a6a5831, type: 3}
+    hitSound: {fileID: 8300000, guid: 0b65be7dcd3038443bbd217ef9ce661c, type: 3}
+    soundVolume: 1
+    scale: 2
+    randomScaleMin: 2.2
+    randomScaleMax: 2.2
+    legacyRandomScaleRange: {x: 0.9, y: 1.1}
+    overrideColor: 0
+    color: {r: 1, g: 1, b: 1, a: 0}
+  - effectId: slide_attack
+    prefab: {fileID: 2629016494315086251, guid: 5776aed3bb070e54cb09a11c8a6a5831, type: 3}
+    hitSound: {fileID: 8300000, guid: 0b65be7dcd3038443bbd217ef9ce661c, type: 3}
+    soundVolume: 1
+    scale: 1
+    randomScaleMin: 0.9
+    randomScaleMax: 1.1
+    legacyRandomScaleRange: {x: 0.9, y: 1.1}
+    overrideColor: 0
+    color: {r: 1, g: 1, b: 1, a: 0}
+  - effectId: BasicAttack2
+    prefab: {fileID: 2629016494315086251, guid: 5776aed3bb070e54cb09a11c8a6a5831, type: 3}
+    hitSound: {fileID: 8300000, guid: 0b65be7dcd3038443bbd217ef9ce661c, type: 3}
+    soundVolume: 1
+    scale: 1
+    randomScaleMin: 0.9
+    randomScaleMax: 1.1
+    legacyRandomScaleRange: {x: 0.9, y: 1.1}
+    overrideColor: 0
+    color: {r: 1, g: 1, b: 1, a: 0}
+  - effectId: BasicAttack3
+    prefab: {fileID: 2629016494315086251, guid: 5776aed3bb070e54cb09a11c8a6a5831, type: 3}
+    hitSound: {fileID: 8300000, guid: 0b65be7dcd3038443bbd217ef9ce661c, type: 3}
+    soundVolume: 1
+    scale: 1
+    randomScaleMin: 0.9
+    randomScaleMax: 1.1
+    legacyRandomScaleRange: {x: 0.9, y: 1.1}
+    overrideColor: 0
+    color: {r: 1, g: 1, b: 1, a: 0}
+  - effectId: BasicAttack3
+    prefab: {fileID: 2629016494315086251, guid: 5776aed3bb070e54cb09a11c8a6a5831, type: 3}
+    hitSound: {fileID: 8300000, guid: 0b65be7dcd3038443bbd217ef9ce661c, type: 3}
+    soundVolume: 1
+    scale: 1
+    randomScaleMin: 0.9
+    randomScaleMax: 1.1
+    legacyRandomScaleRange: {x: 0.9, y: 1.1}
+    overrideColor: 0
+    color: {r: 1, g: 1, b: 1, a: 0}
+  spawnOffset: {x: 0, y: 0, z: 0}
+  globalScaleMultiplier: 1
+  animationSpeedMultiplier: 1
+  maxActiveBloodEffects: 30
+  bloodEffectMaxLifetime: 30
+  playerBloodSpawnInterval: 0.12
+  fallbackBloodEffectPrefab: {fileID: 4288107571095694937, guid: c3f8938673a07704e93ac52eee18f410, type: 3}
