@@ -21,6 +21,7 @@ MonoBehaviour:
   minBossStage: 1
   maxBossStage: 8
   includeInRewardPool: 1
+  basicSkill: 1
   staminaCost: 400
   cooldownSeconds: 8
   healthRestoreAmount: 3000

@@ -69,47 +69,47 @@ MonoBehaviour:
   - effectId: BasicAttack1
     prefab: {fileID: 764304066602274965, guid: 4a322f29a9e1fa54f90223de8bcf3a28, type: 3}
     hitSound: {fileID: 8300000, guid: 0b65be7dcd3038443bbd217ef9ce661c, type: 3}
-    soundVolume: 1
+    soundVolume: 0.5
     scale: 1
-    randomScaleMin: 1
-    randomScaleMax: 1
+    randomScaleMin: 0.9
+    randomScaleMax: 1.2
     legacyRandomScaleRange: {x: 0.9, y: 1.1}
     overrideColor: 0
     color: {r: 0, g: 0.05740881, b: 1, a: 1}
   - effectId: high_spin_attack
     prefab: {fileID: 6463355840203370170, guid: 70ead61ff20b23b4e97b90d8e8997ecd, type: 3}
     hitSound: {fileID: 8300000, guid: 0b65be7dcd3038443bbd217ef9ce661c, type: 3}
-    soundVolume: 1
-    scale: 2
-    randomScaleMin: 2
-    randomScaleMax: 2.2
+    soundVolume: 0.5
+    scale: 1.5
+    randomScaleMin: 1.4
+    randomScaleMax: 1.6
     legacyRandomScaleRange: {x: 0.9, y: 1.1}
     overrideColor: 0
     color: {r: 1, g: 1, b: 1, a: 0}
   - effectId: jump_attack
     prefab: {fileID: 2629016494315086251, guid: 5776aed3bb070e54cb09a11c8a6a5831, type: 3}
     hitSound: {fileID: 8300000, guid: 0b65be7dcd3038443bbd217ef9ce661c, type: 3}
-    soundVolume: 1
-    scale: 2
-    randomScaleMin: 2.2
-    randomScaleMax: 2.2
+    soundVolume: 0.5
+    scale: 1.5
+    randomScaleMin: 1.4
+    randomScaleMax: 1.6
     legacyRandomScaleRange: {x: 0.9, y: 1.1}
     overrideColor: 0
     color: {r: 1, g: 1, b: 1, a: 0}
   - effectId: slide_attack
     prefab: {fileID: 2629016494315086251, guid: 5776aed3bb070e54cb09a11c8a6a5831, type: 3}
     hitSound: {fileID: 8300000, guid: 0b65be7dcd3038443bbd217ef9ce661c, type: 3}
-    soundVolume: 1
-    scale: 1
-    randomScaleMin: 0.9
-    randomScaleMax: 1.1
+    soundVolume: 0.5
+    scale: 1.5
+    randomScaleMin: 1.4
+    randomScaleMax: 1.6
     legacyRandomScaleRange: {x: 0.9, y: 1.1}
     overrideColor: 0
     color: {r: 1, g: 1, b: 1, a: 0}
   - effectId: BasicAttack2
     prefab: {fileID: 2629016494315086251, guid: 5776aed3bb070e54cb09a11c8a6a5831, type: 3}
     hitSound: {fileID: 8300000, guid: 0b65be7dcd3038443bbd217ef9ce661c, type: 3}
-    soundVolume: 1
+    soundVolume: 0.5
     scale: 1
     randomScaleMin: 0.9
     randomScaleMax: 1.1
@@ -119,7 +119,7 @@ MonoBehaviour:
   - effectId: BasicAttack3
     prefab: {fileID: 2629016494315086251, guid: 5776aed3bb070e54cb09a11c8a6a5831, type: 3}
     hitSound: {fileID: 8300000, guid: 0b65be7dcd3038443bbd217ef9ce661c, type: 3}
-    soundVolume: 1
+    soundVolume: 0.5
     scale: 1
     randomScaleMin: 0.9
     randomScaleMax: 1.1
@@ -129,7 +129,7 @@ MonoBehaviour:
   - effectId: BasicAttack3
     prefab: {fileID: 2629016494315086251, guid: 5776aed3bb070e54cb09a11c8a6a5831, type: 3}
     hitSound: {fileID: 8300000, guid: 0b65be7dcd3038443bbd217ef9ce661c, type: 3}
-    soundVolume: 1
+    soundVolume: 0.5
     scale: 1
     randomScaleMin: 0.9
     randomScaleMax: 1.1

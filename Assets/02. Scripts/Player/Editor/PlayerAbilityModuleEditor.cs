@@ -31,6 +31,7 @@ public class PlayerAbilityModuleEditor : Editor
     private SerializedProperty _minBossStage;
     private SerializedProperty _maxBossStage;
     private SerializedProperty _includeInRewardPool;
+    private SerializedProperty _basicSkill;
     private SerializedProperty _staminaCost;
     private SerializedProperty _cooldownSeconds;
     private SerializedProperty _healthRestoreAmount;
@@ -109,6 +110,7 @@ public class PlayerAbilityModuleEditor : Editor
         _minBossStage = serializedObject.FindProperty("minBossStage");
         _maxBossStage = serializedObject.FindProperty("maxBossStage");
         _includeInRewardPool = serializedObject.FindProperty("includeInRewardPool");
+        _basicSkill = serializedObject.FindProperty("basicSkill");
         _staminaCost = serializedObject.FindProperty("staminaCost");
         _cooldownSeconds = serializedObject.FindProperty("cooldownSeconds");
         _healthRestoreAmount = serializedObject.FindProperty("healthRestoreAmount");
@@ -204,6 +206,7 @@ public class PlayerAbilityModuleEditor : Editor
         EditorGUILayout.PropertyField(_minBossStage);
         EditorGUILayout.PropertyField(_maxBossStage);
         EditorGUILayout.PropertyField(_includeInRewardPool);
+        EditorGUILayout.PropertyField(_basicSkill, new GUIContent("Basic Skill"));
     }
 
     private void DrawActiveSettings()

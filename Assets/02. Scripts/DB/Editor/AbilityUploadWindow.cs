@@ -85,6 +85,7 @@ public class AbilityUploadWindow : EditorWindow
                 form.AddField("display_name", module.DisplayName ?? "");
                 form.AddField("description", module.Description ?? "");
                 form.AddField("ability_type", module.AbilityType.ToString());
+                form.AddField("basic_skill", module.BasicSkill ? 1 : 0);
                 form.AddField("stamina_cost", module.StaminaCost.ToString());
                 form.AddField("cooldown_seconds", module.CooldownSeconds.ToString());
                 form.AddField("damage_multiplier", module.HitboxDamage.ToString());
