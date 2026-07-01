@@ -65,7 +65,8 @@ public class NetworkPlayerData : NetworkBehaviour
         if (HasStateAuthority)
         {
             PlayerSessionStore.SaveAbility(Owner, abilityId);
-            AddAbilityId(abilityId);
+            // 방장 플레이어는 보상 선택 시 같은 오브젝트에서 이미 획득 효과를 적용했다.
+            AddAbilityId(abilityId, false);
             return;
         }
 
@@ -128,7 +129,9 @@ public class NetworkPlayerData : NetworkBehaviour
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
     private void RPC_RecordAbilityId(string abilityId)
     {
-        AddAbilityId(abilityId);
+        // 일반 참가자의 로컬 PlayerStats에는 StateAuthority가 없으므로
+        // 기존 보상 기록 RPC가 도착한 권한 오브젝트에서 획득 효과를 적용한다.
+        AddAbilityId(abilityId, true);
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
@@ -144,7 +147,7 @@ public class NetworkPlayerData : NetworkBehaviour
         LastSelectedRewardStage = Mathf.Max(LastSelectedRewardStage, bossStage);
     }
 
-    private void AddAbilityId(string abilityId)
+    private void AddAbilityId(string abilityId, bool applyAcquireEffects)
     {
         if (HasAbilityId(abilityId) || SavedAbilityCount >= MaxSavedAbilities)
         {
@@ -155,6 +158,19 @@ public class NetworkPlayerData : NetworkBehaviour
         SavedAbilityCount++;
 
         PlayerSessionStore.SaveAbility(Owner, abilityId);
-        GetComponent<PlayerAbilityInventory>()?.RestoreFromSessionData(Owner);
+        PlayerAbilityInventory inventory = GetComponent<PlayerAbilityInventory>();
+        inventory?.RestoreFromSessionData(Owner);
+
+        if (!applyAcquireEffects || inventory == null)
+        {
+            return;
+        }
+
+        PlayerAbilityModule module = inventory.FindModuleById(abilityId);
+        PlayerAbilityExecutor executor = GetComponent<PlayerAbilityExecutor>();
+        if (module != null && executor != null)
+        {
+            executor.EquipModule(module, inventory.CreateContext());
+        }
     }
 }

@@ -27,10 +27,10 @@ MonoBehaviour:
   staminaRestoreAmount: 0
   specialEffect: 0
   maxHealthBonus: 0
-  maxStaminaBonus: 0
+  maxStaminaBonus: 3000
   defenseRateBonus: 0
   attackDamageBonusPercent: 0
-  animationClip: {fileID: -203655887218126122, guid: f91d1ffc181042e45bdcbe560e4be586, type: 3}
+  animationClip: {fileID: 0}
   animationStateName: StaminaUp
   animationTrigger: StaminaUp
   animationSpeed: 1.7

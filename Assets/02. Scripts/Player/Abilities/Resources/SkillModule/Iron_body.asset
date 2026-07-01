@@ -10,30 +10,30 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cbc39ac0e5f95d14fbd17eac508de1c4, type: 3}
-  m_Name: HPup
+  m_Name: Iron_body
   m_EditorClassIdentifier: 
-  bitIndex: 4
-  abilityId: HPup
-  displayName: "\uCCB4\uB825\uC99D\uAC00"
-  description: Increase maxHp
-  icon: {fileID: -513147929, guid: 7d4e7f6eb9b67bc4da7d17ee567dd146, type: 3}
+  bitIndex: 9
+  abilityId: iron_body
+  displayName: IRON BODY
+  description: "\uBC29\uC5B4\uB825\uC744 10\uD504\uB85C \uD5A5\uC0C1\uC2DC\uD0A8\uB2E4"
+  icon: {fileID: 1990943920, guid: 7d4e7f6eb9b67bc4da7d17ee567dd146, type: 3}
   abilityType: 0
   minBossStage: 1
   maxBossStage: 8
-  includeInRewardPool: 1
+  includeInRewardPool: 0
   staminaCost: 0
   cooldownSeconds: 0
   healthRestoreAmount: 0
   staminaRestoreAmount: 0
   specialEffect: 0
-  maxHealthBonus: 3000
+  maxHealthBonus: 0
   maxStaminaBonus: 0
-  defenseRateBonus: 0
+  defenseRateBonus: 0.1
   attackDamageBonusPercent: 0
   animationClip: {fileID: 0}
-  animationStateName: StaminaUp
-  animationTrigger: StaminaUp
-  animationSpeed: 1.7
+  animationStateName: 
+  animationTrigger: 
+  animationSpeed: 1
   rootMotionMode: 0
   staminaRecoveryDelayMode: 0
   opensComboInput: 0
