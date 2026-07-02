@@ -3,7 +3,6 @@ using Fusion;
 using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
-using UnityEngine.SceneManagement;
 
 public class CutsceneManager : MonoBehaviour
 {
@@ -45,29 +44,23 @@ public class CutsceneManager : MonoBehaviour
     [SerializeField] private AnimationClip playerKickAnimationClip;
     [SerializeField] private float gateKickCameraZoomDuration = 0.7f;
     [SerializeField] private float gateKickCameraFieldOfView = 35f;
-    [SerializeField] private float playerKickDuration = 1.2f;
 
     [Header("Gate")]
     [SerializeField] private Animation gateAnimation;
-    [SerializeField] private string gateOpenAnimationName = "DoorOpen";
-    [SerializeField] private AnimationClip gateOpenAnimationClip;
+    [SerializeField] private AnimationClip gateOpenClip;
     [SerializeField] private float gateOpenDelay = 0.35f;
 
-    [Header("Scene Load")]
-    [SerializeField] private string nextSceneName = "scServer_peace";
-    [SerializeField] private float loadDelay = 0.25f;
-    [SerializeField] private bool restoreCameraBeforeGateLoad = false;
+    [Header("Sound")]
+    [SerializeField] private AudioClip gateOpenSound;
+    [SerializeField, Range(0f, 1f)] private float gateOpenSoundVolume = 1f;
 
     private bool _isPlaying;
     private bool _bossWakeUpCutscenePlayed;
+    private bool _gateOpenCompleted;
     private PlayableGraph _playerKickGraph;
 
     public bool IsPlaying => _isPlaying;
-    public float GateKickCutsceneDuration =>
-        Mathf.Max(0f, gateKickCameraZoomDuration) +
-        Mathf.Max(0f, gateOpenDelay) +
-        Mathf.Max(0f, playerKickDuration) +
-        Mathf.Max(0f, loadDelay);
+    public bool GateOpenCompleted => _gateOpenCompleted;
 
     private void Awake()
     {
@@ -160,7 +153,7 @@ public class CutsceneManager : MonoBehaviour
     {
         if (!_isPlaying)
         {
-            StartCoroutine(PlayGateKickRoutine(null, false));
+            StartCoroutine(PlayGateKickRoutine(null));
         }
     }
 
@@ -168,15 +161,7 @@ public class CutsceneManager : MonoBehaviour
     {
         if (!_isPlaying)
         {
-            StartCoroutine(PlayGateKickRoutine(runner, false, kickPlayer));
-        }
-    }
-
-    public void PlayGateKickCutsceneAndLoad(NetworkRunner runner)
-    {
-        if (!_isPlaying)
-        {
-            StartCoroutine(PlayGateKickRoutine(runner, true));
+            StartCoroutine(PlayGateKickRoutine(runner, kickPlayer));
         }
     }
 
@@ -232,9 +217,10 @@ public class CutsceneManager : MonoBehaviour
         _isPlaying = false;
     }
 
-    private IEnumerator PlayGateKickRoutine(NetworkRunner runner, bool loadSceneOnEnd, PlayerRef kickPlayer = default)
+    private IEnumerator PlayGateKickRoutine(NetworkRunner runner, PlayerRef kickPlayer = default)
     {
         _isPlaying = true;
+        _gateOpenCompleted = false;
 
         ResolveManagers();
         ResolveGateKickPlayer(runner, kickPlayer);
@@ -262,28 +248,8 @@ public class CutsceneManager : MonoBehaviour
             yield return new WaitForSeconds(gateOpenDelay);
         }
 
-        PlayGateOpenAnimation();
-
-        if (playerKickDuration > 0f)
-        {
-            yield return new WaitForSeconds(playerKickDuration);
-        }
-
-        if (restoreCameraBeforeGateLoad && cameraManager != null)
-        {
-            yield return cameraManager.RestoreGameplayCamera();
-        }
-
-        if (loadSceneOnEnd && loadDelay > 0f)
-        {
-            yield return new WaitForSeconds(loadDelay);
-        }
-
-        if (loadSceneOnEnd)
-        {
-            LoadNextScene(runner);
-        }
-
+        yield return PlayGateOpenAnimationRoutine();
+        _gateOpenCompleted = true;
         SetPlayerControlEnabled(true);
         _isPlaying = false;
     }
@@ -415,36 +381,74 @@ public class CutsceneManager : MonoBehaviour
         }
     }
 
-    private void PlayGateOpenAnimation()
+    private IEnumerator PlayGateOpenAnimationRoutine()
     {
         if (gateAnimation == null)
         {
             Debug.LogWarning("[CutsceneManager] Gate Animation is not assigned.");
-            return;
+            yield break;
         }
 
-        string clipName = !string.IsNullOrEmpty(gateOpenAnimationName)
-            ? gateOpenAnimationName
-            : gateOpenAnimationClip != null
-                ? gateOpenAnimationClip.name
-                : string.Empty;
-
-        if (gateOpenAnimationClip != null && !string.IsNullOrEmpty(clipName) && gateAnimation.GetClip(clipName) == null)
+        AnimationState gateOpenState = null;
+        if (gateOpenClip != null)
         {
-            gateAnimation.AddClip(gateOpenAnimationClip, clipName);
+            if (gateAnimation.GetClip(gateOpenClip.name) == null)
+            {
+                gateAnimation.AddClip(gateOpenClip, gateOpenClip.name);
+            }
+
+            gateOpenState = gateAnimation[gateOpenClip.name];
+        }
+        else if (gateAnimation.clip != null)
+        {
+            gateOpenState = gateAnimation[gateAnimation.clip.name];
         }
 
-        if (!string.IsNullOrEmpty(clipName) && gateAnimation.GetClip(clipName) != null)
+        // 기본 클립을 지정하지 않은 경우에도 등록된 첫 단일 클립을 사용한다.
+        foreach (AnimationState state in gateAnimation)
         {
-            gateAnimation.Play(clipName);
-            return;
+            if (gateOpenState == null && state != null && state.clip != null)
+            {
+                gateOpenState = state;
+            }
         }
 
-        if (gateOpenAnimationClip != null)
+        if (gateOpenState == null)
         {
-            gateAnimation.clip = gateOpenAnimationClip;
-            gateAnimation.Play();
+            Debug.LogWarning("[CutsceneManager] Gate Animation has no clips.");
+            yield break;
         }
+
+        gateOpenState.time = 0f;
+        gateOpenState.wrapMode = WrapMode.ClampForever;
+
+        if (gateOpenSound != null && SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlaySFX_3D(
+                gateOpenSound,
+                gateAnimation.transform.position,
+                SoundCategory.BossGimmick,
+                gateOpenSoundVolume);
+        }
+
+        float speed = Mathf.Abs(gateOpenState.speed);
+        if (speed <= 0.0001f)
+        {
+            speed = 1f;
+        }
+
+        float duration = gateOpenState.length / speed;
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            gateOpenState.clip.SampleAnimation(
+                gateAnimation.gameObject,
+                Mathf.Min(elapsed * speed, gateOpenState.length));
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        gateOpenState.clip.SampleAnimation(gateAnimation.gameObject, gateOpenState.length);
     }
 
     private static void PlayAnimatorCommand(Animator animator, AnimatorCommandMode mode, string animationName)
@@ -463,23 +467,4 @@ public class CutsceneManager : MonoBehaviour
         animator.CrossFade(Animator.StringToHash(animationName), 0.1f, 0, 0f);
     }
 
-    private void LoadNextScene(NetworkRunner runner)
-    {
-        if (string.IsNullOrEmpty(nextSceneName))
-        {
-            return;
-        }
-
-        if (runner != null)
-        {
-            if (runner.IsServer)
-            {
-                runner.LoadScene(nextSceneName, LoadSceneMode.Single);
-            }
-
-            return;
-        }
-
-        SceneManager.LoadScene(nextSceneName);
-    }
 }

@@ -7,7 +7,6 @@ using System.Linq;
 public class NextLevelPortal : NetworkBehaviour
 {
     [SerializeField] private bool playGateKickCutsceneBeforeLoad = true;
-    [SerializeField] private float gateKickCutsceneFallbackDuration = 2.7f;
 
     private NetworkObject _localPlayerNetObj;
     private Collider _enteredCollider; // [핵심] 꼬임 방지를 위해 들어온 콜라이더의 영수증을 보관합니다.
@@ -143,16 +142,16 @@ public class NextLevelPortal : NetworkBehaviour
 
     private IEnumerator ChangeToNextLevelAfterCutscene(NetworkRunner runner)
     {
-        CutsceneManager cutsceneManager = CutsceneManager.Instance;
-        float delay = cutsceneManager != null
-            ? cutsceneManager.GateKickCutsceneDuration
-            : gateKickCutsceneFallbackDuration;
+        // RPC가 로컬에서도 컷신을 시작할 한 프레임을 보장한다.
+        yield return null;
 
-        if (delay > 0f)
+        CutsceneManager cutsceneManager = CutsceneManager.Instance;
+        while (cutsceneManager != null && !cutsceneManager.GateOpenCompleted)
         {
-            yield return new WaitForSeconds(delay);
+            yield return null;
         }
 
+        // 실제 문 클립의 재생이 끝난 뒤 Fusion 로드를 시작해야 로딩 화면이 컷신을 덮지 않는다.
         ChangeToNextLevel(runner);
     }
 
