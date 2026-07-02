@@ -190,7 +190,12 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
         float targetHeight = polarBoss.flightHeight * heightFrac;
         // 틱 단위 값의 미세 계단을 부드럽게(약한 스무딩). 커브가 이미 모양을 잡으므로 빠르게 추종.
         _currentHeight = Mathf.Lerp(_currentHeight, targetHeight, Time.deltaTime * 12f);
-        //transform.localPosition = new Vector3(0f, _currentHeight, 0f);
+
+        // 🔥 [멀티 동기화 버그 픽스] 패턴 Y 누적치는 코어의 [Networked] PatternYOffset에서 읽는다.
+        //    (기존 로컬 누적 방식은 호스트에서만 값이 쌓여, 클라이언트에선 네이팜 활공 중 바닥에 붙어 보였음)
+        //    틱 스냅샷의 계단 현상은 비행고도와 같은 스무딩으로 완화.
+        _patternYOffset = Mathf.Lerp(_patternYOffset, polarBoss.PatternYOffset, Time.deltaTime * 12f);
+
         // _currentHeight(2페이즈 비행 버프)와 _patternYOffset(현재 패턴 공중부양 누적치)를 합산!
         transform.localPosition = new Vector3(0f, _currentHeight + _patternYOffset, 0f);
 
@@ -542,18 +547,7 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
     {
         return rootMotionCapture != null ? rootMotionCapture.ConsumeDeltaRotation() : Quaternion.identity;
     }
-    private float _patternYOffset = 0f; // 누적용 변수
-
-    // 인터페이스 구현
-    public void AddPatternYOffset(float deltaY)
-    {
-        _patternYOffset += deltaY;
-    }
-
-    public void ResetPatternYOffset()
-    {
-        _patternYOffset = 0f; // 패턴 끝나면 바닥으로 복구
-    }
+    private float _patternYOffset = 0f; // 코어의 PatternYOffset을 스무딩해서 따라가는 표시용 값
 
     // ==========================================
     // [애니메이션 이벤트용 함수] 애니메이션 클립에서 호출!

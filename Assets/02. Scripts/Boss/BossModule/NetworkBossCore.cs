@@ -147,6 +147,12 @@ public class NetworkBossCore : NetworkBehaviour
     [Networked] public int CurrentStepIndex { get; set; } = -1;
     [Networked] private float PreviousCurveValue { get; set; } // 프레임 간 이동량 계산용
 
+    // 🔥 [멀티 동기화 버그 픽스] 패턴 커브 이동의 Y축(공중부양) 누적치.
+    //    기존엔 호스트가 _visual.AddPatternYOffset()으로 '자기 화면의 비주얼'에만 누적해서,
+    //    클라이언트에선 네이팜 활공 등 Y이동 패턴 중 보스가 바닥에 붙어 보였다.
+    //    → [Networked]로 호스트가 기록하고, 각 클라이언트의 Visual이 이 값을 읽어 높이를 표현한다.
+    [Networked] public float PatternYOffset { get; set; }
+
     [Networked] public TickTimer StateTimer { get; set; }
     [Networked] public TickTimer AttackCooldown { get; set; }
     [Networked] private TickTimer AggroTimer { get; set; }
@@ -354,10 +360,10 @@ public class NetworkBossCore : NetworkBehaviour
             // 이번 틱에 움직일 전체 로컬 이동량
             Vector3 localDisplacement = action.moveOffset * deltaCurve;
 
-            // 🔥 [신규 핵심] 1. Y축(높이)은 누적해서 비주얼(모델)만 공중에 띄움!
+            // 🔥 [신규 핵심] 1. Y축(높이)은 네트워크 변수에 누적 → 모든 클라이언트의 비주얼이 읽어 공중에 띄움!
             if (localDisplacement.y != 0f)
             {
-                _visual?.AddPatternYOffset(localDisplacement.y);
+                PatternYOffset += localDisplacement.y;
             }
 
             // 🔥 2. X, Z축은 부모가 지형을 따라 물리적으로 이동!
@@ -618,7 +624,7 @@ public class NetworkBossCore : NetworkBehaviour
         if (CurrentState == BossState.ExecutingPattern && newState != BossState.ExecutingPattern)
         {
             _visual?.SetRootMotionCapture(false);
-            _visual?.ResetPatternYOffset(); 
+            PatternYOffset = 0f; // 패턴 종료/취소 시 높이 초기화 (네트워크로 전파)
         }
         CurrentState = newState;
     }

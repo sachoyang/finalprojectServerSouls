@@ -4868,35 +4868,35 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   hitZones:
   - hitShape: 0
-    hitRadius: 0.5
+    hitRadius: 0.7
     boxSize: {x: 0, y: 0, z: 0}
-    hitOffset: {x: 0, y: 0, z: 0.69}
+    hitOffset: {x: 0, y: 0, z: 1.2}
     startTime: 0.13
     duration: 1
   - hitShape: 0
-    hitRadius: 0.7
+    hitRadius: 1
     boxSize: {x: 0, y: 0, z: 0}
-    hitOffset: {x: 0, y: 0, z: 1.85}
+    hitOffset: {x: 0, y: 0, z: 3}
     startTime: 0.28
     duration: 2
   - hitShape: 0
-    hitRadius: 1
-    boxSize: {x: 0, y: 0, z: 0}
-    hitOffset: {x: 0, y: 0, z: 3.54}
-    startTime: 0.51
-    duration: 2
-  - hitShape: 0
-    hitRadius: 1.2
-    boxSize: {x: 0, y: 0, z: 0}
-    hitOffset: {x: 0, y: 0, z: 5.68}
-    startTime: 0.8
-    duration: 1.5
-  - hitShape: 0
     hitRadius: 1.4
     boxSize: {x: 0, y: 0, z: 0}
-    hitOffset: {x: 0, y: 0, z: 8.39}
-    startTime: 1.18
-    duration: 1
+    hitOffset: {x: 0, y: 0, z: 5.82}
+    startTime: 0.44
+    duration: 2
+  - hitShape: 0
+    hitRadius: 1.6
+    boxSize: {x: 0, y: 0, z: 0}
+    hitOffset: {x: 0, y: 0, z: 9.15}
+    startTime: 0.66
+    duration: 2
+  - hitShape: 0
+    hitRadius: 2
+    boxSize: {x: 0, y: 0, z: 0}
+    hitOffset: {x: 0, y: 0, z: 13.3}
+    startTime: 0.98
+    duration: 2
   syncParticle: {fileID: 198637950067575458}
   baseDamage: 2000
   isMultiHit: 1

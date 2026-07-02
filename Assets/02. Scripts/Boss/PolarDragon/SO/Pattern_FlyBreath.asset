@@ -32,9 +32,11 @@ MonoBehaviour:
       m_RotationOrder: 0
     hitboxIndex: 0
     hasSuperArmor: 0
-    enableTracking: 1
+    enableTracking: 0
     trackingStopPercent: 1
     trackingSpeed: 2
     emitBreath: 1
     breathDownAngle: 0
     breathAimAtTarget: 1
+    dropNapalm: 0
+    napalmInterval: 0.35

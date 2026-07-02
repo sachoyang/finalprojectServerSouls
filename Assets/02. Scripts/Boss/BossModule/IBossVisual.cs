@@ -32,8 +32,4 @@ public interface IBossVisual
     Vector3 ConsumeRootMotionDelta();
     // 호스트가 매 틱 모아둔 루트모션 회전량을 가져간다(90도 턴 등). 회전이 없으면 Quaternion.identity.
     Quaternion ConsumeRootMotionRotation();
-
-    // 패턴 Y축 높이 '누적' 및 '초기화' 함수
-    void AddPatternYOffset(float deltaY);
-    void ResetPatternYOffset();
 }

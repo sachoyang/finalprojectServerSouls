@@ -197,6 +197,7 @@ GameObject:
   m_Component:
   - component: {fileID: 150577676177912306}
   - component: {fileID: 2402919297648847605}
+  - component: {fileID: 4410727452468581993}
   - component: {fileID: 992474550098228659}
   - component: {fileID: 7614925232187989671}
   m_Layer: 0
@@ -239,8 +240,26 @@ MonoBehaviour:
   Flags: 262145
   NestedObjects: []
   NetworkedBehaviours:
+  - {fileID: 4410727452468581993}
   - {fileID: 992474550098228659}
   ForceRemoteRenderTimeframe: 0
+--- !u!114 &4410727452468581993
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8521524127431077655}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 158639473, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _stateAuthorityChangeErrorCorrectionDelta: 0
+  SyncScale: 0
+  SyncParent: 0
+  _autoAOIOverride: 1
+  DisableSharedModeInterpolation: 0
 --- !u!114 &992474550098228659
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1707,8 +1726,7 @@ MonoBehaviour:
   lanceAimHeightOffset: 1
   breathPrefab: {fileID: 1634767862067424, guid: 0e3ede779577a0045b54cf1c69866595, type: 3}
   breathAttachPoint: {fileID: 5112874964202677409}
-  breathEmitLocalAxis: {x: 0, y: 0, z: 1}
-  targetBreathYawOffset: 90
+  muzzleRotationOffset: {x: 0, y: -90, z: 0}
   napalmPoolPrefab: {fileID: 1956197547661106, guid: a428612c4aa901e4587211db366f4b59, type: 3}
   napalmGroundMask:
     serializedVersion: 2
