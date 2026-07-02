@@ -1707,12 +1707,14 @@ MonoBehaviour:
   lanceAimHeightOffset: 1
   breathPrefab: {fileID: 1634767862067424, guid: 0e3ede779577a0045b54cf1c69866595, type: 3}
   breathAttachPoint: {fileID: 5112874964202677409}
-  breathEmitLocalAxis: {x: 1, y: 0, z: 0}
+  breathEmitLocalAxis: {x: 0, y: 0, z: 1}
+  targetBreathYawOffset: 90
   napalmPoolPrefab: {fileID: 1956197547661106, guid: a428612c4aa901e4587211db366f4b59, type: 3}
   napalmGroundMask:
     serializedVersion: 2
     m_Bits: 640
   napalmRayHeight: 50
+  napalmRayDownAngle: 45
   napalmSound: {fileID: 0}
   debugNapalmRay: 1
   wakeUpSound: {fileID: 0}

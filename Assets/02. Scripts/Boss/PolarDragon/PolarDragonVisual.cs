@@ -55,9 +55,12 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
     [Tooltip("브레스가 붙을 뼈. 머리 본(headBone)이나 그 자식으로 지정하면 머리 스윙을 따라 브레스가 스윕됩니다.\n" +
              "비워두면 breathSpawnPoint(입 뼈)를 사용합니다.")]
     public Transform breathAttachPoint;
-    [Tooltip("브레스 파티클이 자기 로컬 '어느 축'으로 뿜어지는지. 이 프리팹(IceThrower)은 +X로 나가므로 (1,0,0).\n" +
-             "+Z로 나가는 일반 파티클이면 (0,0,1)로 두세요. 방향이 반대/이상하면 이 축을 바꾸면 됩니다.")]
-    public Vector3 breathEmitLocalAxis = new Vector3(1f, 0f, 0f);
+
+    [Header("뼈대 뒤틀림 보정")]
+    [Tooltip("파티클은 무조건 +Z로 나가는데, 보스의 입 뼈대가 틀어져 있을 때 0도를 맞춰주기 위한 각도.\n" +
+             "왼쪽 볼로 새어나가면 (0, 90, 0) 또는 (0, -90, 0)을 넣어서 정면을 맞춰주세요.")]
+    public Vector3 muzzleRotationOffset = new Vector3(0f, 90f, 0f);
+
 
     [Header("네이팜 융단폭격 (비행 전용)")]
     [Tooltip("바닥에 줄줄이 떨어지는 불장판 프리팹(WildFire). 지속 데미지가 필요하면 이 프리팹 루트에 " +
@@ -129,18 +132,25 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
 
     private void LateUpdate()
     {
-        if (headBone == null || lookAtGuide == null || _ikWeight <= 0.01f) return;
+        if (headBone != null && lookAtGuide != null && _ikWeight > 0.01f)
+        {
+            Vector3 targetDirection = (_ikLookAtPosition - headBone.position).normalized;
 
-        Vector3 targetDirection = (_ikLookAtPosition - headBone.position).normalized;
+            // 🔥 [목 꺾임 방지] 몸통 정면(루트 forward) 기준 maxLookAngle 콘 안으로 시선 방향을 클램프.
+            //    타겟이 측후방에 있어도 고개가 콘 가장자리까지만 돌아간다.
+            Vector3 bodyForward = (_bossCore != null ? _bossCore.transform.forward : transform.forward);
+            Vector3 clampedDirection = Vector3.RotateTowards(bodyForward, targetDirection, maxLookAngle * Mathf.Deg2Rad, 0f);
 
-        // 🔥 [목 꺾임 방지] 몸통 정면(루트 forward) 기준 maxLookAngle 콘 안으로 시선 방향을 클램프.
-        //    타겟이 측후방에 있어도 고개가 콘 가장자리까지만 돌아간다.
-        Vector3 bodyForward = (_bossCore != null ? _bossCore.transform.forward : transform.forward);
-        Vector3 clampedDirection = Vector3.RotateTowards(bodyForward, targetDirection, maxLookAngle * Mathf.Deg2Rad, 0f);
+            Vector3 currentLookDirection = lookAtGuide.forward;
+            Quaternion rotationDelta = Quaternion.FromToRotation(currentLookDirection, clampedDirection);
+            headBone.rotation = Quaternion.Lerp(headBone.rotation, rotationDelta * headBone.rotation, _ikWeight);
+        }
 
-        Vector3 currentLookDirection = lookAtGuide.forward;
-        Quaternion rotationDelta = Quaternion.FromToRotation(currentLookDirection, clampedDirection);
-        headBone.rotation = Quaternion.Lerp(headBone.rotation, rotationDelta * headBone.rotation, _ikWeight);
+        // 🔥 [브레스 조준 - 머리 IK 다음에 갱신]
+        if (_activeBreath != null && _breathTrackTarget && _breathAttach != null)
+        {
+            _activeBreath.transform.rotation = BreathAimRotationToTarget(_breathAttach);
+        }
     }
 
     // ==========================================
@@ -223,10 +233,8 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
         bool inBreathPhase = action.emitBreath || action.dropNapalm;
         if (!inBreathPhase) StopBreath();
 
-        // 🔥 [플레이어 조준 추적] 브레스가 켜져 있고 조준 모드면, 매 프레임 어그로 플레이어를 향해 방향을 갱신
-        //    (플레이어가 위/아래로 움직이면 브레스도 따라 올라가고 내려간다).
-        if (_activeBreath != null && _breathTrackTarget && _breathAttach != null)
-            _activeBreath.transform.rotation = BreathAimRotationToTarget(_breathAttach, _breathAxisFix);
+        // 🔥 [플레이어 조준 추적] LateUpdate로 이동함(여기서 먼저 조준해도 이후 머리 IK가 부착 본을
+        //    또 돌리면 그만큼 브레스가 밀려 어긋나기 때문). 실제 갱신 로직은 LateUpdate() 참고.
 
         // 불장판 투하(dropNapalm 켠 액션에서만)
         if (!action.dropNapalm || napalmPoolPrefab == null) return;
@@ -310,49 +318,35 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
             SoundManager.Instance.PlaySFX_3D(napalmSound, spawnPos, SoundCategory.BossGimmick);
     }
 
-    // 브레스 스트림(IceThrower)을 분사하기 시작한다. breathAttachPoint(머리 본 등)에 붙어 그 움직임을 따라간다.
-    //  🔥 회전 기준: 부착점(attach)의 '정면(+Z)'을 브레스가 나갈 방향으로 삼는다.
-    //    파티클이 자기 로컬 -X로 뿜기 때문에, breathEmitLocalAxis(-X)를 +Z에 맞추는 보정을 곱해 방향을 바로잡는다.
-    //    (이러면 attach.forward 쪽으로 브레스가 나감 — 왼쪽으로 새던 문제 해결)
-    //    네이팜처럼 아래로 숙여야 할 때만(breathDownAngle != 0) 그 위에 보스 오른쪽 축 기준 피치를 얹는다.
     private void SpawnBreath(PolarDragonBoss boss, BossActionModule action)
     {
         Transform attach = (breathAttachPoint != null) ? breathAttachPoint : breathSpawnPoint;
         if (breathPrefab == null || attach == null) return;
 
-        // 혹시 이전 브레스가 남아 있으면 먼저 정리(중복 분사 방지)
         StopBreath();
 
-        // 파티클 방출 축(-X/+X 등)을 오브젝트 +Z로 정렬하는 보정. 이 보정 위에 목표 회전을 곱하면
-        // '파티클이 실제로 나가는 방향'이 원하는 방향과 일치한다.
-        Vector3 emitAxis = (breathEmitLocalAxis.sqrMagnitude > 0.0001f) ? breathEmitLocalAxis.normalized : Vector3.forward;
-        Quaternion axisFix = Quaternion.FromToRotation(emitAxis, Vector3.forward);
-
         Quaternion aimRot;
+
         if (action.breathAimAtTarget)
         {
-            // 플레이어를 직접 조준(위아래 포함). 이후 매 프레임 갱신된다.
-            aimRot = BreathAimRotationToTarget(attach, axisFix);
+            // 일반 브레스: 플레이어 높이 조준 + 애니메이션 좌우 스윕
+            aimRot = BreathAimRotationToTarget(attach);
         }
         else
         {
-            // 고정 브레스(네이팜 등): 조준 추적 없음. 부착점(마우스 본) 회전 그대로 + 하향각.
-            //  브레스 '비주얼'은 마우스 본을 따라가고, WildFire 생성 위치는 아래 DropNapalm의 레이가 별도로 정한다.
-            aimRot = attach.rotation * axisFix;
-            if (Mathf.Abs(action.breathDownAngle) > 0.01f)
-                aimRot = Quaternion.AngleAxis(action.breathDownAngle, boss.transform.right) * aimRot;
+            // 네이팜 (고정 발사): 조준 없이 진짜 입 정면에서 설정한 각도만큼 아래로 숙임
+            Quaternion trueMouthRot = attach.rotation * Quaternion.Euler(muzzleRotationOffset);
+            aimRot = trueMouthRot * Quaternion.Euler(action.breathDownAngle, 0f, 0f);
         }
 
+        // 파티클은 +Z로 방출되므로, aimRot 방향을 그대로 월드 회전값으로 주면 완벽하게 날아감
         GameObject fx = EffectPoolManager.SpawnPooled(breathPrefab, attach.position, aimRot, attach);
         InitAoeForRole(fx, boss);
         if (fx == null) return;
 
         _breathAttach = attach;
         _breathTrackTarget = action.breathAimAtTarget;
-        _breathAxisFix = axisFix;
 
-        // 🔥 [자동 길이 맞춤] 브레스 파티클을 강제로 루프시켜, 우리가 StopBreath로 멈출 때까지 계속 뿜게 한다.
-        //    → 파티클 Duration/Lifetime을 손으로 맞추지 않아도 항상 액션 끝까지 이어진다.
         _activeBreath = fx;
         _activeBreathPs = fx.GetComponentsInChildren<ParticleSystem>(true);
         if (_activeBreathPs != null)
@@ -367,18 +361,32 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
         }
     }
 
-    // 브레스가 어그로 플레이어를 향하도록, 방출축(axisFix)을 목표 방향에 정렬한 회전을 만든다.
-    //  타겟이 없으면 부착점 정면으로 폴백. 살짝 위(가슴 높이)를 노려 발밑으로 처지지 않게 한다.
-    private Quaternion BreathAimRotationToTarget(Transform attach, Quaternion axisFix)
+    private Quaternion BreathAimRotationToTarget(Transform attach)
     {
-        Vector3 dir;
-        if (_bossCore != null && _bossCore.AggroTarget != null)
-            dir = (_bossCore.AggroTarget.transform.position + Vector3.up * 1.0f) - attach.position;
-        else
-            dir = attach.forward;
+        // 1. 뼈대의 꼬임을 풀어서 입이 바라보는 '진짜 월드 정면' 방향을 구함
+        Quaternion trueMouthRot = attach.rotation * Quaternion.Euler(muzzleRotationOffset);
+        Vector3 trueMouthForward = trueMouthRot * Vector3.forward;
 
-        if (dir.sqrMagnitude < 0.0001f) dir = attach.forward;
-        return Quaternion.LookRotation(dir.normalized, Vector3.up) * axisFix;
+        // 2. 위아래(Pitch)를 무시하고 순수하게 고개를 좌우로 흔드는 방향(Yaw)만 추출
+        Vector3 flatForward = new Vector3(trueMouthForward.x, 0f, trueMouthForward.z).normalized;
+        if (flatForward.sqrMagnitude < 0.0001f) flatForward = transform.forward;
+
+        if (_bossCore != null && _bossCore.AggroTarget != null)
+        {
+            // 3. 타겟(플레이어 가슴팍)까지의 수평 거리와 수직 높이(Y) 차이 계산
+            Vector3 targetPos = _bossCore.AggroTarget.transform.position + Vector3.up * 1.0f;
+            float distXZ = Vector2.Distance(new Vector2(targetPos.x, targetPos.z), new Vector2(attach.position.x, attach.position.z));
+            float dy = targetPos.y - attach.position.y;
+
+            // 4. 좌우는 애니메이션(flatForward)을 따르고, 높이는 플레이어(dy)를 따르도록 벡터 합성!
+            Vector3 finalAimDir = (flatForward * distXZ + Vector3.up * dy).normalized;
+
+            // 파티클의 +Z축이 이 합성된 방향을 정확히 쳐다보게 만듦
+            return Quaternion.LookRotation(finalAimDir, Vector3.up);
+        }
+
+        // 타겟이 없으면 그냥 진짜 입 방향으로 발사
+        return Quaternion.LookRotation(trueMouthForward, Vector3.up);
     }
 
     // 브레스 방출을 멈추고(잔여 파티클은 자연스레 소멸) 참조를 놓는다.
