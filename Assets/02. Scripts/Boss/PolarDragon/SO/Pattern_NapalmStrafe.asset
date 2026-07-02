@@ -10,125 +10,20 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4087804678eb42f4d8f433cd34284ab0, type: 3}
-  m_Name: Pattern_RetreatBreath
+  m_Name: Pattern_NapalmStrafe
   m_EditorClassIdentifier: 
   patternId: 
   displayName: 
   minRange: 0
-  maxRange: 5
-  weight: 0
+  maxRange: 25
+  weight: 10
   actions:
   - animationClip: {fileID: 7400000, guid: bd6bd723d64eb65468eef542be8d1957, type: 3}
     animationStateName: TakeOff
     animationHash: -2014032391
-    duration: 1.5
-    useRootMotion: 0
-    moveOffset: {x: 0, y: 3, z: 0}
-    moveCurve:
-      serializedVersion: 2
-      m_Curve:
-      - serializedVersion: 3
-        time: 0
-        value: 0
-        inSlope: 1
-        outSlope: 1
-        tangentMode: 34
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      - serializedVersion: 3
-        time: 1
-        value: 1
-        inSlope: 1
-        outSlope: 1
-        tangentMode: 34
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
-    hitboxIndex: 0
-    hasSuperArmor: 0
-    enableTracking: 1
-    trackingStopPercent: 1
-    trackingSpeed: 2
-  - animationClip: {fileID: 7400000, guid: 7f10852d43ede7f459338eb637d3ad61, type: 3}
-    animationStateName: Fly
-    animationHash: 1808254291
-    duration: 2
-    useRootMotion: 0
-    moveOffset: {x: 0, y: 0, z: -15}
-    moveCurve:
-      serializedVersion: 2
-      m_Curve:
-      - serializedVersion: 3
-        time: 0
-        value: 0
-        inSlope: 1
-        outSlope: 1
-        tangentMode: 34
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      - serializedVersion: 3
-        time: 1
-        value: 1
-        inSlope: 1
-        outSlope: 1
-        tangentMode: 34
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
-    hitboxIndex: 0
-    hasSuperArmor: 0
-    enableTracking: 1
-    trackingStopPercent: 1
-    trackingSpeed: 2
-  - animationClip: {fileID: 7400000, guid: 06c5792ce5bb88642b939b8d5ce9c51e, type: 3}
-    animationStateName: FlyStationary
-    animationHash: -746261695
-    duration: 0.8
-    useRootMotion: 0
-    moveOffset: {x: 0, y: 0, z: 0}
-    moveCurve:
-      serializedVersion: 2
-      m_Curve:
-      - serializedVersion: 3
-        time: 0
-        value: 1
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 34
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      - serializedVersion: 3
-        time: 1
-        value: 1
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 34
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
-    hitboxIndex: 0
-    hasSuperArmor: 0
-    enableTracking: 1
-    trackingStopPercent: 1
-    trackingSpeed: 2
-  - animationClip: {fileID: 7400000, guid: bdeab59f78196044b88b4d0fd37ee4e1, type: 3}
-    animationStateName: FlyStationaryToLanding
-    animationHash: 761871033
     duration: 1
     useRootMotion: 0
-    moveOffset: {x: 0, y: -3, z: 0}
+    moveOffset: {x: 0, y: 6, z: 0}
     moveCurve:
       serializedVersion: 2
       m_Curve:
@@ -155,13 +50,15 @@ MonoBehaviour:
       m_RotationOrder: 4
     hitboxIndex: 0
     hasSuperArmor: 0
-    enableTracking: 1
-    trackingStopPercent: 1
-    trackingSpeed: 2
-  - animationClip: {fileID: 7400000, guid: a9d396f0b5a179c468b4a6ca901f8031, type: 3}
-    animationStateName: SpreadFrozenBreath
-    animationHash: 2017910308
-    duration: 3.333
+    enableTracking: 0
+    trackingStopPercent: 0
+    trackingSpeed: 0
+    dropNapalm: 0
+    napalmInterval: 0.35
+  - animationClip: {fileID: 7400000, guid: 06c5792ce5bb88642b939b8d5ce9c51e, type: 3}
+    animationStateName: FlyStationary
+    animationHash: -746261695
+    duration: 0.8
     useRootMotion: 0
     moveOffset: {x: 0, y: 0, z: 0}
     moveCurve:
@@ -169,12 +66,90 @@ MonoBehaviour:
       m_Curve: []
       m_PreInfinity: 0
       m_PostInfinity: 0
+      m_RotationOrder: 0
+    hitboxIndex: 0
+    hasSuperArmor: 0
+    enableTracking: 1
+    trackingStopPercent: 1
+    trackingSpeed: 3
+    emitBreath: 0
+    breathDownAngle: 0
+    dropNapalm: 0
+    napalmInterval: 0.35
+  - animationClip: {fileID: 7400000, guid: 356ee6b81c24e0d479ec34763ac66b8e, type: 3}
+    animationStateName: Glide
+    animationHash: 642707492
+    duration: 2.5
+    useRootMotion: 0
+    moveOffset: {x: 0, y: 0, z: 22}
+    moveCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 1
+        outSlope: 1
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 1
+        outSlope: 1
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    hitboxIndex: 0
+    hasSuperArmor: 0
+    enableTracking: 0
+    trackingStopPercent: 1
+    trackingSpeed: 1
+    emitBreath: 1
+    breathDownAngle: 45
+    breathAimAtTarget: 0
+    dropNapalm: 1
+    napalmInterval: 0.3
+  - animationClip: {fileID: 7400000, guid: 979950bb5271581458ad8d4c8423586e, type: 3}
+    animationStateName: GlideToLanding
+    animationHash: -1742687778
+    duration: 1.5
+    useRootMotion: 0
+    moveOffset: {x: 0, y: -6, z: 0}
+    moveCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 2
+        outSlope: 2
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
       m_RotationOrder: 4
     hitboxIndex: 0
     hasSuperArmor: 0
     enableTracking: 0
     trackingStopPercent: 0
     trackingSpeed: 0
-    emitBreath: 1
-    breathDownAngle: 0
-    breathAimAtTarget: 1
+    dropNapalm: 0
+    napalmInterval: 0.35

@@ -290,7 +290,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: fe10bd928a7cd0749890661072750de8, type: 2}
   - {fileID: 11400000, guid: c36c884abbabd5c409b6b27ef52aef9c, type: 2}
   - {fileID: 11400000, guid: 694a967762bb2ba42b6838c9e661ab41, type: 2}
-  - {fileID: 11400000, guid: bd166e8bbb6f6fa4eb9e26bf93c693b7, type: 2}
+  - {fileID: 11400000, guid: 7c3f1a9e5d2b40849b6f6a1c2d3e4f5a, type: 2}
   phase2Patterns:
   - {fileID: 11400000, guid: 1ef1ef1103160124b96c461e2414180f, type: 2}
   - {fileID: 11400000, guid: 6685c723db89ca0429e428814d737e88, type: 2}
@@ -298,7 +298,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: fe10bd928a7cd0749890661072750de8, type: 2}
   - {fileID: 11400000, guid: c36c884abbabd5c409b6b27ef52aef9c, type: 2}
   - {fileID: 11400000, guid: 694a967762bb2ba42b6838c9e661ab41, type: 2}
-  - {fileID: 11400000, guid: bd166e8bbb6f6fa4eb9e26bf93c693b7, type: 2}
+  - {fileID: 11400000, guid: 7c3f1a9e5d2b40849b6f6a1c2d3e4f5a, type: 2}
   _AllowedMaxPhase: 2
   _DamageMultiplier: 1
   _CurrentPhase: 1
@@ -1700,12 +1700,21 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  spitFrozenBallPrefab: {fileID: 1820680284854294, guid: 5537c81202b24a247970c22b8b6c911a, type: 3}
-  spreadFrozenBreathPrefab: {fileID: 0}
+  spreadFrozenBreathPrefab: {fileID: 1634767862067424, guid: 0e3ede779577a0045b54cf1c69866595, type: 3}
   breathSpawnPoint: {fileID: 5112963571751928741}
   iceLancePrefab: {fileID: 1820680284854294, guid: 5537c81202b24a247970c22b8b6c911a, type: 3}
   energyExplosionPrefab: {fileID: 1329845292236604, guid: 9bba9cf244c53c5439505dfc96fdd11c, type: 3}
   lanceAimHeightOffset: 1
+  breathPrefab: {fileID: 1634767862067424, guid: 0e3ede779577a0045b54cf1c69866595, type: 3}
+  breathAttachPoint: {fileID: 5112874964202677409}
+  breathEmitLocalAxis: {x: 1, y: 0, z: 0}
+  napalmPoolPrefab: {fileID: 1956197547661106, guid: a428612c4aa901e4587211db366f4b59, type: 3}
+  napalmGroundMask:
+    serializedVersion: 2
+    m_Bits: 640
+  napalmRayHeight: 50
+  napalmSound: {fileID: 0}
+  debugNapalmRay: 1
   wakeUpSound: {fileID: 0}
   groggySound: {fileID: 0}
   dieSound: {fileID: 0}
@@ -1812,6 +1821,11 @@ MonoBehaviour:
 --- !u!4 &5110417372715785809 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4240964543308124, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}
+  m_PrefabInstance: {fileID: 5108428487193952013}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &5112874964202677409 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4604842440367020, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}
   m_PrefabInstance: {fileID: 5108428487193952013}
   m_PrefabAsset: {fileID: 0}
 --- !u!4 &5112963571751928741 stripped

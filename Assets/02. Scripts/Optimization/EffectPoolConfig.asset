@@ -31,6 +31,12 @@ MonoBehaviour:
     - prefab: {fileID: 1543693566691686547, guid: 687762c3782af1047872e0b2ee3a78ec, type: 3}
       prewarmCount: 5
       autoReturnAfter: 5
+    - prefab: {fileID: 1956197547661106, guid: f293a2dcc753a4a489fefe7f8f312d69, type: 3}
+      prewarmCount: 15
+      autoReturnAfter: 5
+    - prefab: {fileID: 1956197547661106, guid: a428612c4aa901e4587211db366f4b59, type: 3}
+      prewarmCount: 15
+      autoReturnAfter: 5
   - name: 
     maxActive: 0
     prefabs: []

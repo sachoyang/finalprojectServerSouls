@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 using System.Collections.Generic;
 
 [System.Serializable]
@@ -49,6 +50,31 @@ public class BossActionModule
     
     [Tooltip("트래킹(회전) 속도")]
     public float trackingSpeed = 3.0f;
+
+    [Header("브레스 스트림 (IceThrower)")]
+    [Tooltip("ON: 이 액션이 시작될 때 입/머리에서 브레스 스트림(IceThrower)을 뿜기 시작한다(루프).\n" +
+             "브레스 구간(emitBreath 또는 dropNapalm 액션이 연달아 이어지는 동안)이 끝나면 자동으로 멈춘다.\n" +
+             "예) 네이팜: 전진(Glide)보다 앞선 FlyStationary에 걸어 불길을 먼저 냄.\n" +
+             "예) SpreadFrozenBreath / FlyStationarySpreadFrozenBreath(머리 흔드는 브레스) 액션에 걸면 머리 스윙을 따라 뿜음.")]
+    [FormerlySerializedAs("startNapalmBreath")]
+    public bool emitBreath = false;
+
+    [Tooltip("브레스가 정면에서 아래로 얼마나 숙일지(도). 0=정면, 45=바닥 대각선(네이팜 융단폭격). 음수면 위로.\n" +
+             "breathAimAtTarget이 켜져 있으면 이 값은 무시된다(플레이어를 직접 조준).")]
+    [Range(-90f, 90f)]
+    public float breathDownAngle = 0f;
+
+    [Tooltip("ON: 브레스가 어그로 플레이어를 향해 조준되고, 플레이어가 위/아래로 움직이면 브레스도 따라 올라가고 내려간다.\n" +
+             "SpreadFrozenBreath 같은 브레스 패턴에 권장. 네이팜(바닥 융단폭격)은 OFF로 두고 breathDownAngle을 쓴다.")]
+    public bool breathAimAtTarget = false;
+
+    [Header("네이팜 융단폭격 (PolarDragon 비행 전용)")]
+    [Tooltip("ON: 이 액션(예: Glide)이 진행되는 동안 보스 바로 아래 지면에 네이팜 불장판을 주기적으로 투하한다.\n" +
+             "엘든링 용의 공중 융단폭격 연출용. 지상/일반 패턴에는 끄면 아무 영향 없음.")]
+    public bool dropNapalm = false;
+
+    [Tooltip("네이팜 투하 간격(초). 작을수록 촘촘한 융단폭격이 된다. (예: 0.3)")]
+    public float napalmInterval = 0.35f;
 }
 
 [CreateAssetMenu(menuName = "ServerSouls/Boss Modules/Boss Pattern")]
