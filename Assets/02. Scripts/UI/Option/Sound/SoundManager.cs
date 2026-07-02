@@ -14,7 +14,8 @@ public enum SoundCategory
     CombatHit,   // 타격음 (칼 챙강!)
     CombatHurt,  // 피격음 (윽!)
     SkillEffect, // 스킬 발동 소리
-    BossGimmick  // 보스 포효, 기믹 소리
+    BossGimmick, // 보스 포효, 기믹 소리
+    PlayerSound  // 플레이어 이동, 구르기, 착지 등 동작음
 }
 
 // ==========================================
