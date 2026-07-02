@@ -759,6 +759,8 @@ MonoBehaviour:
   powerUpStaminaCost: 500
   slideSlashStaminaCost: 400
   _CurrentHealth: 0
+  _LastDamageHitPoint: {x: 0, y: 0, z: 0}
+  _LastDamageHitNormal: {x: 0, y: 0, z: 0}
   _CurrentStamina: 0
   _IsDead: 0
   _IsAnimationInvincible: 0
@@ -806,6 +808,7 @@ MonoBehaviour:
   lockOnTargetSelector: {fileID: 0}
   lockOnSearchRadius: 80
   lockOnRotationSpeed: 900
+  playerHeadTransform: {fileID: 0}
 --- !u!114 &258220981
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1794,6 +1797,8 @@ MonoBehaviour:
   powerUpStaminaCost: 500
   slideSlashStaminaCost: 400
   _CurrentHealth: 0
+  _LastDamageHitPoint: {x: 0, y: 0, z: 0}
+  _LastDamageHitNormal: {x: 0, y: 0, z: 0}
   _CurrentStamina: 0
   _IsDead: 0
   _IsAnimationInvincible: 0
@@ -1841,6 +1846,7 @@ MonoBehaviour:
   lockOnTargetSelector: {fileID: 0}
   lockOnSearchRadius: 80
   lockOnRotationSpeed: 900
+  playerHeadTransform: {fileID: 0}
 --- !u!114 &405316507
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -27357,9 +27363,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   bossPool:
-  - {fileID: 11400000, guid: d7e46c98e98aec845b9c6865f2dec211, type: 2}
-  - {fileID: 11400000, guid: ad6568c9a99aefb4d8821e3c31f42f1d, type: 2}
-  - {fileID: 11400000, guid: 96df1c5f1bcdd344cab8ecd91e9892ca, type: 2}
   - {fileID: 11400000, guid: e99e869d0eaa98f489081edfaa900f92, type: 2}
 --- !u!4 &1683641379
 Transform:
@@ -38587,6 +38590,8 @@ MonoBehaviour:
   powerUpStaminaCost: 500
   slideSlashStaminaCost: 400
   _CurrentHealth: 0
+  _LastDamageHitPoint: {x: 0, y: 0, z: 0}
+  _LastDamageHitNormal: {x: 0, y: 0, z: 0}
   _CurrentStamina: 0
   _IsDead: 0
   _IsAnimationInvincible: 0
@@ -54768,6 +54773,7 @@ MonoBehaviour:
   lockOnTargetSelector: {fileID: 0}
   lockOnSearchRadius: 80
   lockOnRotationSpeed: 900
+  playerHeadTransform: {fileID: 0}
 --- !u!114 &5312276368083435852
 MonoBehaviour:
   m_ObjectHideFlags: 0
