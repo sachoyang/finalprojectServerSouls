@@ -13,7 +13,7 @@ public class LobbyServerManager : NetworkBehaviour
     [Header("Slot UI")]
     public GameObject[] slotPanels;
 
-    [Tooltip("Slot0, Slot1, Slot2 À§Ä¡ÀÇ Ready Ã¼Å© Ç¥½Ã")]
+    [Tooltip("Slot0, Slot1, Slot2 ï¿½ï¿½Ä¡ï¿½ï¿½ Ready Ã¼Å© Ç¥ï¿½ï¿½")]
     public GameObject[] readyEffects;
 
     public GameObject[] youIndicators;
@@ -25,13 +25,13 @@ public class LobbyServerManager : NetworkBehaviour
     public Button localReadyButton;
     public Text localReadyButtonText;
 
-    [Tooltip("¿ìÃø ÇÏ´Ü ¹öÆ°ÀÇ BG Image")]
+    [Tooltip("ï¿½ï¿½ï¿½ï¿½ ï¿½Ï´ï¿½ ï¿½ï¿½Æ°ï¿½ï¿½ BG Image")]
     public Image localReadyButtonBackground;
 
-    [Tooltip("¿ìÃø ÇÏ´Ü ¹öÆ°ÀÇ EF ¿ÀºêÁ§Æ®")]
+    [Tooltip("ï¿½ï¿½ï¿½ï¿½ ï¿½Ï´ï¿½ ï¿½ï¿½Æ°ï¿½ï¿½ EF ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®")]
     public GameObject localReadyButtonEffect;
 
-    [Tooltip("¿ìÃø ÇÏ´Ü ¹öÆ° EFÀÇ Image")]
+    [Tooltip("ï¿½ï¿½ï¿½ï¿½ ï¿½Ï´ï¿½ ï¿½ï¿½Æ° EFï¿½ï¿½ Image")]
     public Image localReadyButtonEffectImage;
 
     [Header("Button Colors")]
@@ -132,7 +132,7 @@ public class LobbyServerManager : NetworkBehaviour
             }
         }
 
-        // ½½·Ô ¹èÁ¤ Á÷ÈÄ¿¡µµ ¹öÆ°ÀÌ È°¼ºÈ­µÇµµ·Ï ¸Å ÇÁ·¹ÀÓ °»½ÅÇÑ´Ù.
+        // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½ ï¿½ï¿½Æ°ï¿½ï¿½ È°ï¿½ï¿½È­ï¿½Çµï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
         RefreshLocalActionButton();
     }
 
@@ -240,13 +240,21 @@ public class LobbyServerManager : NetworkBehaviour
         bool isLocalPlayer =
             owner == Runner.LocalPlayer;
 
+        // ğŸ”¥ [ë²„ê·¸ í”½ìŠ¤] ë‹‰ë„¤ì„ì´ nullì´ë©´(ë””ë²„ê·¸/ê°„ì´ ë¡œê·¸ì¸ ë“±) RPC ì§ë ¬í™”ì—ì„œ
+        //    ArgumentNullExceptionì´ í„°ì§€ê³ , ê·¸ ì˜ˆì™¸ê°€ Spawned()â†’RefreshLobbyUIë¥¼ í†µì§¸ë¡œ
+        //    ì¤‘ë‹¨ì‹œì¼œ ìŠ¬ë¡¯ UIê°€ ì „ë¶€ ê¹¨ì¡Œë‹¤. ìœ íš¨í•œ ë‹‰ë„¤ì„ì´ ìˆì„ ë•Œë§Œ ë“±ë¡ RPCë¥¼ ë³´ë‚¸ë‹¤.
+        string myNickname =
+            BackendManager.HasInstance
+                ? BackendManager.Instance.CurrentNickname
+                : null;
+
         if (isLocalPlayer &&
-            BackendManager.HasInstance &&
-            nickname != BackendManager.Instance.CurrentNickname)
+            !string.IsNullOrEmpty(myNickname) &&
+            nickname != myNickname)
         {
             RPC_SetNickname(
                 slotIndex,
-                BackendManager.Instance.CurrentNickname);
+                myNickname);
         }
 
         if (IsValidIndex(nicknameTexts, slotIndex))
@@ -300,7 +308,7 @@ public class LobbyServerManager : NetworkBehaviour
             }
         }
 
-        // ¹æÀåÀÇ Start¿Í °Ô½ºÆ®ÀÇ Cancel »óÅÂ´Â ÃÊ·Ï»öÀÌ´Ù.
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Startï¿½ï¿½ ï¿½Ô½ï¿½Æ®ï¿½ï¿½ Cancel ï¿½ï¿½ï¿½Â´ï¿½ ï¿½Ê·Ï»ï¿½ï¿½Ì´ï¿½.
         bool useGreen =
             isHost || isLocalPlayerReady;
 
@@ -344,7 +352,7 @@ public class LobbyServerManager : NetworkBehaviour
             return;
         }
 
-        // ¹æÀåÀº Ready¸¦ Åä±ÛÇÏÁö ¾Ê°í ¹Ù·Î ½ÃÀÛÀ» ½ÃµµÇÑ´Ù.
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Readyï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê°ï¿½ ï¿½Ù·ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ãµï¿½ï¿½Ñ´ï¿½.
         if (HasStateAuthority)
         {
             TryStartBattle();
@@ -367,7 +375,7 @@ public class LobbyServerManager : NetworkBehaviour
         if (!AreAllGuestPlayersReady())
         {
             ShowWarningMessage(
-                "ÁØºñÇÏÁö ¾ÊÀº ÇÃ·¹ÀÌ¾î°¡ ÀÖ½À´Ï´Ù.");
+                "ï¿½Øºï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½Ì¾î°¡ ï¿½Ö½ï¿½ï¿½Ï´ï¿½.");
 
             return;
         }

@@ -62,6 +62,12 @@ public class ReviveScreenIndicator : MonoBehaviour
         if (targetStats == null || targetTransform == null)
             return;
 
+        // 🔥 [버그 픽스] 씬 전환(로비 복귀)으로 플레이어가 디스폰된 직후에도 파괴 전까지 Tick이
+        //    한두 프레임 더 돌 수 있다. 그 상태에서 IsDead 등 [Networked] 변수에 접근하면
+        //    InvalidOperationException이 터지므로 안전할 때만 진행한다.
+        if (!IsStatsReadable())
+            return;
+
         UpdateScreenPosition();
         
         // PlayerStats가 FixedUpdateNetwork에서 수치를 실시간 복구하므로 매 프레임 UI 동기화
@@ -71,6 +77,15 @@ public class ReviveScreenIndicator : MonoBehaviour
     private void HandleReviveStateChanged(PlayerStats stats)
     {
         Refresh();
+    }
+
+    // PlayerStats의 [Networked] 변수를 읽어도 안전한 상태인지 검사 (스폰 전/디스폰 후 접근 방지)
+    private bool IsStatsReadable()
+    {
+        return targetStats != null &&
+               targetStats.IsSpawnedReady &&
+               targetStats.Object != null &&
+               targetStats.Object.IsValid;
     }
 
     private void BuildVisuals(Vector2 indicatorSize, Sprite backgroundSprite, Sprite fillSprite)
@@ -195,7 +210,7 @@ public class ReviveScreenIndicator : MonoBehaviour
 
         Vector3 screenPosition = cachedCamera.WorldToScreenPoint(targetTransform.position + headOffset);
         isOnScreen = screenPosition.z > 0f;
-        rootRect.gameObject.SetActive(isOnScreen && targetStats != null && targetStats.IsDead);
+        rootRect.gameObject.SetActive(isOnScreen && IsStatsReadable() && targetStats.IsDead);
 
         if (!isOnScreen)
             return;

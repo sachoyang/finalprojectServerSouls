@@ -205,6 +205,19 @@ public class EffectPoolManager : MonoBehaviour
         q.Enqueue(instance);
     }
 
+    // ── 전체 회수 ─────────────────────────────────────────────
+    // 씬 전환(게임오버→로비 복귀 등) 시 호출. 아직 재생 중인 활성 이펙트가
+    // DontDestroyOnLoad인 풀 매니저에 붙어 다음 씬까지 끌려가는 것을 방지한다.
+    public void ReturnAllActive()
+    {
+        foreach (var cat in _categories.Values)
+        {
+            // Return()이 리스트에서 노드를 제거하므로 First를 계속 뽑는 방식으로 순회
+            while (cat.active.First != null)
+                Return(cat.active.First.Value.gameObject);
+        }
+    }
+
     // ── 내부 ──────────────────────────────────────────────────
     private GameObject CreateNew(GameObject prefab)
     {
