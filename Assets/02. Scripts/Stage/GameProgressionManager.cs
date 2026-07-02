@@ -14,6 +14,12 @@ public class GameProgressionManager : MonoBehaviour // 런(Run) 동안 유지되
     public int CurrentLevel { get; private set; } = 1;
     public BossEncounterData CurrentBossData { get; private set; }
 
+    [Header("씬 이름 (생명주기 기준)")]
+    [Tooltip("세션을 유지한 채 복귀하는 로비 씬. 이 씬이 로드되면 런 상태를 초기화(ResetRun)한다.")]
+    public string lobbySceneName = "scLobbyMain";
+    [Tooltip("세션이 완전히 끝나고 돌아가는 타이틀 씬. 이 씬이 로드되면 매니저 자체를 파괴한다.")]
+    public string titleSceneName = "scTitle uicreate Main";
+
     private void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
@@ -22,13 +28,51 @@ public class GameProgressionManager : MonoBehaviour // 런(Run) 동안 유지되
         SceneManager.sceneLoaded += OnSceneLoaded; // 복귀 감지용 구독
     }
 
-    // 타이틀/로비 복귀 시 런 초기화(자폭)
+    // 씬 로드 기준 생명주기 정리.
+    //  - 로비 복귀(세션 유지, 같은 인원) → 런 상태만 초기화하고 매니저는 유지 (모든 클라이언트에서 각자 실행됨)
+    //  - 타이틀 복귀(세션 종료)         → 매니저 파괴
+    //  🔥 [버그 픽스] 기존엔 "scLobby"라는 존재하지 않는 씬 이름을 검사해 로비 복귀 시 아무 정리도 안 됐다.
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        if (scene.name == "scTitle uicreate Main" || scene.name == "scLobby")
+        if (scene.name == titleSceneName)
         {
             Destroy(gameObject);
         }
+        else if (scene.name == lobbySceneName)
+        {
+            ResetRun();
+        }
+    }
+
+    // ==========================================
+    // 게임오버 → 로비 복귀 시 '런(Run) 단위' 상태 일괄 청소.
+    //  세션(NetworkRunner)과 영속 매니저(사운드/풀/설정/로그인)는 유지하고,
+    //  이번 런에서만 유효했던 것들을 버린다. 새 항목이 생기면 반드시 여기에 추가할 것!
+    // ==========================================
+    public void ResetRun()
+    {
+        CurrentLevel = 1;
+        CurrentBossData = null;
+
+        // 아직 재생 중이던 전투 이펙트가 로비까지 끌려오지 않게 전부 풀로 회수
+        if (EffectPoolManager.Instance != null)
+            EffectPoolManager.Instance.ReturnAllActive();
+
+        // 🔥 마우스 커서 복구. 게임오버 화면에서 켠 ForceCursorVisible(static)을 여기서 내려줘야
+        //    다음 런의 전투 씬에서 카메라가 커서를 다시 정상적으로 잠글 수 있다.
+        //    로비에는 커서를 잠그는 카메라가 없으므로 여기서 풀어둔 상태가 그대로 유지된다.
+        ThirdPersonCameraController.ForceCursorVisible = false;
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+        // ▼▼▼ [플레이어팀 작업 필요] ▼▼▼
+        // PlayerSessionStore에 ClearAll()을 추가하고 아래 주석을 해제해 주세요.
+        // static 저장소 3종(스탯 스냅샷 / 어빌리티 목록 / 보상 선택 기록)을 비워야
+        // 다음 런에서 이전 런의 체력·어빌리티가 복원되는 버그가 사라집니다.
+        // PlayerSessionStore.ClearAll();
+        // ▲▲▲ [플레이어팀 작업 필요] ▲▲▲
+
+        Debug.Log("[GameProgressionManager] 런 상태 초기화 완료 (로비 복귀).");
     }
 
     private void OnDestroy()

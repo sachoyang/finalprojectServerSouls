@@ -28,10 +28,10 @@ public class GameOverView : MonoBehaviour
     [SerializeField] private string defeatMessage = "DEFEATED";
     [SerializeField] private string retreatMessage = "RETREAT";
     [SerializeField] private string continueText = "Continue";
+    [SerializeField] private string waitingForHostText = "Waiting for Host...";
 
     [Header("Scene")]
     [SerializeField] private string lobbySceneName = "scLobbyMain";
-    [SerializeField] private bool shutdownRunnerBeforeLoad = true;
 
     private bool isPlaying;
     private bool canLeave;
@@ -85,6 +85,13 @@ public class GameOverView : MonoBehaviour
             return;
 
         gameObject.SetActive(true);
+
+        // 🔥 게임오버 화면부터 마우스 커서를 되살린다 (Continue 버튼 클릭용).
+        //    커서 잠금은 ThirdPersonCameraController가 매 프레임 다시 걸기 때문에,
+        //    보상 화면(RewardSelectView)과 같은 공식 훅인 ForceCursorVisible로 눌러둔다.
+        ThirdPersonCameraController.ForceCursorVisible = true;
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
 
         if (messageText != null)
             messageText.text = message;
@@ -149,31 +156,48 @@ public class GameOverView : MonoBehaviour
             continueButton.interactable = enabled;
     }
 
-    private async void LoadLobbyScene()
+    // ==========================================
+    // 🔥 [세션 유지 복귀] 로비로 돌아가되 세션(NetworkRunner)은 절대 끊지 않는다.
+    //  - 호스트: runner.LoadScene(Single) → 게스트 전원이 Fusion 씬 동기화로 자동으로 따라온다.
+    //  - 게스트: 직접 LoadScene/Shutdown 금지! (기존 버그: 각 클라가 제멋대로 셧다운+로컬 로드
+    //            → 세션 파괴 + 클라별 씬 불일치로 네트워크 오브젝트 참조가 줄줄이 깨졌음)
+    //            버튼을 눌러도 "호스트 대기" 표시만 하고 기다린다.
+    //  - 런 상태 청소(레벨/이펙트/플레이어 스냅샷)는 GameProgressionManager.ResetRun()이
+    //    로비 씬 로드 시점에 모든 클라이언트에서 각자 수행한다. (여기서 할 일 아님)
+    // ==========================================
+    private void LoadLobbyScene()
     {
         if (isLoadingScene)
             return;
 
-        isLoadingScene = true;
-
         NetworkRunner runner = GetRunner();
 
-        if (runner != null && shutdownRunnerBeforeLoad)
+        if (runner != null && runner.IsRunning)
         {
-            await runner.Shutdown();
-            SceneManager.LoadScene(lobbySceneName);
+            if (!runner.IsServer)
+            {
+                ShowWaitingForHost();
+                return;
+            }
+
+            isLoadingScene = true;
+            runner.LoadScene(lobbySceneName, LoadSceneMode.Single);
             return;
         }
 
-        if (runner != null)
-        {
-            if (runner.IsServer)
-                await runner.LoadScene(lobbySceneName, LoadSceneMode.Single);
-
-            return;
-        }
-
+        // 러너가 없거나 이미 종료된 경우(디버그 단독 실행 등)만 로컬 로드 폴백
+        isLoadingScene = true;
         SceneManager.LoadScene(lobbySceneName);
+    }
+
+    // 게스트가 먼저 Continue를 눌렀을 때: 호스트가 씬을 넘겨줄 때까지 대기 중임을 표시
+    private void ShowWaitingForHost()
+    {
+        if (continueButtonText != null)
+            continueButtonText.text = waitingForHostText;
+
+        if (continueButton != null)
+            continueButton.interactable = false;
     }
 
     private NetworkRunner GetRunner()

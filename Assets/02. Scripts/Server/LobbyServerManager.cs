@@ -13,7 +13,7 @@ public class LobbyServerManager : NetworkBehaviour
     [Header("Slot UI")]
     public GameObject[] slotPanels;
 
-    [Tooltip("Slot0, Slot1, Slot2 À§Ä¡ÀÇ Ready Ã¼Å© Ç¥½Ã")]
+    [Tooltip("Slot0, Slot1, Slot2 ï¿½ï¿½Ä¡ï¿½ï¿½ Ready Ã¼Å© Ç¥ï¿½ï¿½")]
     public GameObject[] readyEffects;
 
     public GameObject[] youIndicators;
@@ -25,13 +25,13 @@ public class LobbyServerManager : NetworkBehaviour
     public Button localReadyButton;
     public Text localReadyButtonText;
 
-    [Tooltip("¿ìÃø ÇÏ´Ü ¹öÆ°ÀÇ BG Image")]
+    [Tooltip("ï¿½ï¿½ï¿½ï¿½ ï¿½Ï´ï¿½ ï¿½ï¿½Æ°ï¿½ï¿½ BG Image")]
     public Image localReadyButtonBackground;
 
-    [Tooltip("¿ìÃø ÇÏ´Ü ¹öÆ°ÀÇ EF ¿ÀºêÁ§Æ®")]
+    [Tooltip("ï¿½ï¿½ï¿½ï¿½ ï¿½Ï´ï¿½ ï¿½ï¿½Æ°ï¿½ï¿½ EF ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®")]
     public GameObject localReadyButtonEffect;
 
-    [Tooltip("¿ìÃø ÇÏ´Ü ¹öÆ° EFÀÇ Image")]
+    [Tooltip("ï¿½ï¿½ï¿½ï¿½ ï¿½Ï´ï¿½ ï¿½ï¿½Æ° EFï¿½ï¿½ Image")]
     public Image localReadyButtonEffectImage;
 
     [Header("Button Colors")]
@@ -44,6 +44,10 @@ public class LobbyServerManager : NetworkBehaviour
     [Header("Message")]
     public Text warningMessageText;
     public float warningMessageDuration = 2f;
+
+    [Header("Guest Nickname Fallback")]
+    [Tooltip("Nickname prefix for users without a login nickname (debug/guest). Slot number is appended. e.g. 'Guest ' -> Guest 1")]
+    public string guestNicknamePrefix = "Guest ";
 
     [Header("Scene Names")]
     public string titleSceneName =
@@ -132,7 +136,7 @@ public class LobbyServerManager : NetworkBehaviour
             }
         }
 
-        // ½½·Ô ¹èÁ¤ Á÷ÈÄ¿¡µµ ¹öÆ°ÀÌ È°¼ºÈ­µÇµµ·Ï ¸Å ÇÁ·¹ÀÓ °»½ÅÇÑ´Ù.
+        // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½ ï¿½ï¿½Æ°ï¿½ï¿½ È°ï¿½ï¿½È­ï¿½Çµï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
         RefreshLocalActionButton();
     }
 
@@ -240,13 +244,24 @@ public class LobbyServerManager : NetworkBehaviour
         bool isLocalPlayer =
             owner == Runner.LocalPlayer;
 
+        // ë‹‰ë„¤ì„ ê²°ì •: ì •ì‹ ë¡œê·¸ì¸ ë‹‰ë„¤ì„ â†’ ì—†ìœ¼ë©´(ë””ë²„ê·¸/ê²ŒìŠ¤íŠ¸) "Guest N" í´ë°±.
+        //  null ê·¸ëŒ€ë¡œ RPCì— ë„£ìœ¼ë©´ ì§ë ¬í™” ì˜ˆì™¸ë¡œ Spawned()â†’RefreshLobbyUIê°€ í†µì§¸ë¡œ ì¤‘ë‹¨ë˜ì–´
+        //  ìŠ¬ë¡¯ UIê°€ ì „ë¶€ ê¹¨ì§€ë¯€ë¡œ, í•­ìƒ ìœ íš¨í•œ ë¬¸ìì—´ë§Œ ë³´ë‚¸ë‹¤.
+        //  ë„¤íŠ¸ì›Œí¬ ê°’ì´ ì•„ì§ ë„ì°©í•˜ì§€ ì•Šì€ ë™ì•ˆì—ë§Œ ì•„ë˜ í‘œì‹œ ë¡œì§ì´ "Loading..."ì„ ë³´ì—¬ì¤€ë‹¤.
+        string myNickname =
+            BackendManager.HasInstance
+                ? BackendManager.Instance.CurrentNickname
+                : null;
+
+        if (string.IsNullOrEmpty(myNickname))
+            myNickname = guestNicknamePrefix + (slotIndex + 1);
+
         if (isLocalPlayer &&
-            BackendManager.HasInstance &&
-            nickname != BackendManager.Instance.CurrentNickname)
+            nickname != myNickname)
         {
             RPC_SetNickname(
                 slotIndex,
-                BackendManager.Instance.CurrentNickname);
+                myNickname);
         }
 
         if (IsValidIndex(nicknameTexts, slotIndex))
@@ -300,7 +315,7 @@ public class LobbyServerManager : NetworkBehaviour
             }
         }
 
-        // ¹æÀåÀÇ Start¿Í °Ô½ºÆ®ÀÇ Cancel »óÅÂ´Â ÃÊ·Ï»öÀÌ´Ù.
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Startï¿½ï¿½ ï¿½Ô½ï¿½Æ®ï¿½ï¿½ Cancel ï¿½ï¿½ï¿½Â´ï¿½ ï¿½Ê·Ï»ï¿½ï¿½Ì´ï¿½.
         bool useGreen =
             isHost || isLocalPlayerReady;
 
@@ -344,7 +359,7 @@ public class LobbyServerManager : NetworkBehaviour
             return;
         }
 
-        // ¹æÀåÀº Ready¸¦ Åä±ÛÇÏÁö ¾Ê°í ¹Ù·Î ½ÃÀÛÀ» ½ÃµµÇÑ´Ù.
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Readyï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê°ï¿½ ï¿½Ù·ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ãµï¿½ï¿½Ñ´ï¿½.
         if (HasStateAuthority)
         {
             TryStartBattle();
@@ -367,7 +382,7 @@ public class LobbyServerManager : NetworkBehaviour
         if (!AreAllGuestPlayersReady())
         {
             ShowWarningMessage(
-                "ÁØºñÇÏÁö ¾ÊÀº ÇÃ·¹ÀÌ¾î°¡ ÀÖ½À´Ï´Ù.");
+                "ï¿½Øºï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½Ì¾î°¡ ï¿½Ö½ï¿½ï¿½Ï´ï¿½.");
 
             return;
         }

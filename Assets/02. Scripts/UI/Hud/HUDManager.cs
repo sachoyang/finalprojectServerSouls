@@ -73,8 +73,20 @@ public class HUDManager : MonoBehaviour
                 playerStatusController = localStatusController;
         }
 
-        if (boss == null || !boss.IsSpawnedReady || boss.CurrentState == BossState.Die)
+        if (!IsBossReadable(boss) || boss.CurrentState == BossState.Die)
             boss = FindActiveBoss();
+    }
+
+    // 🔥 [버그 픽스] 보스의 네트워크 변수를 읽어도 안전한지 검사.
+    //    IsSpawnedReady만으로는 부족하다 — 씬 전환(로비 복귀)으로 '디스폰된 뒤'에도 파괴 전까지
+    //    한두 프레임 Update가 돌면서 CurrentState 접근 시 InvalidOperationException이 터졌다.
+    //    Object.IsValid로 디스폰 이후 상태를 걸러낸다.
+    private static bool IsBossReadable(NetworkBossCore target)
+    {
+        return target != null &&
+               target.IsSpawnedReady &&
+               target.Object != null &&
+               target.Object.IsValid;
     }
 
     private void TryFindRuntimeReferences()
@@ -82,8 +94,7 @@ public class HUDManager : MonoBehaviour
         if (localPlayerController != null &&
             abilityInventory != null &&
             playerStatusController != null &&
-            boss != null &&
-            boss.IsSpawnedReady &&
+            IsBossReadable(boss) &&
             boss.CurrentState != BossState.Die)
         {
             return;
@@ -135,10 +146,10 @@ public class HUDManager : MonoBehaviour
         if (bossHUDView == null)
             return;
 
-        if (boss == null || !boss.IsSpawnedReady || boss.CurrentState == BossState.Die)
+        if (!IsBossReadable(boss) || boss.CurrentState == BossState.Die)
             boss = FindActiveBoss();
 
-        if (boss == null || !boss.IsSpawnedReady)
+        if (!IsBossReadable(boss))
         {
             bossHUDView.ClearStatuses();
             bossHUDView.SetVisible(false);
@@ -171,7 +182,7 @@ public class HUDManager : MonoBehaviour
             if (!targetBoss.gameObject.activeInHierarchy)
                 continue;
 
-            if (!targetBoss.IsSpawnedReady)
+            if (!IsBossReadable(targetBoss))
                 continue;
 
             if (targetBoss.CurrentState == BossState.Die)

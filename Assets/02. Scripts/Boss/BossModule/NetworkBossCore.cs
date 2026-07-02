@@ -218,6 +218,13 @@ public class NetworkBossCore : NetworkBehaviour
         }
     }
 
+    public override void Despawned(NetworkRunner runner, bool hasState)
+    {
+        // 🔥 씬 전환(로비 복귀 등)으로 디스폰된 뒤에도 HUD 같은 씬 UI가 한두 프레임 더 이 객체를
+        //    참조할 수 있다. 준비 플래그를 내려서 [Networked] 변수 접근 예외를 막는다.
+        IsSpawnedReady = false;
+    }
+
     public override void FixedUpdateNetwork()
     {
         if (!HasStateAuthority || CurrentHP <= 0) return;
