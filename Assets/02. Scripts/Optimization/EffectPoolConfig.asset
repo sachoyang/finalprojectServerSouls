@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   categories:
   - name: BossEffect
-    maxActive: 6
+    maxActive: 10
     prefabs:
     - prefab: {fileID: 1820680284854294, guid: 5537c81202b24a247970c22b8b6c911a, type: 3}
       prewarmCount: 5
