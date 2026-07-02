@@ -72,16 +72,14 @@ public static bool IsAlivePlayer(NetworkObject networkObject)
 
 ---
 
-## ✅ 작업 3. 게스트 닉네임 null 확인 (로그인/DB 담당과 협의)
+## ✔️ 작업 3. 게스트 닉네임 폴백 — 처리 완료 (참고만)
 
-`BackendManager.CurrentNickname`은 **정식 로그인 응답에서만** 세팅됩니다.
-디버그/간이 경로로 들어온 게스트는 null이라서, 로비 복귀 시 닉네임 등록 RPC가 null 직렬화로 터지며
-**슬롯 UI 전체가 깨지는 버그**가 있었습니다. 지금은 "닉네임이 있을 때만 RPC 전송"으로 막아뒀지만,
-닉네임 없는 유저는 슬롯에 **"Loading..."** 으로 표시됩니다.
+`BackendManager.CurrentNickname`이 없는 유저(디버그/게스트)는 이제 슬롯 번호 기반
+**"Guest 1 / Guest 2 / Guest 3"** 으로 자동 등록됩니다. "Loading..."은 네트워크 값이
+도착하기 전에만 잠깐 표시됩니다. (`LobbyServerManager.RefreshSlotUI`)
 
-확인/결정할 것:
-- 정식 로그인 게스트도 복귀 후 null이 되는 케이스가 있는지 (있다면 `BackendManager` 쪽 세션 수명 문제)
-- 디버그 유저는 `PlayerPrefs["CurrentNickname"]`(DebugQuickEntry가 채움)를 폴백으로 쓸지 여부
+- 접두사는 `LobbyServerManager` 인스펙터의 `guestNicknamePrefix`로 변경 가능 ("게스트 " 등 한글 원하면 인스펙터에서 수정 — 코드에 한글 리터럴을 넣지 않은 건 이 파일이 UTF-8이 아니라 런타임에 깨질 수 있어서)
+- 정식 로그인 유저가 복귀 후에도 null이 되는 케이스가 발견되면 그때는 `BackendManager` 세션 수명 문제이니 DB 담당과 확인
 
 ---
 

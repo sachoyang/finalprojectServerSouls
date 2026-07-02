@@ -45,6 +45,10 @@ public class LobbyServerManager : NetworkBehaviour
     public Text warningMessageText;
     public float warningMessageDuration = 2f;
 
+    [Header("Guest Nickname Fallback")]
+    [Tooltip("Nickname prefix for users without a login nickname (debug/guest). Slot number is appended. e.g. 'Guest ' -> Guest 1")]
+    public string guestNicknamePrefix = "Guest ";
+
     [Header("Scene Names")]
     public string titleSceneName =
         "scTitle uicreate Main";
@@ -240,16 +244,19 @@ public class LobbyServerManager : NetworkBehaviour
         bool isLocalPlayer =
             owner == Runner.LocalPlayer;
 
-        // 🔥 [버그 픽스] 닉네임이 null이면(디버그/간이 로그인 등) RPC 직렬화에서
-        //    ArgumentNullException이 터지고, 그 예외가 Spawned()→RefreshLobbyUI를 통째로
-        //    중단시켜 슬롯 UI가 전부 깨졌다. 유효한 닉네임이 있을 때만 등록 RPC를 보낸다.
+        // 닉네임 결정: 정식 로그인 닉네임 → 없으면(디버그/게스트) "Guest N" 폴백.
+        //  null 그대로 RPC에 넣으면 직렬화 예외로 Spawned()→RefreshLobbyUI가 통째로 중단되어
+        //  슬롯 UI가 전부 깨지므로, 항상 유효한 문자열만 보낸다.
+        //  네트워크 값이 아직 도착하지 않은 동안에만 아래 표시 로직이 "Loading..."을 보여준다.
         string myNickname =
             BackendManager.HasInstance
                 ? BackendManager.Instance.CurrentNickname
                 : null;
 
+        if (string.IsNullOrEmpty(myNickname))
+            myNickname = guestNicknamePrefix + (slotIndex + 1);
+
         if (isLocalPlayer &&
-            !string.IsNullOrEmpty(myNickname) &&
             nickname != myNickname)
         {
             RPC_SetNickname(
