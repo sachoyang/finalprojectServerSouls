@@ -61,17 +61,14 @@ MonoBehaviour:
   bossWakeUpStartDelay: 0.5
   playerObject: {fileID: 0}
   playerAnimator: {fileID: 0}
-  playerKickPoint: {fileID: 7862197501795760496, guid: 99852d037beaa874497ccbfd3c209a04, type: 3}
+  playerKickPoint: {fileID: 0}
   playerAnimationMode: 1
   playerKickAnimationName: Great Sword Kick2
   playerKickAnimationClip: {fileID: -203655887218126122, guid: d4da8e7f6735baa42a191e7b409513d5, type: 3}
   gateKickCameraZoomDuration: 0.7
   gateKickCameraFieldOfView: 70
-  playerKickDuration: 1.2
   gateAnimation: {fileID: 0}
-  gateOpenAnimationName: DoorOpen
-  gateOpenAnimationClip: {fileID: 7400000, guid: 786b63d7a90ac5b43ab3b748d3392018, type: 2}
-  gateOpenDelay: 0.35
-  nextSceneName: scServer_stage
-  loadDelay: 0.25
-  restoreCameraBeforeGateLoad: 0
+  gateOpenClip: {fileID: 7400000, guid: 786b63d7a90ac5b43ab3b748d3392018, type: 2}
+  gateOpenDelay: 0.25
+  gateOpenSound: {fileID: 8300000, guid: 7836ea6ecd0d15a49ac083a85d848cff, type: 3}
+  gateOpenSoundVolume: 1

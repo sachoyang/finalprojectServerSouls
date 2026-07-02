@@ -18,7 +18,10 @@ Cutscene README
 - RestoreGameplayCamera(): 게임플레이 카메라로 복귀.
 - PlayGateKickCutscene(): 문 발차기 컷신 시작.
 - PlayGateKickCutscene(NetworkRunner runner, PlayerRef kickPlayer): 특정 플레이어를 발차기 연출 대상으로 지정.
-- PlayGateKickCutsceneAndLoad(NetworkRunner runner): 문 발차기 후 nextSceneName으로 이동.
+
+씬 전환:
+- CutsceneManager는 씬을 전환하지 않는다.
+- 문 발차기 컷신과 동시에 시작하는 Fusion 씬 전환은 NextLevelPortal이 담당한다.
 
 조작 잠금:
 - SetPlayerControlEnabled(false)는 내부적으로 PlayerControlLockFlags.All을 잠근다.
