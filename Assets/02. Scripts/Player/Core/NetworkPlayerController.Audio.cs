@@ -26,6 +26,11 @@ public partial class NetworkPlayerController
         SoundCategory category = ParseSoundCategory(
             animationEvent.stringParameter);
 
+        if (!IsDominantAnimationEvent(animationEvent))
+        {
+            return;
+        }
+
         PlayAnimationSound(
             clip,
             volume,
@@ -57,6 +62,39 @@ public partial class NetworkPlayerController
             transform.position,
             category,
             volume);
+    }
+
+    private bool IsDominantAnimationEvent(AnimationEvent animationEvent)
+    {
+        AnimationClip sourceClip = animationEvent.animatorClipInfo.clip;
+        if (animator == null || sourceClip == null)
+        {
+            return true;
+        }
+
+        float sourceWeight = animationEvent.animatorClipInfo.weight;
+        AnimatorClipInfo[] activeClips = animator.GetCurrentAnimatorClipInfo(0);
+        foreach (AnimatorClipInfo activeClip in activeClips)
+        {
+            if (activeClip.clip == null || activeClip.clip == sourceClip)
+            {
+                continue;
+            }
+
+            if (activeClip.weight > sourceWeight + Mathf.Epsilon)
+            {
+                return false;
+            }
+
+            // 정확히 같은 가중치일 때도 하나의 클립만 선택해 중복 재생을 막는다.
+            if (Mathf.Approximately(activeClip.weight, sourceWeight) &&
+                activeClip.clip.GetInstanceID() < sourceClip.GetInstanceID())
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static SoundCategory ParseSoundCategory(string categoryName)

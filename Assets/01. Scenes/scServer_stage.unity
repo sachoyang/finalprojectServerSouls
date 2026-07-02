@@ -720,6 +720,10 @@ MonoBehaviour:
     volumeMultiplier: 1
     minDistance: 20
     maxDistance: 100
+  - category: 7
+    volumeMultiplier: 0.5
+    minDistance: 20
+    maxDistance: 100
   sfxPoolSize: 20
   bgmCrossfadeDuration: 1.5
   currentBGM: {fileID: 0}

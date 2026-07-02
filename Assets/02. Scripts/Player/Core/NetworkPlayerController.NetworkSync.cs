@@ -160,8 +160,10 @@ public partial class NetworkPlayerController
         bool lockOnMovement = IsLockOnNetworked && !IsInActionAnimation();
         // 락온 이동 블렌드 트리와 일반 이동 파라미터가 서로 섞이지 않게 분리한다.
         animator.SetBool(IsCrawling, _playerStats != null && _playerStats.IsDead);
-        float normalMoveBlend = lockOnMovement ? 0f : MoveSpeedBlendNetworked;
-        animator.SetFloat(MoveSpeed, normalMoveBlend, 0.12f, Time.deltaTime);
+        float normalMoveBlend = lockOnMovement || !IsMovingNetworked
+            ? 0f
+            : Mathf.Clamp01(MoveSpeedBlendNetworked);
+        SetAnimatorFloatDampedAndSnap(MoveSpeed, normalMoveBlend);
         UpdateLockOnAnimatorParameters(lockOnMovement, LockOnMoveNetworked);
     }
 

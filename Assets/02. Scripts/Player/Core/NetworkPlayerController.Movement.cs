@@ -5,6 +5,8 @@ using UnityEngine;
 
 public partial class NetworkPlayerController
 {
+    private const float AnimatorFloatZeroSnapThreshold = 0.001f;
+
     private void HandleCrawlingMovement()
     {
         // 사망 후에는 락온을 해제하고 일반 입력 방향으로만 천천히 기어간다.
@@ -97,14 +99,42 @@ public partial class NetworkPlayerController
 
     private void UpdateLockOnAnimatorParameters(bool lockOnMovement, byte lockMove)
     {
-        // 락온 이동 코드를 2D 블렌드 트리 좌표로 넘긴다.
-        Vector2 blend = lockOnMovement ? GetLockOnBlend(lockMove) : Vector2.zero;
-        float speed = lockOnMovement ? blend.magnitude : 0f;
+        if (!lockOnMovement)
+        {
+            animator.SetBool(IsLockOn, false);
+            SetAnimatorFloatDampedAndSnap(LockMoveX, 0f);
+            SetAnimatorFloatDampedAndSnap(LockMoveY, 0f);
+            SetAnimatorFloatDampedAndSnap(LockMoveSpeed, 0f);
+            return;
+        }
 
-        animator.SetBool(IsLockOn, lockOnMovement);
-        animator.SetFloat(LockMoveX, blend.x, 0.12f, Time.deltaTime);
-        animator.SetFloat(LockMoveY, blend.y, 0.12f, Time.deltaTime);
-        animator.SetFloat(LockMoveSpeed, speed, 0.12f, Time.deltaTime);
+        // 락온 이동 코드를 2D 블렌드 트리 좌표로 넘긴다.
+        Vector2 blend = GetLockOnBlend(lockMove);
+        float speed = blend.magnitude;
+
+        animator.SetBool(IsLockOn, true);
+        if (speed <= 0f)
+        {
+            SetAnimatorFloatDampedAndSnap(LockMoveX, 0f);
+            SetAnimatorFloatDampedAndSnap(LockMoveY, 0f);
+            SetAnimatorFloatDampedAndSnap(LockMoveSpeed, 0f);
+            return;
+        }
+
+        SetAnimatorFloatDampedAndSnap(LockMoveX, blend.x);
+        SetAnimatorFloatDampedAndSnap(LockMoveY, blend.y);
+        SetAnimatorFloatDampedAndSnap(LockMoveSpeed, speed);
+    }
+
+    private void SetAnimatorFloatDampedAndSnap(int parameter, float target)
+    {
+        animator.SetFloat(parameter, target, 0.12f, Time.deltaTime);
+        if (Mathf.Abs(target) <= AnimatorFloatZeroSnapThreshold &&
+            Mathf.Abs(animator.GetFloat(parameter)) <= AnimatorFloatZeroSnapThreshold)
+        {
+            // damping의 시각적 감속은 유지하고, 극소수만 정확한 0으로 정리한다.
+            animator.SetFloat(parameter, 0f);
+        }
     }
 
     private static Vector2 GetLockOnBlend(byte lockMove)
@@ -337,7 +367,9 @@ public partial class NetworkPlayerController
         IsMovingNetworked = isMoving;
         IsRunningNetworked = isRunning;
         LockOnMoveNetworked = lockMove;
-        MoveSpeedBlendNetworked = moveSpeedBlend;
+        MoveSpeedBlendNetworked = isMoving
+            ? Mathf.Clamp01(moveSpeedBlend)
+            : 0f;
     }
 
 }

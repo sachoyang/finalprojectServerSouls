@@ -25773,7 +25773,7 @@ MonoBehaviour:
   respawnChestKey: 287
   teleportToChestKey: 288
   loadPathSceneKey: 289
-  pathSceneName: scPath
+  pathSceneName: scPathNew
 --- !u!114 &1881547196
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -26962,6 +26962,10 @@ MonoBehaviour:
     maxDistance: 100
   - category: 6
     volumeMultiplier: 1
+    minDistance: 20
+    maxDistance: 100
+  - category: 7
+    volumeMultiplier: 0.15
     minDistance: 20
     maxDistance: 100
   sfxPoolSize: 20
