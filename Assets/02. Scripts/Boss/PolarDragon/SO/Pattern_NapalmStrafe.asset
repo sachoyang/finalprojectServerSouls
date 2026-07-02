@@ -53,8 +53,15 @@ MonoBehaviour:
     enableTracking: 0
     trackingStopPercent: 0
     trackingSpeed: 0
+    emitBreath: 0
+    breathDownAngle: 0
+    breathAimAtTarget: 0
+    breathStartPercent: 0
+    breathStopPercent: 1
     dropNapalm: 0
     napalmInterval: 0.35
+    napalmStartPercent: 0
+    napalmStopPercent: 1
   - animationClip: {fileID: 7400000, guid: 06c5792ce5bb88642b939b8d5ce9c51e, type: 3}
     animationStateName: FlyStationary
     animationHash: -746261695
@@ -74,8 +81,13 @@ MonoBehaviour:
     trackingSpeed: 3
     emitBreath: 0
     breathDownAngle: 0
+    breathAimAtTarget: 0
+    breathStartPercent: 0
+    breathStopPercent: 1
     dropNapalm: 0
     napalmInterval: 0.35
+    napalmStartPercent: 0
+    napalmStopPercent: 1
   - animationClip: {fileID: 7400000, guid: 356ee6b81c24e0d479ec34763ac66b8e, type: 3}
     animationStateName: Glide
     animationHash: 642707492
@@ -114,8 +126,12 @@ MonoBehaviour:
     emitBreath: 1
     breathDownAngle: 45
     breathAimAtTarget: 0
+    breathStartPercent: 0
+    breathStopPercent: 1
     dropNapalm: 1
     napalmInterval: 0.3
+    napalmStartPercent: 0
+    napalmStopPercent: 1
   - animationClip: {fileID: 7400000, guid: 979950bb5271581458ad8d4c8423586e, type: 3}
     animationStateName: GlideToLanding
     animationHash: -1742687778
@@ -151,5 +167,12 @@ MonoBehaviour:
     enableTracking: 0
     trackingStopPercent: 0
     trackingSpeed: 0
+    emitBreath: 1
+    breathDownAngle: 0
+    breathAimAtTarget: 1
+    breathStartPercent: 0
+    breathStopPercent: 0.2
     dropNapalm: 0
     napalmInterval: 0.35
+    napalmStartPercent: 0
+    napalmStopPercent: 1

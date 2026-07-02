@@ -38,5 +38,9 @@ MonoBehaviour:
     emitBreath: 1
     breathDownAngle: 0
     breathAimAtTarget: 1
+    breathStartPercent: 0.1
+    breathStopPercent: 0.9
     dropNapalm: 0
     napalmInterval: 0.35
+    napalmStartPercent: 0
+    napalmStopPercent: 1

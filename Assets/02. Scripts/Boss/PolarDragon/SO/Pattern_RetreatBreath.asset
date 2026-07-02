@@ -53,6 +53,15 @@ MonoBehaviour:
     enableTracking: 1
     trackingStopPercent: 1
     trackingSpeed: 2
+    emitBreath: 0
+    breathDownAngle: 0
+    breathAimAtTarget: 0
+    breathStartPercent: 0
+    breathStopPercent: 1
+    dropNapalm: 0
+    napalmInterval: 0.35
+    napalmStartPercent: 0
+    napalmStopPercent: 1
   - animationClip: {fileID: 7400000, guid: 7f10852d43ede7f459338eb637d3ad61, type: 3}
     animationStateName: Fly
     animationHash: 1808254291
@@ -88,6 +97,15 @@ MonoBehaviour:
     enableTracking: 1
     trackingStopPercent: 1
     trackingSpeed: 2
+    emitBreath: 0
+    breathDownAngle: 0
+    breathAimAtTarget: 0
+    breathStartPercent: 0
+    breathStopPercent: 1
+    dropNapalm: 0
+    napalmInterval: 0.35
+    napalmStartPercent: 0
+    napalmStopPercent: 1
   - animationClip: {fileID: 7400000, guid: 06c5792ce5bb88642b939b8d5ce9c51e, type: 3}
     animationStateName: FlyStationary
     animationHash: -746261695
@@ -123,6 +141,15 @@ MonoBehaviour:
     enableTracking: 1
     trackingStopPercent: 1
     trackingSpeed: 2
+    emitBreath: 0
+    breathDownAngle: 0
+    breathAimAtTarget: 0
+    breathStartPercent: 0
+    breathStopPercent: 1
+    dropNapalm: 0
+    napalmInterval: 0.35
+    napalmStartPercent: 0
+    napalmStopPercent: 1
   - animationClip: {fileID: 7400000, guid: bdeab59f78196044b88b4d0fd37ee4e1, type: 3}
     animationStateName: FlyStationaryToLanding
     animationHash: 761871033
@@ -158,6 +185,15 @@ MonoBehaviour:
     enableTracking: 1
     trackingStopPercent: 1
     trackingSpeed: 2
+    emitBreath: 0
+    breathDownAngle: 0
+    breathAimAtTarget: 0
+    breathStartPercent: 0
+    breathStopPercent: 1
+    dropNapalm: 0
+    napalmInterval: 0.35
+    napalmStartPercent: 0
+    napalmStopPercent: 1
   - animationClip: {fileID: 7400000, guid: a9d396f0b5a179c468b4a6ca901f8031, type: 3}
     animationStateName: SpreadFrozenBreath
     animationHash: 2017910308
@@ -178,3 +214,9 @@ MonoBehaviour:
     emitBreath: 1
     breathDownAngle: 0
     breathAimAtTarget: 1
+    breathStartPercent: 0.2
+    breathStopPercent: 0.8
+    dropNapalm: 0
+    napalmInterval: 0.35
+    napalmStartPercent: 0
+    napalmStopPercent: 1

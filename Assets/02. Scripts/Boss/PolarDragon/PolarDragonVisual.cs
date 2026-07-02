@@ -83,6 +83,7 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
     // 현재 액션(패턴/스텝)이 바뀌면 리셋하고, 경과 시간 기준으로 몇 발까지 떨궜는지 추적한다.
     private int _napalmStepKey = -1;
     private int _napalmDropped = 0;
+    private bool _breathSpawnedThisStep = false; // 이 액션에서 브레스 분사를 이미 시작했는지 (재분사 방지)
 
     // 진행 중인 브레스 스트림(입/머리에 붙은 IceThrower). 브레스 구간이 끝날 때 방출을 멈추고 놓아준다.
     private GameObject _activeBreath;
@@ -222,33 +223,48 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
             return;
         }
 
+        // 🔥 [SO 타이밍] 액션 진행률(0~1) 계산. 애니메이션 이벤트 대신 이 값과 SO의
+        //    breathStart/StopPercent, napalmStart/StopPercent를 비교해 이펙트 타이밍을 잡는다.
+        //    StateTimer는 [Networked]라 호스트/클라이언트 모두 같은 진행률을 본다.
+        float remaining = boss.StateTimer.RemainingTime(boss.Runner) ?? 0f;
+        float elapsed = action.duration - remaining;
+        float progress = (action.duration > 0f) ? Mathf.Clamp01(elapsed / action.duration) : 1f;
+
         // 패턴/스텝이 바뀌는 순간을 감지(액션 진입 1회 처리)
         int key = boss.CurrentPatternIndex * 1000 + boss.CurrentStepIndex;
         if (key != _napalmStepKey)
         {
             _napalmStepKey = key;
             _napalmDropped = 0;
-            // 이 액션 시작 시 브레스 분사(emitBreath 켠 액션에서만).
-            if (action.emitBreath) SpawnBreath(boss, action);
+            _breathSpawnedThisStep = false;
+        }
+
+        // 브레스 시작: emitBreath 액션에서 breathStartPercent 도달 시 1회 분사 시작 (0이면 액션 시작과 동시)
+        if (action.emitBreath && !_breathSpawnedThisStep && progress >= action.breathStartPercent)
+        {
+            _breathSpawnedThisStep = true;
+            SpawnBreath(boss, action);
         }
 
         // 🔥 브레스는 '브레스 구간(emitBreath 또는 dropNapalm 액션)' 동안만 유지.
         //    구간을 벗어나 다음 액션(예: GlideToLanding, 착륙 등)으로 넘어가면 방출을 멈춰
         //    파티클 길이를 손대지 않아도 항상 액션 종료까지 자동으로 이어진다.
+        //    추가로 emitBreath 액션에 breathStopPercent(<1)를 설정하면 그 시점에 조기 종료(후딜 연출용).
         bool inBreathPhase = action.emitBreath || action.dropNapalm;
-        if (!inBreathPhase) StopBreath();
+        bool earlyStop = action.emitBreath && action.breathStopPercent < 1f && progress >= action.breathStopPercent;
+        if (!inBreathPhase || earlyStop) StopBreath();
 
         // 🔥 [플레이어 조준 추적] LateUpdate로 이동함(여기서 먼저 조준해도 이후 머리 IK가 부착 본을
         //    또 돌리면 그만큼 브레스가 밀려 어긋나기 때문). 실제 갱신 로직은 LateUpdate() 참고.
 
-        // 불장판 투하(dropNapalm 켠 액션에서만)
+        // 불장판 투하(dropNapalm 켠 액션에서만, napalmStart~StopPercent 창 안에서만)
         if (!action.dropNapalm || napalmPoolPrefab == null) return;
+        if (progress < action.napalmStartPercent || progress > action.napalmStopPercent) return;
 
-        // 경과 시간(실초) 기준으로 "지금까지 몇 발을 떨궜어야 하는지" 계산 → 프레임률과 무관하게 균일한 카펫.
+        // 투하 창 안에서 경과 시간(실초) 기준으로 "지금까지 몇 발을 떨궜어야 하는지" 계산 → 프레임률과 무관하게 균일한 카펫.
         float interval = Mathf.Max(0.05f, action.napalmInterval);
-        float remaining = boss.StateTimer.RemainingTime(boss.Runner) ?? 0f;
-        float elapsed = action.duration - remaining;
-        int shouldHave = Mathf.FloorToInt(elapsed / interval) + 1; // t≈0에서 첫 발
+        float windowElapsed = elapsed - (action.napalmStartPercent * action.duration);
+        int shouldHave = Mathf.FloorToInt(windowElapsed / interval) + 1; // 창 시작 시점에서 첫 발
         // 혹시 모를 폭주 방지(한 프레임에 과다 스폰 차단)
         if (shouldHave - _napalmDropped > 32) _napalmDropped = shouldHave - 32;
         while (_napalmDropped < shouldHave)

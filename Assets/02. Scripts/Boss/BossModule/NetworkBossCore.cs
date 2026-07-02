@@ -82,6 +82,11 @@ public class NetworkBossCore : NetworkBehaviour
     [Tooltip("에디터에서 기획자가 설정하는 1층 기준 기본 체력")]
     public float baseMaxHP = 100000f;
 
+    [Header("인원수 난이도 보정")]
+    [Tooltip("보스 스폰 시점의 접속 인원 1명당 추가되는 체력 배율.\n" +
+             "0.5면 1명 1.0x / 2명 1.5x / 3명 2.0x. (스폰 시점 기준이라 중간에 나간 인원은 자동 제외)")]
+    public float hpBonusPerExtraPlayer = 0.5f;
+
     [Networked] public float maxHP { get; set; }
     [Networked] public float CurrentHP { get; set; }
 
@@ -195,6 +200,19 @@ public class NetworkBossCore : NetworkBehaviour
 
         if (HasStateAuthority)
         {
+            // 🔥 [인원수 난이도] 보스 스폰 시점의 '실제 접속 인원' 기준으로 체력 보정.
+            //    로비 인원이 아니라 지금 세션에 남아있는 인원을 세므로, 중간에 나간 사람은 자동으로 빠진다.
+            //    (매니저가 층수 배율로 주입한 maxHP 위에 인원수 배율을 한 번 더 곱하는 구조)
+            int playerCount = 0;
+            foreach (PlayerRef p in Runner.ActivePlayers) playerCount++;
+            playerCount = Mathf.Max(1, playerCount);
+
+            if (maxHP <= 0f) maxHP = baseMaxHP; // 매니저 주입 없이 씬에 직접 배치된 보스 폴백
+
+            float countMult = 1f + (playerCount - 1) * hpBonusPerExtraPlayer;
+            maxHP *= countMult;
+            Debug.Log($"[Boss] 인원수 난이도 보정: {playerCount}명 접속 → 체력 x{countMult} (maxHP: {maxHP})");
+
             CurrentHP = maxHP;
             ChangeState(BossState.Sleep);
         }

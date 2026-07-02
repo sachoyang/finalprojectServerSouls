@@ -68,6 +68,16 @@ public class BossActionModule
              "SpreadFrozenBreath 같은 브레스 패턴에 권장. 네이팜(바닥 융단폭격)은 OFF로 두고 breathDownAngle을 쓴다.")]
     public bool breathAimAtTarget = false;
 
+    [Tooltip("브레스 분사 '시작' 시점 (액션 진행률 0~1). 애니메이션 이벤트처럼 특정 타이밍에 분사를 시작한다.\n" +
+             "예) 입을 벌리는 앞동작이 클립의 30%라면 0.3으로. 0이면 액션 시작과 동시(기존 동작).")]
+    [Range(0f, 1f)]
+    public float breathStartPercent = 0f;
+
+    [Tooltip("브레스 분사 '종료' 시점 (액션 진행률 0~1). 이 시점을 지나면 방출을 멈추고 잔불만 자연 소멸한다.\n" +
+             "1이면 액션 끝까지 유지 — 다음 액션도 브레스 구간(emitBreath/dropNapalm)이면 계속 이어짐(기존 동작).")]
+    [Range(0f, 1f)]
+    public float breathStopPercent = 1f;
+
     [Header("네이팜 융단폭격 (PolarDragon 비행 전용)")]
     [Tooltip("ON: 이 액션(예: Glide)이 진행되는 동안 보스 바로 아래 지면에 네이팜 불장판을 주기적으로 투하한다.\n" +
              "엘든링 용의 공중 융단폭격 연출용. 지상/일반 패턴에는 끄면 아무 영향 없음.")]
@@ -75,6 +85,14 @@ public class BossActionModule
 
     [Tooltip("네이팜 투하 간격(초). 작을수록 촘촘한 융단폭격이 된다. (예: 0.3)")]
     public float napalmInterval = 0.35f;
+
+    [Tooltip("네이팜 투하 '시작' 시점 (액션 진행률 0~1). 예) 활공이 자리를 잡은 뒤부터 떨구려면 0.2. 0이면 액션 시작부터(기존 동작).")]
+    [Range(0f, 1f)]
+    public float napalmStartPercent = 0f;
+
+    [Tooltip("네이팜 투하 '종료' 시점 (액션 진행률 0~1). 1이면 액션 끝까지 투하(기존 동작).")]
+    [Range(0f, 1f)]
+    public float napalmStopPercent = 1f;
 }
 
 [CreateAssetMenu(menuName = "ServerSouls/Boss Modules/Boss Pattern")]
