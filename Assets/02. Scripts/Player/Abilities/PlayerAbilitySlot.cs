@@ -16,18 +16,21 @@ public class PlayerAbilitySlot : ISerializationCallbackReceiver
     // 다음 사용 가능 시간.
     // Fusion Runner가 있으면 Runner.SimulationTime 기준, 없으면 Time.time 기준으로 비교한다.
     [SerializeField] private float cooldownSeconds;
+    [SerializeField, Min(1)] private int level = 1;
     [SerializeField, HideInInspector] private float nextReadyTime;
 
     public PlayerAbilityModule Module => module;
     public KeyCode KeyCode => keyCode;
-    public float CooldownSeconds => module != null ? module.CooldownSeconds : cooldownSeconds;
+    public int Level => Mathf.Clamp(level, 1, module != null ? module.MaxLevel : 1);
+    public float CooldownSeconds => module != null ? module.GetCooldownSeconds(Level) : cooldownSeconds;
     public float NextReadyTime => nextReadyTime;
 
     // 액티브 능력을 획득할 때 PlayerAbilityInventory가 슬롯을 생성한다.
-    public PlayerAbilitySlot(PlayerAbilityModule module, KeyCode keyCode)
+    public PlayerAbilitySlot(PlayerAbilityModule module, KeyCode keyCode, int level = 1)
     {
         this.module = module;
         this.keyCode = keyCode;
+        this.level = Mathf.Clamp(level, 1, module != null ? module.MaxLevel : 1);
         RefreshInspectorCooldown();
     }
 
@@ -35,6 +38,12 @@ public class PlayerAbilitySlot : ISerializationCallbackReceiver
     public void SetKey(KeyCode newKey)
     {
         keyCode = newKey;
+    }
+
+    public void SetLevel(int newLevel)
+    {
+        level = Mathf.Clamp(newLevel, 1, module != null ? module.MaxLevel : 1);
+        RefreshInspectorCooldown();
     }
 
     // 현재 시간이 쿨다운 종료 시간 이후인지 확인한다.
@@ -68,7 +77,7 @@ public class PlayerAbilitySlot : ISerializationCallbackReceiver
     {
         if (module != null)
         {
-            cooldownSeconds = module.CooldownSeconds;
+            cooldownSeconds = module.GetCooldownSeconds(Level);
         }
     }
 }
