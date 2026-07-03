@@ -46,6 +46,8 @@ public class DragonVisual : MonoBehaviour, IBossVisual
 
     private NetworkBossCore _bossCore;
 
+    private bool _hasTurnParam;
+
     private void Awake()
     {
         if (anim == null)
@@ -54,6 +56,18 @@ public class DragonVisual : MonoBehaviour, IBossVisual
         }
 
         _bossCore = GetComponentInParent<NetworkBossCore>();
+
+        if (anim != null)
+        {
+            foreach (var p in anim.parameters)
+            {
+                if (p.type == AnimatorControllerParameterType.Float && p.name == "Turn") 
+                { 
+                    _hasTurnParam = true; 
+                    break; 
+                }
+            }
+        }
     }
 
     private void LateUpdate()
@@ -138,18 +152,22 @@ public class DragonVisual : MonoBehaviour, IBossVisual
 
     public void SetDirection(float dirX, float dirY)
     {
-        // Lerp를 사용하여 방향 전환이나 정지 시 뚝뚝 끊기지 않고 부드럽게 감속/가속되게 합니다.
-        float currentX = anim.GetFloat("DirX");
-        float currentY = anim.GetFloat("DirY");
-        anim.SetFloat("DirX", Mathf.Lerp(currentX, dirX, Time.deltaTime * 5f));
-        anim.SetFloat("DirY", Mathf.Lerp(currentY, dirY, Time.deltaTime * 5f));
+        // 🔥 DirX, DirY 대신 벡터의 길이(속도)를 구해서 MoveSpeed 파라미터 하나만 제어합니다.
+        Vector2 dir = new Vector2(dirX, dirY);
+        float targetSpeed = dir.magnitude;
+
+        float currentSpeed = anim.GetFloat("MoveSpeed");
+        // 부드럽게 감속/가속되도록 Lerp 처리
+        anim.SetFloat("MoveSpeed", Mathf.Lerp(currentSpeed, targetSpeed, Time.deltaTime * 5f));
     }
 
-    // 제자리 회전 블렌딩. DragonVisual은 DirX/DirY(2D) 블렌드를 쓰므로,
-    // 제자리 턴 스텝을 쓰려면 Animator에 "Turn" 파라미터 + 턴 블렌드를 추가하면 됨. (없으면 무시)
     public void SetTurn(float turnSign)
     {
-        // 필요 시 여기에 anim.SetFloat("Turn", ...) 연결. 현재는 no-op(기존 동작 유지).
+        // 🔥 제자리 회전 시 발 스텝 턴 모션을 블렌딩 (Foot Sliding 제거)
+        if (!_hasTurnParam) return; // 파라미터 미설정 시 안전하게 무시
+        
+        float cur = anim.GetFloat("Turn");
+        anim.SetFloat("Turn", Mathf.Lerp(cur, turnSign, Time.deltaTime * 8f));
     }
 
     // 2. 시선 처리 목표 위치 갱신

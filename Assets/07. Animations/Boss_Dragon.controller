@@ -321,7 +321,7 @@ AnimatorStateMachine:
     m_Position: {x: 280, y: 80, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -8466421871268451976}
-    m_Position: {x: 1200, y: 110, z: 0}
+    m_Position: {x: 790, y: 50, z: 0}
   - serializedVersion: 1
     m_State: {fileID: 8819735153484826736}
     m_Position: {x: 50, y: -130, z: 0}
@@ -333,13 +333,13 @@ AnimatorStateMachine:
     m_Position: {x: 560, y: 80, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -4450098558778417205}
-    m_Position: {x: 1200, y: 230, z: 0}
+    m_Position: {x: 790, y: 170, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -5614476989385405936}
     m_Position: {x: 560, y: -170, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -5311931318026723050}
-    m_Position: {x: 1200, y: 170, z: 0}
+    m_Position: {x: 790, y: 110, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -7281662077431574226}
     m_Position: {x: 420, y: 210, z: 0}
@@ -348,16 +348,16 @@ AnimatorStateMachine:
     m_Position: {x: 60, y: 140, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -7426946608117020067}
-    m_Position: {x: 1200, y: -130, z: 0}
+    m_Position: {x: 790, y: -190, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -644886964438216441}
-    m_Position: {x: 1200, y: -70, z: 0}
+    m_Position: {x: 790, y: -130, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -8931231649626553828}
-    m_Position: {x: 1200, y: -10, z: 0}
+    m_Position: {x: 790, y: -70, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -4696892303128453060}
-    m_Position: {x: 730, y: -30, z: 0}
+    m_Position: {x: 410, y: -80, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -7015597805718496203}
     m_Position: {x: 440, y: 0, z: 0}
@@ -368,7 +368,7 @@ AnimatorStateMachine:
   m_StateMachineBehaviours: []
   m_AnyStatePosition: {x: 70, y: 10, z: 0}
   m_EntryPosition: {x: 80, y: 50, z: 0}
-  m_ExitPosition: {x: 780, y: 370, z: 0}
+  m_ExitPosition: {x: 600, y: 320, z: 0}
   m_ParentStateMachinePosition: {x: 800, y: 20, z: 0}
   m_DefaultState: {fileID: 5729074784864210208}
 --- !u!1102 &-644886964438216441
@@ -406,18 +406,6 @@ AnimatorController:
   m_Name: Boss_Dragon
   serializedVersion: 5
   m_AnimatorParameters:
-  - m_Name: DirX
-    m_Type: 1
-    m_DefaultFloat: 0
-    m_DefaultInt: 0
-    m_DefaultBool: 0
-    m_Controller: {fileID: 9100000}
-  - m_Name: DirY
-    m_Type: 1
-    m_DefaultFloat: 0
-    m_DefaultInt: 0
-    m_DefaultBool: 0
-    m_Controller: {fileID: 9100000}
   - m_Name: Turn
     m_Type: 1
     m_DefaultFloat: 0

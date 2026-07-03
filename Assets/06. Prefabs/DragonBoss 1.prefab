@@ -2932,7 +2932,7 @@ MonoBehaviour:
   aggroRefreshTime: 5
   patternCooldown: 2
   facingDeadzoneAngle: 10
-  turnInPlaceSpeed: 80
+  turnInPlaceSpeed: 50
   statusDatabase:
   - {fileID: 11400000, guid: 31c5858a67b3f3e4ab6c0f5e8e5eda30, type: 2}
   wakeUpAnimName: Scream
@@ -2943,6 +2943,7 @@ MonoBehaviour:
   groggyAnimLength: 1.4
   _CurrentGroggy: 0
   baseMaxHP: 100000
+  hpBonusPerExtraPlayer: 0.5
   _maxHP: 0
   _CurrentHP: 0
   wallLayerMask:
@@ -2970,6 +2971,7 @@ MonoBehaviour:
   _AggroTarget: {fileID: 0}
   _CurrentPatternIndex: -1
   _CurrentStepIndex: -1
+  _PatternYOffset: 0
   _IsGimmickActive:
     _value: 0
   gimmickDamageReduction: 0.3
@@ -3141,7 +3143,7 @@ MonoBehaviour:
   targetLayer:
     serializedVersion: 2
     m_Bits: 256
-  hitRadius: 1.4
+  hitRadius: 2
   weaponNodes:
   - {fileID: 695492420836495950}
   - {fileID: 9193321572944028717}
