@@ -207,6 +207,7 @@ public class DebugQuickEntry : MonoBehaviour
 
         Debug.Log($"[DebugQuickEntry] 세션 시작 (Mode={mode}, Code='{code}')");
 
+        PlayerSessionStore.ClearAll();
         var result = await _runner.StartGame(args);
 
         if (!result.Ok)

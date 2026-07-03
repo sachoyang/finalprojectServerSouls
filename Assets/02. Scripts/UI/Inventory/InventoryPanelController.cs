@@ -27,6 +27,12 @@ public class InventoryPanelController : MonoBehaviour
     private int lastEquippedModuleCount = -1;
     private Coroutine bindCoroutine;
 
+    private void OnDestroy()
+    {
+        if (abilityInventory != null)
+            abilityInventory.AbilityLevelChanged -= OnAbilityLevelChanged;
+    }
+
     private void Start()
     {
         SetInventoryVisible(false);
@@ -124,7 +130,7 @@ public class InventoryPanelController : MonoBehaviour
         for (int i = 0; i < modules.Count; i++)
         {
             InventoryCardSlotView slot = Instantiate(cardSlotPrefab, cardSlotParent);
-            slot.SetModule(modules[i], tooltipView);
+            slot.SetModule(modules[i], abilityInventory.GetAbilityLevel(modules[i]), tooltipView);
             spawnedObjects.Add(slot.gameObject);
         }
     }
@@ -171,8 +177,15 @@ public class InventoryPanelController : MonoBehaviour
             yield return new WaitForSeconds(referenceSearchInterval);
         }
 
+        abilityInventory.AbilityLevelChanged -= OnAbilityLevelChanged;
+        abilityInventory.AbilityLevelChanged += OnAbilityLevelChanged;
         RefreshCardList();
         bindCoroutine = null;
+    }
+
+    private void OnAbilityLevelChanged(PlayerAbilityModule module, int level)
+    {
+        RefreshCardList();
     }
 
     private void SetEmptyTextVisible(bool isVisible)
