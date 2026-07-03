@@ -3,6 +3,38 @@ using UnityEngine;
 
 public partial class NetworkPlayerController
 {
+    private BloodEffectSpawner _bloodEffectSpawner;
+
+    public void BroadcastBloodEffect(
+        string effectId,
+        Vector3 position,
+        Vector3 surfaceNormal)
+    {
+        if (!HasStateAuthority)
+        {
+            return;
+        }
+
+        RPC_SpawnBloodEffect(effectId, position, surfaceNormal);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_SpawnBloodEffect(
+        string effectId,
+        Vector3 position,
+        Vector3 surfaceNormal)
+    {
+        if (_bloodEffectSpawner == null)
+        {
+            _bloodEffectSpawner = FindFirstObjectByType<BloodEffectSpawner>();
+        }
+
+        _bloodEffectSpawner?.SpawnBlood(
+            effectId,
+            position,
+            surfaceNormal);
+    }
+
     public void UnlockBasicAttackCombo()
     {
         _localBasicAttackComboUnlocked = true;

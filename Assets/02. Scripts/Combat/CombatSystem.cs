@@ -351,7 +351,18 @@ public class CombatSystem : MonoBehaviour
             hitNormal = attackOrigin.forward;
         }
 
-        // 피 분출과 타격음은 같은 호출에서 처리한다.
+        // 데미지/피격 위치는 서버가 확정하고, 표현은 모든 클라이언트에서 한 번씩 생성한다.
+        if (attackOrigin.TryGetComponent(
+                out NetworkPlayerController networkAttacker))
+        {
+            networkAttacker.BroadcastBloodEffect(
+                effectId,
+                hitPoint,
+                hitNormal);
+            return;
+        }
+
+        // 네트워크 플레이어가 아닌 테스트 공격자는 기존 로컬 경로를 사용한다.
         bloodEffectSpawner.SpawnBlood(effectId, hitPoint, hitNormal);
     }
 
