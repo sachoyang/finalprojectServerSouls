@@ -211,11 +211,7 @@ public class RewardSelectView : MonoBehaviour
 
     private int GetRewardLevel(PlayerAbilityModule module)
     {
-        NetworkPlayerController localPlayer = PlayerRegistry.LocalPlayer;
-        PlayerAbilityInventory inventory =
-            localPlayer != null ? localPlayer.GetComponent<PlayerAbilityInventory>() : null;
-        int currentLevel = inventory != null ? inventory.GetAbilityLevel(module) : 0;
-        return module != null ? Mathf.Clamp(currentLevel + 1, 1, module.MaxLevel) : 1;
+        return 1;
     }
 
     private bool ConfirmRewardSelection(PlayerAbilityModule module)

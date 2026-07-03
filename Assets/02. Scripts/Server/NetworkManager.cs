@@ -82,7 +82,6 @@ public class NetworkManager : MonoSingleton<NetworkManager>, ISessionGuard // �
 
         Debug.Log($"[NetworkManager] 포톤 접속 시도.. 모드: {mode}, 방제: {sessionName}");
 
-        PlayerSessionStore.ClearAll();
         var result = await _runner.StartGame(new StartGameArgs()
         {
             GameMode = mode,

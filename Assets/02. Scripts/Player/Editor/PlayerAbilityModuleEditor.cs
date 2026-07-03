@@ -21,7 +21,6 @@ public class PlayerAbilityModuleEditor : Editor
     private static bool _hitboxOpen = true;
     private static bool _previewOpen = true;
     private static bool _soundOpen = true;
-    private static int _selectedLevelIndex;
 
     // 프로퍼티 매핑용 변수들
     private SerializedProperty _abilityId;
@@ -33,11 +32,15 @@ public class PlayerAbilityModuleEditor : Editor
     private SerializedProperty _maxBossStage;
     private SerializedProperty _unlockedSkill;
     private SerializedProperty _basicSkill;
-    private SerializedProperty _maxLevel;
-    private SerializedProperty _levelSettings;
+    private SerializedProperty _staminaCost;
+    private SerializedProperty _cooldownSeconds;
     private SerializedProperty _healthRestoreAmount;
     private SerializedProperty _staminaRestoreAmount;
     private SerializedProperty _specialEffect;
+    private SerializedProperty _maxHealthBonus;
+    private SerializedProperty _maxStaminaBonus;
+    private SerializedProperty _defenseRateBonus;
+    private SerializedProperty _attackDamageBonusPercent;
     private SerializedProperty _animationClip;
     private SerializedProperty _animationStateName;
     private SerializedProperty _animationTrigger;
@@ -47,6 +50,7 @@ public class PlayerAbilityModuleEditor : Editor
     private SerializedProperty _parentEffectToPlayer;
     private SerializedProperty _hitboxPrefab;
     private SerializedProperty _hitboxLocalOffset;
+    private SerializedProperty _hitboxDamage;
     private SerializedProperty _hitboxRevivePower;
     private SerializedProperty _hitboxDelay;
     private SerializedProperty _hitboxLifetime;
@@ -107,11 +111,15 @@ public class PlayerAbilityModuleEditor : Editor
         _maxBossStage = serializedObject.FindProperty("maxBossStage");
         _unlockedSkill = serializedObject.FindProperty("unlockedSkill");
         _basicSkill = serializedObject.FindProperty("basicSkill");
-        _maxLevel = serializedObject.FindProperty("maxLevel");
-        _levelSettings = serializedObject.FindProperty("levelSettings");
+        _staminaCost = serializedObject.FindProperty("staminaCost");
+        _cooldownSeconds = serializedObject.FindProperty("cooldownSeconds");
         _healthRestoreAmount = serializedObject.FindProperty("healthRestoreAmount");
         _staminaRestoreAmount = serializedObject.FindProperty("staminaRestoreAmount");
         _specialEffect = serializedObject.FindProperty("specialEffect");
+        _maxHealthBonus = serializedObject.FindProperty("maxHealthBonus");
+        _maxStaminaBonus = serializedObject.FindProperty("maxStaminaBonus");
+        _defenseRateBonus = serializedObject.FindProperty("defenseRateBonus");
+        _attackDamageBonusPercent = serializedObject.FindProperty("attackDamageBonusPercent");
         _animationClip = serializedObject.FindProperty("animationClip");
         _animationStateName = serializedObject.FindProperty("animationStateName");
         _animationTrigger = serializedObject.FindProperty("animationTrigger");
@@ -121,6 +129,7 @@ public class PlayerAbilityModuleEditor : Editor
         _parentEffectToPlayer = serializedObject.FindProperty("parentEffectToPlayer");
         _hitboxPrefab = serializedObject.FindProperty("hitboxPrefab");
         _hitboxLocalOffset = serializedObject.FindProperty("hitboxLocalOffset");
+        _hitboxDamage = serializedObject.FindProperty("hitboxDamage");
         _hitboxRevivePower = serializedObject.FindProperty("hitboxRevivePower");
         _hitboxDelay = serializedObject.FindProperty("hitboxDelay");
         _hitboxLifetime = serializedObject.FindProperty("hitboxLifetime");
@@ -156,7 +165,6 @@ public class PlayerAbilityModuleEditor : Editor
 
         EditorGUILayout.PropertyField(_abilityType);
         bool isActive = _abilityType.enumValueIndex == (int)AbilityType.Active;
-        EnsureLevelSettingsInitialized();
 
         // 섹션별 렌더링 코드들
         DrawSection("Reward", ref _rewardOpen, DrawReward);
@@ -203,17 +211,8 @@ public class PlayerAbilityModuleEditor : Editor
 
     private void DrawActiveSettings()
     {
-        DrawLevelSelector();
-        SerializedProperty level = _levelSettings.GetArrayElementAtIndex(_selectedLevelIndex);
-        EditorGUILayout.PropertyField(
-            level.FindPropertyRelative("damageMultiplier"),
-            new GUIContent("데미지 배율"));
-        EditorGUILayout.PropertyField(
-            level.FindPropertyRelative("cooldownSeconds"),
-            new GUIContent("쿨타임"));
-        EditorGUILayout.PropertyField(
-            level.FindPropertyRelative("staminaCost"),
-            new GUIContent("스태미나 소모량"));
+        EditorGUILayout.PropertyField(_staminaCost);
+        EditorGUILayout.PropertyField(_cooldownSeconds);
     }
 
     private void DrawEffect()
@@ -225,62 +224,10 @@ public class PlayerAbilityModuleEditor : Editor
 
     private void DrawPassiveStats()
     {
-        DrawLevelSelector();
-        SerializedProperty level = _levelSettings.GetArrayElementAtIndex(_selectedLevelIndex);
-        EditorGUILayout.PropertyField(
-            level.FindPropertyRelative("maxHealthBonus"),
-            new GUIContent("최대 체력 보너스"));
-        EditorGUILayout.PropertyField(
-            level.FindPropertyRelative("maxStaminaBonus"),
-            new GUIContent("최대 스태미나 보너스"));
-        EditorGUILayout.PropertyField(
-            level.FindPropertyRelative("defenseRateBonus"),
-            new GUIContent("방어율 보너스"));
-        EditorGUILayout.PropertyField(
-            level.FindPropertyRelative("attackDamageBonusPercent"),
-            new GUIContent("공격력 보너스 (%)"));
-    }
-
-    private void DrawLevelSelector()
-    {
-        EditorGUILayout.PropertyField(_maxLevel, new GUIContent("최대 레벨"));
-        int maxLevel = Mathf.Clamp(_maxLevel.intValue, 1, byte.MaxValue);
-        if (_maxLevel.intValue != maxLevel)
-        {
-            _maxLevel.intValue = maxLevel;
-        }
-
-        string[] levelLabels = new string[maxLevel];
-        for (int i = 0; i < maxLevel; i++)
-            levelLabels[i] = $"Lv.{i + 1}";
-
-        _selectedLevelIndex = EditorGUILayout.Popup(
-            "레벨 설정",
-            Mathf.Clamp(_selectedLevelIndex, 0, maxLevel - 1),
-            levelLabels);
-    }
-
-    private void EnsureLevelSettingsInitialized()
-    {
-        int maxLevel = Mathf.Clamp(_maxLevel.intValue, 1, byte.MaxValue);
-        int previousSize = _levelSettings.arraySize;
-        if (previousSize == maxLevel)
-        {
-            return;
-        }
-
-        _levelSettings.arraySize = maxLevel;
-        for (int i = previousSize; i < maxLevel; i++)
-        {
-            SerializedProperty level = _levelSettings.GetArrayElementAtIndex(i);
-            level.FindPropertyRelative("damageMultiplier").floatValue = 1f;
-            level.FindPropertyRelative("cooldownSeconds").floatValue = 0f;
-            level.FindPropertyRelative("staminaCost").floatValue = 0f;
-            level.FindPropertyRelative("maxHealthBonus").floatValue = 0f;
-            level.FindPropertyRelative("maxStaminaBonus").floatValue = 0f;
-            level.FindPropertyRelative("defenseRateBonus").floatValue = 0f;
-            level.FindPropertyRelative("attackDamageBonusPercent").floatValue = 0f;
-        }
+        EditorGUILayout.PropertyField(_maxHealthBonus);
+        EditorGUILayout.PropertyField(_maxStaminaBonus);
+        EditorGUILayout.PropertyField(_defenseRateBonus);
+        EditorGUILayout.PropertyField(_attackDamageBonusPercent);
     }
 
     private void DrawPresentation()
@@ -309,6 +256,7 @@ public class PlayerAbilityModuleEditor : Editor
             EditorGUILayout.LabelField("Legacy Hitbox Prefab", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(_hitboxPrefab);
             EditorGUILayout.PropertyField(_hitboxLocalOffset);
+            EditorGUILayout.PropertyField(_hitboxDamage);
             EditorGUILayout.PropertyField(_hitboxRevivePower);
             EditorGUILayout.PropertyField(_hitboxDelay);
             EditorGUILayout.PropertyField(_hitboxLifetime);
@@ -358,6 +306,7 @@ public class PlayerAbilityModuleEditor : Editor
                     EditorGUILayout.PropertyField(element.FindPropertyRelative("radius"));
                     EditorGUILayout.PropertyField(element.FindPropertyRelative("height"));
                     EditorGUILayout.PropertyField(element.FindPropertyRelative("centerHeight"));
+                    EditorGUILayout.PropertyField(element.FindPropertyRelative("damageRate"));
                     EditorGUILayout.PropertyField(element.FindPropertyRelative("groggyDamage"));
                     EditorGUILayout.PropertyField(element.FindPropertyRelative("revivePower"));
                     EditorGUILayout.PropertyField(element.FindPropertyRelative("previewColor"));

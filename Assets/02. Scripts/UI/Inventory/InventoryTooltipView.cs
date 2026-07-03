@@ -13,7 +13,7 @@ public class InventoryTooltipView : MonoBehaviour
     [SerializeField] private Text detailText;
     [SerializeField] private Text levelUpText;
 
-    public void Show(PlayerAbilityModule module, int level)
+    public void Show(PlayerAbilityModule module)
     {
         if (module == null)
         {
@@ -25,7 +25,7 @@ public class InventoryTooltipView : MonoBehaviour
             tooltipRoot.SetActive(true);
 
         if (nameText != null)
-            nameText.text = $"{module.DisplayName}  Lv.{Mathf.Clamp(level, 1, module.MaxLevel)}";
+            nameText.text = module.DisplayName;
 
         if (typeText != null)
             typeText.text = module.IsActive ? "Active" : "Passive";
@@ -34,10 +34,10 @@ public class InventoryTooltipView : MonoBehaviour
             descriptionText.text = module.Description;
 
         if (detailText != null)
-            detailText.text = BuildDetailText(module, level);
+            detailText.text = BuildDetailText(module);
 
         if (levelUpText != null)
-            levelUpText.text = BuildLevelUpText(module, level);
+            levelUpText.text = BuildLevelUpText(module);
     }
 
     public void Hide()
@@ -48,36 +48,17 @@ public class InventoryTooltipView : MonoBehaviour
             gameObject.SetActive(false);
     }
 
-    private string BuildDetailText(PlayerAbilityModule module, int level)
+    private string BuildDetailText(PlayerAbilityModule module)
     {
         if (!module.IsActive)
-        {
-            return "Max Health: +" + module.GetMaxHealthBonus(level) + "\n" +
-                   "Max Stamina: +" + module.GetMaxStaminaBonus(level) + "\n" +
-                   "Defense: +" + module.GetDefenseRateBonus(level) + "\n" +
-                   "Attack: +" + (module.GetAttackDamageBonusRate(level) * 100f) + "%";
-        }
+            return "";
 
-        return "Damage: x" + module.GetDamageMultiplier(level) + "\n" +
-               "Stamina Cost: " + module.GetStaminaCost(level) + "\n" +
-               "Cooldown: " + module.GetCooldownSeconds(level) + "s";
+        return "Stamina Cost: " + module.StaminaCost + "\n" +
+               "Cooldown: " + module.CooldownSeconds + "s";
     }
 
-    private string BuildLevelUpText(PlayerAbilityModule module, int level)
+    private string BuildLevelUpText(PlayerAbilityModule module)
     {
-        if (level >= module.MaxLevel)
-            return "MAX LEVEL";
-
-        int nextLevel = level + 1;
-        if (module.IsActive)
-        {
-            return $"Next Lv.{nextLevel}  Damage x{module.GetDamageMultiplier(nextLevel)}, " +
-                   $"Stamina {module.GetStaminaCost(nextLevel)}, Cooldown {module.GetCooldownSeconds(nextLevel)}s";
-        }
-
-        return $"Next Lv.{nextLevel}  HP +{module.GetMaxHealthBonus(nextLevel)}, " +
-               $"Stamina +{module.GetMaxStaminaBonus(nextLevel)}, " +
-               $"Defense +{module.GetDefenseRateBonus(nextLevel)}, " +
-               $"Attack +{module.GetAttackDamageBonusRate(nextLevel) * 100f}%";
+        return "";
     }
 }

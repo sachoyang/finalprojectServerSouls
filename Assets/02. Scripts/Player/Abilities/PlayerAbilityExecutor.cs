@@ -29,15 +29,6 @@ public class PlayerAbilityExecutor : MonoBehaviour
 
     public void EquipModule(PlayerAbilityModule module, PlayerAbilityContext context)
     {
-        ApplyLevelChange(module, context, 0, 1);
-    }
-
-    public void ApplyLevelChange(
-        PlayerAbilityModule module,
-        PlayerAbilityContext context,
-        int previousLevel,
-        int newLevel)
-    {
         if (module == null)
         {
             return;
@@ -45,7 +36,7 @@ public class PlayerAbilityExecutor : MonoBehaviour
 
         if (!module.IsActive)
         {
-            context.Stats?.ApplyPassiveStatBonus(module, previousLevel, newLevel);
+            context.Stats?.ApplyPassiveStatBonus(module);
             PlayPresentation(module, context);
             ApplyEffect(module, context);
         }
@@ -70,7 +61,7 @@ public class PlayerAbilityExecutor : MonoBehaviour
         ApplySpecialEffect(module, context);
     }
 
-    public void Activate(PlayerAbilityModule module, PlayerAbilityContext context, int level)
+    public void Activate(PlayerAbilityModule module, PlayerAbilityContext context)
     {
         if (!CanActivate(module, context))
         {
@@ -83,7 +74,7 @@ public class PlayerAbilityExecutor : MonoBehaviour
             return;
         }
 
-        StartCoroutine(ProcessHitEvents(context, module, level));
+        StartCoroutine(ProcessHitEvents(context, module));
     }
 
     public void PlayPresentation(PlayerAbilityModule module, PlayerAbilityContext context)
@@ -182,7 +173,7 @@ public class PlayerAbilityExecutor : MonoBehaviour
         }
     }
 
-    private IEnumerator ProcessHitEvents(PlayerAbilityContext context, PlayerAbilityModule module, int level)
+    private IEnumerator ProcessHitEvents(PlayerAbilityContext context, PlayerAbilityModule module)
     {
         if (context.Owner == null || context.Transform == null)
         {
@@ -240,7 +231,7 @@ public class PlayerAbilityExecutor : MonoBehaviour
                         context.Transform,
                         hitEvent,
                         module.AbilityId,
-                        module.GetDamageMultiplier(level),
+                        module.HitboxDamage,
                         outgoingMultiplier);
                 }
 
@@ -254,8 +245,7 @@ public class PlayerAbilityExecutor : MonoBehaviour
 
             Debug.Log(
                 $"[SkillHitEvent] {module.AbilityId}/{hitEvent.Label} " +
-                $"level={level}, damageRate={module.GetDamageMultiplier(level)}, " +
-                $"attackPower={context.Stats?.AttackPower ?? 0f}, " +
+                $"damageRate={hitEvent.DamageRate}, attackPower={context.Stats?.AttackPower ?? 0f}, " +
                 $"raw={maxRawHits}, cylinder={maxFilteredHits}, " +
                 $"bossHurtbox={maxBossHurtboxes}, applied={hitBoss}",
                 context.Owner);

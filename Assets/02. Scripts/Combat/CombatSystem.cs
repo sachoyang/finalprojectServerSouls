@@ -92,7 +92,7 @@ public class CombatSystem : MonoBehaviour
         Transform attackOrigin,
         AbilityHitEvent hitEvent,
         string abilityId,
-        float levelDamageRate,
+        float fallbackDamage,
         float outgoingDamageMultiplier = 1f)
     {
         if (attackOrigin == null || hitEvent == null)
@@ -100,11 +100,9 @@ public class CombatSystem : MonoBehaviour
             return false;
         }
 
+        float damageMultiplier = hitEvent.DamageRate > 0f ? hitEvent.DamageRate : fallbackDamage;
         float attackPower = attackerStats != null ? attackerStats.AttackPower : 0f;
-        float damage =
-            attackPower *
-            Mathf.Max(0f, levelDamageRate) *
-            Mathf.Max(0f, outgoingDamageMultiplier);
+        float damage = attackPower * damageMultiplier * Mathf.Max(0f, outgoingDamageMultiplier);
         if (damage <= 0f)
         {
             return false;

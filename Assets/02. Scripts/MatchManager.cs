@@ -68,7 +68,6 @@ public class MatchManager : MonoBehaviour
 
         Debug.Log($"접속 시도 중... 모드: {mode}, 방 이름: {sessionName}");
 
-        PlayerSessionStore.ClearAll();
         await _runner.StartGame(new StartGameArgs()
         {
             GameMode = mode,

@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [System.Serializable]
 public class AbilityHitEvent
@@ -9,6 +10,8 @@ public class AbilityHitEvent
     [SerializeField] private float radius = 1.4f;
     [SerializeField] private float height = 1.8f;
     [SerializeField] private float centerHeight = 0.9f;
+    [FormerlySerializedAs("damage")]
+    [SerializeField] private float damageRate;
     [SerializeField] private float groggyDamage = 10f;
     [SerializeField] private float revivePower = 34f;
     [SerializeField] private Color previewColor = new Color(1f, 0.2f, 0f, 0.3f);
@@ -19,6 +22,7 @@ public class AbilityHitEvent
     public float Radius => Mathf.Max(0f, radius);
     public float Height => Mathf.Max(0f, height);
     public float CenterHeight => centerHeight;
+    public float DamageRate => damageRate;
     public float GroggyDamage => groggyDamage;
     public float RevivePower => revivePower;
     public Color PreviewColor => previewColor;
@@ -44,33 +48,6 @@ public enum AnimatorStateFeatureMode
     Auto,
     Enabled,
     Disabled
-}
-
-[System.Serializable]
-public class AbilityLevelData
-{
-    [SerializeField] private float damageMultiplier = 1f;
-    [SerializeField] private float cooldownSeconds;
-    [SerializeField] private float staminaCost;
-    [SerializeField] private float maxHealthBonus;
-    [SerializeField] private float maxStaminaBonus;
-    [SerializeField] private float defenseRateBonus;
-    [SerializeField] private float attackDamageBonusPercent;
-
-    public float DamageMultiplier => damageMultiplier;
-    public float CooldownSeconds => cooldownSeconds;
-    public float StaminaCost => staminaCost;
-    public float MaxHealthBonus => maxHealthBonus;
-    public float MaxStaminaBonus => maxStaminaBonus;
-    public float DefenseRateBonus => defenseRateBonus;
-    public float AttackDamageBonusRate => attackDamageBonusPercent * 0.01f;
-
-    public void SetActiveValues(float damage, float cooldown, float stamina)
-    {
-        damageMultiplier = damage;
-        cooldownSeconds = cooldown;
-        staminaCost = stamina;
-    }
 }
 
 [CreateAssetMenu(menuName = "ServerSouls/Player Modules/Player Ability")]
@@ -106,11 +83,13 @@ public class PlayerAbilityModule : ScriptableObject
     // 모든 로그인 유저가 개인 해금 비트 없이도 보상 후보로 사용할 기본 스킬.
     // 서버 DB의 basic_skill 컬럼과 동기화된다.
     [SerializeField] private bool basicSkill;
-    [SerializeField, Min(1)] private int maxLevel = 4;
 
-    [Header("Level Settings")]
-    [Tooltip("최대 레벨 수만큼 생성되며 인스펙터의 레벨 드롭다운으로 편집합니다.")]
-    [SerializeField] private AbilityLevelData[] levelSettings = System.Array.Empty<AbilityLevelData>();
+    [Header("Active Settings")]
+    // 액티브 능력을 사용할 때 소모하는 스태미나. 0이면 무료다.
+    [SerializeField] private float staminaCost;
+
+    // 액티브 능력을 사용한 뒤 다시 사용할 수 있을 때까지의 시간.
+    [SerializeField] private float cooldownSeconds;
 
     [Header("Effect")]
     // 사용 또는 장착 시 회복할 체력량. 0이면 체력 회복 효과가 없다.
@@ -120,6 +99,20 @@ public class PlayerAbilityModule : ScriptableObject
     [SerializeField] private float staminaRestoreAmount;
 
     [SerializeField] private PlayerAbilitySpecialEffect specialEffect;
+
+    [Header("Passive Stat Bonuses")]
+    // 패시브 모듈 획득 시 최대 체력에 더할 값. 실제 적용 로직은 PlayerStats의 스탯 보너스 처리에서 사용한다.
+    [SerializeField] private float maxHealthBonus;
+
+    // 패시브 모듈 획득 시 최대 스태미나에 더할 값.
+    [SerializeField] private float maxStaminaBonus;
+
+    // 패시브 모듈 획득 시 방어율에 더할 값. 0.1이면 최종 피해를 10% 더 줄이는 용도로 사용한다.
+    [SerializeField, Range(-1f, 1f)] private float defenseRateBonus;
+
+
+    // 패시브 모듈 획득 시 기본 공격 데미지에 곱할 증가율. 20을 입력하면 계산에서는 0.2 배율로 사용한다.
+    [SerializeField] private float attackDamageBonusPercent;
 
     [Header("Presentation")]
     // 이 능력에 대응되는 애니메이션 클립. 실제 재생은 Animator Trigger를 권장하고, 이 필드는 에셋에서 어떤 모션을 쓰는지 확인하는 용도다.
@@ -164,6 +157,8 @@ public class PlayerAbilityModule : ScriptableObject
     // 플레이어 기준 로컬 좌표로 히트박스를 생성할 위치 오프셋.
     [SerializeField] private Vector3 hitboxLocalOffset;
 
+    [SerializeField] private float hitboxDamage;
+
     [SerializeField] private float hitboxRevivePower = 34f;
 
     [SerializeField] private float hitboxDelay;
@@ -188,15 +183,14 @@ public class PlayerAbilityModule : ScriptableObject
     public Sprite Icon => icon;
     public AbilityType AbilityType => abilityType;
     public bool IsActive => abilityType == AbilityType.Active;
-    public float StaminaCost => GetStaminaCost(1);
-    public float CooldownSeconds => GetCooldownSeconds(1);
+    public float StaminaCost => staminaCost;
+    public float CooldownSeconds => cooldownSeconds;
     public bool UnlockedSkill => unlockedSkill;
     public bool BasicSkill => basicSkill;
-    public int MaxLevel => Mathf.Clamp(maxLevel, 1, byte.MaxValue);
-    public float MaxHealthBonus => GetMaxHealthBonus(1);
-    public float MaxStaminaBonus => GetMaxStaminaBonus(1);
-    public float DefenseRateBonus => GetDefenseRateBonus(1);
-    public float AttackDamageBonusRate => GetAttackDamageBonusRate(1);
+    public float MaxHealthBonus => maxHealthBonus;
+    public float MaxStaminaBonus => maxStaminaBonus;
+    public float DefenseRateBonus => defenseRateBonus;
+    public float AttackDamageBonusRate => attackDamageBonusPercent * 0.01f;
     public AnimationClip AnimationClip => animationClip;
     public string AnimationStateName => animationStateName;
     public string AnimationTrigger => animationTrigger;
@@ -208,7 +202,7 @@ public class PlayerAbilityModule : ScriptableObject
          animationClip.hasRootCurves);
     public bool DelaysStaminaRecovery =>
         staminaRecoveryDelayMode == AnimatorStateFeatureMode.Enabled ||
-        (staminaRecoveryDelayMode == AnimatorStateFeatureMode.Auto && GetStaminaCost(1) > 0f);
+        (staminaRecoveryDelayMode == AnimatorStateFeatureMode.Auto && staminaCost > 0f);
     public bool OpensComboInput => opensComboInput;
     public float ComboInputOpenNormalizedTime => comboInputOpenNormalizedTime;
     public float HealthRestoreAmount => healthRestoreAmount;
@@ -219,7 +213,7 @@ public class PlayerAbilityModule : ScriptableObject
     public bool ParentEffectToPlayer => parentEffectToPlayer;
     public GameObject HitboxPrefab => hitboxPrefab;
     public Vector3 HitboxLocalOffset => hitboxLocalOffset;
-    public float HitboxDamage => GetDamageMultiplier(1);
+    public float HitboxDamage => hitboxDamage;
     public float HitboxRevivePower => hitboxRevivePower;
     public float HitboxDelay => hitboxDelay;
     public float HitboxLifetime => hitboxLifetime;
@@ -228,52 +222,6 @@ public class PlayerAbilityModule : ScriptableObject
     public AudioClip SoundClip => soundClip;
     public float SoundVolume => soundVolume;
     public float SoundDelay => soundDelay;
-    public float GetDamageMultiplier(int level)
-    {
-        return GetLevelData(level).DamageMultiplier;
-    }
-
-    public float GetCooldownSeconds(int level)
-    {
-        return GetLevelData(level).CooldownSeconds;
-    }
-
-    public float GetStaminaCost(int level)
-    {
-        return GetLevelData(level).StaminaCost;
-    }
-
-    public float GetMaxHealthBonus(int level)
-    {
-        if (level <= 0)
-            return 0f;
-
-        return GetLevelData(level).MaxHealthBonus;
-    }
-
-    public float GetMaxStaminaBonus(int level)
-    {
-        if (level <= 0)
-            return 0f;
-
-        return GetLevelData(level).MaxStaminaBonus;
-    }
-
-    public float GetDefenseRateBonus(int level)
-    {
-        if (level <= 0)
-            return 0f;
-
-        return GetLevelData(level).DefenseRateBonus;
-    }
-
-    public float GetAttackDamageBonusRate(int level)
-    {
-        if (level <= 0)
-            return 0f;
-
-        return GetLevelData(level).AttackDamageBonusRate;
-    }
 
     public bool CanAppearAtStage(int bossStage)
     {
@@ -284,26 +232,6 @@ public class PlayerAbilityModule : ScriptableObject
     public void SetUnlockedSkill(bool value)
     {
         unlockedSkill = value;
-    }
-
-    private AbilityLevelData GetLevelData(int level)
-    {
-        EnsureLevelSettings();
-
-        int index = Mathf.Clamp(level, 1, MaxLevel) - 1;
-        return levelSettings[index];
-    }
-
-    private void EnsureLevelSettings()
-    {
-        if (levelSettings == null)
-            levelSettings = System.Array.Empty<AbilityLevelData>();
-
-        if (levelSettings.Length != MaxLevel)
-            System.Array.Resize(ref levelSettings, MaxLevel);
-
-        for (int i = 0; i < levelSettings.Length; i++)
-            levelSettings[i] ??= new AbilityLevelData();
     }
 
     // ==========================================
@@ -322,14 +250,9 @@ public class PlayerAbilityModule : ScriptableObject
         this.abilityType = (dbData.ability_type == "Active") ? AbilityType.Active : AbilityType.Passive;
         this.basicSkill = dbData.basic_skill != 0;
 
-        EnsureLevelSettings();
-        for (int i = 0; i < levelSettings.Length; i++)
-        {
-            levelSettings[i].SetActiveValues(
-                dbData.damage_multiplier,
-                dbData.cooldown_seconds,
-                dbData.stamina_cost);
-        }
+        this.staminaCost = dbData.stamina_cost;
+        this.cooldownSeconds = dbData.cooldown_seconds;
+        this.hitboxDamage = dbData.damage_multiplier; // 데미지 매핑
         this.hitboxLifetime = dbData.duration; // 지속시간 매핑
 
         // 특수 효과 Enum 매핑

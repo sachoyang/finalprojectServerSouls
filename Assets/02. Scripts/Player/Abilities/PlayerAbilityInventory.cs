@@ -12,6 +12,10 @@ public class PlayerAbilityInventory : MonoBehaviour
     // PlayerPrefs에 액티브 슬롯별 키 설정을 저장할 때 사용하는 접두어.
     private const string KeyPrefsPrefix = "PlayerAbilityKey.";
 
+    [Header("Reward Pool")]
+    // true면 이미 획득한 능력은 보상 후보에서 제외한다.
+    [SerializeField] private bool preventDuplicateModules = true;
+
     [Header("Default Active Keys")]
     // 액티브 능력을 처음 획득했을 때 자동으로 배정되는 기본 키 목록.
     // 첫 번째 액티브는 Alpha1, 두 번째 액티브는 Alpha2처럼 획득 순서대로 배정된다.
@@ -32,7 +36,6 @@ public class PlayerAbilityInventory : MonoBehaviour
     // 현재 플레이어가 획득한 모든 능력.
     // 패시브와 액티브가 모두 들어간다.
     [SerializeField] private List<PlayerAbilityModule> equippedModules = new List<PlayerAbilityModule>();
-    [SerializeField] private List<int> equippedLevels = new List<int>();
 
     // 현재 플레이어가 획득한 액티브 능력 슬롯 목록.
     // 패시브 능력은 이 목록에 들어가지 않는다.
@@ -62,7 +65,6 @@ public class PlayerAbilityInventory : MonoBehaviour
 
     // 능력 장착이 끝난 뒤 UI 갱신이나 효과음 재생 등에 사용할 수 있는 이벤트.
     public event Action<PlayerAbilityModule> AbilityEquipped;
-    public event Action<PlayerAbilityModule, int> AbilityLevelChanged;
 
     // 키 변경 UI가 표시를 갱신할 수 있도록 알려주는 이벤트.
     public event Action<int, KeyCode> ActiveKeyChanged;
@@ -99,8 +101,8 @@ public class PlayerAbilityInventory : MonoBehaviour
                 continue;
             }
 
-            // 최대 레벨 스킬만 후보에서 제외하고, Lv.1~3은 중복 등장해 레벨업할 수 있다.
-            if (GetAbilityLevel(module) >= module.MaxLevel)
+            // 중복 획득을 막는 설정이면 이미 가진 능력도 제외한다.
+            if (preventDuplicateModules && HasModule(module))
             {
                 continue;
             }
@@ -119,15 +121,13 @@ public class PlayerAbilityInventory : MonoBehaviour
     // 보상 선택창에서 플레이어가 능력 1개를 고르면 호출한다.
     public bool SelectRewardOption(PlayerAbilityModule module)
     {
-        int nextLevel = GetAbilityLevel(module) + 1;
-        if (module == null || nextLevel > module.MaxLevel ||
-            !SetAbilityLevel(module, nextLevel, true))
+        if (!EquipModule(module, false, true))
         {
             return false;
         }
 
         _playerData ??= GetComponent<NetworkPlayerData>();
-        _playerData?.RecordAbility(module, nextLevel);
+        _playerData?.RecordAbility(module);
         return true;
     }
 
@@ -143,29 +143,25 @@ public class PlayerAbilityInventory : MonoBehaviour
         for (int i = 0; i < _playerData.SavedAbilityCount; i++)
         {
             PlayerAbilityModule module = FindModuleById(_playerData.GetAbilityId(i));
-            SetAbilityLevel(module, _playerData.GetAbilityLevel(i), false);
+            EquipModule(module, true, false);
         }
     }
 
     public void RestoreFromSessionData(PlayerRef owner)
     {
         EnsureRuntimeLists();
-        IReadOnlyList<PlayerSessionStore.AbilityState> abilities = PlayerSessionStore.GetAbilities(owner);
-        for (int i = 0; i < abilities.Count; i++)
+        IReadOnlyList<string> abilityIds = PlayerSessionStore.GetAbilityIds(owner);
+        for (int i = 0; i < abilityIds.Count; i++)
         {
-            PlayerAbilityModule module = FindModuleById(abilities[i].AbilityId);
-            SetAbilityLevel(module, abilities[i].Level, false);
+            PlayerAbilityModule module = FindModuleById(abilityIds[i]);
+            EquipModule(module, true, false);
         }
     }
 
-    public bool ApplyServerReward(PlayerAbilityModule module)
-    {
-        int nextLevel = GetAbilityLevel(module) + 1;
-        return module != null && nextLevel <= module.MaxLevel &&
-               SetAbilityLevel(module, nextLevel, true);
-    }
-
-    private bool SetAbilityLevel(PlayerAbilityModule module, int targetLevel, bool applyAcquireEffects)
+    private bool EquipModule(
+        PlayerAbilityModule module,
+        bool allowAlreadyEquipped,
+        bool applyAcquireEffects)
     {
         EnsureRuntimeLists();
         if (module == null)
@@ -173,68 +169,40 @@ public class PlayerAbilityInventory : MonoBehaviour
             return false;
         }
 
-        targetLevel = Mathf.Clamp(targetLevel, 1, module.MaxLevel);
-        int moduleIndex = FindEquippedModuleIndex(module.AbilityId);
-        int currentLevel = moduleIndex >= 0 ? equippedLevels[moduleIndex] : 0;
-        if (targetLevel <= currentLevel)
+        if (preventDuplicateModules && HasModule(module))
         {
-            return true;
+            return allowAlreadyEquipped;
         }
 
         PlayerAbilityContext context = CreateContext();
-        if (currentLevel == 0 && _executor != null && !_executor.CanEquip(module, context))
+        // 실제 장착 가능 여부는 Executor가 검사한다.
+        if (_executor != null && !_executor.CanEquip(module, context))
         {
             return false;
         }
 
-        if (moduleIndex < 0)
-        {
-            equippedModules.Add(module);
-            equippedLevels.Add(targetLevel);
-            moduleIndex = equippedModules.Count - 1;
+        equippedModules.Add(module);
 
-            if (module.IsActive && module.SpecialEffect == PlayerAbilitySpecialEffect.None)
-            {
-                int slotIndex = activeSlots.Count;
-                activeSlots.Add(new PlayerAbilitySlot(module, GetSavedOrDefaultKey(slotIndex), targetLevel));
-            }
-        }
-        else
-        {
-            equippedLevels[moduleIndex] = targetLevel;
-            UpdateActiveSlotLevel(module.AbilityId, targetLevel);
-        }
-
-        // 패시브는 이전 레벨 총 보너스와 새 레벨 총 보너스의 차이만 적용한다.
-        // 씬 이동 복구에서는 PlayerStats 스냅샷에 이미 누적값이 있으므로 효과를 재적용하지 않는다.
+        // 새 보상 획득 때만 패시브 스탯, 즉시 회복, 애니메이션/VFX를 실행한다.
+        // 씬 이동 복구에서는 PlayerStats 세션 스냅샷에 이미 반영된 값을 유지하고
+        // 보유 목록과 액티브 슬롯만 재구성해 패시브 모션 및 수치 중복 적용을 막는다.
         if (applyAcquireEffects)
         {
-            _executor?.ApplyLevelChange(module, context, currentLevel, targetLevel);
+            _executor?.EquipModule(module, context);
         }
         else
         {
             _executor?.RestoreModule(module, context);
         }
 
-        if (currentLevel == 0)
+        if (module.IsActive && module.SpecialEffect == PlayerAbilitySpecialEffect.None)
         {
-            AbilityEquipped?.Invoke(module);
+            int slotIndex = activeSlots.Count;
+            activeSlots.Add(new PlayerAbilitySlot(module, GetSavedOrDefaultKey(slotIndex)));
         }
 
-        AbilityLevelChanged?.Invoke(module, targetLevel);
+        AbilityEquipped?.Invoke(module);
         return true;
-    }
-
-    public int GetAbilityLevel(PlayerAbilityModule module)
-    {
-        return module != null ? GetAbilityLevel(module.AbilityId) : 0;
-    }
-
-    public int GetAbilityLevel(string abilityId)
-    {
-        EnsureRuntimeLists();
-        int index = FindEquippedModuleIndex(abilityId);
-        return index >= 0 ? equippedLevels[index] : 0;
     }
 
     // 특정 액티브 슬롯의 키를 바꿀 때 사용한다.
@@ -284,7 +252,7 @@ public class PlayerAbilityInventory : MonoBehaviour
                 module.Icon,
                 slot.KeyCode,
                 Mathf.Max(0f, slot.NextReadyTime - currentTime),
-                slot.CooldownSeconds));
+                module.CooldownSeconds));
         }
 
         return slots;
@@ -344,39 +312,17 @@ public class PlayerAbilityInventory : MonoBehaviour
 
     private bool HasModule(PlayerAbilityModule module)
     {
-        return module != null && FindEquippedModuleIndex(module.AbilityId) >= 0;
-    }
-
-    private int FindEquippedModuleIndex(string abilityId)
-    {
-        if (string.IsNullOrWhiteSpace(abilityId))
+        EnsureRuntimeLists();
+        string abilityId = module.AbilityId;
+        foreach (PlayerAbilityModule equipped in equippedModules)
         {
-            return -1;
-        }
-
-        for (int i = 0; i < equippedModules.Count; i++)
-        {
-            PlayerAbilityModule equipped = equippedModules[i];
             if (equipped != null && equipped.AbilityId == abilityId)
             {
-                return i;
+                return true;
             }
         }
 
-        return -1;
-    }
-
-    private void UpdateActiveSlotLevel(string abilityId, int level)
-    {
-        for (int i = 0; i < activeSlots.Count; i++)
-        {
-            PlayerAbilitySlot slot = activeSlots[i];
-            if (slot?.Module != null && slot.Module.AbilityId == abilityId)
-            {
-                slot.SetLevel(level);
-                return;
-            }
-        }
+        return false;
     }
 
     // 저장된 키가 있으면 저장값을 사용하고, 없으면 기본 키 배열에서 가져온다.
@@ -411,26 +357,8 @@ public class PlayerAbilityInventory : MonoBehaviour
     private void EnsureRuntimeLists()
     {
         equippedModules ??= new List<PlayerAbilityModule>();
-        equippedLevels ??= new List<int>();
         activeSlots ??= new List<PlayerAbilitySlot>();
         defaultActiveKeys ??= Array.Empty<KeyCode>();
-
-        while (equippedLevels.Count < equippedModules.Count)
-        {
-            equippedLevels.Add(1);
-        }
-
-        if (equippedLevels.Count > equippedModules.Count)
-        {
-            equippedLevels.RemoveRange(equippedModules.Count, equippedLevels.Count - equippedModules.Count);
-        }
-
-        for (int i = 0; i < equippedLevels.Count; i++)
-        {
-            PlayerAbilityModule module = equippedModules[i];
-            int maxLevel = module != null ? module.MaxLevel : 1;
-            equippedLevels[i] = Mathf.Clamp(equippedLevels[i], 1, maxLevel);
-        }
     }
 
     // 보상 후보를 랜덤 순서로 섞기 위한 Fisher-Yates 셔플.
