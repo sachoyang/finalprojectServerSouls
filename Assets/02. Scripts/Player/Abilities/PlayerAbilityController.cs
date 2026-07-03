@@ -80,7 +80,7 @@ public class PlayerAbilityController : NetworkBehaviour
         PlayerAbilitySlot slot = _inventory.GetActiveSlot(activeSlotIndex);
         PlayerAbilityModule module = slot?.Module;
         // 슬롯이 비어 있거나 패시브/보상용 모듈이면 액티브 스킬로 실행하지 않는다.
-        if (module == null || !module.IsActive)
+        if (module == null || !module.UsesActiveSlot)
         {
             return false;
         }

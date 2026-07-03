@@ -38,10 +38,22 @@ public class RewardCardView : MonoBehaviour
             skillDescriptionText.text = module != null ? module.Description : "";
 
         if (skillLevelText != null)
-            skillLevelText.text = "Lv. " + Mathf.Max(1, currentLevel).ToString();
+        {
+            int displayLevel = Mathf.Max(1, currentLevel);
+            bool isMaxLevel = module != null && displayLevel >= module.MaxLevel;
+            skillLevelText.text = isMaxLevel
+                ? $"Lv.{displayLevel}(MAX)"
+                : $"Lv.{displayLevel}";
+        }
 
         if (skillDivisionText != null)
-            skillDivisionText.text = module != null && module.IsActive ? "ACTIVE" : "PASSIVE";
+            skillDivisionText.text = module == null
+                ? ""
+                : module.IsActive
+                    ? "ACTIVE"
+                    : module.IsPassive
+                        ? "PASSIVE"
+                        : "UTILITY";
 
         if (selectButton != null)
         {

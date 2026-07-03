@@ -77,6 +77,7 @@ public class InventoryPanelController : MonoBehaviour
 
         List<PlayerAbilityModule> activeModules = new List<PlayerAbilityModule>();
         List<PlayerAbilityModule> passiveModules = new List<PlayerAbilityModule>();
+        List<PlayerAbilityModule> utilityModules = new List<PlayerAbilityModule>();
 
         for (int i = 0; i < equippedModules.Count; i++)
         {
@@ -87,11 +88,16 @@ public class InventoryPanelController : MonoBehaviour
 
             if (module.IsActive)
                 activeModules.Add(module);
-            else
+            else if (module.IsPassive)
                 passiveModules.Add(module);
+            else
+                utilityModules.Add(module);
         }
 
-        bool hasAnySkill = activeModules.Count > 0 || passiveModules.Count > 0;
+        bool hasAnySkill =
+            activeModules.Count > 0 ||
+            passiveModules.Count > 0 ||
+            utilityModules.Count > 0;
         SetEmptyTextVisible(!hasAnySkill);
 
         if (!hasAnySkill)
@@ -99,10 +105,15 @@ public class InventoryPanelController : MonoBehaviour
 
         CreateSlots(activeModules);
 
-        if (activeModules.Count > 0 && passiveModules.Count > 0)
+        if (activeModules.Count > 0 && (passiveModules.Count > 0 || utilityModules.Count > 0))
             CreatePassiveGroupSpacing();
 
         CreateSlots(passiveModules);
+
+        if (passiveModules.Count > 0 && utilityModules.Count > 0)
+            CreatePassiveGroupSpacing();
+
+        CreateSlots(utilityModules);
     }
 
     private bool IsInventoryHoldKeyPressed()

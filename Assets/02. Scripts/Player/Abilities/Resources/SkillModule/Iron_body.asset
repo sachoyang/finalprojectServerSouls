@@ -22,15 +22,45 @@ MonoBehaviour:
   maxBossStage: 8
   unlockedSkill: 1
   basicSkill: 1
-  staminaCost: 0
-  cooldownSeconds: 0
-  healthRestoreAmount: 0
-  staminaRestoreAmount: 0
+  maxLevel: 4
+  levelSettings:
+  - damageMultiplier: 1
+    cooldownSeconds: 0
+    staminaCost: 0
+    maxHealthBonus: 0
+    maxStaminaBonus: 0
+    defenseBonusPercent: 10
+    attackDamageBonusPercent: 0
+    healthRestoreAmount: 0
+    staminaRestoreAmount: 0
+  - damageMultiplier: 1
+    cooldownSeconds: 0
+    staminaCost: 0
+    maxHealthBonus: 0
+    maxStaminaBonus: 0
+    defenseBonusPercent: 20
+    attackDamageBonusPercent: 0
+    healthRestoreAmount: 0
+    staminaRestoreAmount: 0
+  - damageMultiplier: 1
+    cooldownSeconds: 0
+    staminaCost: 0
+    maxHealthBonus: 0
+    maxStaminaBonus: 0
+    defenseBonusPercent: 30
+    attackDamageBonusPercent: 0
+    healthRestoreAmount: 0
+    staminaRestoreAmount: 0
+  - damageMultiplier: 1
+    cooldownSeconds: 0
+    staminaCost: 0
+    maxHealthBonus: 0
+    maxStaminaBonus: 0
+    defenseBonusPercent: 40
+    attackDamageBonusPercent: 0
+    healthRestoreAmount: 0
+    staminaRestoreAmount: 0
   specialEffect: 0
-  maxHealthBonus: 0
-  maxStaminaBonus: 0
-  defenseRateBonus: 0.1
-  attackDamageBonusPercent: 0
   animationClip: {fileID: 0}
   animationStateName: 
   animationTrigger: 

@@ -17,20 +17,50 @@ MonoBehaviour:
   displayName: "\uC790\uC560\uC758 \uC190\uAE38"
   description: "\uCCB4\uB825\uC744 3000 \uD68C\uBCF5\uD55C\uB2E4"
   icon: {fileID: 78065985, guid: 7d4e7f6eb9b67bc4da7d17ee567dd146, type: 3}
-  abilityType: 1
+  abilityType: 2
   minBossStage: 1
   maxBossStage: 8
   unlockedSkill: 1
   basicSkill: 1
-  staminaCost: 400
-  cooldownSeconds: 8
-  healthRestoreAmount: 3000
-  staminaRestoreAmount: 0
+  maxLevel: 4
+  levelSettings:
+  - damageMultiplier: 1
+    cooldownSeconds: 8
+    staminaCost: 400
+    maxHealthBonus: 0
+    maxStaminaBonus: 0
+    defenseRateBonus: 0
+    attackDamageBonusPercent: 0
+    healthRestoreAmount: 3000
+    staminaRestoreAmount: 0
+  - damageMultiplier: 1
+    cooldownSeconds: 8
+    staminaCost: 400
+    maxHealthBonus: 0
+    maxStaminaBonus: 0
+    defenseRateBonus: 0
+    attackDamageBonusPercent: 0
+    healthRestoreAmount: 3000
+    staminaRestoreAmount: 0
+  - damageMultiplier: 1
+    cooldownSeconds: 8
+    staminaCost: 400
+    maxHealthBonus: 0
+    maxStaminaBonus: 0
+    defenseRateBonus: 0
+    attackDamageBonusPercent: 0
+    healthRestoreAmount: 3000
+    staminaRestoreAmount: 0
+  - damageMultiplier: 1
+    cooldownSeconds: 8
+    staminaCost: 400
+    maxHealthBonus: 0
+    maxStaminaBonus: 0
+    defenseRateBonus: 0
+    attackDamageBonusPercent: 0
+    healthRestoreAmount: 3000
+    staminaRestoreAmount: 0
   specialEffect: 0
-  maxHealthBonus: 0
-  maxStaminaBonus: 0
-  defenseRateBonus: 0
-  attackDamageBonusPercent: 0
   animationClip: {fileID: -203655887218126122, guid: b87c0223bacdbd840967e74c4a41288f, type: 3}
   animationStateName: Heal
   animationTrigger: Heal
@@ -44,7 +74,6 @@ MonoBehaviour:
   parentEffectToPlayer: 0
   hitboxPrefab: {fileID: 0}
   hitboxLocalOffset: {x: 0, y: 0, z: 0}
-  hitboxDamage: 0
   hitboxRevivePower: 34
   hitboxDelay: 0
   hitboxLifetime: 0.3

@@ -22,18 +22,42 @@ MonoBehaviour:
   maxBossStage: 8
   unlockedSkill: 1
   basicSkill: 1
-  staminaCost: 500
-  cooldownSeconds: 12
+  maxLevel: 4
+  levelSettings:
+  - damageMultiplier: 1
+    cooldownSeconds: 0
+    staminaCost: 0
+    maxHealthBonus: 0
+    maxStaminaBonus: 3000
+    defenseBonusPercent: 0
+    attackDamageBonusPercent: 0
+  - damageMultiplier: 1
+    cooldownSeconds: 0
+    staminaCost: 0
+    maxHealthBonus: 0
+    maxStaminaBonus: 6000
+    defenseBonusPercent: 0
+    attackDamageBonusPercent: 0
+  - damageMultiplier: 1
+    cooldownSeconds: 0
+    staminaCost: 0
+    maxHealthBonus: 0
+    maxStaminaBonus: 9000
+    defenseBonusPercent: 0
+    attackDamageBonusPercent: 0
+  - damageMultiplier: 1
+    cooldownSeconds: 0
+    staminaCost: 0
+    maxHealthBonus: 0
+    maxStaminaBonus: 12000
+    defenseBonusPercent: 0
+    attackDamageBonusPercent: 0
   healthRestoreAmount: 0
   staminaRestoreAmount: 0
   specialEffect: 0
-  maxHealthBonus: 0
-  maxStaminaBonus: 3000
-  defenseRateBonus: 0
-  attackDamageBonusPercent: 0
   animationClip: {fileID: 0}
-  animationStateName: StaminaUp
-  animationTrigger: StaminaUp
+  animationStateName:
+  animationTrigger:
   animationSpeed: 1.7
   rootMotionMode: 0
   staminaRecoveryDelayMode: 0
@@ -44,7 +68,6 @@ MonoBehaviour:
   parentEffectToPlayer: 0
   hitboxPrefab: {fileID: 0}
   hitboxLocalOffset: {x: 0, y: 0, z: 0}
-  hitboxDamage: 0
   hitboxRevivePower: 34
   hitboxDelay: 0
   hitboxLifetime: 0.3

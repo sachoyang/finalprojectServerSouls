@@ -506,7 +506,7 @@ public class PlayerStats : NetworkBehaviour
 
     public void ApplyPassiveStatBonus(PlayerAbilityModule module, int previousLevel, int newLevel)
     {
-        if (module == null || module.IsActive || !HasStateAuthority)
+        if (module == null || !module.IsPassive || !HasStateAuthority)
         {
             return;
         }
@@ -537,7 +537,7 @@ public class PlayerStats : NetworkBehaviour
     // 장비 해제나 테스트 리셋처럼 패시브 보너스를 되돌릴 일이 생겼을 때 사용할 수 있는 함수다.
     public void RemovePassiveStatBonus(PlayerAbilityModule module)
     {
-        if (module == null || module.IsActive || !HasStateAuthority)
+        if (module == null || !module.IsPassive || !HasStateAuthority)
         {
             return;
         }

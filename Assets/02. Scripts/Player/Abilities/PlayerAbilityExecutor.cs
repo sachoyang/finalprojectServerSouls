@@ -22,7 +22,7 @@ public class PlayerAbilityExecutor : MonoBehaviour
     public bool CanActivate(PlayerAbilityModule module, PlayerAbilityContext context)
     {
         return module != null &&
-               module.IsActive &&
+               module.UsesActiveSlot &&
                context.Owner != null &&
                (context.Stats == null || !context.Stats.IsDead);
     }
@@ -43,14 +43,16 @@ public class PlayerAbilityExecutor : MonoBehaviour
             return;
         }
 
-        if (!module.IsActive)
+        if (module.IsPassive)
         {
             context.Stats?.ApplyPassiveStatBonus(module, previousLevel, newLevel);
             PlayPresentation(module, context);
-            ApplyEffect(module, context);
         }
-
-        ApplySpecialEffect(module, context);
+        else if (module.IsUtility && module.SpecialEffect != PlayerAbilitySpecialEffect.None)
+        {
+            PlayPresentation(module, context);
+            ApplySpecialEffect(module, context);
+        }
     }
 
     public void EquipPassive(PlayerAbilityModule module, PlayerAbilityContext context)
@@ -67,7 +69,10 @@ public class PlayerAbilityExecutor : MonoBehaviour
             return;
         }
 
-        ApplySpecialEffect(module, context);
+        if (module.IsUtility && module.SpecialEffect != PlayerAbilitySpecialEffect.None)
+        {
+            ApplySpecialEffect(module, context);
+        }
     }
 
     public void Activate(PlayerAbilityModule module, PlayerAbilityContext context, int level)
@@ -77,7 +82,12 @@ public class PlayerAbilityExecutor : MonoBehaviour
             return;
         }
 
-        ApplyEffect(module, context);
+        if (module.IsUtility)
+        {
+            ApplyEffect(module, context, level);
+            return;
+        }
+
         if (module.HitEvents == null || module.HitEvents.Length == 0)
         {
             return;
@@ -160,16 +170,18 @@ public class PlayerAbilityExecutor : MonoBehaviour
             Mathf.Max(0f, module.SoundDelay));
     }
 
-    private static void ApplyEffect(PlayerAbilityModule module, PlayerAbilityContext context)
+    private static void ApplyEffect(PlayerAbilityModule module, PlayerAbilityContext context, int level)
     {
-        if (module.HealthRestoreAmount > 0f)
+        float healthRestoreAmount = module.GetHealthRestoreAmount(level);
+        float staminaRestoreAmount = module.GetStaminaRestoreAmount(level);
+        if (healthRestoreAmount > 0f)
         {
-            context.Stats?.Heal(module.HealthRestoreAmount);
+            context.Stats?.Heal(healthRestoreAmount);
         }
 
-        if (module.StaminaRestoreAmount > 0f)
+        if (staminaRestoreAmount > 0f)
         {
-            context.Stats?.RestoreStamina(module.StaminaRestoreAmount);
+            context.Stats?.RestoreStamina(staminaRestoreAmount);
         }
 
     }

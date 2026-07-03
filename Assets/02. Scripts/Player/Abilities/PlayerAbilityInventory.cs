@@ -193,7 +193,7 @@ public class PlayerAbilityInventory : MonoBehaviour
             equippedLevels.Add(targetLevel);
             moduleIndex = equippedModules.Count - 1;
 
-            if (module.IsActive && module.SpecialEffect == PlayerAbilitySpecialEffect.None)
+            if (module.UsesActiveSlot && module.SpecialEffect == PlayerAbilitySpecialEffect.None)
             {
                 int slotIndex = activeSlots.Count;
                 activeSlots.Add(new PlayerAbilitySlot(module, GetSavedOrDefaultKey(slotIndex), targetLevel));

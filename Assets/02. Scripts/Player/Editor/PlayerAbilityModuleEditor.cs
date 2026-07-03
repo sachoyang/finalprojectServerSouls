@@ -35,8 +35,6 @@ public class PlayerAbilityModuleEditor : Editor
     private SerializedProperty _basicSkill;
     private SerializedProperty _maxLevel;
     private SerializedProperty _levelSettings;
-    private SerializedProperty _healthRestoreAmount;
-    private SerializedProperty _staminaRestoreAmount;
     private SerializedProperty _specialEffect;
     private SerializedProperty _animationClip;
     private SerializedProperty _animationStateName;
@@ -109,8 +107,6 @@ public class PlayerAbilityModuleEditor : Editor
         _basicSkill = serializedObject.FindProperty("basicSkill");
         _maxLevel = serializedObject.FindProperty("maxLevel");
         _levelSettings = serializedObject.FindProperty("levelSettings");
-        _healthRestoreAmount = serializedObject.FindProperty("healthRestoreAmount");
-        _staminaRestoreAmount = serializedObject.FindProperty("staminaRestoreAmount");
         _specialEffect = serializedObject.FindProperty("specialEffect");
         _animationClip = serializedObject.FindProperty("animationClip");
         _animationStateName = serializedObject.FindProperty("animationStateName");
@@ -154,91 +150,111 @@ public class PlayerAbilityModuleEditor : Editor
     {
         serializedObject.Update();
 
-        EditorGUILayout.PropertyField(_abilityType);
+        _abilityType.enumValueIndex = EditorGUILayout.Popup(
+            "스킬 분류",
+            _abilityType.enumValueIndex,
+            new[] { "패시브", "액티브", "유틸리티" });
         bool isActive = _abilityType.enumValueIndex == (int)AbilityType.Active;
+        bool isPassive = _abilityType.enumValueIndex == (int)AbilityType.Passive;
+        bool isUtility = _abilityType.enumValueIndex == (int)AbilityType.Utility;
+        bool usesAcquisitionPresentation =
+            isPassive ||
+            (isUtility && _specialEffect.enumValueIndex != (int)PlayerAbilitySpecialEffect.None);
         EnsureLevelSettingsInitialized();
 
         // 섹션별 렌더링 코드들
-        DrawSection("Reward", ref _rewardOpen, DrawReward);
+        DrawSection("보상 설정", ref _rewardOpen, DrawReward);
+        DrawSection(
+            "레벨 설정",
+            ref _activeSettingsOpen,
+            () => DrawLevelSettings(isActive, isPassive, isUtility));
+
+        DrawSection(usesAcquisitionPresentation ? "획득 연출" : "사용 연출", ref _presentationOpen, DrawPresentation);
+        DrawSection(usesAcquisitionPresentation ? "획득 VFX" : "사용 VFX", ref _vfxOpen, DrawVfx);
+        DrawSection("사운드", ref _soundOpen, DrawSound);
 
         if (isActive)
         {
-            DrawSection("Active Settings", ref _activeSettingsOpen, DrawActiveSettings);
-        }
-
-        DrawSection("Effect", ref _effectOpen, DrawEffect);
-
-        if (!isActive)
-        {
-            DrawSection("Passive Stat Bonuses", ref _passiveStatsOpen, DrawPassiveStats);
-        }
-
-        DrawSection(isActive ? "Presentation" : "Acquisition Presentation", ref _presentationOpen, DrawPresentation);
-        DrawSection(isActive ? "VFX" : "Acquisition VFX", ref _vfxOpen, DrawVfx);
-        DrawSection("Sound", ref _soundOpen, DrawSound);
-
-        if (isActive)
-        {
-            DrawSection("Hitbox", ref _hitboxOpen, DrawHitbox);
+            DrawSection("공격 판정", ref _hitboxOpen, DrawHitbox);
         }
 
         serializedObject.ApplyModifiedProperties();
 
         // 프리뷰 뷰포트 드로잉
-        DrawSection("Preview", ref _previewOpen, DrawEmbeddedPreview);
+        DrawSection("미리보기", ref _previewOpen, DrawEmbeddedPreview);
     }
 
     private void DrawReward()
     {
-        EditorGUILayout.PropertyField(_bitIndex);
-        EditorGUILayout.PropertyField(_abilityId);
-        EditorGUILayout.PropertyField(_displayName);
-        EditorGUILayout.PropertyField(_description);
-        EditorGUILayout.PropertyField(_icon);
-        EditorGUILayout.PropertyField(_minBossStage);
-        EditorGUILayout.PropertyField(_maxBossStage);
-        EditorGUILayout.PropertyField(_unlockedSkill, new GUIContent("Unlocked Skill"));
-        EditorGUILayout.PropertyField(_basicSkill, new GUIContent("Basic Skill"));
+        EditorGUILayout.PropertyField(_bitIndex, new GUIContent("비트 인덱스"));
+        EditorGUILayout.PropertyField(_abilityId, new GUIContent("스킬 ID"));
+        EditorGUILayout.PropertyField(_displayName, new GUIContent("표시 이름"));
+        EditorGUILayout.PropertyField(_description, new GUIContent("설명"));
+        EditorGUILayout.PropertyField(_icon, new GUIContent("아이콘"));
+        EditorGUILayout.PropertyField(_minBossStage, new GUIContent("최소 등장 스테이지"));
+        EditorGUILayout.PropertyField(_maxBossStage, new GUIContent("최대 등장 스테이지"));
+        EditorGUILayout.PropertyField(_unlockedSkill, new GUIContent("해금된 스킬"));
+        EditorGUILayout.PropertyField(_basicSkill, new GUIContent("기본 스킬"));
     }
 
-    private void DrawActiveSettings()
+    private void DrawLevelSettings(bool isActive, bool isPassive, bool isUtility)
     {
         DrawLevelSelector();
         SerializedProperty level = _levelSettings.GetArrayElementAtIndex(_selectedLevelIndex);
-        EditorGUILayout.PropertyField(
-            level.FindPropertyRelative("damageMultiplier"),
-            new GUIContent("데미지 배율"));
-        EditorGUILayout.PropertyField(
-            level.FindPropertyRelative("cooldownSeconds"),
-            new GUIContent("쿨타임"));
-        EditorGUILayout.PropertyField(
-            level.FindPropertyRelative("staminaCost"),
-            new GUIContent("스태미나 소모량"));
-    }
 
-    private void DrawEffect()
-    {
-        EditorGUILayout.PropertyField(_healthRestoreAmount);
-        EditorGUILayout.PropertyField(_staminaRestoreAmount);
-        EditorGUILayout.PropertyField(_specialEffect);
-    }
+        bool isUsableUtility =
+            isUtility &&
+            _specialEffect.enumValueIndex == (int)PlayerAbilitySpecialEffect.None;
 
-    private void DrawPassiveStats()
-    {
-        DrawLevelSelector();
-        SerializedProperty level = _levelSettings.GetArrayElementAtIndex(_selectedLevelIndex);
-        EditorGUILayout.PropertyField(
-            level.FindPropertyRelative("maxHealthBonus"),
-            new GUIContent("최대 체력 보너스"));
-        EditorGUILayout.PropertyField(
-            level.FindPropertyRelative("maxStaminaBonus"),
-            new GUIContent("최대 스태미나 보너스"));
-        EditorGUILayout.PropertyField(
-            level.FindPropertyRelative("defenseRateBonus"),
-            new GUIContent("방어율 보너스"));
-        EditorGUILayout.PropertyField(
-            level.FindPropertyRelative("attackDamageBonusPercent"),
-            new GUIContent("공격력 보너스 (%)"));
+        if (isUtility)
+        {
+            EditorGUILayout.PropertyField(_specialEffect, new GUIContent("특수 효과"));
+        }
+
+        if (isActive || isUsableUtility)
+        {
+            EditorGUILayout.PropertyField(
+                level.FindPropertyRelative("cooldownSeconds"),
+                new GUIContent("쿨타임"));
+            EditorGUILayout.PropertyField(
+                level.FindPropertyRelative("staminaCost"),
+                new GUIContent("스태미나 소모량"));
+        }
+
+        if (isActive)
+        {
+            EditorGUILayout.PropertyField(
+                level.FindPropertyRelative("damageMultiplier"),
+                new GUIContent("스킬 레벨 배율"));
+        }
+        else if (isPassive)
+        {
+            EditorGUILayout.PropertyField(
+                level.FindPropertyRelative("maxHealthBonus"),
+                new GUIContent("최대 체력 보너스"));
+            EditorGUILayout.PropertyField(
+                level.FindPropertyRelative("maxStaminaBonus"),
+                new GUIContent("최대 스태미나 보너스"));
+            EditorGUILayout.PropertyField(
+                level.FindPropertyRelative("defenseBonusPercent"),
+                new GUIContent(
+                    "방어율 보너스 (%)",
+                    "현재 방어율에 합연산됩니다. 10 입력 시 10%, 100 입력 시 100%입니다."));
+            EditorGUILayout.PropertyField(
+                level.FindPropertyRelative("attackDamageBonusPercent"),
+                new GUIContent(
+                    "공격력 보너스 (%)",
+                    "현재 공격력 증가율에 합연산됩니다. 10 입력 시 10%, 100 입력 시 100%입니다."));
+        }
+        else if (isUsableUtility)
+        {
+            EditorGUILayout.PropertyField(
+                level.FindPropertyRelative("healthRestoreAmount"),
+                new GUIContent("체력 회복량"));
+            EditorGUILayout.PropertyField(
+                level.FindPropertyRelative("staminaRestoreAmount"),
+                new GUIContent("스태미나 회복량"));
+        }
     }
 
     private void DrawLevelSelector()
@@ -278,24 +294,26 @@ public class PlayerAbilityModuleEditor : Editor
             level.FindPropertyRelative("staminaCost").floatValue = 0f;
             level.FindPropertyRelative("maxHealthBonus").floatValue = 0f;
             level.FindPropertyRelative("maxStaminaBonus").floatValue = 0f;
-            level.FindPropertyRelative("defenseRateBonus").floatValue = 0f;
+            level.FindPropertyRelative("defenseBonusPercent").floatValue = 0f;
             level.FindPropertyRelative("attackDamageBonusPercent").floatValue = 0f;
+            level.FindPropertyRelative("healthRestoreAmount").floatValue = 0f;
+            level.FindPropertyRelative("staminaRestoreAmount").floatValue = 0f;
         }
     }
 
     private void DrawPresentation()
     {
-        EditorGUILayout.PropertyField(_animationClip);
-        EditorGUILayout.PropertyField(_animationStateName);
-        EditorGUILayout.PropertyField(_animationTrigger);
-        EditorGUILayout.PropertyField(_animationSpeed);
+        EditorGUILayout.PropertyField(_animationClip, new GUIContent("애니메이션 클립"));
+        EditorGUILayout.PropertyField(_animationStateName, new GUIContent("애니메이션 상태 이름"));
+        EditorGUILayout.PropertyField(_animationTrigger, new GUIContent("애니메이션 트리거"));
+        EditorGUILayout.PropertyField(_animationSpeed, new GUIContent("애니메이션 속도"));
     }
 
     private void DrawVfx()
     {
-        EditorGUILayout.PropertyField(_effectPrefab);
-        EditorGUILayout.PropertyField(_effectLocalOffset);
-        EditorGUILayout.PropertyField(_parentEffectToPlayer);
+        EditorGUILayout.PropertyField(_effectPrefab, new GUIContent("이펙트 프리팹"));
+        EditorGUILayout.PropertyField(_effectLocalOffset, new GUIContent("로컬 위치 오프셋"));
+        EditorGUILayout.PropertyField(_parentEffectToPlayer, new GUIContent("플레이어에 연결"));
     }
 
     private void DrawHitbox()
@@ -306,12 +324,12 @@ public class PlayerAbilityModuleEditor : Editor
         if (_hitEvents.arraySize == 0)
         {
             EditorGUILayout.Space(4f);
-            EditorGUILayout.LabelField("Legacy Hitbox Prefab", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField(_hitboxPrefab);
-            EditorGUILayout.PropertyField(_hitboxLocalOffset);
-            EditorGUILayout.PropertyField(_hitboxRevivePower);
-            EditorGUILayout.PropertyField(_hitboxDelay);
-            EditorGUILayout.PropertyField(_hitboxLifetime);
+            EditorGUILayout.LabelField("기존 히트박스 프리팹", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(_hitboxPrefab, new GUIContent("히트박스 프리팹"));
+            EditorGUILayout.PropertyField(_hitboxLocalOffset, new GUIContent("로컬 위치 오프셋"));
+            EditorGUILayout.PropertyField(_hitboxRevivePower, new GUIContent("부활 기여량"));
+            EditorGUILayout.PropertyField(_hitboxDelay, new GUIContent("생성 지연"));
+            EditorGUILayout.PropertyField(_hitboxLifetime, new GUIContent("유지 시간"));
         }
     }
 
@@ -321,7 +339,7 @@ public class PlayerAbilityModuleEditor : Editor
         {
             using (new EditorGUILayout.HorizontalScope())
             {
-                EditorGUILayout.LabelField("Hit Events", EditorStyles.boldLabel);
+                EditorGUILayout.LabelField("타격 이벤트", EditorStyles.boldLabel);
                 if (GUILayout.Button("+", GUILayout.Width(28f)))
                 {
                     int index = _hitEvents.arraySize;
@@ -352,15 +370,18 @@ public class PlayerAbilityModuleEditor : Editor
                         }
                     }
 
-                    EditorGUILayout.PropertyField(element.FindPropertyRelative("label"));
-                    EditorGUILayout.PropertyField(element.FindPropertyRelative("startNormalizedTime"));
-                    EditorGUILayout.PropertyField(element.FindPropertyRelative("endNormalizedTime"));
-                    EditorGUILayout.PropertyField(element.FindPropertyRelative("radius"));
-                    EditorGUILayout.PropertyField(element.FindPropertyRelative("height"));
-                    EditorGUILayout.PropertyField(element.FindPropertyRelative("centerHeight"));
-                    EditorGUILayout.PropertyField(element.FindPropertyRelative("groggyDamage"));
-                    EditorGUILayout.PropertyField(element.FindPropertyRelative("revivePower"));
-                    EditorGUILayout.PropertyField(element.FindPropertyRelative("previewColor"));
+                    EditorGUILayout.PropertyField(element.FindPropertyRelative("label"), new GUIContent("이름"));
+                    EditorGUILayout.PropertyField(element.FindPropertyRelative("startNormalizedTime"), new GUIContent("판정 시작 시간"));
+                    EditorGUILayout.PropertyField(element.FindPropertyRelative("endNormalizedTime"), new GUIContent("판정 종료 시간"));
+                    EditorGUILayout.PropertyField(element.FindPropertyRelative("radius"), new GUIContent("반지름"));
+                    EditorGUILayout.PropertyField(element.FindPropertyRelative("height"), new GUIContent("높이"));
+                    EditorGUILayout.PropertyField(element.FindPropertyRelative("centerHeight"), new GUIContent("중심 높이"));
+                    EditorGUILayout.PropertyField(
+                        element.FindPropertyRelative("damageRate"),
+                        new GUIContent("타격 데미지 배율"));
+                    EditorGUILayout.PropertyField(element.FindPropertyRelative("groggyDamage"), new GUIContent("그로기 데미지"));
+                    EditorGUILayout.PropertyField(element.FindPropertyRelative("revivePower"), new GUIContent("부활 기여량"));
+                    EditorGUILayout.PropertyField(element.FindPropertyRelative("previewColor"), new GUIContent("미리보기 색상"));
                 }
             }
         }
@@ -389,9 +410,9 @@ public class PlayerAbilityModuleEditor : Editor
 
     private void DrawSound()
     {
-        EditorGUILayout.PropertyField(_soundClip);
-        EditorGUILayout.PropertyField(_soundVolume);
-        EditorGUILayout.PropertyField(_soundDelay);
+        EditorGUILayout.PropertyField(_soundClip, new GUIContent("사운드 클립"));
+        EditorGUILayout.PropertyField(_soundVolume, new GUIContent("볼륨"));
+        EditorGUILayout.PropertyField(_soundDelay, new GUIContent("재생 지연"));
     }
 
     private void DrawEmbeddedPreview()

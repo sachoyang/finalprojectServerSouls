@@ -9,6 +9,7 @@ public class AbilityHitEvent
     [SerializeField] private float radius = 1.4f;
     [SerializeField] private float height = 1.8f;
     [SerializeField] private float centerHeight = 0.9f;
+    [SerializeField] private float damageRate = 1f;
     [SerializeField] private float groggyDamage = 10f;
     [SerializeField] private float revivePower = 34f;
     [SerializeField] private Color previewColor = new Color(1f, 0.2f, 0f, 0.3f);
@@ -19,6 +20,7 @@ public class AbilityHitEvent
     public float Radius => Mathf.Max(0f, radius);
     public float Height => Mathf.Max(0f, height);
     public float CenterHeight => centerHeight;
+    public float DamageRate => damageRate;
     public float GroggyDamage => groggyDamage;
     public float RevivePower => revivePower;
     public Color PreviewColor => previewColor;
@@ -30,7 +32,10 @@ public enum AbilityType
     Passive,
 
     // 획득 후 액티브 슬롯에 등록되어 지정된 키로 사용하는 능력.
-    Active
+    Active,
+
+    // 획득 시 회복이나 특수 효과를 적용하고 액티브 슬롯에는 들어가지 않는 능력.
+    Utility
 }
 
 public enum PlayerAbilitySpecialEffect
@@ -54,16 +59,22 @@ public class AbilityLevelData
     [SerializeField] private float staminaCost;
     [SerializeField] private float maxHealthBonus;
     [SerializeField] private float maxStaminaBonus;
-    [SerializeField] private float defenseRateBonus;
+    [Tooltip("현재 방어율에 합연산됩니다. 10 입력 시 10%, 100 입력 시 100%입니다.")]
+    [SerializeField] private float defenseBonusPercent;
+    [Tooltip("현재 공격력 증가율에 합연산됩니다. 10 입력 시 10%, 100 입력 시 100%입니다.")]
     [SerializeField] private float attackDamageBonusPercent;
+    [SerializeField] private float healthRestoreAmount;
+    [SerializeField] private float staminaRestoreAmount;
 
     public float DamageMultiplier => damageMultiplier;
     public float CooldownSeconds => cooldownSeconds;
     public float StaminaCost => staminaCost;
     public float MaxHealthBonus => maxHealthBonus;
     public float MaxStaminaBonus => maxStaminaBonus;
-    public float DefenseRateBonus => defenseRateBonus;
+    public float DefenseRateBonus => defenseBonusPercent * 0.01f;
     public float AttackDamageBonusRate => attackDamageBonusPercent * 0.01f;
+    public float HealthRestoreAmount => healthRestoreAmount;
+    public float StaminaRestoreAmount => staminaRestoreAmount;
 
     public void SetActiveValues(float damage, float cooldown, float stamina)
     {
@@ -112,13 +123,7 @@ public class PlayerAbilityModule : ScriptableObject
     [Tooltip("최대 레벨 수만큼 생성되며 인스펙터의 레벨 드롭다운으로 편집합니다.")]
     [SerializeField] private AbilityLevelData[] levelSettings = System.Array.Empty<AbilityLevelData>();
 
-    [Header("Effect")]
-    // 사용 또는 장착 시 회복할 체력량. 0이면 체력 회복 효과가 없다.
-    [SerializeField] private float healthRestoreAmount;
-
-    // 사용 또는 장착 시 회복할 스태미나량. 0이면 스태미나 회복 효과가 없다.
-    [SerializeField] private float staminaRestoreAmount;
-
+    [Header("Utility")]
     [SerializeField] private PlayerAbilitySpecialEffect specialEffect;
 
     [Header("Presentation")]
@@ -188,6 +193,11 @@ public class PlayerAbilityModule : ScriptableObject
     public Sprite Icon => icon;
     public AbilityType AbilityType => abilityType;
     public bool IsActive => abilityType == AbilityType.Active;
+    public bool IsPassive => abilityType == AbilityType.Passive;
+    public bool IsUtility => abilityType == AbilityType.Utility;
+    public bool UsesActiveSlot =>
+        IsActive ||
+        (IsUtility && specialEffect == PlayerAbilitySpecialEffect.None);
     public float StaminaCost => GetStaminaCost(1);
     public float CooldownSeconds => GetCooldownSeconds(1);
     public bool UnlockedSkill => unlockedSkill;
@@ -211,8 +221,8 @@ public class PlayerAbilityModule : ScriptableObject
         (staminaRecoveryDelayMode == AnimatorStateFeatureMode.Auto && GetStaminaCost(1) > 0f);
     public bool OpensComboInput => opensComboInput;
     public float ComboInputOpenNormalizedTime => comboInputOpenNormalizedTime;
-    public float HealthRestoreAmount => healthRestoreAmount;
-    public float StaminaRestoreAmount => staminaRestoreAmount;
+    public float HealthRestoreAmount => GetHealthRestoreAmount(1);
+    public float StaminaRestoreAmount => GetStaminaRestoreAmount(1);
     public PlayerAbilitySpecialEffect SpecialEffect => specialEffect;
     public GameObject EffectPrefab => effectPrefab;
     public Vector3 EffectLocalOffset => effectLocalOffset;
@@ -275,6 +285,22 @@ public class PlayerAbilityModule : ScriptableObject
         return GetLevelData(level).AttackDamageBonusRate;
     }
 
+    public float GetHealthRestoreAmount(int level)
+    {
+        if (level <= 0)
+            return 0f;
+
+        return GetLevelData(level).HealthRestoreAmount;
+    }
+
+    public float GetStaminaRestoreAmount(int level)
+    {
+        if (level <= 0)
+            return 0f;
+
+        return GetLevelData(level).StaminaRestoreAmount;
+    }
+
     public bool CanAppearAtStage(int bossStage)
     {
         return bossStage >= minBossStage && bossStage <= maxBossStage;
@@ -319,7 +345,9 @@ public class PlayerAbilityModule : ScriptableObject
         this.displayName = dbData.display_name;
         this.description = dbData.description;
 
-        this.abilityType = (dbData.ability_type == "Active") ? AbilityType.Active : AbilityType.Passive;
+        this.abilityType = System.Enum.TryParse(dbData.ability_type, true, out AbilityType parsedType)
+            ? parsedType
+            : AbilityType.Passive;
         this.basicSkill = dbData.basic_skill != 0;
 
         EnsureLevelSettings();

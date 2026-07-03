@@ -24,15 +24,39 @@ MonoBehaviour:
   maxBossStage: 8
   unlockedSkill: 1
   basicSkill: 1
-  staminaCost: 400
-  cooldownSeconds: 8
+  maxLevel: 4
+  levelSettings:
+  - damageMultiplier: 1
+    cooldownSeconds: 8
+    staminaCost: 400
+    maxHealthBonus: 0
+    maxStaminaBonus: 0
+    defenseRateBonus: 0
+    attackDamageBonusPercent: 0
+  - damageMultiplier: 1
+    cooldownSeconds: 8
+    staminaCost: 400
+    maxHealthBonus: 0
+    maxStaminaBonus: 0
+    defenseRateBonus: 0
+    attackDamageBonusPercent: 0
+  - damageMultiplier: 1
+    cooldownSeconds: 8
+    staminaCost: 400
+    maxHealthBonus: 0
+    maxStaminaBonus: 0
+    defenseRateBonus: 0
+    attackDamageBonusPercent: 0
+  - damageMultiplier: 1
+    cooldownSeconds: 8
+    staminaCost: 400
+    maxHealthBonus: 0
+    maxStaminaBonus: 0
+    defenseRateBonus: 0
+    attackDamageBonusPercent: 0
   healthRestoreAmount: 0
   staminaRestoreAmount: 0
   specialEffect: 0
-  maxHealthBonus: 0
-  maxStaminaBonus: 0
-  defenseRateBonus: 0
-  attackDamageBonusPercent: 0
   animationClip: {fileID: -203655887218126122, guid: 2e360ce02ed05d04faec51172d19bb6d, type: 3}
   animationStateName: JumpAttack
   animationTrigger: JumpAttack
@@ -46,7 +70,6 @@ MonoBehaviour:
   parentEffectToPlayer: 0
   hitboxPrefab: {fileID: 0}
   hitboxLocalOffset: {x: 0, y: 0, z: 0}
-  hitboxDamage: 0
   hitboxRevivePower: 34
   hitboxDelay: 0
   hitboxLifetime: 0.3

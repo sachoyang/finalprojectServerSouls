@@ -100,9 +100,11 @@ public class CombatSystem : MonoBehaviour
             return false;
         }
 
+        float hitEventDamageRate = Mathf.Max(0f, hitEvent.DamageRate);
         float attackPower = attackerStats != null ? attackerStats.AttackPower : 0f;
         float damage =
             attackPower *
+            hitEventDamageRate *
             Mathf.Max(0f, levelDamageRate) *
             Mathf.Max(0f, outgoingDamageMultiplier);
         if (damage <= 0f)

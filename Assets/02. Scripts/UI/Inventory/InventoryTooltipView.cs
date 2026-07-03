@@ -25,7 +25,13 @@ public class InventoryTooltipView : MonoBehaviour
             tooltipRoot.SetActive(true);
 
         if (nameText != null)
-            nameText.text = $"{module.DisplayName}  Lv.{Mathf.Clamp(level, 1, module.MaxLevel)}";
+        {
+            int displayLevel = Mathf.Clamp(level, 1, module.MaxLevel);
+            string levelText = displayLevel >= module.MaxLevel
+                ? $"Lv.{displayLevel}(MAX)"
+                : $"Lv.{displayLevel}";
+            nameText.text = $"{module.DisplayName}  {levelText}";
+        }
 
         if (typeText != null)
             typeText.text = module.IsActive ? "Active" : "Passive";
@@ -50,12 +56,18 @@ public class InventoryTooltipView : MonoBehaviour
 
     private string BuildDetailText(PlayerAbilityModule module, int level)
     {
-        if (!module.IsActive)
+        if (module.IsPassive)
         {
             return "Max Health: +" + module.GetMaxHealthBonus(level) + "\n" +
                    "Max Stamina: +" + module.GetMaxStaminaBonus(level) + "\n" +
-                   "Defense: +" + module.GetDefenseRateBonus(level) + "\n" +
+                   "Defense (Add): +" + (module.GetDefenseRateBonus(level) * 100f) + "%\n" +
                    "Attack: +" + (module.GetAttackDamageBonusRate(level) * 100f) + "%";
+        }
+
+        if (module.IsUtility)
+        {
+            return "Health Restore: " + module.GetHealthRestoreAmount(level) + "\n" +
+                   "Stamina Restore: " + module.GetStaminaRestoreAmount(level);
         }
 
         return "Damage: x" + module.GetDamageMultiplier(level) + "\n" +
@@ -75,9 +87,15 @@ public class InventoryTooltipView : MonoBehaviour
                    $"Stamina {module.GetStaminaCost(nextLevel)}, Cooldown {module.GetCooldownSeconds(nextLevel)}s";
         }
 
-        return $"Next Lv.{nextLevel}  HP +{module.GetMaxHealthBonus(nextLevel)}, " +
-               $"Stamina +{module.GetMaxStaminaBonus(nextLevel)}, " +
-               $"Defense +{module.GetDefenseRateBonus(nextLevel)}, " +
-               $"Attack +{module.GetAttackDamageBonusRate(nextLevel) * 100f}%";
+        if (module.IsPassive)
+        {
+            return $"Next Lv.{nextLevel}  HP +{module.GetMaxHealthBonus(nextLevel)}, " +
+                   $"Stamina +{module.GetMaxStaminaBonus(nextLevel)}, " +
+                   $"Defense(Add) +{module.GetDefenseRateBonus(nextLevel) * 100f}%, " +
+                   $"Attack +{module.GetAttackDamageBonusRate(nextLevel) * 100f}%";
+        }
+
+        return $"Next Lv.{nextLevel}  Heal {module.GetHealthRestoreAmount(nextLevel)}, " +
+               $"Stamina {module.GetStaminaRestoreAmount(nextLevel)}";
     }
 }
