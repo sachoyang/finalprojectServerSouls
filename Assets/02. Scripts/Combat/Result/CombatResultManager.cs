@@ -24,6 +24,8 @@ public class CombatResultManager : MonoBehaviour
     private CombatResultType currentResult = CombatResultType.None;
     private float allPlayersDeadTimer;
 
+    public bool HasResult => currentResult != CombatResultType.None;
+
     private void Update()
     {
         if (currentResult != CombatResultType.None)
@@ -34,8 +36,15 @@ public class CombatResultManager : MonoBehaviour
         CheckDefeat();
     }
 
+    public void RequestDefeat()
+    {
+        ResolveReferences();
+        CompleteCombat(CombatResultType.Defeat);
+    }
+
     public void RequestRetreat()
     {
+        ResolveReferences();
         CompleteCombat(CombatResultType.Retreat);
     }
 
