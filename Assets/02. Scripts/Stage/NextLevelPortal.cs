@@ -125,12 +125,13 @@ public class NextLevelPortal : NetworkBehaviour
     private void ChangeToNextLevel(NetworkRunner runner)
     {
         if (GameProgressionManager.Instance == null) return;
-        int currentLevel = GameProgressionManager.Instance.CurrentLevel;
 
         // Path 씬에서 회복된 체력/스태미나를 다음 보스 씬 스폰 전에 세션 저장소에 남긴다.
         PlayerSessionStore.SaveActivePlayerStats(runner);
 
-        if (currentLevel >= 8)
+        // 마지막 층(maxLevel) 보스를 이미 클리어하고 온 Path 씬이라면 → 엔딩으로!
+        // (층수 상한은 GameProgressionManager.maxLevel 한 곳에서만 관리. 예전엔 8이 하드코딩되어 있었음)
+        if (GameProgressionManager.Instance.IsFinalLevel)
         {
             runner.LoadScene("scEnding", UnityEngine.SceneManagement.LoadSceneMode.Single);
         }

@@ -33,6 +33,10 @@ public class RewardManager : MonoBehaviour
     [SerializeField] private float rewardSelectionTimeout = 60f;
     [SerializeField] private string nextSceneName = "scPath";
 
+    [Tooltip("다음 층이 '마지막 보스층'일 때 대신 로드할 전용 Path 씬.\n" +
+             "(마지막 층 여부는 GameProgressionManager.maxLevel 기준. Build Settings에 등록 필수!)")]
+    [SerializeField] private string lastPathSceneName = "scPathLast";
+
     private bool _rewardStarted;
     private bool _rewardOptionsOpened;
     private bool _sceneLoadRequested;
@@ -355,6 +359,20 @@ public class RewardManager : MonoBehaviour
         return playerCount > 0;
     }
 
+    // 보스 클리어 후 이동할 Path 씬 결정.
+    //  - 다음 층이 마지막 보스층이면 → 전용 씬(scPathLast)
+    //  - 그 외(마지막 보스를 방금 잡은 경우 포함) → 일반 scPath (포탈이 엔딩으로 보내줌)
+    private string GetNextSceneName()
+    {
+        GameProgressionManager gpm = GameProgressionManager.Instance;
+        if (gpm != null && !gpm.IsFinalLevel && gpm.IsNextLevelFinal)
+        {
+            return lastPathSceneName;
+        }
+
+        return nextSceneName;
+    }
+
     private void LoadNextScene()
     {
         if (_sceneLoadRequested)
@@ -363,31 +381,33 @@ public class RewardManager : MonoBehaviour
         }
 
         _sceneLoadRequested = true;
+        string targetSceneName = GetNextSceneName();
+
         NetworkRunner runner = GetRunner();
         if (runner != null)
         {
             if (runner.IsServer)
             {
-                if (!Application.CanStreamedLevelBeLoaded(nextSceneName))
+                if (!Application.CanStreamedLevelBeLoaded(targetSceneName))
                 {
-                    Debug.LogError($"[RewardManager] Next scene '{nextSceneName}' is not registered in Build Settings.");
+                    Debug.LogError($"[RewardManager] Next scene '{targetSceneName}' is not registered in Build Settings.");
                     return;
                 }
 
                 PlayerSessionStore.SaveActivePlayerStats(runner);
-                runner.LoadScene(nextSceneName, LoadSceneMode.Single);
+                runner.LoadScene(targetSceneName, LoadSceneMode.Single);
             }
 
             return;
         }
 
-        if (!Application.CanStreamedLevelBeLoaded(nextSceneName))
+        if (!Application.CanStreamedLevelBeLoaded(targetSceneName))
         {
-            Debug.LogError($"[RewardManager] Next scene '{nextSceneName}' is not registered in Build Settings.");
+            Debug.LogError($"[RewardManager] Next scene '{targetSceneName}' is not registered in Build Settings.");
             return;
         }
 
-        SceneManager.LoadScene(nextSceneName);
+        SceneManager.LoadScene(targetSceneName);
     }
 
     private static PlayerAbilityInventory FindLocalAbilityInventory()
