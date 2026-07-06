@@ -20,8 +20,30 @@ public class DebugHotkey : MonoBehaviour
     [SerializeField] private KeyCode loadPathSceneKey = KeyCode.F8;
     [SerializeField] private string pathSceneName = "scPath";
 
+    // 디버그 키 사용 가능 여부.
+    //  - 에디터/개발(Development) 빌드: 항상 허용
+    //  - 릴리즈 빌드: admin 계정으로 로그인한 경우에만 허용
+    //    (F5 보스 킬은 여기서 걸러도, 최종 검증은 호스트가 NetworkBossCore.RPC_DebugKillBoss에서
+    //     login_id + 세션 토큰을 백엔드로 재확인하므로 조작된 클라이언트도 뚫을 수 없다)
+    private static bool DebugKeysAllowed
+    {
+        get
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            return true;
+#else
+            return BackendManager.HasInstance && BackendManager.Instance.IsAdminAccount;
+#endif
+        }
+    }
+
     private void Update()
     {
+        if (!DebugKeysAllowed)
+        {
+            return;
+        }
+
         if (Input.GetKeyDown(killBossAndSkipCutsceneKey))
         {
             StartCoroutine(KillBossAndSkipChestCutscene());
@@ -59,7 +81,10 @@ public class DebugHotkey : MonoBehaviour
             yield break;
         }
 
-        boss.RPC_DebugKillBoss();
+        // 릴리즈 빌드에서는 호스트가 이 login_id + 세션 토큰을 백엔드로 검증한 뒤에만 처치한다.
+        string loginId = BackendManager.HasInstance ? BackendManager.Instance.CurrentLoginID : null;
+        string sessionToken = BackendManager.HasInstance ? BackendManager.Instance.CurrentSessionToken : null;
+        boss.RPC_DebugKillBoss(loginId ?? string.Empty, sessionToken ?? string.Empty);
         Debug.Log("[DebugHotkey] F5: 보스 강제 처치를 요청했습니다.");
 
         // 클라이언트의 RPC 왕복과 RewardManager의 사망 감지를 기다린 뒤,

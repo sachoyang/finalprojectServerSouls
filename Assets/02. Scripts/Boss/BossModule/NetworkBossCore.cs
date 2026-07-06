@@ -1,6 +1,8 @@
 using Fusion;
 using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.Networking;
 using Unity.VisualScripting;
 
 // 보스의 현재 상태를 아주 심플하게 통제하기 위한 열거형
@@ -89,6 +91,18 @@ public class NetworkBossCore : NetworkBehaviour
 
     [Networked] public float maxHP { get; set; }
     [Networked] public float CurrentHP { get; set; }
+
+    [Header("데미지 검증 (치트 방어)")]
+    [Tooltip("한 번의 타격으로 들어올 수 있는 최대 데미지 = maxHP × 이 비율.\n" +
+             "RPC_TakeDamage는 아무 클라이언트나 호출할 수 있으므로, 조작된 클라이언트가 보낸 비정상 데미지(예: 999999)를 서버에서 잘라내는 안전장치.")]
+    [Range(0.001f, 1f)]
+    public float maxSingleHitPercent = 0.05f;
+
+    [Header("디버그 킬 (릴리즈 빌드 admin 전용)")]
+    [Tooltip("릴리즈 빌드에서 디버그 강제 킬(F5)을 허용할 admin 계정의 login_id 목록.\n" +
+             "에디터/개발(Development) 빌드에서는 이 목록과 무관하게 항상 허용된다.\n" +
+             "릴리즈에서는 login_id가 이 목록에 있고, 호스트가 백엔드(check_session.php)로 세션 토큰이 진짜임을 확인한 경우에만 발동.")]
+    public List<string> debugKillAdminIds = new List<string>();
 
     [Header("벽 충돌 설정 (미끄러짐)")]
     public LayerMask wallLayerMask;
@@ -506,6 +520,8 @@ public class NetworkBossCore : NetworkBehaviour
 
                 // ==========================================
                 // 전투 시작 시 방 잠금 (디버그 난입 방지 및 안전장치)
+                // ※ 여기서 잠근 방은 로비 복귀 시점에 LobbyServerManager.Spawned()가 다시 연다.
+                //   (정책: '로비에 있는 동안만' 방이 열려 있음. 전투/보상 씬 도중에는 계속 잠김)
                 // ==========================================
                 if (Runner.SessionInfo != null && Runner.SessionInfo.IsOpen)
                 {
@@ -645,11 +661,18 @@ public class NetworkBossCore : NetworkBehaviour
     // ==========================================
     protected void ChangeState(BossState newState)
     {
-        // 패턴이 끝나거나 그로기 등으로 강제 취소되었을 때 높이를 0으로 초기화
+        // 패턴이 끝나거나 그로기/페이즈 전환 등으로 강제 취소되었을 때 패턴 관련 상태 일괄 초기화
         if (CurrentState == BossState.ExecutingPattern && newState != BossState.ExecutingPattern)
         {
             _visual?.SetRootMotionCapture(false);
             PatternYOffset = 0f; // 패턴 종료/취소 시 높이 초기화 (네트워크로 전파)
+
+            // 🔥 [버그 픽스] 패턴 인덱스도 함께 리셋.
+            //    2페이즈 전환처럼 패턴 도중 상태가 바뀌면 패턴 리스트가 phase2Patterns로 교체되는데,
+            //    옛 인덱스가 남아있으면 한두 프레임 동안 CurrentAction/Render가 엉뚱한 패턴을 참조하거나
+            //    phase2 리스트가 더 짧을 때 범위 밖 접근이 날 수 있다.
+            CurrentPatternIndex = -1;
+            CurrentStepIndex = -1;
         }
         CurrentState = newState;
     }
@@ -666,9 +689,12 @@ public class NetworkBossCore : NetworkBehaviour
                 BossActionModule action = CurrentAvailablePatterns[CurrentPatternIndex].GetAction(CurrentStepIndex);
 
                 // 해시값으로 애니메이션 실행
-                // 해시값이 비어있으면 실시간으로 문자열을 찾아 해시로 변환하는 안전장치
-                int targetHash = Animator.StringToHash(action.animationStateName);
-                Debug.Log($"[보스] 재생 시도 상태명: '{action.animationStateName}' (hash={targetHash})");
+                // SO의 OnValidate에서 미리 구워둔 해시를 사용 (핫패스에서 StringToHash 재계산 방지)
+                // 해시가 비어있으면(0) 실시간으로 문자열을 찾아 변환하는 안전장치만 남긴다.
+                int targetHash = action.animationHash != 0
+                    ? action.animationHash
+                    : Animator.StringToHash(action.animationStateName);
+                BossLog.Info($"[보스] 재생 시도 상태명: '{action.animationStateName}' (hash={targetHash})");
                 _visual.PlayAction(targetHash);
 
                 // (원본 클립 길이 / 기획자가 설정한 시간)으로 정확한 배속 도출
@@ -758,13 +784,13 @@ public class NetworkBossCore : NetworkBehaviour
         if (topDPSPlayer != null)
         {
             AggroTarget = topDPSPlayer;
-            Debug.Log($"[Aggro] 어그로 갱신! 대상: {topDPSPlayer.Id}");
+            BossLog.Info($"[Aggro] 어그로 갱신! 대상: {topDPSPlayer.Id}");
         }
         else
         {
             // 누적 딜이 없으면 가장 가까운 대상으로 갱신
             FindClosestTarget();
-            Debug.Log("[Aggro] 누적 딜량 없음. 가장 가까운 대상으로 갱신.");
+            BossLog.Info("[Aggro] 누적 딜량 없음. 가장 가까운 대상으로 갱신.");
         }
 
         _aggroTracker.Clear();
@@ -780,34 +806,41 @@ public class NetworkBossCore : NetworkBehaviour
         // 1. 이미 죽어있는 상태면 때려도 무시 (중복 실행 방지)
         if (CurrentState == BossState.Die || CurrentHP <= 0) return;
 
-        // 2. 방깎 디버프 등을 계산하여 최종 데미지 산출 후 체력 차감
+        // 2. 서버(StateAuthority)에서 데미지 상한/하한 검증.
+        //    RpcSources.All이라 조작된 클라이언트가 999999 같은 값을 보낼 수 있으므로,
+        //    한 방 최대치를 maxHP 비율로 잘라내고 음수(보스 회복 치트)도 차단한다.
+        damage = Mathf.Clamp(damage, 0f, maxHP * maxSingleHitPercent);
+        groggyDamage = Mathf.Clamp(groggyDamage, 0f, maxGroggy);
+
+        // 3. 방깎 디버프 등을 계산하여 최종 데미지 산출 후 체력 차감
         float finalDamage = damage * GetIncomingDamageMultiplier();
         CurrentHP -= finalDamage;
 
-        // 3. 데미지를 입고 나서 체력이 0 이하가 되었는지 확인!!
+        // 4. 데미지를 입고 나서 체력이 0 이하가 되었는지 확인!!
         if (CurrentHP <= 0)
         {
             ExecuteDeath();
             return; // 죽었으면 아래 코드(그로기, 변신 등) 실행 안 하고 함수 종료!
         }
 
-        // 4. 그로기 수치 누적 (무적 연출 중이 아닐 때만)
+        // 5. 어그로 딜미터기 기록 (장부 관리는 헬퍼에 위임)
+        //    페이즈 전환 체크보다 먼저 기록해야, 정확히 50% 컷을 낸 마지막 타격이 딜미터에서 누락되지 않는다.
+        _aggroTracker.Record(attacker, damage);
+
+        // 6. 그로기 수치 누적 (무적 연출 중이 아닐 때만)
         if (CurrentState != BossState.PhaseTransition && CurrentState != BossState.Groggy)
         {
             CurrentGroggy += groggyDamage;
             if (CurrentGroggy >= maxGroggy)
             {
-                Debug.Log("[보스] 그로기(Stagger) 발생!");
-                // 그로기 발동 시 실행 중이던 패턴 강제 취소!
-                CurrentPatternIndex = -1;
-                CurrentStepIndex = -1;
-
+                BossLog.Info("[보스] 그로기(Stagger) 발생!");
                 StateTimer = TickTimer.CreateFromSeconds(Runner, groggyDuration);
+                // 패턴 인덱스 리셋은 ChangeState가 ExecutingPattern을 벗어날 때 공통 처리
                 ChangeState(BossState.Groggy);
             }
         }
 
-        // 5. 체력이 50% 이하인데 아직 1페이즈고, 매니저가 2페이즈를 허락(5층 이상)했다면?!
+        // 7. 체력이 50% 이하인데 아직 1페이즈고, 매니저가 2페이즈를 허락(5층 이상)했다면?!
         if (CurrentPhase == 1 && AllowedMaxPhase >= 2 && CurrentHP <= (maxHP * 0.5f))
         {
             CurrentPhase = 2; // 즉시 2페이즈 패턴 리스트로 교체!
@@ -815,15 +848,12 @@ public class NetworkBossCore : NetworkBehaviour
 
             // 3초 동안 무적 & 포효 연출 진행
             StateTimer = TickTimer.CreateFromSeconds(Runner, phaseTransitionDuration);
-            Debug.Log("[보스] 체력 50% 이하! 2페이즈 돌입!");
+            BossLog.Info("[보스] 체력 50% 이하! 2페이즈 돌입!");
 
             //ApplyStatus(1); // 광폭화 SO 만들어둔 거 부여
 
             return;
         }
-
-        // 6. 어그로 딜미터기 기록 (장부 관리는 헬퍼에 위임)
-        _aggroTracker.Record(attacker, damage);
     }
 
     // ==========================================
@@ -846,18 +876,58 @@ public class NetworkBossCore : NetworkBehaviour
         }
     }
 
-    // 컴포넌트 탐색 대신 유니티 태그("Player") 기반 탐색
+    // ==========================================
+    // 디버그 강제 킬 (F5)
+    //  - 에디터/개발(Development) 빌드: 무조건 허용 (기존 개발 흐름 그대로)
+    //  - 릴리즈 빌드: debugKillAdminIds에 등록된 admin 계정만.
+    //    호출자가 자기 login_id + 세션 토큰을 같이 보내면, 호스트가 백엔드(check_session.php)에
+    //    "이 토큰이 이 계정의 살아있는 세션이 맞냐"고 물어본 뒤에만 실행한다.
+    //    → login_id만 알아서는 발동 불가. 살아있는 세션 토큰까지 가진 진짜 admin만 가능.
+    // ==========================================
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    public void RPC_DebugKillBoss()
+    public void RPC_DebugKillBoss(string loginId, string sessionToken)
     {
         if (CurrentState == BossState.Die)
         {
             return;
         }
 
-        Debug.Log("[Boss Debug] 디버그 강제 킬 버튼 입력!");
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Debug.Log("[Boss Debug] 디버그 강제 킬 버튼 입력! (개발 빌드 - 무조건 허용)");
         ExecuteDeath(); // 공통 사망 함수 호출!
+#else
+        if (string.IsNullOrEmpty(loginId) || string.IsNullOrEmpty(sessionToken)) return;
+        if (!debugKillAdminIds.Contains(loginId)) return;
+
+        StartCoroutine(VerifyAdminSessionAndKill(loginId, sessionToken));
+#endif
     }
+
+#if !UNITY_EDITOR && !DEVELOPMENT_BUILD
+    // 릴리즈 빌드 전용: 호스트가 직접 백엔드에 세션 토큰의 진위를 확인한 뒤 보스를 처치한다.
+    private IEnumerator VerifyAdminSessionAndKill(string loginId, string sessionToken)
+    {
+        if (!BackendManager.HasInstance || !BackendManager.Instance.isServerReady) yield break;
+
+        WWWForm form = new WWWForm();
+        form.AddField("login_id", loginId);
+        form.AddField("session_token", sessionToken);
+
+        using (UnityWebRequest www = UnityWebRequest.Post(BackendManager.Instance.BASE_URL + "check_session.php", form))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.result != UnityWebRequest.Result.Success) yield break;
+            if (www.downloadHandler.text.Contains("invalid")) yield break; // 위조/만료된 토큰
+        }
+
+        // 검증하는 동안 이미 죽었을 수 있으니 마지막으로 한 번 더 확인
+        if (!HasStateAuthority || CurrentState == BossState.Die || CurrentHP <= 0) yield break;
+
+        Debug.Log($"[Boss Debug] admin 계정({loginId}) 검증 완료. 디버그 강제 킬 실행!");
+        ExecuteDeath();
+    }
+#endif
 
     private void FindClosestTarget()
     {
