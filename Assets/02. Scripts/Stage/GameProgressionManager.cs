@@ -10,9 +10,29 @@ public class GameProgressionManager : MonoBehaviour // 런(Run) 동안 유지되
     [Header("등장 가능한 보스 풀 (랜덤 추첨)")]
     public List<BossEncounterData> bossPool;
 
+    [Header("런(Run) 길이 설정")]
+    [Tooltip("이번 런의 최대 층수 = 마지막 보스가 나오는 층.\n" +
+             "이 층의 보스를 잡으면 (Path 씬을 거쳐) 엔딩으로 넘어간다. 보스 종류가 늘어나면 이 값만 올리면 됨.")]
+    [Min(1)]
+    public int maxLevel = 3;
+
     // 동기화할 필요 없습니다! 방장(Host)이 여기서 계산하고 알아서 세팅합니다.
     public int CurrentLevel { get; private set; } = 1;
     public BossEncounterData CurrentBossData { get; private set; }
+
+    // 지금 있는 층이 마지막 보스층인가? (이 층을 클리어하면 엔딩)
+    public bool IsFinalLevel => CurrentLevel >= maxLevel;
+
+    // 다음에 올라갈 층이 마지막 보스층인가? (보스 클리어 직후 Path 씬을 고를 때 사용 → scPathLast)
+    public bool IsNextLevelFinal => CurrentLevel + 1 >= maxLevel;
+
+    // ==========================================
+    // 보스 추첨용 '셔플백(가방)'.
+    //  완전 랜덤이 아니라, bossPool의 보스가 전부 한 번씩 나올 때까지 중복 없이 뽑는다.
+    //  (예: 보스 5마리 & 5층이면 1~5층에 5마리가 전부 한 번씩 등장)
+    //  가방이 비면 다시 풀 전체로 채워서 반복 → 6층부터는 새 가방에서 다시 랜덤.
+    // ==========================================
+    private readonly List<BossEncounterData> _bossBag = new List<BossEncounterData>();
 
     [Header("씬 이름 (생명주기 기준)")]
     [Tooltip("세션을 유지한 채 복귀하는 로비 씬. 이 씬이 로드되면 런 상태를 초기화(ResetRun)한다.")]
@@ -53,6 +73,7 @@ public class GameProgressionManager : MonoBehaviour // 런(Run) 동안 유지되
     {
         CurrentLevel = 1;
         CurrentBossData = null;
+        _bossBag.Clear(); // 새 런에서는 새 가방으로 다시 추첨
 
         // 아직 재생 중이던 전투 이펙트가 로비까지 끌려오지 않게 전부 풀로 회수
         if (EffectPoolManager.Instance != null)
@@ -84,6 +105,8 @@ public class GameProgressionManager : MonoBehaviour // 런(Run) 동안 유지되
     public void StartFirstLevel(NetworkRunner runner)
     {
         CurrentLevel = 1;
+        _bossBag.Clear(); // 런 시작은 항상 새 가방으로 (로비를 안 거치는 디버그 진입 대비)
+        CurrentBossData = null;
         LoadNextRandomLevel(runner);
     }
 
@@ -92,9 +115,8 @@ public class GameProgressionManager : MonoBehaviour // 런(Run) 동안 유지되
     {
         if (bossPool == null || bossPool.Count == 0) return;
 
-        // 1. 랜덤 보스와 맵 뽑기
-        int randomIndex = Random.Range(0, bossPool.Count);
-        CurrentBossData = bossPool[randomIndex];
+        // 1. 셔플백에서 보스 뽑기 (가방이 빌 때까지 중복 없음)
+        CurrentBossData = DrawBossFromBag();
 
         Debug.Log($"=== [통제실] {CurrentLevel}층 진입! 출현 보스: {CurrentBossData.bossName}, 맵: {CurrentBossData.sceneName} ===");
 
@@ -112,6 +134,37 @@ public class GameProgressionManager : MonoBehaviour // 런(Run) 동안 유지되
     {
         CurrentLevel++;
         LoadNextRandomLevel(runner);
+    }
+
+    // 셔플백에서 보스 1마리 추첨.
+    //  - 가방이 비어 있으면 bossPool 전체로 다시 채운다 (다음 순회 시작)
+    //  - 새로 채울 때, 직전 층 보스가 연속으로 나오는 것만 1회 방지 (가방 경계에서 같은 보스 2연속 방지)
+    private BossEncounterData DrawBossFromBag()
+    {
+        if (_bossBag.Count == 0)
+        {
+            _bossBag.AddRange(bossPool);
+
+            // 직전 가방의 마지막 보스가 새 가방의 첫 추첨에서 또 나오지 않게 임시 제외
+            // (풀이 2마리 이상일 때만. 1마리뿐이면 어쩔 수 없이 그대로 나온다)
+            if (CurrentBossData != null && _bossBag.Count > 1 && _bossBag.Contains(CurrentBossData))
+            {
+                _bossBag.Remove(CurrentBossData);
+                BossEncounterData drawn = TakeRandomFromBag();
+                _bossBag.Add(CurrentBossData); // 다음 층부터는 다시 후보에 포함
+                return drawn;
+            }
+        }
+
+        return TakeRandomFromBag();
+    }
+
+    private BossEncounterData TakeRandomFromBag()
+    {
+        int randomIndex = Random.Range(0, _bossBag.Count);
+        BossEncounterData drawn = _bossBag[randomIndex];
+        _bossBag.RemoveAt(randomIndex);
+        return drawn;
     }
 
     // 클라이언트가 방장의 층수를 받아와서 강제로 동기화하는 함수

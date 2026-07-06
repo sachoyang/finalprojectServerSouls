@@ -4926,6 +4926,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   bossPool:
   - {fileID: 11400000, guid: e99e869d0eaa98f489081edfaa900f92, type: 2}
+  - {fileID: 11400000, guid: d44bf377fd236af4ab2f6d958435f890, type: 2}
+  - {fileID: 11400000, guid: ad6568c9a99aefb4d8821e3c31f42f1d, type: 2}
+  maxLevel: 3
   lobbySceneName: scLobbyMain
   titleSceneName: scTitle uicreate Main
 --- !u!4 &1683641379

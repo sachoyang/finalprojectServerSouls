@@ -99,13 +99,17 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 282b066d2cb931d40b08a8074ebc05c0, type: 2}
   wakeUpAnimName: atack17_awake
   wakeUpDuration: 2.8
+  phaseTransitionDuration: 3
   maxGroggy: 40
   groggyDuration: 3
   groggyAnimLength: 1.4
   _CurrentGroggy: 0
   baseMaxHP: 80000
+  hpBonusPerExtraPlayer: 0.5
   _maxHP: 0
   _CurrentHP: 0
+  maxSingleHitPercent: 0.05
+  debugKillAdminIds: []
   wallLayerMask:
     serializedVersion: 2
     m_Bits: 128
@@ -133,6 +137,7 @@ MonoBehaviour:
   _AggroTarget: {fileID: 0}
   _CurrentPatternIndex: -1
   _CurrentStepIndex: -1
+  _PatternYOffset: 0
   _IsGimmickActive:
     _value: 0
   gimmickDamageReduction: 0.3
@@ -311,6 +316,93 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   priority: 10
+--- !u!1001 &4124599244505010993
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 5805152259837700541}
+    m_Modifications:
+    - target: {fileID: 3654741155788002110, guid: ac8053bb68b7997419467a34b74fb975, type: 3}
+      propertyPath: m_Name
+      value: Explosion FREE 3 Variant
+      objectReference: {fileID: 0}
+    - target: {fileID: 3654741155788002240, guid: ac8053bb68b7997419467a34b74fb975, type: 3}
+      propertyPath: playOnAwake
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3654741155788002241, guid: ac8053bb68b7997419467a34b74fb975, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 3654741155788002241, guid: ac8053bb68b7997419467a34b74fb975, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 3654741155788002241, guid: ac8053bb68b7997419467a34b74fb975, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 3654741155788002241, guid: ac8053bb68b7997419467a34b74fb975, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3654741155788002241, guid: ac8053bb68b7997419467a34b74fb975, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 1.53
+      objectReference: {fileID: 0}
+    - target: {fileID: 3654741155788002241, guid: ac8053bb68b7997419467a34b74fb975, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3654741155788002241, guid: ac8053bb68b7997419467a34b74fb975, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3654741155788002241, guid: ac8053bb68b7997419467a34b74fb975, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3654741155788002241, guid: ac8053bb68b7997419467a34b74fb975, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3654741155788002241, guid: ac8053bb68b7997419467a34b74fb975, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3654741155788002241, guid: ac8053bb68b7997419467a34b74fb975, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3654741155788002241, guid: ac8053bb68b7997419467a34b74fb975, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3654741155788002241, guid: ac8053bb68b7997419467a34b74fb975, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3654741156627264491, guid: ac8053bb68b7997419467a34b74fb975, type: 3}
+      propertyPath: playOnAwake
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: ac8053bb68b7997419467a34b74fb975, type: 3}
+--- !u!4 &830274899878494448 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3654741155788002241, guid: ac8053bb68b7997419467a34b74fb975, type: 3}
+  m_PrefabInstance: {fileID: 4124599244505010993}
+  m_PrefabAsset: {fileID: 0}
+--- !u!198 &830274899878494449 stripped
+ParticleSystem:
+  m_CorrespondingSourceObject: {fileID: 3654741155788002240, guid: ac8053bb68b7997419467a34b74fb975, type: 3}
+  m_PrefabInstance: {fileID: 4124599244505010993}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &5800700646694842395
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -381,7 +473,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 4558266444110246, guid: f32f6d542cd744a408b8da872db675ae, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 830274899878494448}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 1637584495559616, guid: f32f6d542cd744a408b8da872db675ae, type: 3}
       insertIndex: -1
@@ -448,7 +543,7 @@ MonoBehaviour:
   anim: {fileID: 0}
   poisonDaggerPrefab: {fileID: 0}
   daggerSpawnPoint: {fileID: 0}
-  smokeBombEffect: {fileID: 0}
+  smokeBombEffect: {fileID: 830274899878494449}
   bossRenderers:
   - {fileID: 5866387177343502527}
   - {fileID: 5865795671548935459}
@@ -470,6 +565,8 @@ MonoBehaviour:
   - {fileID: 5865642660018464609}
   - {fileID: 5866214305272577539}
   stealthMaterial: {fileID: 2100000, guid: 7b18083985be4a8448e20c3a7e9ef7e9, type: 2}
+  stealthSwapDelay: 0.4
+  stealthFadeDuration: 1
   leftDaggerAttack: {fileID: 3658658473912946082}
   rightDaggerAttack: {fileID: 5064155163458426212}
   walkSound: {fileID: 0}
