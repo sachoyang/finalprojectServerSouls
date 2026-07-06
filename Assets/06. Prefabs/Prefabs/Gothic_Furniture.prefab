@@ -11412,7 +11412,6 @@ GameObject:
   m_Component:
   - component: {fileID: 5604128399780874891}
   - component: {fileID: 8435509208687457517}
-  - component: {fileID: 8688683921604276278}
   m_Layer: 0
   m_Name: SM_Cabinet_2M_01b2_6
   m_TagString: Untagged
@@ -11465,28 +11464,6 @@ LODGroup:
     renderers:
     - renderer: {fileID: 6152591214192112583}
   m_Enabled: 1
---- !u!64 &8688683921604276278
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4046384808220562525}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 4300014, guid: abc00000000007290484407424536184, type: 3}
 --- !u!1 &4067277957406975458
 GameObject:
   m_ObjectHideFlags: 0
