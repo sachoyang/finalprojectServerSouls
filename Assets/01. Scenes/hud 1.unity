@@ -544,6 +544,14 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2797270223535193496, guid: ef46b85b0c26e5543af7b48c1cd433ec, type: 3}
+      propertyPath: glassBreakStartAlpha
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2797270223535193496, guid: ef46b85b0c26e5543af7b48c1cd433ec, type: 3}
+      propertyPath: glassBreakFadeDuration
+      value: 4
+      objectReference: {fileID: 0}
     - target: {fileID: 3358107483345156382, guid: ef46b85b0c26e5543af7b48c1cd433ec, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0

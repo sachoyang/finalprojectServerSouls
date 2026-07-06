@@ -151,7 +151,7 @@ public class HUDManager : MonoBehaviour
 
         if (!IsBossReadable(boss))
         {
-            bossHUDView.ClearStatuses();
+            bossHUDView.Clear();
             bossHUDView.SetVisible(false);
             return;
         }
@@ -162,8 +162,20 @@ public class HUDManager : MonoBehaviour
         if (currentHp <= 0f && boss.CurrentState != BossState.Die)
             currentHp = maxHp;
 
+        bool isGroggy = boss.CurrentState == BossState.Groggy;
+        float groggyRemainingTime = 0f;
+
+        if (isGroggy && boss.Runner != null)
+            groggyRemainingTime = boss.StateTimer.RemainingTime(boss.Runner) ?? 0f;
+
         bossHUDView.SetBossName(boss.bossName);
         bossHUDView.SetHp(currentHp, maxHp);
+        bossHUDView.SetGroggy(
+            boss.CurrentGroggy,
+            boss.maxGroggy,
+            isGroggy,
+            groggyRemainingTime,
+            boss.groggyDuration);
         bossHUDView.SetStatuses(boss.GetActiveStatusesForUI());
         bossHUDView.SetVisible(boss.CurrentState != BossState.Die);
     }
