@@ -31,6 +31,10 @@ public class AbilityDBResponse
 // 2. 능력 모듈 생성 및 비트마스크 연동 매니저
 public class AbilityManager : MonoSingleton<AbilityManager>
 {
+    [Header("스킬 수치 동기화")]
+    [Tooltip("끄면 서버 Bake 수치를 받지 않고 Resources/SkillModule의 로컬 값만 사용합니다.")]
+    [SerializeField] private bool useServerAbilityBalance;
+
     // bit_index를 Key로 사용하는 전체 스킬 딕셔너리
     public Dictionary<int, PlayerAbilityModule> AllAbilitiesDict { get; private set; } = new Dictionary<int, PlayerAbilityModule>();
     public Dictionary<string, PlayerAbilityModule> AllAbilitiesById { get; private set; } = new Dictionary<string, PlayerAbilityModule>();
@@ -138,6 +142,15 @@ public class AbilityManager : MonoSingleton<AbilityManager>
         if (!IsLoaded)
         {
             LoadLocalAbilityCatalog();
+        }
+
+        if (!useServerAbilityBalance)
+        {
+            Debug.Log(
+                "<color=yellow>[AbilityManager] 서버 스킬 Bake 동기화가 꺼져 있어 로컬 SkillModule 수치만 사용합니다.</color>");
+            ApplyRewardPoolFromBitmask();
+            onComplete?.Invoke(IsLoaded);
+            return;
         }
 
         StartCoroutine(FetchRoutine(onComplete));

@@ -15,48 +15,41 @@ MonoBehaviour:
   bitIndex: 2
   abilityId: heal
   displayName: "\uC790\uC560\uC758 \uC190\uAE38"
-  description: "\uCCB4\uB825\uC744 3000 \uD68C\uBCF5\uD55C\uB2E4"
+  description: "\uCCB4\uB825\uC744 {heal}\uB9CC\uD07C \uD68C\uBCF5\uD55C\uB2E4"
   icon: {fileID: 78065985, guid: 7d4e7f6eb9b67bc4da7d17ee567dd146, type: 3}
   abilityType: 2
-  minBossStage: 1
-  maxBossStage: 8
+  appearStage: 1
   unlockedSkill: 1
   basicSkill: 1
   maxLevel: 4
+  staminaCost: 400
+  cooldownSeconds: 8
   levelSettings:
   - damageMultiplier: 1
-    cooldownSeconds: 8
-    staminaCost: 400
     maxHealthBonus: 0
     maxStaminaBonus: 0
-    defenseRateBonus: 0
+    defenseBonusPercent: 0
     attackDamageBonusPercent: 0
     healthRestoreAmount: 3000
     staminaRestoreAmount: 0
   - damageMultiplier: 1
-    cooldownSeconds: 8
-    staminaCost: 400
     maxHealthBonus: 0
     maxStaminaBonus: 0
-    defenseRateBonus: 0
+    defenseBonusPercent: 0
     attackDamageBonusPercent: 0
     healthRestoreAmount: 3000
     staminaRestoreAmount: 0
   - damageMultiplier: 1
-    cooldownSeconds: 8
-    staminaCost: 400
     maxHealthBonus: 0
     maxStaminaBonus: 0
-    defenseRateBonus: 0
+    defenseBonusPercent: 0
     attackDamageBonusPercent: 0
     healthRestoreAmount: 3000
     staminaRestoreAmount: 0
   - damageMultiplier: 1
-    cooldownSeconds: 8
-    staminaCost: 400
     maxHealthBonus: 0
     maxStaminaBonus: 0
-    defenseRateBonus: 0
+    defenseBonusPercent: 0
     attackDamageBonusPercent: 0
     healthRestoreAmount: 3000
     staminaRestoreAmount: 0

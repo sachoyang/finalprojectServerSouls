@@ -37,7 +37,7 @@ public class InventoryTooltipView : MonoBehaviour
             typeText.text = module.IsActive ? "Active" : "Passive";
 
         if (descriptionText != null)
-            descriptionText.text = module.Description;
+            descriptionText.text = AbilityDescriptionFormatter.Format(module, level);
 
         if (detailText != null)
             detailText.text = BuildDetailText(module, level);
@@ -71,8 +71,8 @@ public class InventoryTooltipView : MonoBehaviour
         }
 
         return "Damage: x" + module.GetDamageMultiplier(level) + "\n" +
-               "Stamina Cost: " + module.GetStaminaCost(level) + "\n" +
-               "Cooldown: " + module.GetCooldownSeconds(level) + "s";
+               "Stamina Cost: " + module.StaminaCost + "\n" +
+               "Cooldown: " + module.CooldownSeconds + "s";
     }
 
     private string BuildLevelUpText(PlayerAbilityModule module, int level)
@@ -84,7 +84,7 @@ public class InventoryTooltipView : MonoBehaviour
         if (module.IsActive)
         {
             return $"Next Lv.{nextLevel}  Damage x{module.GetDamageMultiplier(nextLevel)}, " +
-                   $"Stamina {module.GetStaminaCost(nextLevel)}, Cooldown {module.GetCooldownSeconds(nextLevel)}s";
+                   $"Stamina {module.StaminaCost}, Cooldown {module.CooldownSeconds}s";
         }
 
         if (module.IsPassive)

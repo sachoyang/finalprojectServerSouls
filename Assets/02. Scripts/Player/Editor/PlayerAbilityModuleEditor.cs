@@ -13,14 +13,13 @@ public class PlayerAbilityModuleEditor : Editor
 
     // 인스펙터 폴드아웃(Fold-out) 상태 저장 변수들
     private static bool _rewardOpen = true;
-    private static bool _activeSettingsOpen = true;
-    private static bool _effectOpen = true;
-    private static bool _passiveStatsOpen = true;
-    private static bool _presentationOpen = true;
-    private static bool _vfxOpen = true;
+    private static bool _skillSettingsOpen = true;
+    private static bool _levelSettingsOpen = true;
+    private static bool _skillPresentationOpen = true;
     private static bool _hitboxOpen = true;
     private static bool _previewOpen = true;
-    private static bool _soundOpen = true;
+    private static int _passiveGraphPropertyIndex;
+    private static int _utilityGraphPropertyIndex;
     private static int _selectedLevelIndex;
 
     // 프로퍼티 매핑용 변수들
@@ -29,11 +28,12 @@ public class PlayerAbilityModuleEditor : Editor
     private SerializedProperty _description;
     private SerializedProperty _icon;
     private SerializedProperty _abilityType;
-    private SerializedProperty _minBossStage;
-    private SerializedProperty _maxBossStage;
+    private SerializedProperty _appearStage;
     private SerializedProperty _unlockedSkill;
     private SerializedProperty _basicSkill;
     private SerializedProperty _maxLevel;
+    private SerializedProperty _staminaCost;
+    private SerializedProperty _cooldownSeconds;
     private SerializedProperty _levelSettings;
     private SerializedProperty _specialEffect;
     private SerializedProperty _animationClip;
@@ -101,11 +101,12 @@ public class PlayerAbilityModuleEditor : Editor
         _description = serializedObject.FindProperty("description");
         _icon = serializedObject.FindProperty("icon");
         _abilityType = serializedObject.FindProperty("abilityType");
-        _minBossStage = serializedObject.FindProperty("minBossStage");
-        _maxBossStage = serializedObject.FindProperty("maxBossStage");
+        _appearStage = serializedObject.FindProperty("appearStage");
         _unlockedSkill = serializedObject.FindProperty("unlockedSkill");
         _basicSkill = serializedObject.FindProperty("basicSkill");
         _maxLevel = serializedObject.FindProperty("maxLevel");
+        _staminaCost = serializedObject.FindProperty("staminaCost");
+        _cooldownSeconds = serializedObject.FindProperty("cooldownSeconds");
         _levelSettings = serializedObject.FindProperty("levelSettings");
         _specialEffect = serializedObject.FindProperty("specialEffect");
         _animationClip = serializedObject.FindProperty("animationClip");
@@ -157,21 +158,25 @@ public class PlayerAbilityModuleEditor : Editor
         bool isActive = _abilityType.enumValueIndex == (int)AbilityType.Active;
         bool isPassive = _abilityType.enumValueIndex == (int)AbilityType.Passive;
         bool isUtility = _abilityType.enumValueIndex == (int)AbilityType.Utility;
-        bool usesAcquisitionPresentation =
-            isPassive ||
-            (isUtility && _specialEffect.enumValueIndex != (int)PlayerAbilitySpecialEffect.None);
         EnsureLevelSettingsInitialized();
 
         // 섹션별 렌더링 코드들
         DrawSection("보상 설정", ref _rewardOpen, DrawReward);
+
+        if (isActive || isUtility)
+        {
+            DrawSection(
+                "스킬 설정",
+                ref _skillSettingsOpen,
+                () => DrawSkillSettings(isActive, isUtility));
+        }
+
+        DrawSection("스킬 연출", ref _skillPresentationOpen, DrawSkillPresentation);
+
         DrawSection(
             "레벨 설정",
-            ref _activeSettingsOpen,
+            ref _levelSettingsOpen,
             () => DrawLevelSettings(isActive, isPassive, isUtility));
-
-        DrawSection(usesAcquisitionPresentation ? "획득 연출" : "사용 연출", ref _presentationOpen, DrawPresentation);
-        DrawSection(usesAcquisitionPresentation ? "획득 VFX" : "사용 VFX", ref _vfxOpen, DrawVfx);
-        DrawSection("사운드", ref _soundOpen, DrawSound);
 
         if (isActive)
         {
@@ -189,19 +194,21 @@ public class PlayerAbilityModuleEditor : Editor
         EditorGUILayout.PropertyField(_bitIndex, new GUIContent("비트 인덱스"));
         EditorGUILayout.PropertyField(_abilityId, new GUIContent("스킬 ID"));
         EditorGUILayout.PropertyField(_displayName, new GUIContent("표시 이름"));
-        EditorGUILayout.PropertyField(_description, new GUIContent("설명"));
+        EditorGUILayout.PropertyField(
+            _description,
+            new GUIContent(
+                "설명",
+                "사용 가능한 토큰: {level}, {maxLevel}, {skillMultiplier}, {hitCount}, {hit1}..., " +
+                "{staminaCost}, {cooldown}, {maxHealthIncrease}, {maxStaminaIncrease}, " +
+                "{defenseIncrease}, {attackIncrease}, {healthRestore}, {staminaRestore}"));
         EditorGUILayout.PropertyField(_icon, new GUIContent("아이콘"));
-        EditorGUILayout.PropertyField(_minBossStage, new GUIContent("최소 등장 스테이지"));
-        EditorGUILayout.PropertyField(_maxBossStage, new GUIContent("최대 등장 스테이지"));
+        EditorGUILayout.PropertyField(_appearStage, new GUIContent("등장 스테이지"));
         EditorGUILayout.PropertyField(_unlockedSkill, new GUIContent("해금된 스킬"));
         EditorGUILayout.PropertyField(_basicSkill, new GUIContent("기본 스킬"));
     }
 
-    private void DrawLevelSettings(bool isActive, bool isPassive, bool isUtility)
+    private void DrawSkillSettings(bool isActive, bool isUtility)
     {
-        DrawLevelSelector();
-        SerializedProperty level = _levelSettings.GetArrayElementAtIndex(_selectedLevelIndex);
-
         bool isUsableUtility =
             isUtility &&
             _specialEffect.enumValueIndex == (int)PlayerAbilitySpecialEffect.None;
@@ -214,50 +221,83 @@ public class PlayerAbilityModuleEditor : Editor
         if (isActive || isUsableUtility)
         {
             EditorGUILayout.PropertyField(
-                level.FindPropertyRelative("cooldownSeconds"),
+                _cooldownSeconds,
                 new GUIContent("쿨타임"));
             EditorGUILayout.PropertyField(
-                level.FindPropertyRelative("staminaCost"),
+                _staminaCost,
                 new GUIContent("스태미나 소모량"));
-        }
-
-        if (isActive)
-        {
-            EditorGUILayout.PropertyField(
-                level.FindPropertyRelative("damageMultiplier"),
-                new GUIContent("스킬 레벨 배율"));
-        }
-        else if (isPassive)
-        {
-            EditorGUILayout.PropertyField(
-                level.FindPropertyRelative("maxHealthBonus"),
-                new GUIContent("최대 체력 보너스"));
-            EditorGUILayout.PropertyField(
-                level.FindPropertyRelative("maxStaminaBonus"),
-                new GUIContent("최대 스태미나 보너스"));
-            EditorGUILayout.PropertyField(
-                level.FindPropertyRelative("defenseBonusPercent"),
-                new GUIContent(
-                    "방어율 보너스 (%)",
-                    "현재 방어율에 합연산됩니다. 10 입력 시 10%, 100 입력 시 100%입니다."));
-            EditorGUILayout.PropertyField(
-                level.FindPropertyRelative("attackDamageBonusPercent"),
-                new GUIContent(
-                    "공격력 보너스 (%)",
-                    "현재 공격력 증가율에 합연산됩니다. 10 입력 시 10%, 100 입력 시 100%입니다."));
-        }
-        else if (isUsableUtility)
-        {
-            EditorGUILayout.PropertyField(
-                level.FindPropertyRelative("healthRestoreAmount"),
-                new GUIContent("체력 회복량"));
-            EditorGUILayout.PropertyField(
-                level.FindPropertyRelative("staminaRestoreAmount"),
-                new GUIContent("스태미나 회복량"));
         }
     }
 
-    private void DrawLevelSelector()
+    private void DrawLevelSettings(bool isActive, bool isPassive, bool isUtility)
+    {
+        using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+        {
+            DrawMaxLevel();
+            EnsureLevelSettingsInitialized();
+
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                DrawLevelSelector();
+                SerializedProperty level = _levelSettings.GetArrayElementAtIndex(_selectedLevelIndex);
+
+                bool isUsableUtility =
+                    isUtility &&
+                    _specialEffect.enumValueIndex == (int)PlayerAbilitySpecialEffect.None;
+
+                if (isActive)
+                {
+                    EditorGUILayout.PropertyField(
+                        level.FindPropertyRelative("damageMultiplier"),
+                        new GUIContent("스킬 레벨 배율"));
+                }
+                else if (isPassive)
+                {
+                    EditorGUILayout.PropertyField(
+                        level.FindPropertyRelative("maxHealthBonus"),
+                        new GUIContent("최대 체력 증가"));
+                    EditorGUILayout.PropertyField(
+                        level.FindPropertyRelative("maxStaminaBonus"),
+                        new GUIContent("최대 스태미나 증가"));
+                    EditorGUILayout.PropertyField(
+                        level.FindPropertyRelative("defenseBonusPercent"),
+                        new GUIContent(
+                            "방어력 증가 (%)",
+                            "현재 방어력에 합연산됩니다. 10 입력 시 10%, 100 입력 시 100%입니다."));
+                    EditorGUILayout.PropertyField(
+                        level.FindPropertyRelative("attackDamageBonusPercent"),
+                        new GUIContent(
+                            "공격력 증가 (%)",
+                            "현재 공격력 증가율에 합연산됩니다. 10 입력 시 10%, 100 입력 시 100%입니다."));
+                }
+                else if (isUsableUtility)
+                {
+                    EditorGUILayout.PropertyField(
+                        level.FindPropertyRelative("healthRestoreAmount"),
+                        new GUIContent("체력 회복량"));
+                    EditorGUILayout.PropertyField(
+                        level.FindPropertyRelative("staminaRestoreAmount"),
+                        new GUIContent("스태미나 회복량"));
+                }
+            }
+
+            if (isActive)
+            {
+                DrawLevelValueGraph("damageMultiplier", "스킬 배율", false);
+            }
+            else if (isPassive)
+            {
+                DrawPassiveLevelGraph();
+            }
+            else if (isUtility &&
+                     _specialEffect.enumValueIndex == (int)PlayerAbilitySpecialEffect.None)
+            {
+                DrawUtilityLevelGraph();
+            }
+        }
+    }
+
+    private void DrawMaxLevel()
     {
         EditorGUILayout.PropertyField(_maxLevel, new GUIContent("최대 레벨"));
         int maxLevel = Mathf.Clamp(_maxLevel.intValue, 1, byte.MaxValue);
@@ -265,15 +305,177 @@ public class PlayerAbilityModuleEditor : Editor
         {
             _maxLevel.intValue = maxLevel;
         }
+    }
 
+    private void DrawLevelSelector()
+    {
+        int maxLevel = Mathf.Clamp(_maxLevel.intValue, 1, byte.MaxValue);
         string[] levelLabels = new string[maxLevel];
         for (int i = 0; i < maxLevel; i++)
             levelLabels[i] = $"Lv.{i + 1}";
 
         _selectedLevelIndex = EditorGUILayout.Popup(
-            "레벨 설정",
+            "선택 레벨",
             Mathf.Clamp(_selectedLevelIndex, 0, maxLevel - 1),
             levelLabels);
+    }
+
+    private void DrawPassiveLevelGraph()
+    {
+        string[] labels =
+        {
+            "최대 체력 증가",
+            "최대 스태미나 증가",
+            "방어력 증가",
+            "공격력 증가"
+        };
+        string[] properties =
+        {
+            "maxHealthBonus",
+            "maxStaminaBonus",
+            "defenseBonusPercent",
+            "attackDamageBonusPercent"
+        };
+
+        _passiveGraphPropertyIndex = EditorGUILayout.Popup(
+            "그래프 항목",
+            Mathf.Clamp(_passiveGraphPropertyIndex, 0, labels.Length - 1),
+            labels);
+        DrawLevelValueGraph(
+            properties[_passiveGraphPropertyIndex],
+            labels[_passiveGraphPropertyIndex],
+            true);
+    }
+
+    private void DrawUtilityLevelGraph()
+    {
+        string[] labels = { "체력 회복량", "스태미나 회복량" };
+        string[] properties = { "healthRestoreAmount", "staminaRestoreAmount" };
+
+        _utilityGraphPropertyIndex = EditorGUILayout.Popup(
+            "그래프 항목",
+            Mathf.Clamp(_utilityGraphPropertyIndex, 0, labels.Length - 1),
+            labels);
+        DrawLevelValueGraph(
+            properties[_utilityGraphPropertyIndex],
+            labels[_utilityGraphPropertyIndex],
+            true);
+    }
+
+    private void DrawLevelValueGraph(string propertyName, string valueLabel, bool normalizeToLevelOne)
+    {
+        int levelCount = Mathf.Max(1, _levelSettings.arraySize);
+        float levelOneValue = _levelSettings
+            .GetArrayElementAtIndex(0)
+            .FindPropertyRelative(propertyName)
+            .floatValue;
+        if (normalizeToLevelOne && Mathf.Approximately(levelOneValue, 0f))
+        {
+            EditorGUILayout.HelpBox(
+                $"{valueLabel}의 Lv.1 값을 먼저 입력하면 Lv.1 = 1x 기준 그래프가 표시됩니다.",
+                MessageType.Info);
+            return;
+        }
+
+        Keyframe[] keys = new Keyframe[levelCount];
+        float maxMultiplier = 1f;
+        for (int i = 0; i < levelCount; i++)
+        {
+            float value = _levelSettings
+                .GetArrayElementAtIndex(i)
+                .FindPropertyRelative(propertyName)
+                .floatValue;
+            if (normalizeToLevelOne)
+            {
+                value /= levelOneValue;
+            }
+            maxMultiplier = Mathf.Max(maxMultiplier, value);
+            keys[i] = new Keyframe(i + 1, value);
+        }
+
+        AnimationCurve curve = new AnimationCurve(keys);
+        for (int i = 0; i < curve.length; i++)
+        {
+            AnimationUtility.SetKeyLeftTangentMode(curve, i, AnimationUtility.TangentMode.Linear);
+            AnimationUtility.SetKeyRightTangentMode(curve, i, AnimationUtility.TangentMode.Linear);
+        }
+
+        EditorGUILayout.Space(4f);
+        EditorGUILayout.LabelField($"레벨별 {valueLabel} 그래프", EditorStyles.boldLabel);
+        Rect graphArea = GUILayoutUtility.GetRect(0f, 180f, GUILayout.ExpandWidth(true));
+        const float leftAxisWidth = 42f;
+        const float bottomAxisHeight = 22f;
+        Rect graphRect = new Rect(
+            graphArea.x + leftAxisWidth,
+            graphArea.y,
+            graphArea.width - leftAxisWidth,
+            graphArea.height - bottomAxisHeight);
+        float yMax = Mathf.Max(2f, Mathf.Ceil(maxMultiplier));
+        Rect curveRange = new Rect(
+            1f,
+            0f,
+            Mathf.Max(1f, levelCount - 1f),
+            yMax);
+
+        EditorGUI.BeginChangeCheck();
+        AnimationCurve editedCurve = EditorGUI.CurveField(
+            graphRect,
+            curve,
+            new Color(0.25f, 0.65f, 1f, 1f),
+            curveRange);
+        if (EditorGUI.EndChangeCheck())
+        {
+            for (int i = 0; i < levelCount; i++)
+            {
+                if (normalizeToLevelOne && i == 0)
+                {
+                    continue;
+                }
+
+                float editedValue = Mathf.Max(0f, editedCurve.Evaluate(i + 1));
+                _levelSettings
+                    .GetArrayElementAtIndex(i)
+                    .FindPropertyRelative(propertyName)
+                    .floatValue = normalizeToLevelOne
+                        ? editedValue * levelOneValue
+                        : editedValue;
+            }
+        }
+
+        GUIStyle axisLabelStyle = new GUIStyle(EditorStyles.miniLabel)
+        {
+            alignment = TextAnchor.MiddleCenter
+        };
+        int yStepCount = Mathf.RoundToInt(yMax);
+        for (int i = 0; i <= yStepCount; i++)
+        {
+            float normalized = i / (float)yStepCount;
+            float y = Mathf.Lerp(graphRect.yMax, graphRect.y, normalized);
+            Rect labelRect = new Rect(
+                graphArea.x,
+                y - 9f,
+                leftAxisWidth - 4f,
+                18f);
+            GUI.Label(labelRect, $"{i}x", axisLabelStyle);
+        }
+
+        for (int i = 0; i < levelCount; i++)
+        {
+            float normalized = levelCount == 1 ? 0.5f : i / (levelCount - 1f);
+            float x = Mathf.Lerp(graphRect.x, graphRect.xMax, normalized);
+            Rect labelRect = new Rect(
+                x - 22f,
+                graphRect.yMax + 2f,
+                44f,
+                bottomAxisHeight - 2f);
+            GUI.Label(labelRect, $"Lv.{i + 1}", axisLabelStyle);
+        }
+
+        EditorGUILayout.HelpBox(
+            normalizeToLevelOne
+                ? $"아래는 레벨, 왼쪽은 {valueLabel}의 Lv.1 대비 배율입니다. Lv.1은 항상 1x입니다."
+                : $"아래는 레벨, 왼쪽은 {valueLabel}입니다. 그래프를 클릭하면 Curve Editor를 크게 열 수 있습니다.",
+            MessageType.Info);
     }
 
     private void EnsureLevelSettingsInitialized()
@@ -290,8 +492,6 @@ public class PlayerAbilityModuleEditor : Editor
         {
             SerializedProperty level = _levelSettings.GetArrayElementAtIndex(i);
             level.FindPropertyRelative("damageMultiplier").floatValue = 1f;
-            level.FindPropertyRelative("cooldownSeconds").floatValue = 0f;
-            level.FindPropertyRelative("staminaCost").floatValue = 0f;
             level.FindPropertyRelative("maxHealthBonus").floatValue = 0f;
             level.FindPropertyRelative("maxStaminaBonus").floatValue = 0f;
             level.FindPropertyRelative("defenseBonusPercent").floatValue = 0f;
@@ -307,6 +507,23 @@ public class PlayerAbilityModuleEditor : Editor
         EditorGUILayout.PropertyField(_animationStateName, new GUIContent("애니메이션 상태 이름"));
         EditorGUILayout.PropertyField(_animationTrigger, new GUIContent("애니메이션 트리거"));
         EditorGUILayout.PropertyField(_animationSpeed, new GUIContent("애니메이션 속도"));
+    }
+
+    private void DrawSkillPresentation()
+    {
+        using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+        {
+            EditorGUILayout.LabelField("애니메이션", EditorStyles.boldLabel);
+            DrawPresentation();
+
+            EditorGUILayout.Space(6f);
+            EditorGUILayout.LabelField("VFX", EditorStyles.boldLabel);
+            DrawVfx();
+
+            EditorGUILayout.Space(6f);
+            EditorGUILayout.LabelField("사운드", EditorStyles.boldLabel);
+            DrawSound();
+        }
     }
 
     private void DrawVfx()
@@ -403,6 +620,7 @@ public class PlayerAbilityModuleEditor : Editor
         element.FindPropertyRelative("radius").floatValue = 1.4f;
         element.FindPropertyRelative("height").floatValue = 1.8f;
         element.FindPropertyRelative("centerHeight").floatValue = 0f;
+        element.FindPropertyRelative("damageRate").floatValue = 1f;
         element.FindPropertyRelative("groggyDamage").floatValue = 10f;
         element.FindPropertyRelative("revivePower").floatValue = 34f;
         element.FindPropertyRelative("previewColor").colorValue = new Color(1f, 0.2f, 0f, 0.3f);

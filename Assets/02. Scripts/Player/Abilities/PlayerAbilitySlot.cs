@@ -22,7 +22,7 @@ public class PlayerAbilitySlot : ISerializationCallbackReceiver
     public PlayerAbilityModule Module => module;
     public KeyCode KeyCode => keyCode;
     public int Level => Mathf.Clamp(level, 1, module != null ? module.MaxLevel : 1);
-    public float CooldownSeconds => module != null ? module.GetCooldownSeconds(Level) : cooldownSeconds;
+    public float CooldownSeconds => module != null ? module.CooldownSeconds : cooldownSeconds;
     public float NextReadyTime => nextReadyTime;
 
     // 액티브 능력을 획득할 때 PlayerAbilityInventory가 슬롯을 생성한다.
@@ -77,7 +77,7 @@ public class PlayerAbilitySlot : ISerializationCallbackReceiver
     {
         if (module != null)
         {
-            cooldownSeconds = module.GetCooldownSeconds(Level);
+            cooldownSeconds = module.CooldownSeconds;
         }
     }
 }

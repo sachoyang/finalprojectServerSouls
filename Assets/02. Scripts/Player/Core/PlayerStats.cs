@@ -589,7 +589,7 @@ public class PlayerStats : NetworkBehaviour
             return;
         }
 
-        // 방어율을 적용한 최종 피해만 체력에서 차감한다.
+        // 방어력을 적용한 최종 피해만 체력에서 차감한다.
         float finalDamage = damage * (1f - DefenseRate);
         if (_statusController != null)
         {

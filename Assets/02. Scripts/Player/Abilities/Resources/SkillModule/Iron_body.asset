@@ -15,18 +15,15 @@ MonoBehaviour:
   bitIndex: 9
   abilityId: Iron_body
   displayName: "\uC544\uC774\uC5B8 \uBC14\uB514"
-  description: "\uBC29\uC5B4\uB825\uC744 10\uD504\uB85C \uC99D\uAC00\uC2DC\uD0A8\uB2E4"
+  description: "\uBC29\uC5B4\uB825\uC744 {defenseIncrease}% \uC99D\uAC00\uC2DC\uD0A8\uB2E4"
   icon: {fileID: 1990943920, guid: 7d4e7f6eb9b67bc4da7d17ee567dd146, type: 3}
   abilityType: 0
-  minBossStage: 1
-  maxBossStage: 8
+  appearStage: 1
   unlockedSkill: 1
   basicSkill: 1
   maxLevel: 4
   levelSettings:
   - damageMultiplier: 1
-    cooldownSeconds: 0
-    staminaCost: 0
     maxHealthBonus: 0
     maxStaminaBonus: 0
     defenseBonusPercent: 10
@@ -34,8 +31,6 @@ MonoBehaviour:
     healthRestoreAmount: 0
     staminaRestoreAmount: 0
   - damageMultiplier: 1
-    cooldownSeconds: 0
-    staminaCost: 0
     maxHealthBonus: 0
     maxStaminaBonus: 0
     defenseBonusPercent: 20
@@ -43,8 +38,6 @@ MonoBehaviour:
     healthRestoreAmount: 0
     staminaRestoreAmount: 0
   - damageMultiplier: 1
-    cooldownSeconds: 0
-    staminaCost: 0
     maxHealthBonus: 0
     maxStaminaBonus: 0
     defenseBonusPercent: 30
@@ -52,8 +45,6 @@ MonoBehaviour:
     healthRestoreAmount: 0
     staminaRestoreAmount: 0
   - damageMultiplier: 1
-    cooldownSeconds: 0
-    staminaCost: 0
     maxHealthBonus: 0
     maxStaminaBonus: 0
     defenseBonusPercent: 40
@@ -74,7 +65,6 @@ MonoBehaviour:
   parentEffectToPlayer: 0
   hitboxPrefab: {fileID: 0}
   hitboxLocalOffset: {x: 0, y: 0, z: 0}
-  hitboxDamage: 0
   hitboxRevivePower: 34
   hitboxDelay: 0
   hitboxLifetime: 0.3

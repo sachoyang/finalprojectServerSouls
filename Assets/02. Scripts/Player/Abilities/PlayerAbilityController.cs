@@ -98,7 +98,7 @@ public class PlayerAbilityController : NetworkBehaviour
         // 스태미나 소모는 모든 액티브 모듈에 공통으로 적용한다.
         // 스태미나를 쓰지 않는 능력은 모듈의 staminaCost를 0으로 두면 된다.
         bool waitsForSkillAnimationEnd = !string.IsNullOrWhiteSpace(module.AnimationTrigger);
-        float staminaCost = module.GetStaminaCost(abilityLevel);
+        float staminaCost = module.StaminaCost;
         if (_stats != null &&
             !(waitsForSkillAnimationEnd
                 ? _stats.TryUseActionStamina(staminaCost)

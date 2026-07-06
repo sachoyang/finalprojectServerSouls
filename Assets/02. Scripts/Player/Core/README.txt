@@ -13,8 +13,8 @@ NetworkPlayerController
 -> 기본 공격이 맞으면 PlayerStats.TakeDamage() 또는 RegisterReviveHit() 호출
 
 PlayerStats
--> 체력, 스태미나, 사망, 부활, 패시브 스탯 보너스 처리
--> 피해를 받으면 방어율과 PlayerStatusController 배율 적용
+-> 체력, 스태미나, 사망, 부활, 패시브 스탯 증가 처리
+-> 피해를 받으면 방어력과 PlayerStatusController 배율 적용
 -> 피격/사망 결과를 NetworkPlayerController.NotifyDamageReaction()에 알림
 -> HUD용 체력/스태미나 값은 GetHUDData()로 제공
 
@@ -81,7 +81,7 @@ PlayerSessionStore
 3. PlayerStats.cs
 
 역할:
-- 체력, 스태미나, 방어율, 공격력 보너스, 피격 무적, 사망, 부활 게이지 관리.
+- 체력, 스태미나, 방어력, 공격력 증가, 피격 무적, 사망, 부활 게이지 관리.
 
 외부에서 호출할 함수:
 - HasStamina(float amount): 스태미나 충분 여부 확인.
@@ -93,8 +93,8 @@ PlayerSessionStore
 - ForceHeal(float amount): 강제 회복.
 - RestoreStamina(float amount): 스태미나 회복.
 - RegisterReviveHit(NetworkObject helper, float revivePower): 죽은 플레이어 부활 게이지 감소.
-- ApplyPassiveStatBonus(PlayerAbilityModule): 패시브 보너스 적용.
-- RemovePassiveStatBonus(PlayerAbilityModule): 패시브 보너스 제거.
+- ApplyPassiveStatBonus(PlayerAbilityModule): 패시브 증가 적용.
+- RemovePassiveStatBonus(PlayerAbilityModule): 패시브 증가 제거.
 - GetHUDData(): HUD 표시용 PlayerHUDData 반환.
 
 GetHUDData()가 주는 값:
@@ -105,7 +105,7 @@ GetHUDData()가 주는 값:
 - IsDead
 
 중요 내부 함수:
-- ApplyDamage(float damage): 방어율, 상태이상 배율, 피격 무적, 사망 판정.
+- ApplyDamage(float damage): 방어력, 상태이상 배율, 피격 무적, 사망 판정.
 - BeginReviveState(): 사망 시 부활 상태 진입.
 - ApplyReviveHit(): revivePower만큼 ReviveProgress 감소.
 - ReviveFully(): 부활 완료 후 NotifyRevived() 호출.

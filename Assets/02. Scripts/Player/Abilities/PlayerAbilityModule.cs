@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [System.Serializable]
 public class AbilityHitEvent
@@ -55,11 +56,9 @@ public enum AnimatorStateFeatureMode
 public class AbilityLevelData
 {
     [SerializeField] private float damageMultiplier = 1f;
-    [SerializeField] private float cooldownSeconds;
-    [SerializeField] private float staminaCost;
     [SerializeField] private float maxHealthBonus;
     [SerializeField] private float maxStaminaBonus;
-    [Tooltip("현재 방어율에 합연산됩니다. 10 입력 시 10%, 100 입력 시 100%입니다.")]
+    [Tooltip("현재 방어력에 합연산됩니다. 10 입력 시 10%, 100 입력 시 100%입니다.")]
     [SerializeField] private float defenseBonusPercent;
     [Tooltip("현재 공격력 증가율에 합연산됩니다. 10 입력 시 10%, 100 입력 시 100%입니다.")]
     [SerializeField] private float attackDamageBonusPercent;
@@ -67,8 +66,6 @@ public class AbilityLevelData
     [SerializeField] private float staminaRestoreAmount;
 
     public float DamageMultiplier => damageMultiplier;
-    public float CooldownSeconds => cooldownSeconds;
-    public float StaminaCost => staminaCost;
     public float MaxHealthBonus => maxHealthBonus;
     public float MaxStaminaBonus => maxStaminaBonus;
     public float DefenseRateBonus => defenseBonusPercent * 0.01f;
@@ -76,12 +73,6 @@ public class AbilityLevelData
     public float HealthRestoreAmount => healthRestoreAmount;
     public float StaminaRestoreAmount => staminaRestoreAmount;
 
-    public void SetActiveValues(float damage, float cooldown, float stamina)
-    {
-        damageMultiplier = damage;
-        cooldownSeconds = cooldown;
-        staminaCost = stamina;
-    }
 }
 
 [CreateAssetMenu(menuName = "ServerSouls/Player Modules/Player Ability")]
@@ -107,8 +98,8 @@ public class PlayerAbilityModule : ScriptableObject
     [SerializeField] private AbilityType abilityType = AbilityType.Passive;
 
     // 이 능력이 보상 후보로 등장할 수 있는 보스 단계 범위.
-    [SerializeField, Range(1, 8)] private int minBossStage = 1;
-    [SerializeField, Range(1, 8)] private int maxBossStage = 8;
+    [FormerlySerializedAs("minBossStage")]
+    [SerializeField, Min(1)] private int appearStage = 1;
 
     // Basic Skill 또는 개인 해금 상태가 반영된 최종 스킬 해금 여부.
     // Player reward pool 동기화 도구는 이 값을 보고 Player.prefab의 abilityPool에 포함할지 결정한다.
@@ -119,14 +110,15 @@ public class PlayerAbilityModule : ScriptableObject
     [SerializeField] private bool basicSkill;
     [SerializeField, Min(1)] private int maxLevel = 4;
 
-    [Header("Level Settings")]
+    [SerializeField] private float staminaCost;
+    [SerializeField] private float cooldownSeconds;
+
     [Tooltip("최대 레벨 수만큼 생성되며 인스펙터의 레벨 드롭다운으로 편집합니다.")]
     [SerializeField] private AbilityLevelData[] levelSettings = System.Array.Empty<AbilityLevelData>();
 
     [Header("Utility")]
     [SerializeField] private PlayerAbilitySpecialEffect specialEffect;
 
-    [Header("Presentation")]
     // 이 능력에 대응되는 애니메이션 클립. 실제 재생은 Animator Trigger를 권장하고, 이 필드는 에셋에서 어떤 모션을 쓰는지 확인하는 용도다.
     [SerializeField] private AnimationClip animationClip;
 
@@ -152,7 +144,6 @@ public class PlayerAbilityModule : ScriptableObject
 
     [SerializeField, Range(0f, 1f)] private float comboInputOpenNormalizedTime = 0.72f;
 
-    [Header("VFX")]
     // 능력 사용 시 생성할 파티클/이펙트 프리팹.
     [SerializeField] private GameObject effectPrefab;
 
@@ -178,7 +169,6 @@ public class PlayerAbilityModule : ScriptableObject
     [Header("Hit Events")]
     [SerializeField] private AbilityHitEvent[] hitEvents = System.Array.Empty<AbilityHitEvent>();
 
-    [Header("Sound")]
     [Tooltip("능력 사용 시 재생할 사운드 클립 (에셋 DB의 Key로 연동됨)")]
     [SerializeField] private AudioClip soundClip;
     [Tooltip("사운드 재생 볼륨 (0.0 ~ 1.0)")]
@@ -198,8 +188,8 @@ public class PlayerAbilityModule : ScriptableObject
     public bool UsesActiveSlot =>
         IsActive ||
         (IsUtility && specialEffect == PlayerAbilitySpecialEffect.None);
-    public float StaminaCost => GetStaminaCost(1);
-    public float CooldownSeconds => GetCooldownSeconds(1);
+    public float StaminaCost => staminaCost;
+    public float CooldownSeconds => cooldownSeconds;
     public bool UnlockedSkill => unlockedSkill;
     public bool BasicSkill => basicSkill;
     public int MaxLevel => Mathf.Clamp(maxLevel, 1, byte.MaxValue);
@@ -218,7 +208,7 @@ public class PlayerAbilityModule : ScriptableObject
          animationClip.hasRootCurves);
     public bool DelaysStaminaRecovery =>
         staminaRecoveryDelayMode == AnimatorStateFeatureMode.Enabled ||
-        (staminaRecoveryDelayMode == AnimatorStateFeatureMode.Auto && GetStaminaCost(1) > 0f);
+        (staminaRecoveryDelayMode == AnimatorStateFeatureMode.Auto && staminaCost > 0f);
     public bool OpensComboInput => opensComboInput;
     public float ComboInputOpenNormalizedTime => comboInputOpenNormalizedTime;
     public float HealthRestoreAmount => GetHealthRestoreAmount(1);
@@ -229,7 +219,6 @@ public class PlayerAbilityModule : ScriptableObject
     public bool ParentEffectToPlayer => parentEffectToPlayer;
     public GameObject HitboxPrefab => hitboxPrefab;
     public Vector3 HitboxLocalOffset => hitboxLocalOffset;
-    public float HitboxDamage => GetDamageMultiplier(1);
     public float HitboxRevivePower => hitboxRevivePower;
     public float HitboxDelay => hitboxDelay;
     public float HitboxLifetime => hitboxLifetime;
@@ -241,16 +230,6 @@ public class PlayerAbilityModule : ScriptableObject
     public float GetDamageMultiplier(int level)
     {
         return GetLevelData(level).DamageMultiplier;
-    }
-
-    public float GetCooldownSeconds(int level)
-    {
-        return GetLevelData(level).CooldownSeconds;
-    }
-
-    public float GetStaminaCost(int level)
-    {
-        return GetLevelData(level).StaminaCost;
     }
 
     public float GetMaxHealthBonus(int level)
@@ -303,7 +282,7 @@ public class PlayerAbilityModule : ScriptableObject
 
     public bool CanAppearAtStage(int bossStage)
     {
-        return bossStage >= minBossStage && bossStage <= maxBossStage;
+        return bossStage >= appearStage;
     }
 
     // Basic Skill과 유저별 해금 비트를 합산한 런타임 보상 풀 결과를 반영한다.
@@ -351,13 +330,8 @@ public class PlayerAbilityModule : ScriptableObject
         this.basicSkill = dbData.basic_skill != 0;
 
         EnsureLevelSettings();
-        for (int i = 0; i < levelSettings.Length; i++)
-        {
-            levelSettings[i].SetActiveValues(
-                dbData.damage_multiplier,
-                dbData.cooldown_seconds,
-                dbData.stamina_cost);
-        }
+        staminaCost = dbData.stamina_cost;
+        cooldownSeconds = dbData.cooldown_seconds;
         this.hitboxLifetime = dbData.duration; // 지속시간 매핑
 
         // 특수 효과 Enum 매핑

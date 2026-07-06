@@ -35,7 +35,9 @@ public class RewardCardView : MonoBehaviour
             skillNameText.text = module != null ? module.DisplayName : "";
 
         if (skillDescriptionText != null)
-            skillDescriptionText.text = module != null ? module.Description : "";
+            skillDescriptionText.text = module != null
+                ? AbilityDescriptionFormatter.Format(module, currentLevel)
+                : "";
 
         if (skillLevelText != null)
         {
