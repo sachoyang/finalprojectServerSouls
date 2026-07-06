@@ -1229,6 +1229,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4296625453381735702}
   - component: {fileID: 5158819317595949955}
+  - component: {fileID: 2613142526258789563}
   m_Layer: 0
   m_Name: InGameHUD1
   m_TagString: Untagged
@@ -1279,6 +1280,29 @@ MonoBehaviour:
   voteRejectButton: {fileID: 4304462136821958047}
   optionPanel: {fileID: 0}
   voteFailedMessageDuration: 2
+--- !u!114 &2613142526258789563
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1408487291818688522}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 449704108ce2cd4409b7c5195ab0ee35, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerHUDView: {fileID: 7560511977825129531}
+  bossHUDView: {fileID: 2797270223535193496}
+  skillSlotViews: []
+  partyMemberHUDViews:
+  - {fileID: 8337415092931222162}
+  - {fileID: 6213837335482916431}
+  partyRefreshInterval: 0.5
+  referenceSearchInterval: 0.25
+  abilityInventory: {fileID: 0}
+  playerStatusController: {fileID: 0}
+  boss: {fileID: 0}
 --- !u!1 &1519881476824256881
 GameObject:
   m_ObjectHideFlags: 0

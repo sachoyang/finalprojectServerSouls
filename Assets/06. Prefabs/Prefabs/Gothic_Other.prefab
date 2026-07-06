@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6996411134186464043}
   - component: {fileID: 9106119945838919388}
   - component: {fileID: 981207866068157752}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_RollPack_Open_01b_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -94,7 +94,7 @@ GameObject:
   - component: {fileID: 7956579969644372699}
   - component: {fileID: 8694309523790121817}
   - component: {fileID: 4110168494153408376}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -176,7 +176,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7880169326433296205}
   - component: {fileID: 3950290454121916106}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_FromFoliage_1325
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -239,7 +239,7 @@ GameObject:
   - component: {fileID: 939856403008260934}
   - component: {fileID: 7675329378032822643}
   - component: {fileID: 164708708994348934}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a22_8
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -323,7 +323,7 @@ GameObject:
   - component: {fileID: 7234661475445002192}
   - component: {fileID: 5645106120039972267}
   - component: {fileID: 4402324646915776077}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_04b_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -406,7 +406,7 @@ GameObject:
   - component: {fileID: 5939122888574834810}
   - component: {fileID: 2630899272947262645}
   - component: {fileID: 2955185312347592432}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -489,7 +489,7 @@ GameObject:
   - component: {fileID: 3138334411685417820}
   - component: {fileID: 4600756049031821344}
   - component: {fileID: 8636660603203737243}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -572,7 +572,7 @@ GameObject:
   - component: {fileID: 2078207505104066852}
   - component: {fileID: 5007757839960862997}
   - component: {fileID: 202496907094040281}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -654,7 +654,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7376180819545780529}
   - component: {fileID: 7921542934755926318}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_RollPack_Open_01b_199
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -717,7 +717,7 @@ GameObject:
   - component: {fileID: 811616262686439392}
   - component: {fileID: 3986474906414341798}
   - component: {fileID: 5621586608049813739}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -800,7 +800,7 @@ GameObject:
   - component: {fileID: 6260927470420894007}
   - component: {fileID: 4210844727862809839}
   - component: {fileID: 2088499286738319416}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -882,8 +882,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1612788109196046431}
   - component: {fileID: 2982938626743968559}
-  - component: {fileID: 7572190378570456626}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: BP_Skeleton_01a8_SM_Ankle_01a_20_1246
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -935,28 +934,6 @@ LODGroup:
     renderers:
     - renderer: {fileID: 7830135349698939900}
   m_Enabled: 1
---- !u!64 &7572190378570456626
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 127300459666196659}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 4300012, guid: abc00000000008803183395989559898, type: 3}
 --- !u!1 &131201674954559033
 GameObject:
   m_ObjectHideFlags: 0
@@ -967,8 +944,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5117328582408746119}
   - component: {fileID: 3519497548522041338}
-  - component: {fileID: 7735561893285983342}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Shelf_2M_01a_163
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1020,28 +996,6 @@ LODGroup:
     renderers:
     - renderer: {fileID: 2663565901392838385}
   m_Enabled: 1
---- !u!64 &7735561893285983342
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 131201674954559033}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 4300014, guid: abc00000000008970442840361422185, type: 3}
 --- !u!1 &141098225692729689
 GameObject:
   m_ObjectHideFlags: 0
@@ -1053,7 +1007,7 @@ GameObject:
   - component: {fileID: 5340385553078206000}
   - component: {fileID: 379681181562802013}
   - component: {fileID: 5665908118915204528}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1136,7 +1090,7 @@ GameObject:
   - component: {fileID: 7685039571403882139}
   - component: {fileID: 2847947893523437726}
   - component: {fileID: 8918985732530949697}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Ankle_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1218,8 +1172,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5917071387066637824}
   - component: {fileID: 9163067092141568126}
-  - component: {fileID: 6323345630466232767}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Ambo_01a3_334
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1271,28 +1224,6 @@ LODGroup:
     renderers:
     - renderer: {fileID: 7240678831191362521}
   m_Enabled: 1
---- !u!64 &6323345630466232767
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 147703788080427737}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 4300014, guid: abc00000000000095397833049560391, type: 3}
 --- !u!1 &190994310520158779
 GameObject:
   m_ObjectHideFlags: 0
@@ -1304,7 +1235,7 @@ GameObject:
   - component: {fileID: 8821016900904661018}
   - component: {fileID: 1067756918799950273}
   - component: {fileID: 408951316000944321}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1386,8 +1317,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7333767883548552779}
   - component: {fileID: 1909091466254733692}
-  - component: {fileID: 3637418427339240187}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_ArcDeco_01c3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1439,28 +1369,6 @@ LODGroup:
     renderers:
     - renderer: {fileID: 4355602258955897551}
   m_Enabled: 1
---- !u!64 &3637418427339240187
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 199443828018793669}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 4300014, guid: abc00000000006914301154164743657, type: 3}
 --- !u!1 &228082342213663137
 GameObject:
   m_ObjectHideFlags: 0
@@ -1472,7 +1380,7 @@ GameObject:
   - component: {fileID: 8387013897997849028}
   - component: {fileID: 7344104183449759989}
   - component: {fileID: 5047299015980634498}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1555,7 +1463,7 @@ GameObject:
   - component: {fileID: 6590077022474392058}
   - component: {fileID: 3084903819335925258}
   - component: {fileID: 2560551647104368290}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Altar_Top_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1638,7 +1546,7 @@ GameObject:
   - component: {fileID: 1160980604574808667}
   - component: {fileID: 3512255096418679424}
   - component: {fileID: 3743400512253743273}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: BP_Candle_Single_01a17_2_SM_Candleabra_02a_6_3327
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1722,7 +1630,7 @@ GameObject:
   - component: {fileID: 8421337328859251909}
   - component: {fileID: 129776530363556899}
   - component: {fileID: 1770861833570332687}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1804,7 +1712,7 @@ GameObject:
   m_Component:
   - component: {fileID: 523272317432433481}
   - component: {fileID: 2622176942288319491}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_FromFoliage_1333
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1867,7 +1775,7 @@ GameObject:
   - component: {fileID: 2447612165960165386}
   - component: {fileID: 9127965833961050736}
   - component: {fileID: 4872883881557228755}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1949,7 +1857,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1935377723692555235}
   - component: {fileID: 1023817973628774659}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Toe_01a_573
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2012,7 +1920,7 @@ GameObject:
   - component: {fileID: 5258821729667299735}
   - component: {fileID: 4157984805075054562}
   - component: {fileID: 7469000677470967273}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2095,7 +2003,7 @@ GameObject:
   - component: {fileID: 2652055815861365591}
   - component: {fileID: 7438270679685884932}
   - component: {fileID: 5625587747614877318}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2178,7 +2086,7 @@ GameObject:
   - component: {fileID: 108514079450059842}
   - component: {fileID: 5326774578270011853}
   - component: {fileID: 2699457624279333696}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2261,7 +2169,7 @@ GameObject:
   - component: {fileID: 2202668465463195023}
   - component: {fileID: 5383768664142894294}
   - component: {fileID: 5657585365889227960}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2344,7 +2252,7 @@ GameObject:
   - component: {fileID: 9158882054209124827}
   - component: {fileID: 1347400452044534530}
   - component: {fileID: 3060150324902082933}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Palm_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2427,7 +2335,7 @@ GameObject:
   - component: {fileID: 6204072247540495144}
   - component: {fileID: 8605516413924684905}
   - component: {fileID: 4365559640506788372}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_RollPack_Open_01b_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2510,7 +2418,7 @@ GameObject:
   - component: {fileID: 3373341354969946900}
   - component: {fileID: 9126304443118667766}
   - component: {fileID: 464598986305022832}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2593,7 +2501,7 @@ GameObject:
   - component: {fileID: 3525286529796580443}
   - component: {fileID: 8805172577383030049}
   - component: {fileID: 9149136150296460578}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2676,7 +2584,7 @@ GameObject:
   - component: {fileID: 6165588976711975306}
   - component: {fileID: 1283383468172381523}
   - component: {fileID: 2509504620499136489}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Ambo_01b_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2760,7 +2668,7 @@ GameObject:
   - component: {fileID: 6606758275061132480}
   - component: {fileID: 513503325769722963}
   - component: {fileID: 9199242543293593411}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a67_SM_Candleabra_01a_0_2287
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2844,7 +2752,7 @@ GameObject:
   - component: {fileID: 3413482794336083243}
   - component: {fileID: 2964554021549238625}
   - component: {fileID: 3272056003212806938}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_ArcDeco_01c_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2926,7 +2834,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7879756134030090560}
   - component: {fileID: 8723506404742623890}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Palm_01a2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2988,7 +2896,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7406056665081800492}
   - component: {fileID: 3207603362528569975}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_FromFoliage_1310
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3051,7 +2959,7 @@ GameObject:
   - component: {fileID: 2289181945901544400}
   - component: {fileID: 7817608132318006097}
   - component: {fileID: 8182678294010980124}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_04b_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3134,7 +3042,7 @@ GameObject:
   - component: {fileID: 5023917983457542532}
   - component: {fileID: 7235026940673531148}
   - component: {fileID: 8238560776140268431}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3217,7 +3125,7 @@ GameObject:
   - component: {fileID: 7628180112172864550}
   - component: {fileID: 2681567072464181694}
   - component: {fileID: 8585888653370403995}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3302,7 +3210,7 @@ GameObject:
   - component: {fileID: 2860470223654894241}
   - component: {fileID: 7313411282688049323}
   - component: {fileID: 8360431607505049939}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Bed_01a_253
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3428,7 +3336,7 @@ GameObject:
   - component: {fileID: 953165017864964000}
   - component: {fileID: 7336832996749064823}
   - component: {fileID: 6694045176609016868}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3511,7 +3419,7 @@ GameObject:
   - component: {fileID: 1504000366554685770}
   - component: {fileID: 5439763491085488577}
   - component: {fileID: 1889597272060872265}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3594,7 +3502,7 @@ GameObject:
   - component: {fileID: 487115634180792700}
   - component: {fileID: 5598714747118236552}
   - component: {fileID: 2792647575769896649}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Toe_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3677,7 +3585,7 @@ GameObject:
   - component: {fileID: 3548735687267205181}
   - component: {fileID: 774888093386982424}
   - component: {fileID: 5139483358840618397}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Ambo_01b_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3761,7 +3669,7 @@ GameObject:
   - component: {fileID: 201331210867450946}
   - component: {fileID: 8718703797698655990}
   - component: {fileID: 6022311286447895601}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3844,7 +3752,7 @@ GameObject:
   - component: {fileID: 1602554924212959432}
   - component: {fileID: 7830135349698939900}
   - component: {fileID: 2562970198521680146}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Ankle_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3927,7 +3835,7 @@ GameObject:
   - component: {fileID: 1708819933332530144}
   - component: {fileID: 6996711220906501185}
   - component: {fileID: 2746234511547402748}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4010,7 +3918,7 @@ GameObject:
   - component: {fileID: 8217170578823401914}
   - component: {fileID: 351664266080449257}
   - component: {fileID: 6040997394970863198}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4093,7 +4001,7 @@ GameObject:
   - component: {fileID: 6479035842126619018}
   - component: {fileID: 2342462213563940557}
   - component: {fileID: 7161936584821622263}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4176,7 +4084,7 @@ GameObject:
   - component: {fileID: 8575762632473018680}
   - component: {fileID: 6698767369858175742}
   - component: {fileID: 533495320865643711}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_RollPack_Open_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4259,7 +4167,7 @@ GameObject:
   - component: {fileID: 7612086740497339631}
   - component: {fileID: 8832453027651358500}
   - component: {fileID: 948376385102433130}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4342,7 +4250,7 @@ GameObject:
   - component: {fileID: 5610522220344079348}
   - component: {fileID: 7597618653144099552}
   - component: {fileID: 1611475466103703946}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_04a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4425,7 +4333,7 @@ GameObject:
   - component: {fileID: 3544564937214327272}
   - component: {fileID: 575273452985419495}
   - component: {fileID: 7095368118942581673}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4507,7 +4415,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4875231217616152556}
   - component: {fileID: 4054328579319880608}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_FromFoliage_1318
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4570,7 +4478,7 @@ GameObject:
   - component: {fileID: 8995561890781014685}
   - component: {fileID: 721858908053877586}
   - component: {fileID: 8764272110675259751}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: BP_Candle_Single_01a15_11_SM_Candleabra_02a_6_3321
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4654,7 +4562,7 @@ GameObject:
   - component: {fileID: 1399340252036521016}
   - component: {fileID: 127701492253942529}
   - component: {fileID: 7751421478985137810}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: BP_Candle_Single_01a11_28_SM_Candleabra_02a_6_3309
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4738,7 +4646,7 @@ GameObject:
   - component: {fileID: 3838079423014425045}
   - component: {fileID: 7749456233138837539}
   - component: {fileID: 1369203382940468468}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a71_SM_Candleabra_01a_0_2299
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4821,7 +4729,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6211443475071854269}
   - component: {fileID: 1255351952640807812}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_FromFoliage_1313
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4884,7 +4792,7 @@ GameObject:
   - component: {fileID: 8925352745704330033}
   - component: {fileID: 9031879447183392544}
   - component: {fileID: 397180577597050939}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4967,7 +4875,7 @@ GameObject:
   - component: {fileID: 6593599236867088981}
   - component: {fileID: 6142316027290615242}
   - component: {fileID: 8815548849680938669}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Altar_Top_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5050,7 +4958,7 @@ GameObject:
   - component: {fileID: 1217371895122328192}
   - component: {fileID: 1522945491534578414}
   - component: {fileID: 4335308861597743631}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5132,7 +5040,7 @@ GameObject:
   m_Component:
   - component: {fileID: 718920234112184808}
   - component: {fileID: 2740387843108307329}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_FromFoliage_1321
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5195,7 +5103,7 @@ GameObject:
   - component: {fileID: 3314221899501631368}
   - component: {fileID: 4241350504074805074}
   - component: {fileID: 952276104971758859}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5278,7 +5186,7 @@ GameObject:
   - component: {fileID: 1123412803094936671}
   - component: {fileID: 6293453176895383013}
   - component: {fileID: 5551033636615212500}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5361,7 +5269,7 @@ GameObject:
   - component: {fileID: 5430228478335716572}
   - component: {fileID: 8270653000250068245}
   - component: {fileID: 6303784574034928500}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5444,7 +5352,7 @@ GameObject:
   - component: {fileID: 6162875595199751148}
   - component: {fileID: 230877168344721394}
   - component: {fileID: 6304745402717994186}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Altar_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5527,7 +5435,7 @@ GameObject:
   - component: {fileID: 9142393051853118813}
   - component: {fileID: 3637925459461304968}
   - component: {fileID: 3956119587146565881}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Ankle_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5609,7 +5517,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8289396104756595193}
   - component: {fileID: 1682561740131803689}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Palm_01a_220
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5672,7 +5580,7 @@ GameObject:
   - component: {fileID: 6635562227748751893}
   - component: {fileID: 7809292376630953584}
   - component: {fileID: 7366978629870361784}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5755,7 +5663,7 @@ GameObject:
   - component: {fileID: 5817416729411803237}
   - component: {fileID: 3450255494634070301}
   - component: {fileID: 1899024226947502375}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5838,7 +5746,7 @@ GameObject:
   - component: {fileID: 1235348964404724708}
   - component: {fileID: 5555712394095925612}
   - component: {fileID: 1980306029383071743}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Ambo_01b_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5922,7 +5830,7 @@ GameObject:
   - component: {fileID: 3801811872254945684}
   - component: {fileID: 8242266996438773828}
   - component: {fileID: 6031768401935869004}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6004,8 +5912,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5230067852078039591}
   - component: {fileID: 5645113333259485804}
-  - component: {fileID: 1063937733269912126}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: BP_Skeleton_04a7_SM_Ankle_01a_12_1046
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6057,28 +5964,6 @@ LODGroup:
     renderers:
     - renderer: {fileID: 2334242386034085882}
   m_Enabled: 1
---- !u!64 &1063937733269912126
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1959602380431733639}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 4300012, guid: abc00000000008803183395989559898, type: 3}
 --- !u!1 &1965587670915875355
 GameObject:
   m_ObjectHideFlags: 0
@@ -6090,7 +5975,7 @@ GameObject:
   - component: {fileID: 7659268904488918085}
   - component: {fileID: 5906578682260977402}
   - component: {fileID: 5869424066035330952}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Palm_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6173,7 +6058,7 @@ GameObject:
   - component: {fileID: 108618180955638255}
   - component: {fileID: 3092952717478332467}
   - component: {fileID: 1076983961237293812}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6256,7 +6141,7 @@ GameObject:
   - component: {fileID: 603081848006224386}
   - component: {fileID: 8740594103904035385}
   - component: {fileID: 6750129235549831883}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6339,7 +6224,7 @@ GameObject:
   - component: {fileID: 3579498909187436452}
   - component: {fileID: 7097479750288480048}
   - component: {fileID: 4826007541347829118}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_RollPack_Open_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6422,7 +6307,7 @@ GameObject:
   - component: {fileID: 4848825248126740082}
   - component: {fileID: 4145130521870681924}
   - component: {fileID: 9153393517611147980}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6505,7 +6390,7 @@ GameObject:
   - component: {fileID: 6161777204607560013}
   - component: {fileID: 5990908871874596630}
   - component: {fileID: 8656236052556812123}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6588,7 +6473,7 @@ GameObject:
   - component: {fileID: 978757396120227590}
   - component: {fileID: 8874419141372495776}
   - component: {fileID: 1849676293073556101}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_ArcDeco_01c_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6671,7 +6556,7 @@ GameObject:
   - component: {fileID: 8684561935344754484}
   - component: {fileID: 7764580743532698994}
   - component: {fileID: 7949148198224923946}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6754,7 +6639,7 @@ GameObject:
   - component: {fileID: 8250683500699089338}
   - component: {fileID: 5049402883533111051}
   - component: {fileID: 10650828721289928}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6837,7 +6722,7 @@ GameObject:
   - component: {fileID: 766498400554443815}
   - component: {fileID: 8521651140684319256}
   - component: {fileID: 525764834939370054}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6920,7 +6805,7 @@ GameObject:
   - component: {fileID: 8261025296247476734}
   - component: {fileID: 4191375839976270272}
   - component: {fileID: 5150574452502456860}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Ambo_01b_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7004,7 +6889,7 @@ GameObject:
   - component: {fileID: 5932217757553342238}
   - component: {fileID: 996598513332106060}
   - component: {fileID: 1984299632097423784}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_04b24_47
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7088,7 +6973,7 @@ GameObject:
   - component: {fileID: 2212879133693618969}
   - component: {fileID: 200185791829306086}
   - component: {fileID: 8095493200273044317}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_04b_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7171,7 +7056,7 @@ GameObject:
   - component: {fileID: 1685361474828410831}
   - component: {fileID: 3807717442188482760}
   - component: {fileID: 7027453740616766697}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7254,7 +7139,7 @@ GameObject:
   - component: {fileID: 824176643211874720}
   - component: {fileID: 6193084054837493460}
   - component: {fileID: 4305681804402413632}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_04b26_121
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7338,7 +7223,7 @@ GameObject:
   - component: {fileID: 4287117955523980497}
   - component: {fileID: 2124234971270310156}
   - component: {fileID: 7930087093852389126}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7421,7 +7306,7 @@ GameObject:
   - component: {fileID: 8662471424534027458}
   - component: {fileID: 867356766262647401}
   - component: {fileID: 7518329978423761932}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7504,7 +7389,7 @@ GameObject:
   - component: {fileID: 4549159655510493083}
   - component: {fileID: 6506941271120842136}
   - component: {fileID: 7964703769559194804}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7587,7 +7472,7 @@ GameObject:
   - component: {fileID: 5563948107813800208}
   - component: {fileID: 1291648370730721967}
   - component: {fileID: 9022305972624512901}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7670,7 +7555,7 @@ GameObject:
   - component: {fileID: 521297628768701120}
   - component: {fileID: 789836735868534317}
   - component: {fileID: 8074688913772601090}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_RolledMap_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7753,7 +7638,7 @@ GameObject:
   - component: {fileID: 4028694778412681448}
   - component: {fileID: 685117183144791795}
   - component: {fileID: 5449823503226318094}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7836,7 +7721,7 @@ GameObject:
   - component: {fileID: 7937989618392561590}
   - component: {fileID: 2253152253486053837}
   - component: {fileID: 5212994186608878445}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7922,7 +7807,7 @@ GameObject:
   - component: {fileID: 7267657143395995779}
   - component: {fileID: 816531541797618246}
   - component: {fileID: 5432077051656907371}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Altar_Top_01a2_1357
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8069,7 +7954,7 @@ GameObject:
   - component: {fileID: 3986189582604564736}
   - component: {fileID: 3022470731315931731}
   - component: {fileID: 8476700443275949161}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8152,7 +8037,7 @@ GameObject:
   - component: {fileID: 1883499971889118307}
   - component: {fileID: 1547664596836731241}
   - component: {fileID: 4254456418087888180}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_04b_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8235,7 +8120,7 @@ GameObject:
   - component: {fileID: 8070527128895326826}
   - component: {fileID: 1117406408833868205}
   - component: {fileID: 1627652809125526521}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: BP_Candle_Single_01a18_5_SM_Candleabra_02a_6_3330
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8319,7 +8204,7 @@ GameObject:
   - component: {fileID: 8423253668515880906}
   - component: {fileID: 1685538772083122628}
   - component: {fileID: 7698840014899683307}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8401,7 +8286,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7701557046116559776}
   - component: {fileID: 4152536850323262232}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_RollPack_01a_202
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8464,7 +8349,7 @@ GameObject:
   - component: {fileID: 7090772944424822448}
   - component: {fileID: 4668410619888885629}
   - component: {fileID: 2449615191087479648}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_04b_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8547,7 +8432,7 @@ GameObject:
   - component: {fileID: 3248407312887289523}
   - component: {fileID: 1055117406406129028}
   - component: {fileID: 6160416716297403983}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8629,8 +8514,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2825223510163989967}
   - component: {fileID: 6082538197345155117}
-  - component: {fileID: 546491879542529048}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_ArcDeco_01c5
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8682,28 +8566,6 @@ LODGroup:
     renderers:
     - renderer: {fileID: 6959345429392903118}
   m_Enabled: 1
---- !u!64 &546491879542529048
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2667504173953780449}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 4300014, guid: abc00000000006914301154164743657, type: 3}
 --- !u!1 &2702840585218316712
 GameObject:
   m_ObjectHideFlags: 0
@@ -8715,7 +8577,7 @@ GameObject:
   - component: {fileID: 8388104262306613986}
   - component: {fileID: 6617194709676671564}
   - component: {fileID: 6864889141743178653}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8798,7 +8660,7 @@ GameObject:
   - component: {fileID: 697767706283074341}
   - component: {fileID: 1182138073626605121}
   - component: {fileID: 8028425886460924109}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8881,7 +8743,7 @@ GameObject:
   - component: {fileID: 4192674792342126770}
   - component: {fileID: 8330724184636981409}
   - component: {fileID: 4834785779757668556}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_04a22_169
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8965,7 +8827,7 @@ GameObject:
   - component: {fileID: 6379750625865592299}
   - component: {fileID: 4204841972300846714}
   - component: {fileID: 5536228682323573475}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9048,7 +8910,7 @@ GameObject:
   - component: {fileID: 9168663619649482844}
   - component: {fileID: 8498842395584542076}
   - component: {fileID: 6080093804053453849}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9131,7 +8993,7 @@ GameObject:
   - component: {fileID: 2592509890955083457}
   - component: {fileID: 5069738837076590655}
   - component: {fileID: 7487756244583405291}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9214,7 +9076,7 @@ GameObject:
   - component: {fileID: 1020118311270223558}
   - component: {fileID: 5180770930860433449}
   - component: {fileID: 4286634239899550390}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Bed_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9297,7 +9159,7 @@ GameObject:
   - component: {fileID: 1222653579959628390}
   - component: {fileID: 4594704113140235599}
   - component: {fileID: 2450741528682092299}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9380,7 +9242,7 @@ GameObject:
   - component: {fileID: 1023728277635304304}
   - component: {fileID: 2560962844986515741}
   - component: {fileID: 3777841326684186973}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9463,7 +9325,7 @@ GameObject:
   - component: {fileID: 5826704893686618606}
   - component: {fileID: 1796674357160677189}
   - component: {fileID: 4007349627877126069}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9545,7 +9407,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2643454346236344242}
   - component: {fileID: 7695942100405694484}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_FromFoliage_1317
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9608,7 +9470,7 @@ GameObject:
   - component: {fileID: 1277150987081374117}
   - component: {fileID: 3890871254357290318}
   - component: {fileID: 6705014033791635400}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9691,7 +9553,7 @@ GameObject:
   - component: {fileID: 2020005337364826300}
   - component: {fileID: 1532186510027823447}
   - component: {fileID: 831805538174664863}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_04b_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9774,7 +9636,7 @@ GameObject:
   - component: {fileID: 6671576015826623345}
   - component: {fileID: 3290751285403836883}
   - component: {fileID: 1136183594408217967}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9857,7 +9719,7 @@ GameObject:
   - component: {fileID: 7095208478154955795}
   - component: {fileID: 953713668338673889}
   - component: {fileID: 1844924588422450823}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Palm_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9940,7 +9802,7 @@ GameObject:
   - component: {fileID: 2330954174081257485}
   - component: {fileID: 3239257047962190753}
   - component: {fileID: 465158088762358186}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10023,7 +9885,7 @@ GameObject:
   - component: {fileID: 8174552966600579712}
   - component: {fileID: 3873620541524654415}
   - component: {fileID: 824486852244795992}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10106,7 +9968,7 @@ GameObject:
   - component: {fileID: 381198948226709039}
   - component: {fileID: 6163540482052317704}
   - component: {fileID: 5204404840080272070}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Shelf_2M_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10190,7 +10052,7 @@ GameObject:
   - component: {fileID: 2440489004338858050}
   - component: {fileID: 5531474002727743318}
   - component: {fileID: 4266862992361398580}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_RollPack_Open_01b_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10273,7 +10135,7 @@ GameObject:
   - component: {fileID: 8692664175631521527}
   - component: {fileID: 298781320605421743}
   - component: {fileID: 6636898746288407844}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_ArcDeco_01c_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10356,7 +10218,7 @@ GameObject:
   - component: {fileID: 6134365004594138705}
   - component: {fileID: 8818217701807747689}
   - component: {fileID: 4365563624316457081}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10439,7 +10301,7 @@ GameObject:
   - component: {fileID: 7547737079769118103}
   - component: {fileID: 122288815344817263}
   - component: {fileID: 691106535887688467}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10522,7 +10384,7 @@ GameObject:
   - component: {fileID: 1818295583684631022}
   - component: {fileID: 7491604355140030826}
   - component: {fileID: 5154441375546785897}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10605,7 +10467,7 @@ GameObject:
   - component: {fileID: 1760217704293570986}
   - component: {fileID: 6586928097329264795}
   - component: {fileID: 7972857439086086958}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_RolledMap_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10688,7 +10550,7 @@ GameObject:
   - component: {fileID: 3496930378837240680}
   - component: {fileID: 5963605366172541946}
   - component: {fileID: 7774728158697489134}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10771,7 +10633,7 @@ GameObject:
   - component: {fileID: 7750036768941598612}
   - component: {fileID: 276715730406747789}
   - component: {fileID: 1794784062799992918}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10854,7 +10716,7 @@ GameObject:
   - component: {fileID: 4286126235571785151}
   - component: {fileID: 8179459668847759598}
   - component: {fileID: 1179340899861199629}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10937,7 +10799,7 @@ GameObject:
   - component: {fileID: 105550255160618539}
   - component: {fileID: 1512994523589849722}
   - component: {fileID: 8287857513144416130}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11020,7 +10882,7 @@ GameObject:
   - component: {fileID: 4865299040979221860}
   - component: {fileID: 6336219623350257609}
   - component: {fileID: 6329179760682332854}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11103,7 +10965,7 @@ GameObject:
   - component: {fileID: 579031466821945743}
   - component: {fileID: 4110405821767661601}
   - component: {fileID: 7561805747588398243}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11186,7 +11048,7 @@ GameObject:
   - component: {fileID: 5742030017702380}
   - component: {fileID: 6595186038562407528}
   - component: {fileID: 4838353167612295379}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Altar_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11269,7 +11131,7 @@ GameObject:
   - component: {fileID: 3639683200076459774}
   - component: {fileID: 8756193824492893127}
   - component: {fileID: 4142404055693425413}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11351,7 +11213,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6663757964066276183}
   - component: {fileID: 816579578050761446}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_FromFoliage_1308
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11414,7 +11276,7 @@ GameObject:
   - component: {fileID: 3241059389297464857}
   - component: {fileID: 1628922403488567618}
   - component: {fileID: 5975215061575818218}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11497,7 +11359,7 @@ GameObject:
   - component: {fileID: 7815457335898646921}
   - component: {fileID: 597334532505422586}
   - component: {fileID: 8218467264998804038}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11580,7 +11442,7 @@ GameObject:
   - component: {fileID: 1999458557016841651}
   - component: {fileID: 7493986667027954675}
   - component: {fileID: 5830320676443037032}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11663,7 +11525,7 @@ GameObject:
   - component: {fileID: 7554956920590934127}
   - component: {fileID: 7291071236618761462}
   - component: {fileID: 6774664131828027989}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11746,7 +11608,7 @@ GameObject:
   - component: {fileID: 7500523137270187571}
   - component: {fileID: 6047861868563671201}
   - component: {fileID: 5163591625472041697}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Ankle_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11829,7 +11691,7 @@ GameObject:
   - component: {fileID: 9019026584531519616}
   - component: {fileID: 6662179480516969414}
   - component: {fileID: 4304448133637258618}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11912,7 +11774,7 @@ GameObject:
   - component: {fileID: 9083999310000416260}
   - component: {fileID: 6481208103397740488}
   - component: {fileID: 2793977878620057865}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11995,7 +11857,7 @@ GameObject:
   - component: {fileID: 8409953709201001262}
   - component: {fileID: 5965847480947521884}
   - component: {fileID: 3150338697347240184}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_RollPack_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -12078,7 +11940,7 @@ GameObject:
   - component: {fileID: 3534055818535204885}
   - component: {fileID: 3947575988175715616}
   - component: {fileID: 6420714035637964675}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -12161,7 +12023,7 @@ GameObject:
   - component: {fileID: 8572217709517285811}
   - component: {fileID: 460811539618863204}
   - component: {fileID: 2072749896296369046}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -12244,7 +12106,7 @@ GameObject:
   - component: {fileID: 612018686449816219}
   - component: {fileID: 7160532335078719660}
   - component: {fileID: 111037880786328637}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -12327,7 +12189,7 @@ GameObject:
   - component: {fileID: 3417985708543562332}
   - component: {fileID: 6378061183698457198}
   - component: {fileID: 9064172600272014883}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -12409,7 +12271,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3079083166985765691}
   - component: {fileID: 112713784571357491}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_FromFoliage_1327
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -12472,7 +12334,7 @@ GameObject:
   - component: {fileID: 8716953695726778009}
   - component: {fileID: 3339056392711312716}
   - component: {fileID: 2517820746884940824}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_RollPack_Open_01b_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -12554,7 +12416,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8807005060414212783}
   - component: {fileID: 5605731074803582366}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_FromFoliage_1315
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -12617,7 +12479,7 @@ GameObject:
   - component: {fileID: 370306014841125994}
   - component: {fileID: 6777235291689430044}
   - component: {fileID: 3594856585486056894}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -12700,7 +12562,7 @@ GameObject:
   - component: {fileID: 3547832034822084891}
   - component: {fileID: 8665296093781336981}
   - component: {fileID: 2699658275955217362}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_RollPack_Open_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -12782,8 +12644,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8906210128823537313}
   - component: {fileID: 7124355749169100691}
-  - component: {fileID: 45064026664974733}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_ArcDeco_01c4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -12835,28 +12696,6 @@ LODGroup:
     renderers:
     - renderer: {fileID: 1665707428576603009}
   m_Enabled: 1
---- !u!64 &45064026664974733
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3950629337042399892}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 4300014, guid: abc00000000006914301154164743657, type: 3}
 --- !u!1 &3952925275690826123
 GameObject:
   m_ObjectHideFlags: 0
@@ -12868,7 +12707,7 @@ GameObject:
   - component: {fileID: 6595676277126213230}
   - component: {fileID: 378672186645089242}
   - component: {fileID: 7800081306457915432}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_RollPack_Open_01b_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -12951,7 +12790,7 @@ GameObject:
   - component: {fileID: 3975714359431774151}
   - component: {fileID: 1015467736648923434}
   - component: {fileID: 7508099599778848136}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -13034,7 +12873,7 @@ GameObject:
   - component: {fileID: 7587429496228435960}
   - component: {fileID: 1256952550102786897}
   - component: {fileID: 9128664701213846420}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Ankle_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -13117,7 +12956,7 @@ GameObject:
   - component: {fileID: 2758856361522211630}
   - component: {fileID: 2213673201067284791}
   - component: {fileID: 6027895861917130968}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -13200,7 +13039,7 @@ GameObject:
   - component: {fileID: 3929255746146824777}
   - component: {fileID: 3556968891306184506}
   - component: {fileID: 7011236943659262080}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a72_SM_Candleabra_01a_0_2302
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -13283,7 +13122,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6765622524258772959}
   - component: {fileID: 7510571678577513740}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_FromFoliage_1330
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -13346,7 +13185,7 @@ GameObject:
   - component: {fileID: 6810734064735636996}
   - component: {fileID: 4218308265626493297}
   - component: {fileID: 7460270726831803944}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -13429,7 +13268,7 @@ GameObject:
   - component: {fileID: 1509729672411099537}
   - component: {fileID: 1327865907195604054}
   - component: {fileID: 5971111996568926154}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -13515,7 +13354,7 @@ GameObject:
   - component: {fileID: 7970056359467485703}
   - component: {fileID: 2817180683593468920}
   - component: {fileID: 7863706961946081088}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Altar_Top_01a3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -13662,7 +13501,7 @@ GameObject:
   - component: {fileID: 5308881182805661432}
   - component: {fileID: 5531426261466081866}
   - component: {fileID: 7569349641974064234}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: BP_Candle_Single_01a16_SM_Candleabra_02a_6_3324
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -13745,7 +13584,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7785673356698985312}
   - component: {fileID: 5122066256478000661}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_RollPack_Open_01a (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -13808,7 +13647,7 @@ GameObject:
   - component: {fileID: 7328364942776918816}
   - component: {fileID: 4270047249659499494}
   - component: {fileID: 7743024315731344442}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_03a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -13891,7 +13730,7 @@ GameObject:
   - component: {fileID: 118884651768213122}
   - component: {fileID: 5676182732472818972}
   - component: {fileID: 3048140054266922767}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Bed_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -13973,8 +13812,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1341327639397935201}
   - component: {fileID: 3517503671776145048}
-  - component: {fileID: 932082534670841084}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Ambo_01b2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14026,28 +13864,6 @@ LODGroup:
     renderers:
     - renderer: {fileID: 8536473385881973911}
   m_Enabled: 1
---- !u!64 &932082534670841084
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4158240604176931834}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 4300014, guid: abc00000000000095397833049560391, type: 3}
 --- !u!1 &4169046763743085492
 GameObject:
   m_ObjectHideFlags: 0
@@ -14059,7 +13875,7 @@ GameObject:
   - component: {fileID: 8668664817210547847}
   - component: {fileID: 6959345429392903118}
   - component: {fileID: 3362311442099044805}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_ArcDeco_01c_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14141,7 +13957,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6667382610430568796}
   - component: {fileID: 4062172163398781419}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_FromFoliage_1332
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14204,7 +14020,7 @@ GameObject:
   - component: {fileID: 4545838466368166144}
   - component: {fileID: 5339713402324263437}
   - component: {fileID: 7851929607970294439}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14287,7 +14103,7 @@ GameObject:
   - component: {fileID: 6614929707395132361}
   - component: {fileID: 1736909626064668865}
   - component: {fileID: 605176758933216936}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Altar_Top_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14370,7 +14186,7 @@ GameObject:
   - component: {fileID: 6207182289820889143}
   - component: {fileID: 1491411396542395677}
   - component: {fileID: 2020717693517257911}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Altar_Top_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14453,7 +14269,7 @@ GameObject:
   - component: {fileID: 7985351763231826057}
   - component: {fileID: 7194276527340522650}
   - component: {fileID: 2304384356935042691}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_ArcDeco_01c_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14535,7 +14351,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5339821561638503023}
   - component: {fileID: 2728836087068649867}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_FromFoliage_1311
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14598,7 +14414,7 @@ GameObject:
   - component: {fileID: 4645460296224445736}
   - component: {fileID: 4947575893686665346}
   - component: {fileID: 2674730839394113240}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Ankle_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14681,7 +14497,7 @@ GameObject:
   - component: {fileID: 7504629585312724581}
   - component: {fileID: 3912311636160727553}
   - component: {fileID: 3312829264820163566}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Ambo_01b_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14765,7 +14581,7 @@ GameObject:
   - component: {fileID: 4935778961342387883}
   - component: {fileID: 6058028185752986660}
   - component: {fileID: 8978679571213791689}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14848,7 +14664,7 @@ GameObject:
   - component: {fileID: 6189955720785166517}
   - component: {fileID: 1343373684901958615}
   - component: {fileID: 6135291704718492917}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Palm_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14931,7 +14747,7 @@ GameObject:
   - component: {fileID: 3637536541330812648}
   - component: {fileID: 5837142862748494450}
   - component: {fileID: 4523120898785034912}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -15014,7 +14830,7 @@ GameObject:
   - component: {fileID: 3115613192809006193}
   - component: {fileID: 1427046673982573992}
   - component: {fileID: 7808961809312024018}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a69_SM_Candleabra_01a_0_2293
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -15098,7 +14914,7 @@ GameObject:
   - component: {fileID: 2795257209533101690}
   - component: {fileID: 5623224231098195589}
   - component: {fileID: 5890544496522093929}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -15181,7 +14997,7 @@ GameObject:
   - component: {fileID: 5476743433705666280}
   - component: {fileID: 3287819211351915259}
   - component: {fileID: 8429553018091367503}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_ArcDeco_01c_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -15264,7 +15080,7 @@ GameObject:
   - component: {fileID: 4666304268835453822}
   - component: {fileID: 5073208109171805855}
   - component: {fileID: 2493729602123142778}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a21_112
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -15347,7 +15163,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8921306792495444882}
   - component: {fileID: 4246487543982760243}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_RolledMap_01a_156
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -15410,7 +15226,7 @@ GameObject:
   - component: {fileID: 8941073517539141863}
   - component: {fileID: 7574996712997956376}
   - component: {fileID: 623960320727291129}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_RollPack_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -15493,7 +15309,7 @@ GameObject:
   - component: {fileID: 7795000963899278576}
   - component: {fileID: 6901429656837112373}
   - component: {fileID: 2735333782939117343}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -15576,7 +15392,7 @@ GameObject:
   - component: {fileID: 1201880050902393792}
   - component: {fileID: 2666946082694430780}
   - component: {fileID: 8732891794381913684}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_ArcDeco_01c_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -15658,8 +15474,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4193352207458953556}
   - component: {fileID: 7939453568339523002}
-  - component: {fileID: 2822777826155311746}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: BP_Skeleton_01a8_SM_Ankle_01a_17_1243
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -15711,28 +15526,6 @@ LODGroup:
     renderers:
     - renderer: {fileID: 3583569425917187329}
   m_Enabled: 1
---- !u!64 &2822777826155311746
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4707673671121050863}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 4300012, guid: abc00000000008803183395989559898, type: 3}
 --- !u!1 &4708357347688909692
 GameObject:
   m_ObjectHideFlags: 0
@@ -15743,7 +15536,7 @@ GameObject:
   m_Component:
   - component: {fileID: 887038318810515341}
   - component: {fileID: 5503852103488744520}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_FromFoliage_1316
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -15805,8 +15598,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8180592140005381782}
   - component: {fileID: 5871146330240630176}
-  - component: {fileID: 5003982671887164068}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Ankle_01a3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -15858,28 +15650,6 @@ LODGroup:
     renderers:
     - renderer: {fileID: 240939411197542005}
   m_Enabled: 1
---- !u!64 &5003982671887164068
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4724173500485518882}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 4300012, guid: abc00000000008803183395989559898, type: 3}
 --- !u!1 &4759798915115821996
 GameObject:
   m_ObjectHideFlags: 0
@@ -15891,7 +15661,7 @@ GameObject:
   - component: {fileID: 8184177257778839451}
   - component: {fileID: 512957301614911862}
   - component: {fileID: 7113492799754559464}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -15974,7 +15744,7 @@ GameObject:
   - component: {fileID: 6083235895985099480}
   - component: {fileID: 204940299739976657}
   - component: {fileID: 7872051027071907294}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_RollPack_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16057,7 +15827,7 @@ GameObject:
   - component: {fileID: 8489718122330347847}
   - component: {fileID: 1665707428576603009}
   - component: {fileID: 5002541644715296916}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_ArcDeco_01c_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16139,7 +15909,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4526239342842392114}
   - component: {fileID: 2165934130227748597}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16202,7 +15972,7 @@ GameObject:
   - component: {fileID: 8384271470311307696}
   - component: {fileID: 4693408055480970894}
   - component: {fileID: 6866962879126351227}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16285,7 +16055,7 @@ GameObject:
   - component: {fileID: 6381258330582882057}
   - component: {fileID: 6086633486252971098}
   - component: {fileID: 7241293788384436364}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_RollPack_Open_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16368,7 +16138,7 @@ GameObject:
   - component: {fileID: 2241505360985407644}
   - component: {fileID: 1493509063684579933}
   - component: {fileID: 6703633063325078109}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16450,7 +16220,7 @@ GameObject:
   m_Component:
   - component: {fileID: 599457525213318156}
   - component: {fileID: 5372952990266952981}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_FromFoliage_1329
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16513,7 +16283,7 @@ GameObject:
   - component: {fileID: 8937569061566299877}
   - component: {fileID: 870883286065821396}
   - component: {fileID: 3641992691533491372}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_ArcDeco_01c_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16596,7 +16366,7 @@ GameObject:
   - component: {fileID: 8693342588132382419}
   - component: {fileID: 2200021351369275775}
   - component: {fileID: 1580827139535774923}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_ArcDeco_01c_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16678,7 +16448,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7957735565258601714}
   - component: {fileID: 6109496971511884520}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_FromFoliage_1323
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16741,7 +16511,7 @@ GameObject:
   - component: {fileID: 5546098582174097711}
   - component: {fileID: 1727198906475589300}
   - component: {fileID: 7923876752652637924}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16824,7 +16594,7 @@ GameObject:
   - component: {fileID: 4747053798160679784}
   - component: {fileID: 4045645027279815078}
   - component: {fileID: 8399918641612820102}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16907,7 +16677,7 @@ GameObject:
   - component: {fileID: 3632036961842264283}
   - component: {fileID: 8394276888874016760}
   - component: {fileID: 378554955981533545}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16990,7 +16760,7 @@ GameObject:
   - component: {fileID: 4147041739579886856}
   - component: {fileID: 6812449235797110867}
   - component: {fileID: 4417005685468596520}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a20_394
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17074,7 +16844,7 @@ GameObject:
   - component: {fileID: 480864665285735000}
   - component: {fileID: 1147540244364303965}
   - component: {fileID: 5979212326147912603}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17157,7 +16927,7 @@ GameObject:
   - component: {fileID: 4994498754582892925}
   - component: {fileID: 1638665655474008959}
   - component: {fileID: 652289549104667910}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17240,7 +17010,7 @@ GameObject:
   - component: {fileID: 2161064520406085483}
   - component: {fileID: 4495862139436970850}
   - component: {fileID: 4966345784256402604}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17323,7 +17093,7 @@ GameObject:
   - component: {fileID: 7990184642389314038}
   - component: {fileID: 3635360444937785142}
   - component: {fileID: 3975427575301184379}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17406,7 +17176,7 @@ GameObject:
   - component: {fileID: 2599042260868396340}
   - component: {fileID: 316976791802609953}
   - component: {fileID: 6661334376219242173}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17489,7 +17259,7 @@ GameObject:
   - component: {fileID: 198890952788402237}
   - component: {fileID: 7135008786932633967}
   - component: {fileID: 4679153549281680756}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_03a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17572,7 +17342,7 @@ GameObject:
   - component: {fileID: 1772922210828425759}
   - component: {fileID: 5331575228991296737}
   - component: {fileID: 892218382697053333}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Toe_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17655,7 +17425,7 @@ GameObject:
   - component: {fileID: 3120296028459874220}
   - component: {fileID: 11911181857597300}
   - component: {fileID: 7265836217092960362}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17737,7 +17507,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8384162318489994484}
   - component: {fileID: 3170077704790626463}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_FromFoliage_1887
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17800,7 +17570,7 @@ GameObject:
   - component: {fileID: 2332731930848918604}
   - component: {fileID: 1376654170490149400}
   - component: {fileID: 5087179990316832828}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_RollPack_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17883,7 +17653,7 @@ GameObject:
   - component: {fileID: 116895874849163702}
   - component: {fileID: 2332428665171631357}
   - component: {fileID: 1800184876248836683}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Ambo_01b_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17966,7 +17736,7 @@ GameObject:
   m_Component:
   - component: {fileID: 813072415032632360}
   - component: {fileID: 6515216546450584363}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_FromFoliage_1328
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -18029,7 +17799,7 @@ GameObject:
   - component: {fileID: 8863475638718450879}
   - component: {fileID: 451039279837540493}
   - component: {fileID: 2785096002883573713}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -18112,7 +17882,7 @@ GameObject:
   - component: {fileID: 3776782023218169496}
   - component: {fileID: 8222513195830133142}
   - component: {fileID: 3233602527370737567}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -18195,7 +17965,7 @@ GameObject:
   - component: {fileID: 297343432092063996}
   - component: {fileID: 707825778932282834}
   - component: {fileID: 3691281842185673892}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -18278,7 +18048,7 @@ GameObject:
   - component: {fileID: 4161324190938954100}
   - component: {fileID: 1484220371706496718}
   - component: {fileID: 3566028381503533289}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -18361,7 +18131,7 @@ GameObject:
   - component: {fileID: 7984460036093991502}
   - component: {fileID: 4327625497964113722}
   - component: {fileID: 3874903865630342485}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Ankle_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -18444,7 +18214,7 @@ GameObject:
   - component: {fileID: 4378063984599593555}
   - component: {fileID: 8396822460930507291}
   - component: {fileID: 1525015087974217272}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Ankle_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -18527,7 +18297,7 @@ GameObject:
   - component: {fileID: 3813942435083754926}
   - component: {fileID: 6664149442039935246}
   - component: {fileID: 2638010948117723179}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Palm_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -18610,7 +18380,7 @@ GameObject:
   - component: {fileID: 8234897687313485358}
   - component: {fileID: 7839723307958184364}
   - component: {fileID: 8041070761569225827}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: BP_Candle_Single_01a14_8_SM_Candleabra_02a_6_3318
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -18694,7 +18464,7 @@ GameObject:
   - component: {fileID: 4619962327086205982}
   - component: {fileID: 8877033696549181603}
   - component: {fileID: 7417640969915660309}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -18777,7 +18547,7 @@ GameObject:
   - component: {fileID: 6456010529812797987}
   - component: {fileID: 240939411197542005}
   - component: {fileID: 3137840792362804099}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Ankle_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -18860,7 +18630,7 @@ GameObject:
   - component: {fileID: 8390677346736479992}
   - component: {fileID: 7665585264056999552}
   - component: {fileID: 8825400992256560152}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -18943,7 +18713,7 @@ GameObject:
   - component: {fileID: 7803687624115384521}
   - component: {fileID: 756181558754155380}
   - component: {fileID: 421181930406050545}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Altar_Top_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -19026,7 +18796,7 @@ GameObject:
   - component: {fileID: 8564737821357735614}
   - component: {fileID: 8761177836475274322}
   - component: {fileID: 4833972131969018456}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -19109,7 +18879,7 @@ GameObject:
   - component: {fileID: 5736545318601276517}
   - component: {fileID: 5232795243973447253}
   - component: {fileID: 7942444799231420736}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -19192,7 +18962,7 @@ GameObject:
   - component: {fileID: 452191091430538254}
   - component: {fileID: 1988743529870377294}
   - component: {fileID: 3258422987398236052}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -19275,7 +19045,7 @@ GameObject:
   - component: {fileID: 7675835576715465902}
   - component: {fileID: 5832058686782489349}
   - component: {fileID: 352480697265794117}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -19358,7 +19128,7 @@ GameObject:
   - component: {fileID: 8403291702111393920}
   - component: {fileID: 1073173522454556176}
   - component: {fileID: 8876877004528538916}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a66_SM_Candleabra_01a_0_2284
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -19442,7 +19212,7 @@ GameObject:
   - component: {fileID: 6852969040837489688}
   - component: {fileID: 6579300563486129893}
   - component: {fileID: 8581257992235537571}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Altar_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -19525,7 +19295,7 @@ GameObject:
   - component: {fileID: 8210487633564230073}
   - component: {fileID: 8623312338050133982}
   - component: {fileID: 7290419920648551423}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Ankle_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -19608,7 +19378,7 @@ GameObject:
   - component: {fileID: 3666479460543150366}
   - component: {fileID: 6207342233157915073}
   - component: {fileID: 4281215029818792025}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Ankle_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -19691,7 +19461,7 @@ GameObject:
   - component: {fileID: 2566292929976440519}
   - component: {fileID: 3039229414899183959}
   - component: {fileID: 2900814484906711302}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -19774,7 +19544,7 @@ GameObject:
   - component: {fileID: 6440699308712203913}
   - component: {fileID: 2560008076720451197}
   - component: {fileID: 1555348415188875329}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_04b_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -19857,7 +19627,7 @@ GameObject:
   - component: {fileID: 5503009099480454693}
   - component: {fileID: 7421193572737281829}
   - component: {fileID: 27083011905269388}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: BP_Candle_Single_01a7_18_SM_Candleabra_02a_6_3351
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -19941,7 +19711,7 @@ GameObject:
   - component: {fileID: 2236245680540201045}
   - component: {fileID: 840742992390461475}
   - component: {fileID: 5398562326025998789}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -20023,7 +19793,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7716747690078448307}
   - component: {fileID: 220620522286170113}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_FromFoliage_1331
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -20085,7 +19855,7 @@ GameObject:
   m_Component:
   - component: {fileID: 741254280842708334}
   - component: {fileID: 6385227287348938925}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_FromFoliage_1314
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -20146,7 +19916,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2633895893628143002}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Gothic_Other
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -20161,7 +19931,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6140061347066865879}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -20270,7 +20040,7 @@ GameObject:
   - component: {fileID: 8824308311464924120}
   - component: {fileID: 124888429572338279}
   - component: {fileID: 4244540273583869044}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -20353,7 +20123,7 @@ GameObject:
   - component: {fileID: 4404859646333424868}
   - component: {fileID: 6258251386819355686}
   - component: {fileID: 4487578432303114454}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -20435,7 +20205,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5565049482721765399}
   - component: {fileID: 2308825803061317436}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_FromFoliage_1324
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -20498,7 +20268,7 @@ GameObject:
   - component: {fileID: 5085043168588016738}
   - component: {fileID: 8938630536238132441}
   - component: {fileID: 7614140485626804485}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Altar_Top_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -20581,7 +20351,7 @@ GameObject:
   - component: {fileID: 4996311675208905009}
   - component: {fileID: 2132805680066613429}
   - component: {fileID: 3555934048266774286}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Palm_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -20664,7 +20434,7 @@ GameObject:
   - component: {fileID: 2883453268947974230}
   - component: {fileID: 6813135268465410305}
   - component: {fileID: 5996086464596026726}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a70_SM_Candleabra_01a_0_2296
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -20748,7 +20518,7 @@ GameObject:
   - component: {fileID: 1058949327006500495}
   - component: {fileID: 4765779039176912564}
   - component: {fileID: 3111900142475948965}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -20831,7 +20601,7 @@ GameObject:
   - component: {fileID: 7216462447668637582}
   - component: {fileID: 2877263351418954978}
   - component: {fileID: 5067486410859762449}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -20914,7 +20684,7 @@ GameObject:
   - component: {fileID: 184914253059425341}
   - component: {fileID: 556813676501716414}
   - component: {fileID: 3816639855518463349}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_04b_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -20997,7 +20767,7 @@ GameObject:
   - component: {fileID: 7100815229247982488}
   - component: {fileID: 5332944141123234867}
   - component: {fileID: 5321282485183177426}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a63_SM_Candleabra_01a_0_2275
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -21081,7 +20851,7 @@ GameObject:
   - component: {fileID: 8933676275186912210}
   - component: {fileID: 2125118365619398798}
   - component: {fileID: 5001728546339054008}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -21164,7 +20934,7 @@ GameObject:
   - component: {fileID: 2976337710534529415}
   - component: {fileID: 5623732604093961389}
   - component: {fileID: 3116856561419124417}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -21247,7 +21017,7 @@ GameObject:
   - component: {fileID: 5124950912872038097}
   - component: {fileID: 4355602258955897551}
   - component: {fileID: 5731575862032462199}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_ArcDeco_01c_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -21330,7 +21100,7 @@ GameObject:
   - component: {fileID: 7263810559896495156}
   - component: {fileID: 3188186577367182000}
   - component: {fileID: 8111383980575755235}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -21413,7 +21183,7 @@ GameObject:
   - component: {fileID: 8531118361636562038}
   - component: {fileID: 6175984474988809921}
   - component: {fileID: 5821055855918763598}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -21496,7 +21266,7 @@ GameObject:
   - component: {fileID: 2978074929473974912}
   - component: {fileID: 8903572762952615436}
   - component: {fileID: 4540791062467218171}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -21579,7 +21349,7 @@ GameObject:
   - component: {fileID: 4465568404422759639}
   - component: {fileID: 5871184643107770090}
   - component: {fileID: 954380804223855636}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_04b_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -21662,7 +21432,7 @@ GameObject:
   - component: {fileID: 8654746760790025794}
   - component: {fileID: 6631466245405831530}
   - component: {fileID: 8063580041761998043}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -21745,7 +21515,7 @@ GameObject:
   - component: {fileID: 5614414681100133896}
   - component: {fileID: 8822437614159816139}
   - component: {fileID: 5998114507857751892}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -21828,7 +21598,7 @@ GameObject:
   - component: {fileID: 8639473280618000471}
   - component: {fileID: 2663565901392838385}
   - component: {fileID: 7456684059372619349}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Shelf_2M_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -21912,7 +21682,7 @@ GameObject:
   - component: {fileID: 9172624961311475279}
   - component: {fileID: 5252047134661217100}
   - component: {fileID: 9173877512673210661}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_RollPack_Open_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -21995,7 +21765,7 @@ GameObject:
   - component: {fileID: 4551128129534000859}
   - component: {fileID: 741465363722635615}
   - component: {fileID: 1763132900517315195}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_03a46_115
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -22079,7 +21849,7 @@ GameObject:
   - component: {fileID: 4395006708997045411}
   - component: {fileID: 7988070929837058870}
   - component: {fileID: 7540776629606534903}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -22162,7 +21932,7 @@ GameObject:
   - component: {fileID: 8853598600141014116}
   - component: {fileID: 8717574879023171471}
   - component: {fileID: 2861291028991317937}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -22245,7 +22015,7 @@ GameObject:
   - component: {fileID: 5665831143460513382}
   - component: {fileID: 2089801717384699372}
   - component: {fileID: 3552023263649021455}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_RolledMap_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -22328,7 +22098,7 @@ GameObject:
   - component: {fileID: 6350647099036553213}
   - component: {fileID: 994985844435189050}
   - component: {fileID: 6831095342481460870}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -22411,7 +22181,7 @@ GameObject:
   - component: {fileID: 8114809869701882687}
   - component: {fileID: 2549994708942734586}
   - component: {fileID: 8785715738046924339}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -22494,7 +22264,7 @@ GameObject:
   - component: {fileID: 5277398594126201690}
   - component: {fileID: 6769703801575208100}
   - component: {fileID: 6245535240019542953}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -22577,7 +22347,7 @@ GameObject:
   - component: {fileID: 8785973552290582852}
   - component: {fileID: 583582436502958811}
   - component: {fileID: 6480347294157107215}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Shelf_2M_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -22661,7 +22431,7 @@ GameObject:
   - component: {fileID: 8388146810510236162}
   - component: {fileID: 400401331770685040}
   - component: {fileID: 8820845308508023959}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -22744,7 +22514,7 @@ GameObject:
   - component: {fileID: 8764234768729155574}
   - component: {fileID: 7186920545220770955}
   - component: {fileID: 1261140002717722871}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -22827,7 +22597,7 @@ GameObject:
   - component: {fileID: 9104880075976678972}
   - component: {fileID: 8508297870239322064}
   - component: {fileID: 2373200956142799213}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -22910,7 +22680,7 @@ GameObject:
   - component: {fileID: 4051649680394291567}
   - component: {fileID: 5272925490057884013}
   - component: {fileID: 2350690776445108419}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -22993,7 +22763,7 @@ GameObject:
   - component: {fileID: 2085178062770691126}
   - component: {fileID: 4748471341233919718}
   - component: {fileID: 6656698142790824935}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a68_SM_Candleabra_01a_0_2290
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -23077,7 +22847,7 @@ GameObject:
   - component: {fileID: 4339280780549013800}
   - component: {fileID: 778986875925168125}
   - component: {fileID: 4987498173849987621}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Ankle_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -23160,7 +22930,7 @@ GameObject:
   - component: {fileID: 3871474835934200368}
   - component: {fileID: 1253983253237473413}
   - component: {fileID: 2284062618713679453}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_RollPack_Open_01b_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -23242,8 +23012,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3905464483533594111}
   - component: {fileID: 1683953841614450537}
-  - component: {fileID: 8285579522987532904}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Ankle_01a4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -23295,28 +23064,6 @@ LODGroup:
     renderers:
     - renderer: {fileID: 1256952550102786897}
   m_Enabled: 1
---- !u!64 &8285579522987532904
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7097772244784443891}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 4300012, guid: abc00000000008803183395989559898, type: 3}
 --- !u!1 &7117047500175630727
 GameObject:
   m_ObjectHideFlags: 0
@@ -23328,7 +23075,7 @@ GameObject:
   - component: {fileID: 1013721101663121647}
   - component: {fileID: 5896871675887331055}
   - component: {fileID: 5938197629931159586}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -23410,7 +23157,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8821501804963206981}
   - component: {fileID: 2509682962285884815}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_FromFoliage_1322
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -23473,7 +23220,7 @@ GameObject:
   - component: {fileID: 965647606865117780}
   - component: {fileID: 1923840370566219736}
   - component: {fileID: 8980812756260837436}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_04a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -23556,7 +23303,7 @@ GameObject:
   - component: {fileID: 5130427334175792917}
   - component: {fileID: 4153969736993628898}
   - component: {fileID: 4997835735534446230}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_03a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -23638,7 +23385,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5287543744912042335}
   - component: {fileID: 8554675970719474226}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_FromFoliage_1319
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -23701,7 +23448,7 @@ GameObject:
   - component: {fileID: 463691088078657067}
   - component: {fileID: 7751529158523617408}
   - component: {fileID: 4257431097784247873}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_RollPack_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -23784,7 +23531,7 @@ GameObject:
   - component: {fileID: 668690772749444310}
   - component: {fileID: 3108714224089758509}
   - component: {fileID: 1095761103253979278}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -23867,7 +23614,7 @@ GameObject:
   - component: {fileID: 7873010237363197171}
   - component: {fileID: 3905690046133553941}
   - component: {fileID: 2576814468583820316}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_RollPack_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -23950,7 +23697,7 @@ GameObject:
   - component: {fileID: 2649292918261392607}
   - component: {fileID: 243542118866910962}
   - component: {fileID: 5712544158187755214}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: BP_Candle_Single_01a10_25_SM_Candleabra_02a_6_3306
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -24034,7 +23781,7 @@ GameObject:
   - component: {fileID: 7295146519400140605}
   - component: {fileID: 2600749605330792026}
   - component: {fileID: 2217531227835811877}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -24117,7 +23864,7 @@ GameObject:
   - component: {fileID: 267232624247386089}
   - component: {fileID: 1596392224126030979}
   - component: {fileID: 4112499343165304561}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -24200,7 +23947,7 @@ GameObject:
   - component: {fileID: 7183183652826330611}
   - component: {fileID: 2058535039325036944}
   - component: {fileID: 3260624820495322121}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_ArcDeco_01c_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -24283,7 +24030,7 @@ GameObject:
   - component: {fileID: 815685751292614649}
   - component: {fileID: 8536473385881973911}
   - component: {fileID: 8964768408003074613}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Ambo_01b_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -24367,7 +24114,7 @@ GameObject:
   - component: {fileID: 8026508847304273566}
   - component: {fileID: 7897750084155842274}
   - component: {fileID: 8242216451540664829}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -24450,7 +24197,7 @@ GameObject:
   - component: {fileID: 1888032565746396629}
   - component: {fileID: 4712003911001514402}
   - component: {fileID: 8671481639427489793}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -24533,7 +24280,7 @@ GameObject:
   - component: {fileID: 3198291583734850821}
   - component: {fileID: 6511910848075118933}
   - component: {fileID: 1492847724275252614}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a65_SM_Candleabra_01a_0_2281
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -24616,7 +24363,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4321720212805581591}
   - component: {fileID: 6310333684811628455}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_FromFoliage_1320
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -24678,7 +24425,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1561764410471209594}
   - component: {fileID: 8325154577951484423}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_FromFoliage_1326
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -24741,7 +24488,7 @@ GameObject:
   - component: {fileID: 7053058662293596371}
   - component: {fileID: 3715757649264290347}
   - component: {fileID: 5270948461019235509}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_04a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -24824,7 +24571,7 @@ GameObject:
   - component: {fileID: 7214910712975053585}
   - component: {fileID: 5401209629099752747}
   - component: {fileID: 1382816522159396960}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -24907,7 +24654,7 @@ GameObject:
   - component: {fileID: 5141754448679427596}
   - component: {fileID: 6593787964803601323}
   - component: {fileID: 7560175205332562532}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -24989,7 +24736,7 @@ GameObject:
   m_Component:
   - component: {fileID: 939304460881986980}
   - component: {fileID: 3259841065684937245}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_FromFoliage_1312
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -25051,7 +24798,7 @@ GameObject:
   m_Component:
   - component: {fileID: 245609621562866141}
   - component: {fileID: 2621825793715973294}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_223
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -25113,7 +24860,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2771982663988583517}
   - component: {fileID: 5025292438996995784}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_RollPack_Open_01a
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -25176,7 +24923,7 @@ GameObject:
   - component: {fileID: 8435179630652659150}
   - component: {fileID: 7215924261098089686}
   - component: {fileID: 5720246438971350547}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -25259,7 +25006,7 @@ GameObject:
   - component: {fileID: 6169669548258806711}
   - component: {fileID: 2334242386034085882}
   - component: {fileID: 181528169726105212}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Ankle_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -25342,7 +25089,7 @@ GameObject:
   - component: {fileID: 614429151894145276}
   - component: {fileID: 2095213561595029313}
   - component: {fileID: 2083708355788977852}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: BP_Candle_Single_01a9_22_SM_Candleabra_02a_6_3357
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -25426,7 +25173,7 @@ GameObject:
   - component: {fileID: 3835894938356821277}
   - component: {fileID: 1610770393720841511}
   - component: {fileID: 7427229189652941474}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -25509,7 +25256,7 @@ GameObject:
   - component: {fileID: 1986328980933284551}
   - component: {fileID: 3154915061083949722}
   - component: {fileID: 5017203053774642241}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -25592,7 +25339,7 @@ GameObject:
   - component: {fileID: 5449051026849258972}
   - component: {fileID: 2271937406149587774}
   - component: {fileID: 2417735062835171818}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -25675,7 +25422,7 @@ GameObject:
   - component: {fileID: 5112225135216567105}
   - component: {fileID: 4200482240654125309}
   - component: {fileID: 7713898170371146127}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Altar_Top_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -25757,7 +25504,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3021533070650049493}
   - component: {fileID: 7312048025582135546}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_RollPack_01a2_63
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -25820,7 +25567,7 @@ GameObject:
   - component: {fileID: 3510084333975067723}
   - component: {fileID: 5205968511273269920}
   - component: {fileID: 5828605082258021923}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_04b13
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -25904,7 +25651,7 @@ GameObject:
   - component: {fileID: 5734813967974632956}
   - component: {fileID: 5321398361700490218}
   - component: {fileID: 5755338982357010981}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -25987,7 +25734,7 @@ GameObject:
   - component: {fileID: 5647717521541308846}
   - component: {fileID: 285167539435307515}
   - component: {fileID: 784120099578750128}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: BP_Candle_Single_01a8_SM_Candleabra_02a_6_3354
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -26071,7 +25818,7 @@ GameObject:
   - component: {fileID: 4756038480154516814}
   - component: {fileID: 1146788641332274886}
   - component: {fileID: 4281269991354385105}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -26154,7 +25901,7 @@ GameObject:
   - component: {fileID: 5550569515176059633}
   - component: {fileID: 2712192795907363364}
   - component: {fileID: 1419795983686168961}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -26237,7 +25984,7 @@ GameObject:
   - component: {fileID: 6824636035112226938}
   - component: {fileID: 7049366257578312472}
   - component: {fileID: 7710898550472454778}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -26320,7 +26067,7 @@ GameObject:
   - component: {fileID: 5842206896156371079}
   - component: {fileID: 3944366056283304123}
   - component: {fileID: 8935560161895074632}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Bed_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -26403,7 +26150,7 @@ GameObject:
   - component: {fileID: 2810195185043897586}
   - component: {fileID: 7640144488925632445}
   - component: {fileID: 3402647808913125726}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -26486,7 +26233,7 @@ GameObject:
   - component: {fileID: 8416990515914651381}
   - component: {fileID: 8240396308934305116}
   - component: {fileID: 2303778420728069200}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -26569,7 +26316,7 @@ GameObject:
   - component: {fileID: 578909214152078061}
   - component: {fileID: 7240678831191362521}
   - component: {fileID: 867470060865830746}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Ambo_01b_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -26653,7 +26400,7 @@ GameObject:
   - component: {fileID: 8055354299266070202}
   - component: {fileID: 6880411604027649376}
   - component: {fileID: 7137135111636686572}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -26736,7 +26483,7 @@ GameObject:
   - component: {fileID: 3500060337577849593}
   - component: {fileID: 942481877215564245}
   - component: {fileID: 4551007045030188269}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -26819,7 +26566,7 @@ GameObject:
   - component: {fileID: 8771764606969638448}
   - component: {fileID: 727051516426267583}
   - component: {fileID: 3200620101729730005}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_04b27_141
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -26903,7 +26650,7 @@ GameObject:
   - component: {fileID: 4163300187506410034}
   - component: {fileID: 6678218929539583904}
   - component: {fileID: 5954455843581280510}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -26986,7 +26733,7 @@ GameObject:
   - component: {fileID: 3712100574211232054}
   - component: {fileID: 8436094650472245670}
   - component: {fileID: 8633796863455689901}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Ambo_01b_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -27070,7 +26817,7 @@ GameObject:
   - component: {fileID: 8824414534962492779}
   - component: {fileID: 7254249989023148148}
   - component: {fileID: 7336671644222977729}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -27153,7 +26900,7 @@ GameObject:
   - component: {fileID: 4021768500673813221}
   - component: {fileID: 3861158253557653209}
   - component: {fileID: 6534823629688189302}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_04b_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -27236,7 +26983,7 @@ GameObject:
   - component: {fileID: 4825151161035293245}
   - component: {fileID: 2925805210446672786}
   - component: {fileID: 3109160069464299695}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Ankle_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -27318,7 +27065,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2476858760687956764}
   - component: {fileID: 8828043218075472898}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_FromFoliage_1335
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -27380,7 +27127,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1992104210227415419}
   - component: {fileID: 9148341273407073617}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_FromFoliage_1309
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -27443,7 +27190,7 @@ GameObject:
   - component: {fileID: 9197153879180583611}
   - component: {fileID: 4983935973702121504}
   - component: {fileID: 5102658036280301033}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Altar_Top_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -27526,7 +27273,7 @@ GameObject:
   - component: {fileID: 6067846412524978895}
   - component: {fileID: 3271636949625298937}
   - component: {fileID: 3904612925145726132}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -27609,7 +27356,7 @@ GameObject:
   - component: {fileID: 3299615211129637228}
   - component: {fileID: 838624133025577744}
   - component: {fileID: 6055281848893754822}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_04b_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -27695,7 +27442,7 @@ GameObject:
   - component: {fileID: 5163940424074371843}
   - component: {fileID: 7302357120538777442}
   - component: {fileID: 575348795483133161}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Altar_Top_01a4_193
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -27842,7 +27589,7 @@ GameObject:
   - component: {fileID: 1972094300317585788}
   - component: {fileID: 3863115454103669991}
   - component: {fileID: 6437349702216445525}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -27925,7 +27672,7 @@ GameObject:
   - component: {fileID: 3654715120151251831}
   - component: {fileID: 8795270933340743489}
   - component: {fileID: 8546828834949498077}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -28007,7 +27754,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2637478626282692557}
   - component: {fileID: 3049339065151277145}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_FromFoliage_1334
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -28070,7 +27817,7 @@ GameObject:
   - component: {fileID: 5956792903880983936}
   - component: {fileID: 9141809013245472696}
   - component: {fileID: 3631872296540806037}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_220
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -28154,7 +27901,7 @@ GameObject:
   - component: {fileID: 6263444450345285718}
   - component: {fileID: 7525469793136977259}
   - component: {fileID: 922107572342446196}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Toe_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -28237,7 +27984,7 @@ GameObject:
   - component: {fileID: 7249213575170324323}
   - component: {fileID: 6144187301522657359}
   - component: {fileID: 1377562034196526128}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -28319,8 +28066,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7063791126804503022}
   - component: {fileID: 5077076704136756935}
-  - component: {fileID: 4046222318895963457}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Ambo_01b_69
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -28372,28 +28118,6 @@ LODGroup:
     renderers:
     - renderer: {fileID: 1283383468172381523}
   m_Enabled: 1
---- !u!64 &4046222318895963457
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8647412602375303146}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 4300014, guid: abc00000000000095397833049560391, type: 3}
 --- !u!1 &8649041239279166450
 GameObject:
   m_ObjectHideFlags: 0
@@ -28405,7 +28129,7 @@ GameObject:
   - component: {fileID: 501778218408863844}
   - component: {fileID: 6089875648134091571}
   - component: {fileID: 6842579288544272622}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -28488,7 +28212,7 @@ GameObject:
   - component: {fileID: 3270056514924641550}
   - component: {fileID: 4890960660761747157}
   - component: {fileID: 1893195945173390693}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -28571,7 +28295,7 @@ GameObject:
   - component: {fileID: 2900437297252912788}
   - component: {fileID: 6689809985931722828}
   - component: {fileID: 6438952162633501745}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_RollPack_Open_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -28654,7 +28378,7 @@ GameObject:
   - component: {fileID: 2126030889925168241}
   - component: {fileID: 7439331541534617115}
   - component: {fileID: 4574752539196331624}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: BP_Candle_Single_01a19_2_SM_Candleabra_02a_6_3333
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -28737,7 +28461,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4948401931508909458}
   - component: {fileID: 1365186831845437168}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_RollPack_Open_01b
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -28800,7 +28524,7 @@ GameObject:
   - component: {fileID: 1659961008196284603}
   - component: {fileID: 3583569425917187329}
   - component: {fileID: 6775600213802281773}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Ankle_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -28883,7 +28607,7 @@ GameObject:
   - component: {fileID: 3259463327478893470}
   - component: {fileID: 170164976826995161}
   - component: {fileID: 7363417374037425269}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Altar_Top_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -28966,7 +28690,7 @@ GameObject:
   - component: {fileID: 5897282866058124712}
   - component: {fileID: 7418389255650902473}
   - component: {fileID: 3406394410159403254}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_LOD6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -29049,7 +28773,7 @@ GameObject:
   - component: {fileID: 8418724661921704275}
   - component: {fileID: 4467896964604312386}
   - component: {fileID: 5965577544074949968}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01b_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -29132,7 +28856,7 @@ GameObject:
   - component: {fileID: 6547764721765109736}
   - component: {fileID: 9066325342086856182}
   - component: {fileID: 5866452293104016653}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a23_144
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -29215,8 +28939,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4036561281718129781}
   - component: {fileID: 958595855365524960}
-  - component: {fileID: 2294802578849840507}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_ArcDeco_01c6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -29268,28 +28991,6 @@ LODGroup:
     renderers:
     - renderer: {fileID: 7194276527340522650}
   m_Enabled: 1
---- !u!64 &2294802578849840507
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9089877617257636409}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 4300014, guid: abc00000000006914301154164743657, type: 3}
 --- !u!1 &9092801184325762171
 GameObject:
   m_ObjectHideFlags: 0
@@ -29301,7 +29002,7 @@ GameObject:
   - component: {fileID: 1266926064998520338}
   - component: {fileID: 5967631320375191572}
   - component: {fileID: 5831487444352421350}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a64_SM_Candleabra_01a_0_2278
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -29385,7 +29086,7 @@ GameObject:
   - component: {fileID: 1789530830915624228}
   - component: {fileID: 911488078656368374}
   - component: {fileID: 4374812572547228308}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_04b_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -29468,7 +29169,7 @@ GameObject:
   - component: {fileID: 1297516983798294924}
   - component: {fileID: 7236857247335001732}
   - component: {fileID: 8261203437214674448}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_02a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -29551,7 +29252,7 @@ GameObject:
   - component: {fileID: 7763823026469361459}
   - component: {fileID: 7172413666270555555}
   - component: {fileID: 7352654905457327763}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Candleabra_01a_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -29638,7 +29339,7 @@ GameObject:
   - component: {fileID: 6353048770702715803}
   - component: {fileID: 5764423858552704070}
   - component: {fileID: 5437445151764119048}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Altar_01a_207
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -29806,7 +29507,7 @@ GameObject:
   - component: {fileID: 8893773172094896327}
   - component: {fileID: 6463060057836100741}
   - component: {fileID: 3356568328583287737}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SM_Map_01a_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
