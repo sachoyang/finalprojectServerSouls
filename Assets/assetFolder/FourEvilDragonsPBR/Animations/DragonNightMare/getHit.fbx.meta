@@ -675,6 +675,193 @@ ModelImporter:
       maskType: 0
       maskSource: {instanceID: 0}
       additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: getHit_GroggyLoop
+      takeName: Take 001
+      internalID: -998496362607748373
+      firstFrame: 15
+      lastFrame: 24
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 1
+      loopBlend: 1
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask:
+      - path: 
+        weight: 1
+      - path: NightMareDragon
+        weight: 1
+      - path: Root
+        weight: 1
+      - path: Root/L_UpperLeg
+        weight: 1
+      - path: Root/L_UpperLeg/L_Lowerleg01
+        weight: 1
+      - path: Root/L_UpperLeg/L_Lowerleg01/L_LowerLeg02
+        weight: 1
+      - path: Root/L_UpperLeg/L_Lowerleg01/L_LowerLeg02/L_feet
+        weight: 1
+      - path: Root/L_UpperLeg/L_Lowerleg01/L_LowerLeg02/L_feet/L_Toe_Index01
+        weight: 1
+      - path: Root/L_UpperLeg/L_Lowerleg01/L_LowerLeg02/L_feet/L_Toe_Index01/L_Toe_Index02
+        weight: 1
+      - path: Root/L_UpperLeg/L_Lowerleg01/L_LowerLeg02/L_feet/L_Toe_Middle01
+        weight: 1
+      - path: Root/L_UpperLeg/L_Lowerleg01/L_LowerLeg02/L_feet/L_Toe_Middle01/L_Toe_Middle02
+        weight: 1
+      - path: Root/L_UpperLeg/L_Lowerleg01/L_LowerLeg02/L_feet/L_Toe_Pinky01
+        weight: 1
+      - path: Root/L_UpperLeg/L_Lowerleg01/L_LowerLeg02/L_feet/L_Toe_Pinky01/L_Toe_Pinky02
+        weight: 1
+      - path: Root/R_UpperReg
+        weight: 1
+      - path: Root/R_UpperReg/R_Rowerleg01
+        weight: 1
+      - path: Root/R_UpperReg/R_Rowerleg01/R_RowerReg02
+        weight: 1
+      - path: Root/R_UpperReg/R_Rowerleg01/R_RowerReg02/R_feet
+        weight: 1
+      - path: Root/R_UpperReg/R_Rowerleg01/R_RowerReg02/R_feet/R_Toe_Index01
+        weight: 1
+      - path: Root/R_UpperReg/R_Rowerleg01/R_RowerReg02/R_feet/R_Toe_Index01/R_Toe_Index02
+        weight: 1
+      - path: Root/R_UpperReg/R_Rowerleg01/R_RowerReg02/R_feet/R_Toe_Middle01
+        weight: 1
+      - path: Root/R_UpperReg/R_Rowerleg01/R_RowerReg02/R_feet/R_Toe_Middle01/R_Toe_Middle02
+        weight: 1
+      - path: Root/R_UpperReg/R_Rowerleg01/R_RowerReg02/R_feet/R_Toe_Pinky01
+        weight: 1
+      - path: Root/R_UpperReg/R_Rowerleg01/R_RowerReg02/R_feet/R_Toe_Pinky01/R_Toe_Pinky02
+        weight: 1
+      - path: Root/Spine01
+        weight: 1
+      - path: Root/Spine01/Spine02
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/L_Shoulder01
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/L_Shoulder01/L_Shoulder02
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/Neck01
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/Neck01/Neck02
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/Neck01/Neck02/Head
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/Neck01/Neck02/Head/Jaw01
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/Neck01/Neck02/Head/Jaw01/Jaw02
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/Neck01/Neck02/Head/Jaw01/Jaw02/Jaw03
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/Neck01/Neck02/Head/Tongue01
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/Neck01/Neck02/Head/Tongue01/Tongue02
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/Neck01/Neck02/Head/Tongue01/Tongue02/Tongue03
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/Neck01/Neck02/Head/Tongue01/Tongue02/Tongue03/Tongue04
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/Neck01/Neck02/Head/UpperHead01
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/Neck01/Neck02/Head/UpperHead01/UpperHead02
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/R_Shoulder01
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/R_Shoulder01/R_Shoulder02
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/R_UpperArm
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/R_UpperArm/R_RowerArm
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/R_UpperArm/R_RowerArm/R_armHorn
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/R_UpperArm/R_RowerArm/R_Wrist
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/R_UpperArm/R_RowerArm/R_Wrist/R_Hand
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/R_UpperArm/R_RowerArm/R_Wrist/R_Hand/R_Index01
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/R_UpperArm/R_RowerArm/R_Wrist/R_Hand/R_Index01/R_Index02
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/R_UpperArm/R_RowerArm/R_Wrist/R_Hand/R_Index01/R_Index02/R_Index03
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/R_UpperArm/R_RowerArm/R_Wrist/R_Hand/R_Middle01
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/R_UpperArm/R_RowerArm/R_Wrist/R_Hand/R_Middle01/R_Middle02
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/R_UpperArm/R_RowerArm/R_Wrist/R_Hand/R_Middle01/R_Middle02/R_Middle03
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/R_UpperArm/R_RowerArm/R_Wrist/R_Hand/R_Pinky01
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/R_UpperArm/R_RowerArm/R_Wrist/R_Hand/R_Pinky01/R_Pinky02
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/R_UpperArm/R_RowerArm/R_Wrist/R_Hand/R_Pinky01/R_Pinky02/R_Pinky03
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/R_UpperArm1
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/R_UpperArm1/R_RowerArm 1
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/R_UpperArm1/R_RowerArm 1/R_armHorn 1
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/R_UpperArm1/R_RowerArm 1/R_Wrist 1
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/R_UpperArm1/R_RowerArm 1/R_Wrist 1/R_Hand
+          1
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/R_UpperArm1/R_RowerArm 1/R_Wrist 1/R_Hand
+          1/R_Index01 1
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/R_UpperArm1/R_RowerArm 1/R_Wrist 1/R_Hand
+          1/R_Index01 1/R_Index02 1
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/R_UpperArm1/R_RowerArm 1/R_Wrist 1/R_Hand
+          1/R_Index01 1/R_Index02 1/R_Index03 1
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/R_UpperArm1/R_RowerArm 1/R_Wrist 1/R_Hand
+          1/R_Middle01 1
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/R_UpperArm1/R_RowerArm 1/R_Wrist 1/R_Hand
+          1/R_Middle01 1/R_Middle02 1
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/R_UpperArm1/R_RowerArm 1/R_Wrist 1/R_Hand
+          1/R_Middle01 1/R_Middle02 1/R_Middle03 1
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/R_UpperArm1/R_RowerArm 1/R_Wrist 1/R_Hand
+          1/R_Pinky01 1
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/R_UpperArm1/R_RowerArm 1/R_Wrist 1/R_Hand
+          1/R_Pinky01 1/R_Pinky02 1
+        weight: 1
+      - path: Root/Spine01/Spine02/Chest/R_UpperArm1/R_RowerArm 1/R_Wrist 1/R_Hand
+          1/R_Pinky01 1/R_Pinky02 1/R_Pinky03 1
+        weight: 1
+      - path: Root/Tail01
+        weight: 1
+      - path: Root/Tail01/Tail02
+        weight: 1
+      - path: Root/Tail01/Tail02/Tail03
+        weight: 1
+      - path: Root/Tail01/Tail02/Tail03/Tail04
+        weight: 1
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
     isReadable: 1
   meshes:
     lODScreenPercentages: []

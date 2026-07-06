@@ -70,9 +70,29 @@ public class NetworkBossCore : NetworkBehaviour
 
     [Header("그로기(Stagger) 설정")]
     public float maxGroggy = 40f;
-    public float groggyDuration = 3.0f; // 그로기 지속 시간
+    public float groggyDuration = 3.0f; // 그로기 지속 시간 (이 동안 AI가 완전히 정지 = 패턴 안 나옴)
     [Tooltip("getHit 애니메이션의 원래 길이 (초 단위)")]
     public float groggyAnimLength = 1.4f;
+    [Tooltip("그로기 상태 동안 받는 데미지 배율. (1.5 = 50% 추가 데미지 = '딜 타임' 보상)\n1로 두면 보너스 없음.")]
+    public float groggyDamageTakenMultiplier = 1.5f;
+    [Tooltip("평상시 그로기 게이지가 초당 자연 감소하는 양. 0이면 감소 없음(기존 동작).\n" +
+             "값을 주면 '몰아쳐야 그로기가 터지는' 긴장감이 생기고 UI 게이지가 살아 움직인다.")]
+    public float groggyDecayPerSecond = 0f;
+    [Tooltip("ON : 그로기 시간(groggyDuration)을 'getHit 애니메이션이 끝난 뒤부터' 계산.\n" +
+             "     총 그로기 = (groggyAnimLength ÷ groggyHitAnimSpeed) + groggyDuration.\n" +
+             "     애니메이터에 getHit → 루프 스테이트(Exit Time 전이) 구조를 만든 보스에서 켤 것.\n" +
+             "OFF: 기존 방식. getHit 포함 총 groggyDuration. (슬로모션 스트레치 모드용)")]
+    public bool groggyDurationAfterHitAnim = false;
+    [Tooltip("루프 모드(groggyDurationAfterHitAnim ON)에서 getHit 애니메이션의 재생 배속.\n" +
+             "1.5면 1.5배 빠르게 휘청이고 루프로 넘어간다. 타이머도 이 배속에 맞춰 자동 보정됨.\n" +
+             "※ animator.speed라 루프 구간도 같은 배속을 받는다. 루프 호흡 템포는 애니메이터의 루프 스테이트 Speed로 따로 보정할 것.")]
+    [Min(0.1f)]
+    public float groggyHitAnimSpeed = 1f;
+
+    // 그로기 타이머 계산에 쓸 '현재 상황의 피격 클립 길이'.
+    // 기본은 groggyAnimLength 하나지만, 폴라드래곤처럼 지상/공중 피격 클립 길이가 다른 보스는
+    // 이 프로퍼티를 오버라이드해서 지금 재생될 클립의 길이를 돌려주면 타이머가 정확해진다.
+    protected virtual float CurrentGroggyHitAnimLength => groggyAnimLength;
     [Networked] public float CurrentGroggy { get; set; }
 
 
@@ -245,6 +265,13 @@ public class NetworkBossCore : NetworkBehaviour
 
         // 매 프레임 만료된 버프/디버프 청소
         ProcessStatuses();
+
+        // 그로기 게이지 자연 감소 (옵션). 그로기 중이나 수면 중에는 감소시키지 않는다.
+        if (groggyDecayPerSecond > 0f && CurrentGroggy > 0f &&
+            CurrentState != BossState.Groggy && CurrentState != BossState.Sleep)
+        {
+            CurrentGroggy = Mathf.Max(0f, CurrentGroggy - groggyDecayPerSecond * Runner.DeltaTime);
+        }
 
         // 그로기 상태일 때는 타이머만 체크하고 아무것도 안 함!
         if (CurrentState == BossState.Groggy)
@@ -727,7 +754,11 @@ public class NetworkBossCore : NetworkBehaviour
                 // 🔥 [수정됨] 복잡한 사운드/애니 로직을 모두 Visual에게 위임합니다!
                 if (CurrentState == BossState.Groggy)
                 {
-                    float speedMult = groggyAnimLength / groggyDuration;
+                    // 루프 모드: getHit 재생 배속(groggyHitAnimSpeed)을 그대로 전달 (루프가 나머지 시간을 채움)
+                    // 스트레치 모드: 클립 하나를 그로기 시간에 맞춰 잡아늘리는 배속 전달 (기존 동작)
+                    float speedMult = groggyDurationAfterHitAnim
+                        ? groggyHitAnimSpeed
+                        : groggyAnimLength / groggyDuration;
                     // groggyDuration도 함께 넘겨, 비주얼이 자기 클립 길이에 맞춰 배속을 재계산할 수 있게 함
                     _visual.PlayGroggy(speedMult, groggyDuration);
                 }
@@ -814,6 +845,13 @@ public class NetworkBossCore : NetworkBehaviour
 
         // 3. 방깎 디버프 등을 계산하여 최종 데미지 산출 후 체력 차감
         float finalDamage = damage * GetIncomingDamageMultiplier();
+
+        // 그로기(무력화) 중에는 추가 데미지 = 게이지를 채운 보상 '딜 타임'
+        if (CurrentState == BossState.Groggy && groggyDamageTakenMultiplier > 0f)
+        {
+            finalDamage *= groggyDamageTakenMultiplier;
+        }
+
         CurrentHP -= finalDamage;
 
         // 4. 데미지를 입고 나서 체력이 0 이하가 되었는지 확인!!
@@ -834,7 +872,14 @@ public class NetworkBossCore : NetworkBehaviour
             if (CurrentGroggy >= maxGroggy)
             {
                 BossLog.Info("[보스] 그로기(Stagger) 발생!");
-                StateTimer = TickTimer.CreateFromSeconds(Runner, groggyDuration);
+
+                // 루프 모드: getHit이 (배속 반영된 시간만큼) 다 나온 '뒤부터' groggyDuration만큼 루프가 돈다.
+                // 클립 길이는 CurrentGroggyHitAnimLength로 조회 → 지상/공중 클립이 다른 보스도 정확.
+                float totalGroggy = groggyDurationAfterHitAnim
+                    ? (CurrentGroggyHitAnimLength / Mathf.Max(0.1f, groggyHitAnimSpeed)) + groggyDuration
+                    : groggyDuration;
+
+                StateTimer = TickTimer.CreateFromSeconds(Runner, totalGroggy);
                 // 패턴 인덱스 리셋은 ChangeState가 ExecutingPattern을 벗어날 때 공통 처리
                 ChangeState(BossState.Groggy);
             }

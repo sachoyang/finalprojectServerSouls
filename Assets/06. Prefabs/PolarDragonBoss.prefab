@@ -200,6 +200,7 @@ GameObject:
   - component: {fileID: 4410727452468581993}
   - component: {fileID: 992474550098228659}
   - component: {fileID: 7614925232187989671}
+  - component: {fileID: 490754850078489221}
   m_Layer: 0
   m_Name: PolarDragonBoss
   m_TagString: Untagged
@@ -285,13 +286,20 @@ MonoBehaviour:
   wakeUpAnimName: SpreadFrozenBreath
   wakeUpDuration: 2.8
   phaseTransitionDuration: 1.8
-  maxGroggy: 40
-  groggyDuration: 2
+  maxGroggy: 60
+  groggyDuration: 3
   groggyAnimLength: 1
+  groggyDamageTakenMultiplier: 1.5
+  groggyDecayPerSecond: 0
+  groggyDurationAfterHitAnim: 1
+  groggyHitAnimSpeed: 0.7
   _CurrentGroggy: 0
   baseMaxHP: 100000
+  hpBonusPerExtraPlayer: 0.5
   _maxHP: 0
   _CurrentHP: 0
+  maxSingleHitPercent: 0.05
+  debugKillAdminIds: []
   wallLayerMask:
     serializedVersion: 2
     m_Bits: 128
@@ -325,6 +333,7 @@ MonoBehaviour:
   _AggroTarget: {fileID: 0}
   _CurrentPatternIndex: -1
   _CurrentStepIndex: -1
+  _PatternYOffset: 0
   _IsGimmickActive:
     _value: 0
   gimmickDamageReduction: 1
@@ -361,6 +370,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetable: 1
+--- !u!114 &490754850078489221
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8521524127431077655}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 526b142195d343c39a9184405f9ed5e0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  NetworkObject: {fileID: 0}
 --- !u!1001 &5108428487193952013
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1742,6 +1764,7 @@ MonoBehaviour:
   iceMagicSound: {fileID: 0}
   flyingGetHitLength: 0.833
   rootMotionCapture: {fileID: 1268043131240937855}
+  groggyRecoverBlendTime: 0.5
 --- !u!114 &1268043131240937855
 MonoBehaviour:
   m_ObjectHideFlags: 0

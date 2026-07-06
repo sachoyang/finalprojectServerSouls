@@ -93,6 +93,14 @@ public class PolarDragonBoss : NetworkBossCore
     // 🔥 [버그 픽스] 비행 버프가 켜진 동안 부모(NetworkBossCore)의 중력/바닥밀착 로직을 우회시킨다.
     protected override bool IsAirborne => IsFlightActive;
 
+    // 그로기 타이머용 피격 클립 길이.
+    // 폴라드래곤은 지상(GetHit1)과 공중(FlyStationaryGetHit) 클립 길이가 달라서(예: 1.0s vs 0.833s),
+    // 비행 중이면 Visual에 적어둔 공중 클립 길이를 돌려줘 루프 진입 타이밍을 정확하게 맞춘다.
+    protected override float CurrentGroggyHitAnimLength =>
+        (IsFlightActive && _visual is PolarDragonVisual polarVisual)
+            ? polarVisual.flyingGetHitLength
+            : groggyAnimLength;
+
     public override void FixedUpdateNetwork()
     {
         // ==========================================

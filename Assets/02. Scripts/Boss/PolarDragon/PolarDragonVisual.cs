@@ -466,6 +466,16 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
             SoundManager.Instance.PlaySFX_3D(wakeUpSound, transform.position, SoundCategory.BossGimmick);
     }
 
+    [Header("그로기 모션 방식")]
+    // 루프 모드 ON/OFF와 피격 배속은 보스 코어(NetworkBossCore)의
+    // groggyDurationAfterHitAnim / groggyHitAnimSpeed에서 관리한다 (설정 창구 일원화).
+    // 지상(GetHit1)/공중(FlyStationaryGetHit) 각각 루프 스테이트를 만들어 Exit Time 전이로 연결할 것.
+    [Tooltip("그로기(웅크린 루프)에서 일어나 Locomotion으로 돌아올 때의 크로스페이드 시간(초).\n" +
+             "웅크린 포즈와 서 있는 포즈의 차이가 커서 짧은 블렌드로는 뚝 끊겨 보인다. 0.4~0.6 권장.")]
+    public float groggyRecoverBlendTime = 0.5f;
+
+    private bool _groggyRecoverPending = false;
+
     public void PlayGroggy(float speedMultiplier, float groggyDuration)
     {
         PolarDragonBoss polarBoss = _bossCore as PolarDragonBoss;
@@ -473,17 +483,22 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
         // 🔥 [신규] 공중에 있을 땐 공중 전용 피격 모션 재생!
         if (polarBoss != null && polarBoss.IsFlightActive)
         {
-            // 공중 피격 클립은 길이가 달라(예: 0.833s) 코어가 준 배속을 쓰면 엇박.
+            // 공중 피격 클립은 길이가 달라(예: 0.833s) 스트레치 모드에선 코어가 준 배속을 쓰면 엇박.
             // groggyDuration 동안 이 클립을 꽉 채우도록 배속을 직접 재계산한다.
+            // 루프 모드에선 코어가 넘겨준 배속(groggyHitAnimSpeed)을 그대로 쓴다 (루프가 나머지 시간을 채움).
             float flySpeed = (groggyDuration > 0f) ? flyingGetHitLength / groggyDuration : 1f;
-            SetAnimSpeed(flySpeed);
+            bool loopMode = _bossCore != null && _bossCore.groggyDurationAfterHitAnim;
+            SetAnimSpeed(loopMode ? speedMultiplier : flySpeed);
             PlayAction(Animator.StringToHash("FlyStationaryGetHit"));
         }
         else
         {
+            // 루프/스트레치 모드 공통: 코어가 모드에 맞는 배속을 계산해서 넘겨준다.
             SetAnimSpeed(speedMultiplier);
             PlayAction(Animator.StringToHash("GetHit1"));
         }
+
+        _groggyRecoverPending = true; // 다음 Locomotion 복귀는 긴 블렌드로
 
         if (groggySound != null) SoundManager.Instance.PlaySFX_3D(groggySound, transform.position, SoundCategory.BossGimmick);
     }
@@ -534,15 +549,19 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
         //    버프가 막 끝났어도 비행 패턴이 끝나기 전까지는 공중 Locomotion을 유지해야 한다.
         bool isFlying = polarBoss != null && polarBoss.IsFlightActive;
 
+        // 그로기(웅크림)에서 일어나는 복귀는 포즈 차이가 커서 긴 블렌드로 부드럽게 잇는다.
+        bool recovering = _groggyRecoverPending;
+        _groggyRecoverPending = false;
+
         if (isFlying)
         {
             // 공중: 체공 상태 (FlyStationary <-> Fly 블렌드 트리)
-            anim.CrossFade("FlyLocomotion", 0.05f);
+            anim.CrossFade("FlyLocomotion", recovering ? groggyRecoverBlendTime : 0.05f);
         }
         else
         {
             // 지상: (IdleBreathe <-> Walk 블렌드 트리)
-            anim.CrossFade("GroundLocomotion", 0.2f);
+            anim.CrossFade("GroundLocomotion", recovering ? groggyRecoverBlendTime : 0.2f);
         }
     }
 

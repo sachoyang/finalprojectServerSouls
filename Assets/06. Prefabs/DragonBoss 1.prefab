@@ -1139,6 +1139,7 @@ MonoBehaviour:
   dieSound: {fileID: 8300000, guid: c3a1da04fbb342541a51082b452d1654, type: 3}
   walkSound: {fileID: 8300000, guid: eb7acffab7d1b364da7cfd9c4baa75ce, type: 3}
   phase2ThemeBGM: {fileID: 8300000, guid: 767e1bf4e70bc0e4d9c044a968be9b68, type: 3}
+  groggyRecoverBlendTime: 0.5
 --- !u!1 &2703312729836752367
 GameObject:
   m_ObjectHideFlags: 0
@@ -2889,6 +2890,7 @@ GameObject:
   - component: {fileID: 4410727452468581993}
   - component: {fileID: 1280597557237772811}
   - component: {fileID: 8193329986447285239}
+  - component: {fileID: 4643452570321267706}
   m_Layer: 0
   m_Name: DragonBoss 1
   m_TagString: Untagged
@@ -2938,14 +2940,20 @@ MonoBehaviour:
   wakeUpAnimName: Scream
   wakeUpDuration: 2.8
   phaseTransitionDuration: 3
-  maxGroggy: 40
+  maxGroggy: 60
   groggyDuration: 3
   groggyAnimLength: 1.4
+  groggyDamageTakenMultiplier: 1.5
+  groggyDecayPerSecond: 3
+  groggyDurationAfterHitAnim: 1
+  groggyHitAnimSpeed: 0.6
   _CurrentGroggy: 0
   baseMaxHP: 100000
   hpBonusPerExtraPlayer: 0.5
   _maxHP: 0
   _CurrentHP: 0
+  maxSingleHitPercent: 0.05
+  debugKillAdminIds: []
   wallLayerMask:
     serializedVersion: 2
     m_Bits: 128
@@ -3048,6 +3056,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetable: 1
+--- !u!114 &4643452570321267706
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6914082606777652867}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 526b142195d343c39a9184405f9ed5e0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  NetworkObject: {fileID: 0}
 --- !u!1 &6965907121915588567
 GameObject:
   m_ObjectHideFlags: 0

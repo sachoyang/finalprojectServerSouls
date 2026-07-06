@@ -74,6 +74,15 @@ public class BossMeleeAttack : MonoBehaviour
         // 서버(방장)가 아니거나, 공격 중이 아니면 무시
         if (!_isAttacking || _bossScript == null || !_bossScript.HasStateAuthority) return;
 
+        // 🔥 [버그 픽스] 패턴 도중 그로기/사망으로 끊기면 StopAttack 애니메이션 이벤트가 씹혀서
+        //    _isAttacking이 true로 남는다. 그 상태로 그로기 중 무기 판정이 살아있으면 안 되므로,
+        //    보스가 '패턴 실행 중'일 때만 판정을 돌린다.
+        if (_bossScript.CurrentState != BossState.ExecutingPattern)
+        {
+            _isAttacking = false;
+            return;
+        }
+
         for (int i = 0; i < weaponNodes.Length; i++)
         {
             Vector3 currentPos = weaponNodes[i].position;
