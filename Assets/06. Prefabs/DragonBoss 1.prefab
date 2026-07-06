@@ -2890,6 +2890,7 @@ GameObject:
   - component: {fileID: 4410727452468581993}
   - component: {fileID: 1280597557237772811}
   - component: {fileID: 8193329986447285239}
+  - component: {fileID: 4643452570321267706}
   m_Layer: 0
   m_Name: DragonBoss 1
   m_TagString: Untagged
@@ -3055,6 +3056,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetable: 1
+--- !u!114 &4643452570321267706
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6914082606777652867}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 526b142195d343c39a9184405f9ed5e0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  NetworkObject: {fileID: 0}
 --- !u!1 &6965907121915588567
 GameObject:
   m_ObjectHideFlags: 0

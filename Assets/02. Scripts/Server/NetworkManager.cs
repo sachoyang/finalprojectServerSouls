@@ -42,6 +42,53 @@ public class NetworkManager : MonoSingleton<NetworkManager>, ISessionGuard // �
         SceneManager.LoadScene("scLogin"); 
     }
 
+    // ==========================================
+    // F9: Fusion Statistics 실시간 네트워크 통계 패널 토글
+    //  - 세션이 켜져 있는 동안(로비~보스~Path 전부) 어디서든 사용 가능
+    //  - 에디터/개발 빌드: 항상 허용 / 릴리즈 빌드: admin 계정만 (DebugHotkey와 동일 정책)
+    // ==========================================
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.F9) && StatsToggleAllowed &&
+            _runner != null && _runner.IsRunning)
+        {
+            ToggleFusionStatistics();
+        }
+    }
+
+    private void ToggleFusionStatistics()
+    {
+        var stats = _runner.GetComponent<Fusion.Statistics.FusionStatistics>();
+        if (stats == null)
+        {
+            // 런타임 추가 시에는 Spawned가 자동으로 안 오므로 SetupStatisticsPanel을 직접 호출.
+            // (내부에서 runner.AddGlobal로 자가 등록 → Spawned → 패널 생성 순서로 이어짐)
+            stats = _runner.gameObject.AddComponent<Fusion.Statistics.FusionStatistics>();
+            stats.SetupStatisticsPanel();
+            Debug.Log("[NetworkManager] F9: Fusion Statistics 패널을 켰습니다.");
+        }
+        else if (stats.IsPanelActive)
+        {
+            stats.DestroyStatisticsPanel();
+        }
+        else
+        {
+            stats.SetupStatisticsPanel();
+        }
+    }
+
+    private static bool StatsToggleAllowed
+    {
+        get
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            return true;
+#else
+            return BackendManager.HasInstance && BackendManager.Instance.IsAdminAccount;
+#endif
+        }
+    }
+
     public void StartAlone()
     {
         StartSession(GameMode.Host, "ALONE_" + Random.Range(1000, 9999));
