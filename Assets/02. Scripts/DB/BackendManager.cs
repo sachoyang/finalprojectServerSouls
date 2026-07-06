@@ -12,6 +12,7 @@ public class AuthResponse
     public string nickname;
     public long unlocked_skills; // 64개 스킬 비트마스크 (BIGINT)
     public string session_token; // 서버에서 보내줄 토큰 변수(마지막 세션 접근한 사람이 로그인)
+    public int is_admin;         // 1이면 admin 계정 (login.php가 아직 안 보내주면 0으로 파싱되어 자동으로 일반 유저 취급)
 }
 
 [Serializable]
@@ -48,6 +49,9 @@ public class BackendManager : MonoSingleton<BackendManager> // 제네릭 모노�
 
     // 로그인 성공 시 캐싱해둘 내 신분증(토큰)
     public string CurrentSessionToken { get; private set; }
+
+    // 릴리즈 빌드에서 디버그 기능(강제 킬 등)을 쓸 수 있는 admin 계정인지 여부
+    public bool IsAdminAccount { get; private set; }
 
     // 구형 싱글톤 보일러플레이트 제거 (Instance/Awake는 베이스가 처리)
 
@@ -153,6 +157,7 @@ public class BackendManager : MonoSingleton<BackendManager> // 제네릭 모노�
                     CurrentNickname = res.nickname;
                     CurrentSkillsBitmask = res.unlocked_skills;
                     CurrentSessionToken = res.session_token;
+                    IsAdminAccount = res.is_admin == 1;
 
                     // 로그인에 성공하면 10초마다 세션을 검사하는 심장 박동을 켭니다!
                     if (_heartbeatCoroutine != null) StopCoroutine(_heartbeatCoroutine);
@@ -273,6 +278,7 @@ public class BackendManager : MonoSingleton<BackendManager> // 제네릭 모노�
                         // 하트비트 정지 및 정보 초기화
                         CurrentLoginID = null;
                         CurrentSessionToken = null;
+                        IsAdminAccount = false;
                         
                         // 강제 로그아웃 이벤트 발생!
                         OnSessionExpired?.Invoke(); 

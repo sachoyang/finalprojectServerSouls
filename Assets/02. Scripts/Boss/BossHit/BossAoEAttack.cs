@@ -44,6 +44,11 @@ public class BossAoEAttack : MonoBehaviour
     // 컴포넌트는 켜둔 채 이 플래그로 멈춘다.
     private bool _finished;
 
+    // OverlapSphere/BoxNonAlloc용 고정 크기 버퍼 (매 프레임 새 배열 할당으로 인한 GC 스파이크 방지)
+    private const int MaxHitsPerZone = 16;
+    private readonly Collider[] _hitBuffer = new Collider[MaxHitsPerZone];
+    private readonly float[] _hitDistances = new float[MaxHitsPerZone];
+
     // 풀에서 재활성화될 때마다 호출되어 상태를 초기화한다. (컴포넌트를 끄지 않으므로 매 재활성화마다 옴)
     private void OnEnable()
     {
@@ -106,20 +111,22 @@ public class BossAoEAttack : MonoBehaviour
             if (_timer < zone.startTime || _timer > zone.startTime + zone.duration) continue;
 
             Vector3 centerPosition = transform.position + (transform.rotation * zone.hitOffset);
-            Collider[] hits = new Collider[0];
+            int hitCount = 0;
 
+            // NonAlloc 버전 + 고정 버퍼로 매 프레임 배열 할당(GC)을 제거.
             if (zone.hitShape == AoEShape.Sphere)
             {
-                hits = Physics.OverlapSphere(centerPosition, zone.hitRadius, targetLayer);
+                hitCount = Physics.OverlapSphereNonAlloc(centerPosition, zone.hitRadius, _hitBuffer, targetLayer);
             }
             else if (zone.hitShape == AoEShape.Box)
             {
-                hits = Physics.OverlapBox(centerPosition, zone.boxSize / 2f, transform.rotation, targetLayer);
+                hitCount = Physics.OverlapBoxNonAlloc(centerPosition, zone.boxSize / 2f, _hitBuffer, transform.rotation, targetLayer);
             }
 
-            SortBySurfaceDistance(hits, centerPosition);
-            foreach (var hit in hits)
+            SortBySurfaceDistance(_hitBuffer, _hitDistances, hitCount, centerPosition);
+            for (int h = 0; h < hitCount; h++)
             {
+                Collider hit = _hitBuffer[h];
                 PlayerHitbox playerHitbox = hit.GetComponentInParent<PlayerHitbox>();
                 if (playerHitbox == null || !playerHitbox.Matches(hit))
                 {
@@ -145,7 +152,7 @@ public class BossAoEAttack : MonoBehaviour
                     out Vector3 hitPoint,
                     out Vector3 hitNormal);
                 playerStats.TakeDamage(finalDamage, hitPoint, hitNormal);
-                Debug.Log($"[AoE Hit] 광역 이펙트 연쇄 적중! 파티클 동기화 딜: {finalDamage}");
+                BossLog.Info($"[AoE Hit] 광역 이펙트 연쇄 적중! 파티클 동기화 딜: {finalDamage}");
                 _hitTargets[playerStats] = Time.time;
             }
         }
@@ -176,29 +183,32 @@ public class BossAoEAttack : MonoBehaviour
 
     private static void SortBySurfaceDistance(
         Collider[] colliders,
+        float[] distances,
+        int count,
         Vector3 sourcePosition)
     {
-        for (int i = 1; i < colliders.Length; i++)
+        // ClosestPoint(물리 연산)는 콜라이더당 딱 한 번만 계산해서 캐싱.
+        for (int i = 0; i < count; i++)
+        {
+            distances[i] =
+                (colliders[i].ClosestPoint(sourcePosition) - sourcePosition).sqrMagnitude;
+        }
+
+        // 캐싱된 거리 기준 삽입 정렬 (count가 작아 충분히 빠름)
+        for (int i = 1; i < count; i++)
         {
             Collider value = colliders[i];
-            float valueDistance =
-                (value.ClosestPoint(sourcePosition) - sourcePosition).sqrMagnitude;
+            float valueDistance = distances[i];
             int j = i - 1;
-            while (j >= 0)
+            while (j >= 0 && distances[j] > valueDistance)
             {
-                float currentDistance =
-                    (colliders[j].ClosestPoint(sourcePosition) - sourcePosition)
-                    .sqrMagnitude;
-                if (currentDistance <= valueDistance)
-                {
-                    break;
-                }
-
                 colliders[j + 1] = colliders[j];
+                distances[j + 1] = distances[j];
                 j--;
             }
 
             colliders[j + 1] = value;
+            distances[j + 1] = valueDistance;
         }
     }
 

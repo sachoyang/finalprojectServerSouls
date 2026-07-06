@@ -21,6 +21,12 @@ public class BossMeleeAttack : MonoBehaviour
 
     private bool _isAttacking = false;
     private Vector3[] _previousPositions;
+
+    // OverlapCapsuleNonAlloc용 고정 크기 버퍼 (매 틱 새 배열 할당으로 인한 GC 스파이크 방지)
+    // 플레이어 3명 + 자식 콜라이더 여러 개를 감안해도 16이면 충분하다.
+    private const int MaxHitsPerSweep = 16;
+    private readonly Collider[] _hitBuffer = new Collider[MaxHitsPerSweep];
+    private readonly float[] _hitDistances = new float[MaxHitsPerSweep];
     
     // 한 번 휘두를 때(다단히트 방지) 이미 맞은 대상을 기억하는 장부
     private HashSet<Collider> _alreadyHitTargets = new HashSet<Collider>();
@@ -76,11 +82,13 @@ public class BossMeleeAttack : MonoBehaviour
             // SphereCast 대신 OverlapCapsule 사용!
             // 이전 위치(previousPos)와 현재 위치(currentPos)를 양 끝점으로 하는 두께(hitRadius)의 알약 형태 공간을 싹 긁어옵니다.
             // 거리가 가깝든 멀든, 안에서 출발하든 밖에서 출발하든 100% 잡아냅니다.
-            Collider[] hits = Physics.OverlapCapsule(previousPos, currentPos, hitRadius, targetLayer);
-            SortBySurfaceDistance(hits, currentPos);
+            // NonAlloc 버전 + 고정 버퍼로 매 틱 배열 할당(GC)을 제거.
+            int hitCount = Physics.OverlapCapsuleNonAlloc(previousPos, currentPos, hitRadius, _hitBuffer, targetLayer);
+            SortBySurfaceDistance(_hitBuffer, _hitDistances, hitCount, currentPos);
 
-            foreach (var hitCol in hits)
+            for (int h = 0; h < hitCount; h++)
             {
+                Collider hitCol = _hitBuffer[h];
                 PlayerHitbox playerHitbox = hitCol.GetComponentInParent<PlayerHitbox>();
                 if (playerHitbox == null || !playerHitbox.Matches(hitCol)) continue;
 
@@ -99,7 +107,7 @@ public class BossMeleeAttack : MonoBehaviour
                         out Vector3 hitPoint,
                         out Vector3 hitNormal);
                     playerStats.TakeDamage(finalDamage, hitPoint, hitNormal);
-                    Debug.Log($"[Melee Attack] 무기 궤적 타격 성공! 데미지: {finalDamage}");
+                    BossLog.Info($"[Melee Attack] 무기 궤적 타격 성공! 데미지: {finalDamage}");
 
                     // 타격음 재생 (원한다면 여기에 사운드 코드 추가)
 
@@ -139,29 +147,33 @@ public class BossMeleeAttack : MonoBehaviour
 
     private static void SortBySurfaceDistance(
         Collider[] colliders,
+        float[] distances,
+        int count,
         Vector3 sourcePosition)
     {
-        for (int i = 1; i < colliders.Length; i++)
+        // ClosestPoint(물리 연산)는 콜라이더당 딱 한 번만 계산해서 캐싱.
+        // (기존에는 삽입정렬 내부 루프에서 반복 호출되어 O(n²)번 물리 연산이 돌았음)
+        for (int i = 0; i < count; i++)
+        {
+            distances[i] =
+                (colliders[i].ClosestPoint(sourcePosition) - sourcePosition).sqrMagnitude;
+        }
+
+        // 캐싱된 거리 기준 삽입 정렬 (count가 작아 충분히 빠름)
+        for (int i = 1; i < count; i++)
         {
             Collider value = colliders[i];
-            float valueDistance =
-                (value.ClosestPoint(sourcePosition) - sourcePosition).sqrMagnitude;
+            float valueDistance = distances[i];
             int j = i - 1;
-            while (j >= 0)
+            while (j >= 0 && distances[j] > valueDistance)
             {
-                float currentDistance =
-                    (colliders[j].ClosestPoint(sourcePosition) - sourcePosition)
-                    .sqrMagnitude;
-                if (currentDistance <= valueDistance)
-                {
-                    break;
-                }
-
                 colliders[j + 1] = colliders[j];
+                distances[j + 1] = distances[j];
                 j--;
             }
 
             colliders[j + 1] = value;
+            distances[j + 1] = valueDistance;
         }
     }
 

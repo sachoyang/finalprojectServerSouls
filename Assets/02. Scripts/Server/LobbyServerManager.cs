@@ -101,6 +101,19 @@ public class LobbyServerManager : NetworkBehaviour
         changeDetector = GetChangeDetector(
             ChangeDetector.Source.SimulationState);
 
+        // 전투 진입(OnClickBattleButton) / 보스 기상(NetworkBossCore) 때 잠갔던 방을
+        // 로비로 돌아온 시점에 다시 연다. (보스 클리어 후 복귀든 전멸 복귀든 동일)
+        // 정책: '로비에 있는 동안만' 방이 열려 있고, 전투/보상 씬 동안에는 잠긴다.
+        if (HasStateAuthority &&
+            Runner != null &&
+            Runner.SessionInfo != null &&
+            !Runner.SessionInfo.IsOpen)
+        {
+            Runner.SessionInfo.IsOpen = true;
+            Runner.SessionInfo.IsVisible = true;
+            Debug.Log("[네트워크] 로비 복귀. 방 문을 다시 엽니다.");
+        }
+
         RefreshLobbyUI();
     }
 
