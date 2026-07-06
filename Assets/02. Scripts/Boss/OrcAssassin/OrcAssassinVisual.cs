@@ -212,7 +212,14 @@ public class OrcAssassinVisual : MonoBehaviour, IBossVisual
     }
 
     public void SetAnimSpeed(float multiplier) => anim.speed = multiplier;
-    public void DoLocomotion() => anim.CrossFade("Locomotion", 0.1f);
+    public void DoLocomotion()
+    {
+        // 그로기(웅크림)에서 일어나는 복귀는 포즈 차이가 커서 긴 블렌드로 부드럽게 잇는다.
+        float fadeTime = _groggyRecoverPending ? groggyRecoverBlendTime : 0.1f;
+        _groggyRecoverPending = false;
+
+        anim.CrossFade("Locomotion", fadeTime);
+    }
 
     public void PlayWakeUp(int wakeUpHash)
     {
@@ -225,10 +232,22 @@ public class OrcAssassinVisual : MonoBehaviour, IBossVisual
         if (smokeBombEffect != null) smokeBombEffect.Play();
     }
 
+    [Header("그로기 모션 방식")]
+    // 루프 모드 ON/OFF와 gethit 배속은 보스 코어(NetworkBossCore)의
+    // groggyDurationAfterHitAnim / groggyHitAnimSpeed에서 관리한다 (설정 창구 일원화).
+    [Tooltip("그로기(웅크린 루프)에서 일어나 Locomotion으로 돌아올 때의 크로스페이드 시간(초).\n" +
+             "웅크린 포즈와 서 있는 포즈의 차이가 커서 기본 0.1초로는 뚝 끊겨 보인다. 0.4~0.6 권장.")]
+    public float groggyRecoverBlendTime = 0.5f;
+
+    private bool _groggyRecoverPending = false;
+
     public void PlayGroggy(float speedMultiplier, float groggyDuration)
     {
+        // 루프 모드: 코어가 groggyHitAnimSpeed(gethit 재생 배속)를 speedMultiplier로 넘겨준다. 기본 1배속.
+        // 스트레치 모드: 클립을 그로기 시간에 맞춰 잡아늘리는 배속이 넘어온다. (기존 동작)
         SetAnimSpeed(speedMultiplier);
         anim.CrossFade("gethit", 0.1f);
+        _groggyRecoverPending = true; // 다음 Locomotion 복귀는 긴 블렌드로
     }
     public void PlayDie()
     {
