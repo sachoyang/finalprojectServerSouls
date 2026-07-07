@@ -1,0 +1,266 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!200 &20000000
+ShaderVariantCollection:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: CombatEffectVariants
+  m_Shaders:
+  - first: {fileID: 200, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 202, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 9000, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 9001, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 9002, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 9003, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 9004, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 9007, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 9101, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 9103, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 4800000, guid: f865b160a0be2924e8cf37c4e77fb1e9, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+      - keywords: FOG_EXP2
+        passType: 0
+  - first: {fileID: 4800000, guid: bd420104d99485e45b901bffcc31e6dd, type: 3}
+    second:
+      variants:
+      - keywords: FOG_EXP2 INSTANCING_ON
+        passType: 0
+      - keywords: INSTANCING_ON
+        passType: 0
+  - first: {fileID: 4800000, guid: 178af239732bb6042a96790731226ce2, type: 3}
+    second:
+      variants:
+      - keywords: FOG_EXP2 INSTANCING_ON
+        passType: 0
+      - keywords: INSTANCING_ON
+        passType: 0
+      - keywords: INSTANCING_ON SHADOWS_DEPTH
+        passType: 8
+  - first: {fileID: 4800000, guid: 37bcd545946b5fd4faf84df118754e93, type: 3}
+    second:
+      variants:
+      - keywords: INSTANCING_ON
+        passType: 0
+  - first: {fileID: 4800000, guid: 0406db5a14f94604a8c57ccfbc9f3b46, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+      - keywords: FOG_EXP2
+        passType: 0
+      - keywords: FOG_EXP2 _EMISSION _FADING_ON _FLIPBOOKBLENDING_ON _SCREEN_SPACE_OCCLUSION
+          _SOFTPARTICLES_ON _SURFACE_TYPE_TRANSPARENT
+        passType: 0
+      - keywords: FOG_EXP2 _EMISSION _FADING_ON _FLIPBOOKBLENDING_ON _SOFTPARTICLES_ON
+          _SURFACE_TYPE_TRANSPARENT
+        passType: 0
+      - keywords: FOG_EXP2 _EMISSION _FADING_ON _SCREEN_SPACE_OCCLUSION _SOFTPARTICLES_ON
+          _SURFACE_TYPE_TRANSPARENT
+        passType: 0
+      - keywords: FOG_EXP2 _EMISSION _FADING_ON _SOFTPARTICLES_ON _SURFACE_TYPE_TRANSPARENT
+        passType: 0
+      - keywords: FOG_EXP2 _EMISSION _SCREEN_SPACE_OCCLUSION _SURFACE_TYPE_TRANSPARENT
+        passType: 0
+      - keywords: FOG_EXP2 _EMISSION _SURFACE_TYPE_TRANSPARENT
+        passType: 0
+      - keywords: FOG_EXP2 _FADING_ON _FLIPBOOKBLENDING_ON _SOFTPARTICLES_ON
+        passType: 0
+      - keywords: FOG_EXP2 _FADING_ON _SOFTPARTICLES_ON
+        passType: 0
+      - keywords: _DISTORTION_ON _EMISSION _FADING_ON _NORMALMAP _SCREEN_SPACE_OCCLUSION
+          _SOFTPARTICLES_ON _SURFACE_TYPE_TRANSPARENT
+        passType: 0
+      - keywords: _DISTORTION_ON _EMISSION _FADING_ON _NORMALMAP _SOFTPARTICLES_ON
+          _SURFACE_TYPE_TRANSPARENT
+        passType: 0
+      - keywords: _DISTORTION_ON _FADING_ON _NORMALMAP _SOFTPARTICLES_ON
+        passType: 0
+      - keywords: _EMISSION _FADING_ON _FLIPBOOKBLENDING_ON _SCREEN_SPACE_OCCLUSION
+          _SOFTPARTICLES_ON _SURFACE_TYPE_TRANSPARENT
+        passType: 0
+      - keywords: _EMISSION _FADING_ON _FLIPBOOKBLENDING_ON _SOFTPARTICLES_ON _SURFACE_TYPE_TRANSPARENT
+        passType: 0
+      - keywords: _EMISSION _FADING_ON _SCREEN_SPACE_OCCLUSION _SOFTPARTICLES_ON
+          _SURFACE_TYPE_TRANSPARENT
+        passType: 0
+      - keywords: _EMISSION _FADING_ON _SOFTPARTICLES_ON _SURFACE_TYPE_TRANSPARENT
+        passType: 0
+      - keywords: _EMISSION _SCREEN_SPACE_OCCLUSION _SURFACE_TYPE_TRANSPARENT
+        passType: 0
+      - keywords: _EMISSION _SURFACE_TYPE_TRANSPARENT
+        passType: 0
+      - keywords: _FADING_ON _FLIPBOOKBLENDING_ON _SOFTPARTICLES_ON
+        passType: 0
+      - keywords: _FADING_ON _SOFTPARTICLES_ON
+        passType: 0
+      - keywords: 
+        passType: 13
+      - keywords: _FLIPBOOKBLENDING_ON
+        passType: 13
+  - first: {fileID: 4800000, guid: b7839dad95683814aa64166edc107ae2, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 13
+      - keywords: FOG_EXP2 _ADDITIONAL_LIGHTS_VERTEX _ALPHAPREMULTIPLY_ON _EMISSION
+          _MAIN_LIGHT_SHADOWS _NORMALMAP _SURFACE_TYPE_TRANSPARENT
+        passType: 13
+      - keywords: FOG_EXP2 _ADDITIONAL_LIGHTS_VERTEX _ALPHATEST_ON _EMISSION _MAIN_LIGHT_SHADOWS
+          _METALLICSPECGLOSSMAP _NORMALMAP
+        passType: 13
+      - keywords: FOG_EXP2 _ADDITIONAL_LIGHTS_VERTEX _MAIN_LIGHT_SHADOWS _NORMALMAP
+        passType: 13
+      - keywords: FOG_EXP2 _ADDITIONAL_LIGHT_SHADOWS _ALPHAPREMULTIPLY_ON _EMISSION
+          _FORWARD_PLUS _MAIN_LIGHT_SHADOWS _NORMALMAP _REFLECTION_PROBE_BLENDING
+          _REFLECTION_PROBE_BOX_PROJECTION _SCREEN_SPACE_OCCLUSION _SHADOWS_SOFT
+          _SURFACE_TYPE_TRANSPARENT
+        passType: 13
+      - keywords: FOG_EXP2 _ADDITIONAL_LIGHT_SHADOWS _ALPHAPREMULTIPLY_ON _EMISSION
+          _FORWARD_PLUS _MAIN_LIGHT_SHADOWS _NORMALMAP _REFLECTION_PROBE_BLENDING
+          _REFLECTION_PROBE_BOX_PROJECTION _SCREEN_SPACE_OCCLUSION _SURFACE_TYPE_TRANSPARENT
+        passType: 13
+      - keywords: FOG_EXP2 _ADDITIONAL_LIGHT_SHADOWS _ALPHATEST_ON _EMISSION _FORWARD_PLUS
+          _MAIN_LIGHT_SHADOWS _METALLICSPECGLOSSMAP _NORMALMAP _REFLECTION_PROBE_BLENDING
+          _REFLECTION_PROBE_BOX_PROJECTION _SCREEN_SPACE_OCCLUSION
+        passType: 13
+      - keywords: FOG_EXP2 _ADDITIONAL_LIGHT_SHADOWS _ALPHATEST_ON _EMISSION _FORWARD_PLUS
+          _MAIN_LIGHT_SHADOWS _METALLICSPECGLOSSMAP _NORMALMAP _REFLECTION_PROBE_BLENDING
+          _REFLECTION_PROBE_BOX_PROJECTION _SCREEN_SPACE_OCCLUSION _SHADOWS_SOFT
+        passType: 13
+      - keywords: FOG_EXP2 _FORWARD_PLUS _MAIN_LIGHT_SHADOWS _NORMALMAP
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _ALPHAPREMULTIPLY_ON _EMISSION _MAIN_LIGHT_SHADOWS
+          _NORMALMAP _SURFACE_TYPE_TRANSPARENT
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _ALPHAPREMULTIPLY_ON _EMISSION _NORMALMAP _SURFACE_TYPE_TRANSPARENT
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _ALPHATEST_ON _EMISSION _MAIN_LIGHT_SHADOWS
+          _METALLICSPECGLOSSMAP _NORMALMAP
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _ALPHATEST_ON _EMISSION _METALLICSPECGLOSSMAP
+          _NORMALMAP
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _MAIN_LIGHT_SHADOWS _NORMALMAP
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _NORMALMAP
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS_VERTEX _ALPHAPREMULTIPLY_ON _EMISSION _MAIN_LIGHT_SHADOWS
+          _NORMALMAP _SURFACE_TYPE_TRANSPARENT
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS_VERTEX _ALPHATEST_ON _EMISSION _MAIN_LIGHT_SHADOWS
+          _METALLICSPECGLOSSMAP _NORMALMAP
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS_VERTEX _MAIN_LIGHT_SHADOWS _NORMALMAP
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHT_SHADOWS _ALPHAPREMULTIPLY_ON _EMISSION _FADING_ON
+          _FLIPBOOKBLENDING_ON _FORWARD_PLUS _MAIN_LIGHT_SHADOWS _REFLECTION_PROBE_BLENDING
+          _REFLECTION_PROBE_BOX_PROJECTION _SCREEN_SPACE_OCCLUSION _SOFTPARTICLES_ON
+          _SURFACE_TYPE_TRANSPARENT
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHT_SHADOWS _ALPHAPREMULTIPLY_ON _EMISSION _FORWARD_PLUS
+          _MAIN_LIGHT_SHADOWS _NORMALMAP _REFLECTION_PROBE_BLENDING _REFLECTION_PROBE_BOX_PROJECTION
+          _SCREEN_SPACE_OCCLUSION _SHADOWS_SOFT _SURFACE_TYPE_TRANSPARENT
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHT_SHADOWS _ALPHAPREMULTIPLY_ON _EMISSION _FORWARD_PLUS
+          _MAIN_LIGHT_SHADOWS _NORMALMAP _REFLECTION_PROBE_BLENDING _REFLECTION_PROBE_BOX_PROJECTION
+          _SCREEN_SPACE_OCCLUSION _SURFACE_TYPE_TRANSPARENT
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHT_SHADOWS _ALPHATEST_ON _EMISSION _FORWARD_PLUS
+          _MAIN_LIGHT_SHADOWS _METALLICSPECGLOSSMAP _NORMALMAP _REFLECTION_PROBE_BLENDING
+          _REFLECTION_PROBE_BOX_PROJECTION _SCREEN_SPACE_OCCLUSION
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHT_SHADOWS _ALPHATEST_ON _EMISSION _FORWARD_PLUS
+          _MAIN_LIGHT_SHADOWS _METALLICSPECGLOSSMAP _NORMALMAP _REFLECTION_PROBE_BLENDING
+          _REFLECTION_PROBE_BOX_PROJECTION _SCREEN_SPACE_OCCLUSION _SHADOWS_SOFT
+        passType: 13
+      - keywords: _ALPHATEST_ON
+        passType: 13
+      - keywords: _ALPHATEST_ON _NORMALMAP
+        passType: 13
+      - keywords: _FADING_ON _FLIPBOOKBLENDING_ON _FORWARD_PLUS _MAIN_LIGHT_SHADOWS
+          _SOFTPARTICLES_ON
+        passType: 13
+      - keywords: _FORWARD_PLUS _MAIN_LIGHT_SHADOWS _NORMALMAP
+        passType: 13
+  - first: {fileID: -6465566751694194690, guid: b33a908442da88d46939a0af23e87141, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 8
+      - keywords: 
+        passType: 13
+      - keywords: FOG_EXP2 _ADDITIONAL_LIGHT_SHADOWS _DBUFFER_MRT3 _FORWARD_PLUS
+          _MAIN_LIGHT_SHADOWS _REFLECTION_PROBE_BLENDING _REFLECTION_PROBE_BOX_PROJECTION
+          _SCREEN_SPACE_OCCLUSION
+        passType: 13
+      - keywords: FOG_EXP2 _FORWARD_PLUS _MAIN_LIGHT_SHADOWS
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS _MAIN_LIGHT_SHADOWS
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHTS_VERTEX _MAIN_LIGHT_SHADOWS
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHT_SHADOWS _DBUFFER_MRT3 _FORWARD_PLUS _MAIN_LIGHT_SHADOWS
+          _REFLECTION_PROBE_BLENDING _REFLECTION_PROBE_BOX_PROJECTION _SCREEN_SPACE_OCCLUSION
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHT_SHADOWS _DBUFFER_MRT3 _FORWARD_PLUS _MAIN_LIGHT_SHADOWS
+          _REFLECTION_PROBE_BLENDING _REFLECTION_PROBE_BOX_PROJECTION _SCREEN_SPACE_OCCLUSION
+          _SHADOWS_SOFT
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHT_SHADOWS _DBUFFER_MRT3 _FORWARD_PLUS _MAIN_LIGHT_SHADOWS_CASCADE
+          _REFLECTION_PROBE_BLENDING _REFLECTION_PROBE_BOX_PROJECTION _SCREEN_SPACE_OCCLUSION
+          _SHADOWS_SOFT
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHT_SHADOWS _FORWARD_PLUS _MAIN_LIGHT_SHADOWS _REFLECTION_PROBE_BLENDING
+          _REFLECTION_PROBE_BOX_PROJECTION _SCREEN_SPACE_OCCLUSION
+        passType: 13
+      - keywords: _FORWARD_PLUS _MAIN_LIGHT_SHADOWS
+        passType: 13
+      - keywords: _FORWARD_PLUS _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 13
