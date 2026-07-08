@@ -116,7 +116,7 @@ public class NetworkBossCore : NetworkBehaviour
     [Tooltip("한 번의 타격으로 들어올 수 있는 최대 데미지 = maxHP × 이 비율.\n" +
              "RPC_TakeDamage는 아무 클라이언트나 호출할 수 있으므로, 조작된 클라이언트가 보낸 비정상 데미지(예: 999999)를 서버에서 잘라내는 안전장치.")]
     [Range(0.001f, 1f)]
-    public float maxSingleHitPercent = 0.05f;
+    public float maxSingleHitPercent = 1f;
 
     [Header("디버그 킬 (릴리즈 빌드 admin 전용)")]
     [Tooltip("릴리즈 빌드에서 디버그 강제 킬(F5)을 허용할 admin 계정의 login_id 목록.\n" +
