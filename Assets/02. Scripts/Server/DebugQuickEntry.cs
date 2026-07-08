@@ -50,8 +50,10 @@ public class DebugQuickEntry : MonoBehaviour
     [SerializeField] private bool warmupThroughLoadingScene = true;
 
     [Header("GUI 위치 / 너비")]
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
     [SerializeField] private Vector2 guiPosition = new Vector2(10, 10);
     [SerializeField] private float guiWidth = 260f;
+#endif
 
     private const string CurrentNicknameKey = "CurrentNickname";
 

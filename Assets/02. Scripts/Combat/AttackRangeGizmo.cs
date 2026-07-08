@@ -17,7 +17,9 @@ public class AttackRangeGizmo : MonoBehaviour
     [SerializeField] private bool drawCenterLine = true;
     [Header("Skill Hit Events")]
     [SerializeField] private bool showEquippedSkillRanges = true;
+#if UNITY_EDITOR
     [SerializeField] private bool showSkillLabels = true;
+#endif
     [SerializeField] private float fallbackRadius = 1.4f;
     [SerializeField] private float fallbackDistance = 1.8f;
     [SerializeField] private float fallbackHeight = 1.1f;
