@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cbc39ac0e5f95d14fbd17eac508de1c4, type: 3}
+  m_Script: {fileID: 11500000, guid: 5e9d0b71a7d34f4b83c163ad33030303, type: 3}
   m_Name: basic_attack_combo
   m_EditorClassIdentifier: 
   bitIndex: 1
@@ -18,20 +18,16 @@ MonoBehaviour:
   description: "\uAE30\uBCF8 \uACF5\uACA9\uC758 \uCF64\uBCF4\uB97C \uCD1D 3\uD0C0\uAE4C\uC9C0
     \uCD94\uAC00\uD55C\uB2E4"
   icon: {fileID: -1062722195, guid: 602013fcc1a5c4a48ad04a33a93cf811, type: 3}
-  abilityType: 2
   appearStage: 1
   unlockedSkill: 0
   basicSkill: 0
   maxLevel: 1
-  levelSettings:
-  - damageMultiplier: 1
-    maxHealthBonus: 0
-    maxStaminaBonus: 0
-    defenseBonusPercent: 0
-    attackDamageBonusPercent: 0
-    healthRestoreAmount: 0
-    staminaRestoreAmount: 0
+  staminaCost: 0
+  cooldownSeconds: 0
   specialEffect: 1
+  levelSettings:
+  - healthRestoreAmount: 0
+    staminaRestoreAmount: 0
   animationClip: {fileID: -203655887218126122, guid: f1d1bf1bca092184498421e5bb785168, type: 3}
   animationStateName: 
   animationTrigger: 
@@ -43,12 +39,6 @@ MonoBehaviour:
   effectPrefab: {fileID: 0}
   effectLocalOffset: {x: 0, y: 0, z: 0}
   parentEffectToPlayer: 0
-  hitboxPrefab: {fileID: 0}
-  hitboxLocalOffset: {x: 0, y: 0, z: 0}
-  hitboxRevivePower: 34
-  hitboxDelay: 0
-  hitboxLifetime: 0.3
-  hitEvents: []
   soundClip: {fileID: 0}
   soundVolume: 1
   soundDelay: 0

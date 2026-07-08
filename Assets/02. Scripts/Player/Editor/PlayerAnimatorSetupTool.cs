@@ -132,7 +132,7 @@ public static class PlayerAnimatorSetupTool
         }
 
         int updatedCount = 0;
-        string[] moduleGuids = AssetDatabase.FindAssets("t:PlayerAbilityModule", new[] { SkillModuleFolder });
+        string[] moduleGuids = PlayerAbilityAssetSearch.FindAbilityAssetGuids(new[] { SkillModuleFolder });
         foreach (string moduleGuid in moduleGuids)
         {
             string path = AssetDatabase.GUIDToAssetPath(moduleGuid);
@@ -243,7 +243,7 @@ public static class PlayerAnimatorSetupTool
             ?? root.AddStateMachine(SkillMachineName, new Vector3(640f, 280f, 0f));
 
         AnimatorState idleState = FindState(root, "idle1");
-        string[] moduleGuids = AssetDatabase.FindAssets("t:PlayerAbilityModule", new[] { SkillModuleFolder });
+        string[] moduleGuids = PlayerAbilityAssetSearch.FindAbilityAssetGuids(new[] { SkillModuleFolder });
         ClearSkillActions(controller, root, skillMachine, moduleGuids);
         int syncedCount = 0;
 
@@ -907,7 +907,7 @@ public static class PlayerAnimatorSetupTool
         }
 
         string[] moduleGuids =
-            AssetDatabase.FindAssets("t:PlayerAbilityModule", new[] { SkillModuleFolder });
+            PlayerAbilityAssetSearch.FindAbilityAssetGuids(new[] { SkillModuleFolder });
         foreach (string moduleGuid in moduleGuids)
         {
             string path = AssetDatabase.GUIDToAssetPath(moduleGuid);

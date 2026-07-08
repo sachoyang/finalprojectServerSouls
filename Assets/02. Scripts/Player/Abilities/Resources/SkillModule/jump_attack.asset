@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cbc39ac0e5f95d14fbd17eac508de1c4, type: 3}
+  m_Script: {fileID: 11500000, guid: 3a8b0d68c15f4cfaa7f2a7b5bbf10101, type: 3}
   m_Name: jump_attack
   m_EditorClassIdentifier: 
   bitIndex: 6
@@ -19,7 +19,6 @@ MonoBehaviour:
     {hit1}\uBC30\uC758 \uB370\uBBF8\uC9C0\uB97C \uC900\uB2E4\n\uC2A4\uD14C\uBBF8\uB098
     {staminaCost} \uC18C\uBAA8 \uCFE8\uD0C0\uC784 {cooldown}\uCD08"
   icon: {fileID: 721787287, guid: 7d4e7f6eb9b67bc4da7d17ee567dd146, type: 3}
-  abilityType: 1
   appearStage: 1
   unlockedSkill: 1
   basicSkill: 1
@@ -28,34 +27,9 @@ MonoBehaviour:
   cooldownSeconds: 8
   levelSettings:
   - damageMultiplier: 1
-    maxHealthBonus: 0
-    maxStaminaBonus: 0
-    defenseBonusPercent: 0
-    attackDamageBonusPercent: 0
-    healthRestoreAmount: 0
-    staminaRestoreAmount: 0
   - damageMultiplier: 1.4512479
-    maxHealthBonus: 0
-    maxStaminaBonus: 0
-    defenseBonusPercent: 0
-    attackDamageBonusPercent: 0
-    healthRestoreAmount: 0
-    staminaRestoreAmount: 0
   - damageMultiplier: 1
-    maxHealthBonus: 0
-    maxStaminaBonus: 0
-    defenseBonusPercent: 0
-    attackDamageBonusPercent: 0
-    healthRestoreAmount: 0
-    staminaRestoreAmount: 0
   - damageMultiplier: 1.495285
-    maxHealthBonus: 0
-    maxStaminaBonus: 0
-    defenseBonusPercent: 0
-    attackDamageBonusPercent: 0
-    healthRestoreAmount: 0
-    staminaRestoreAmount: 0
-  specialEffect: 0
   animationClip: {fileID: -203655887218126122, guid: 2e360ce02ed05d04faec51172d19bb6d, type: 3}
   animationStateName: JumpAttack
   animationTrigger: JumpAttack
@@ -67,6 +41,9 @@ MonoBehaviour:
   effectPrefab: {fileID: 0}
   effectLocalOffset: {x: 0, y: 0, z: 0}
   parentEffectToPlayer: 0
+  soundClip: {fileID: 8300000, guid: b701448ceb902694db4778af298a1374, type: 3}
+  soundVolume: 1
+  soundDelay: 1
   hitboxPrefab: {fileID: 0}
   hitboxLocalOffset: {x: 0, y: 0, z: 0}
   hitboxRevivePower: 34
@@ -83,6 +60,3 @@ MonoBehaviour:
     groggyDamage: 10
     revivePower: 34
     previewColor: {r: 0, g: 0.8264365, b: 1, a: 0.3}
-  soundClip: {fileID: 8300000, guid: b701448ceb902694db4778af298a1374, type: 3}
-  soundVolume: 1
-  soundDelay: 1

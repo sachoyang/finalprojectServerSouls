@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cbc39ac0e5f95d14fbd17eac508de1c4, type: 3}
+  m_Script: {fileID: 11500000, guid: 4f6c7a9db8e84dd6a23c5cc911020202, type: 3}
   m_Name: Iron_body
   m_EditorClassIdentifier: 
   bitIndex: 9
@@ -17,41 +17,27 @@ MonoBehaviour:
   displayName: "\uC544\uC774\uC5B8 \uBC14\uB514"
   description: "\uBC29\uC5B4\uB825\uC744 {defenseIncrease}% \uC99D\uAC00\uC2DC\uD0A8\uB2E4"
   icon: {fileID: 1990943920, guid: 7d4e7f6eb9b67bc4da7d17ee567dd146, type: 3}
-  abilityType: 0
   appearStage: 1
   unlockedSkill: 1
   basicSkill: 1
   maxLevel: 4
   levelSettings:
-  - damageMultiplier: 1
-    maxHealthBonus: 0
+  - maxHealthBonus: 0
     maxStaminaBonus: 0
     defenseBonusPercent: 10
     attackDamageBonusPercent: 0
-    healthRestoreAmount: 0
-    staminaRestoreAmount: 0
-  - damageMultiplier: 1
-    maxHealthBonus: 0
+  - maxHealthBonus: 0
     maxStaminaBonus: 0
     defenseBonusPercent: 20
     attackDamageBonusPercent: 0
-    healthRestoreAmount: 0
-    staminaRestoreAmount: 0
-  - damageMultiplier: 1
-    maxHealthBonus: 0
+  - maxHealthBonus: 0
     maxStaminaBonus: 0
     defenseBonusPercent: 30
     attackDamageBonusPercent: 0
-    healthRestoreAmount: 0
-    staminaRestoreAmount: 0
-  - damageMultiplier: 1
-    maxHealthBonus: 0
+  - maxHealthBonus: 0
     maxStaminaBonus: 0
     defenseBonusPercent: 40
     attackDamageBonusPercent: 0
-    healthRestoreAmount: 0
-    staminaRestoreAmount: 0
-  specialEffect: 0
   animationClip: {fileID: 0}
   animationStateName: 
   animationTrigger: 
@@ -63,12 +49,6 @@ MonoBehaviour:
   effectPrefab: {fileID: 0}
   effectLocalOffset: {x: 0, y: 0, z: 0}
   parentEffectToPlayer: 0
-  hitboxPrefab: {fileID: 0}
-  hitboxLocalOffset: {x: 0, y: 0, z: 0}
-  hitboxRevivePower: 34
-  hitboxDelay: 0
-  hitboxLifetime: 0.3
-  hitEvents: []
   soundClip: {fileID: 0}
   soundVolume: 1
   soundDelay: 0

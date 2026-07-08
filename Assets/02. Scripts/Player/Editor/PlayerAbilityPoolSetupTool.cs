@@ -68,7 +68,7 @@ public static class PlayerAbilityPoolSetupTool
             return modules;
         }
 
-        string[] moduleGuids = AssetDatabase.FindAssets("t:PlayerAbilityModule", new[] { SkillModuleFolder });
+        string[] moduleGuids = PlayerAbilityAssetSearch.FindAbilityAssetGuids(new[] { SkillModuleFolder });
 
         foreach (string moduleGuid in moduleGuids)
         {
