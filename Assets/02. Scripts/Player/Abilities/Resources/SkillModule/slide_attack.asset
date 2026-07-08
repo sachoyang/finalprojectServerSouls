@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cbc39ac0e5f95d14fbd17eac508de1c4, type: 3}
+  m_Script: {fileID: 11500000, guid: 3a8b0d68c15f4cfaa7f2a7b5bbf10101, type: 3}
   m_Name: slide_attack
   m_EditorClassIdentifier: 
   bitIndex: 7
@@ -19,7 +19,6 @@ MonoBehaviour:
     \uD718\uB458\uB7EC \uD55C\uBC14\uD034 \uBCA0\uC5B4 {hit1}\uBC30\uC758 \uB370\uBBF8\uC9C0\uB97C
     \uC900\uB2E4"
   icon: {fileID: -684497504, guid: 602013fcc1a5c4a48ad04a33a93cf811, type: 3}
-  abilityType: 1
   appearStage: 1
   unlockedSkill: 1
   basicSkill: 1
@@ -28,28 +27,9 @@ MonoBehaviour:
   cooldownSeconds: 6
   levelSettings:
   - damageMultiplier: 1
-    maxHealthBonus: 0
-    maxStaminaBonus: 0
-    defenseRateBonus: 0
-    attackDamageBonusPercent: 0
   - damageMultiplier: 1
-    maxHealthBonus: 0
-    maxStaminaBonus: 0
-    defenseRateBonus: 0
-    attackDamageBonusPercent: 0
   - damageMultiplier: 1
-    maxHealthBonus: 0
-    maxStaminaBonus: 0
-    defenseRateBonus: 0
-    attackDamageBonusPercent: 0
   - damageMultiplier: 1
-    maxHealthBonus: 0
-    maxStaminaBonus: 0
-    defenseRateBonus: 0
-    attackDamageBonusPercent: 0
-  healthRestoreAmount: 0
-  staminaRestoreAmount: 0
-  specialEffect: 0
   animationClip: {fileID: -203655887218126122, guid: 1a16ca6c2c59c904c8e31ebc395a3e96, type: 3}
   animationStateName: SlideAttack
   animationTrigger: SlideAttack
@@ -61,6 +41,9 @@ MonoBehaviour:
   effectPrefab: {fileID: 0}
   effectLocalOffset: {x: 0, y: 0, z: 0}
   parentEffectToPlayer: 0
+  soundClip: {fileID: 8300000, guid: ae210f395a6cd604b864754f03a1632a, type: 3}
+  soundVolume: 1
+  soundDelay: 0
   hitboxPrefab: {fileID: 0}
   hitboxLocalOffset: {x: 0, y: 0, z: 0}
   hitboxRevivePower: 34
@@ -77,6 +60,3 @@ MonoBehaviour:
     groggyDamage: 10
     revivePower: 34
     previewColor: {r: 0, g: 0.0940752, b: 1, a: 0.3}
-  soundClip: {fileID: 8300000, guid: ae210f395a6cd604b864754f03a1632a, type: 3}
-  soundVolume: 1
-  soundDelay: 0

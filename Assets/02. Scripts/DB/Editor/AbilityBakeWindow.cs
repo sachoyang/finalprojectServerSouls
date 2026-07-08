@@ -109,7 +109,7 @@ public class AbilityBakeWindow : EditorWindow
                 bool isNew = false;
                 if (module == null)
                 {
-                    module = ScriptableObject.CreateInstance<PlayerAbilityModule>();
+                    module = CreateModuleForType(dbData.ability_type);
                     isNew = true;
                 }
 
@@ -147,5 +147,20 @@ public class AbilityBakeWindow : EditorWindow
 
         settingsDirty = false;
         AssetDatabase.SaveAssets();
+    }
+
+    private static PlayerAbilityModule CreateModuleForType(string abilityType)
+    {
+        if (System.Enum.TryParse(abilityType, true, out AbilityType parsedType))
+        {
+            return parsedType switch
+            {
+                AbilityType.Active => ScriptableObject.CreateInstance<ActiveAbilityModule>(),
+                AbilityType.Utility => ScriptableObject.CreateInstance<UtilityAbilityModule>(),
+                _ => ScriptableObject.CreateInstance<PassiveAbilityModule>()
+            };
+        }
+
+        return ScriptableObject.CreateInstance<PassiveAbilityModule>();
     }
 }

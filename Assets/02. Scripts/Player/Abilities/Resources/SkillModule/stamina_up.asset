@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cbc39ac0e5f95d14fbd17eac508de1c4, type: 3}
+  m_Script: {fileID: 11500000, guid: 4f6c7a9db8e84dd6a23c5cc911020202, type: 3}
   m_Name: stamina_up
   m_EditorClassIdentifier: 
   bitIndex: 8
@@ -17,35 +17,27 @@ MonoBehaviour:
   displayName: "\uC2A4\uD14C\uBBF8\uB098 \uC99D\uAC00"
   description: "\uCD5C\uB300 \uC2A4\uD14C\uBBF8\uB098\uB97C {maxStaminaIncrease}\uB9CC\uD07C \uC99D\uAC00\uC2DC\uD0A8\uB2E4"
   icon: {fileID: 644248103, guid: 7d4e7f6eb9b67bc4da7d17ee567dd146, type: 3}
-  abilityType: 0
   appearStage: 1
   unlockedSkill: 1
   basicSkill: 1
   maxLevel: 4
   levelSettings:
-  - damageMultiplier: 1
-    maxHealthBonus: 0
+  - maxHealthBonus: 0
     maxStaminaBonus: 3000
     defenseBonusPercent: 0
     attackDamageBonusPercent: 0
-  - damageMultiplier: 1
-    maxHealthBonus: 0
+  - maxHealthBonus: 0
     maxStaminaBonus: 6000
     defenseBonusPercent: 0
     attackDamageBonusPercent: 0
-  - damageMultiplier: 1
-    maxHealthBonus: 0
+  - maxHealthBonus: 0
     maxStaminaBonus: 9000
     defenseBonusPercent: 0
     attackDamageBonusPercent: 0
-  - damageMultiplier: 1
-    maxHealthBonus: 0
+  - maxHealthBonus: 0
     maxStaminaBonus: 12000
     defenseBonusPercent: 0
     attackDamageBonusPercent: 0
-  healthRestoreAmount: 0
-  staminaRestoreAmount: 0
-  specialEffect: 0
   animationClip: {fileID: 0}
   animationStateName:
   animationTrigger:
@@ -57,12 +49,6 @@ MonoBehaviour:
   effectPrefab: {fileID: 0}
   effectLocalOffset: {x: 0, y: 0, z: 0}
   parentEffectToPlayer: 0
-  hitboxPrefab: {fileID: 0}
-  hitboxLocalOffset: {x: 0, y: 0, z: 0}
-  hitboxRevivePower: 34
-  hitboxDelay: 0
-  hitboxLifetime: 0.3
-  hitEvents: []
   soundClip: {fileID: 0}
   soundVolume: 1
   soundDelay: 0

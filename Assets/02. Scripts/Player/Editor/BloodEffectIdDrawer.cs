@@ -78,7 +78,7 @@ public sealed class BloodEffectIdDrawer : PropertyDrawer
         AddOption("기본 공격 / 2타", BloodEffectSpawner.BasicAttack2Id);
         AddOption("기본 공격 / 3타", BloodEffectSpawner.BasicAttack3Id);
 
-        string[] guids = AssetDatabase.FindAssets("t:PlayerAbilityModule");
+        string[] guids = PlayerAbilityAssetSearch.FindAbilityAssetGuids();
         List<PlayerAbilityModule> activeModules = new List<PlayerAbilityModule>();
         for (int i = 0; i < guids.Length; i++)
         {
