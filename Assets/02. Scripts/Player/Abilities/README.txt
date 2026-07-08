@@ -1,19 +1,20 @@
 Player Ability System README
 
 목적
-- 스킬 제작부터 DB 업로드, Bake, 게임 초기화, 로그인 최신화, 보상 획득, 사용, 저장 복구까지 전체 진행 순서를 설명한다.
-- 처음 보는 사람은 1번부터 순서대로 읽으면 된다.
+- 스킬 ScriptableObject 생성, 로컬 SkillModule 관리, DB Bake/Upload 방향, 게임 시작 로드, 보상 획득, 전투 실행, 세션 복구 흐름을 설명한다.
+- 현재 스킬 모듈은 Active / Passive / Utility 타입별 ScriptableObject로 분리되어 있다.
 
 
 1. 전체 진행 과정
 
 [개발 단계]
-PlayerAbilityModule 작성
--> DB Upload
+타입별 스킬 모듈 생성
+-> 로컬 SkillModule 에셋에 Unity 전용 참조 연결
+-> 필요 시 DB Upload
 -> 서버 DB에 밸런스 수치 저장
 -> Bake
 -> Resources/SkillModule의 .asset 갱신
--> 애니메이션/VFX/히트박스/사운드 참조 확인
+-> 애니메이션/VFX/공격판정/사운드 참조 확인
 
 [게임 시작]
 GameManager
@@ -30,160 +31,284 @@ BackendManager.LoginUser()
 
 [로컬 게임]
 로그인과 FetchAbilities 없이
--> 시작 시 로드한 Bake 결과물을 그대로 사용
+-> 시작 시 로드한 SkillModule 값을 그대로 사용
 
 [게임 플레이]
 보스 처치
 -> RewardManager가 보상 후보 생성
 -> 플레이어가 하나 선택
--> PlayerAbilityInventory에 장착
+-> PlayerAbilityInventory에 등록 또는 레벨업
 -> PlayerAbilityController가 입력 감지
 -> 서버 권한에서 사용 검증
--> PlayerAbilityExecutor가 효과/히트박스 실행
--> 모든 클라이언트가 애니메이션/VFX 재생
+-> PlayerAbilityExecutor가 효과/공격판정 실행
+-> 모든 클라이언트가 애니메이션/VFX/사운드 재생
 
-[씬 이동 또는 재접속]
-PlayerSessionStore/NetworkPlayerData에서 abilityId 복구
+[같은 방 씬 이동]
+PlayerSessionStore/NetworkPlayerData에서 abilityId와 level 복구
 -> AbilityManager에서 최신 SkillModule 조회
--> PlayerAbilityInventory에 다시 장착
+-> PlayerAbilityInventory에 다시 등록
 
 
-2. 스킬 원본 만들기: PlayerAbilityModule
+2. 스킬 원본 만들기
 
-파일:
+공통 부모:
 - Assets/02. Scripts/Player/Abilities/PlayerAbilityModule.cs
 
+타입별 모듈:
+- Assets/02. Scripts/Player/Abilities/ActiveAbilityModule.cs
+- Assets/02. Scripts/Player/Abilities/PassiveAbilityModule.cs
+- Assets/02. Scripts/Player/Abilities/UtilityAbilityModule.cs
+
 에셋 위치:
-- Assets/02. Scripts/Player/Abilities/Resources/SkillModule
+- Assets/02. Scripts/Player/Abilities/Resources/SkillModule/ActiveSkill
+- Assets/02. Scripts/Player/Abilities/Resources/SkillModule/PassiveSkill
+- Assets/02. Scripts/Player/Abilities/Resources/SkillModule/UtilitySkill
 
-역할:
-- 스킬 하나의 서버 관리 수치와 Unity 전용 에셋 참조를 함께 보관하는 ScriptableObject다.
+폴더 구조:
+```text
+Resources/SkillModule
+├─ ActiveSkill
+├─ PassiveSkill
+└─ UtilitySkill
+```
 
-반드시 확인할 식별값:
-- AbilityId: DB, Bake, 저장, RPC, 런타임 조회에서 사용하는 고유 문자열이다.
-- BitIndex: 유저 해금 비트마스크에서 사용하는 위치다. 다른 스킬과 중복되면 안 된다.
-
-주요 게임 데이터:
-- DisplayName, Description, Icon
-- AbilityType: Passive 또는 Active
-- IncludeInRewardPool
-- MinBossStage/MaxBossStage
-- StaminaCost, CooldownSeconds
-- 회복량과 패시브 스탯 보너스
-- SpecialEffect
-
-Unity 전용 데이터:
-- AnimationClip, AnimationStateName, AnimationTrigger
-- EffectPrefab과 위치/부모 설정
-- HitboxPrefab과 데미지/위치/지연/수명
-- SoundClip, SoundVolume, SoundDelay
+Create 메뉴:
+- Create > ServerSouls > Player Modules > Active Ability
+- Create > ServerSouls > Player Modules > Passive Ability
+- Create > ServerSouls > Player Modules > Utility Ability
 
 주의:
-- AbilityId를 비워두면 에셋 이름을 대신 사용하므로 에셋 이름 변경에 취약하다.
-- SoundClip/SoundVolume/SoundDelay는 스킬 표현 실행 시 SoundManager의 SkillEffect 카테고리로 3D 재생된다.
+- 처음 만들 때 타입을 선택한다.
+- 인스펙터에서 AbilityType을 바꾸는 구조가 아니다.
+- 세 타입 모두 PlayerAbilityModule을 상속하므로 런타임에서는 PlayerAbilityModule로 공통 처리된다.
 
 
-3. Unity 데이터 DB로 올리기: Upload
+3. 공통 필드
 
-메뉴:
-- Soul Rush/스킬 DB로 업로드 (Upload)
+모든 모듈이 가지는 값:
+- BitIndex: 해금 비트마스크 위치. 다른 스킬과 중복되면 안 된다.
+- AbilityId: DB, 저장, RPC, 런타임 조회에서 사용하는 고유 문자열.
+- DisplayName
+- Description
+- Icon
+- AppearStage: 몇 스테이지부터 보상 후보에 등장할지.
+- UnlockedSkill
+- BasicSkill
+- MaxLevel
+
+AbilityId를 비워두면 에셋 이름을 대신 사용한다. 에셋 이름 변경에 취약하므로 직접 입력하는 것을 권장한다.
+
+BitIndex 범위:
+- Active: 1 ~ 19
+- Passive: 20 ~ 39
+- Utility: 40 ~ 60
+
+새 SkillModule 에셋의 BitIndex가 0이면 에디터가 타입별 범위에서 다음 빈 번호를 자동 할당한다.
+인스펙터의 `다음 빈 BitIndex 자동 할당` 버튼으로도 다시 배정할 수 있다.
+
+주의:
+- BitIndex는 유저 해금 비트마스크와 직접 연결된다.
+- 기존 저장 데이터가 있는 상태에서 BitIndex를 바꾸면 유저가 가진 스킬 해금 상태가 달라질 수 있다.
+- DB의 abilities.bit_index도 Unity 에셋과 같은 범위 규칙을 사용해야 한다.
+
+
+4. ActiveAbilityModule
+
+용도:
+- 플레이어가 슬롯에 장착하고 직접 사용하는 공격/액션 스킬.
+
+가지는 값:
+- CooldownSeconds
+- StaminaCost
+- LevelSettings.damageMultiplier
+- AnimationClip / AnimationStateName / AnimationTrigger / AnimationSpeed
+- RootMotionMode
+- StaminaRecoveryDelayMode
+- OpensComboInput / ComboInputOpenNormalizedTime
+- EffectPrefab / EffectLocalOffset / ParentEffectToPlayer
+- SoundClip / SoundVolume / SoundDelay
+- HitboxPrefab / HitboxLocalOffset / HitboxDelay / HitboxLifetime
+- HitEvents
+
+데미지 기준:
+- 실제 공격 판정은 HitEvents를 사용한다.
+- 각 HitEvent의 DamageRate가 기본 스킬 타격 배율이다.
+- 레벨별 DamageMultiplier는 HitEvent의 DamageRate에 추가로 곱해지는 레벨 배율이다.
+
+예:
+```text
+기본 공격력 x HitEvent.damageRate x ActiveLevel.damageMultiplier x 버프/디버프/방어 보정
+```
+
+
+5. PassiveAbilityModule
+
+용도:
+- 획득 즉시 또는 레벨업 시 플레이어 스탯을 올리는 스킬.
+
+가지는 값:
+- LevelSettings.maxHealthBonus
+- LevelSettings.maxStaminaBonus
+- LevelSettings.defenseBonusPercent
+- LevelSettings.attackDamageBonusPercent
+- AnimationClip / AnimationStateName / AnimationTrigger / AnimationSpeed
+- EffectPrefab / EffectLocalOffset / ParentEffectToPlayer
+- SoundClip / SoundVolume / SoundDelay
+
+가지지 않는 값:
+- CooldownSeconds
+- StaminaCost
+- HitEvents
+- Hitbox
+- HealthRestoreAmount
+- StaminaRestoreAmount
+
+Passive도 획득 연출이 필요할 수 있으므로 애니메이션/VFX/사운드는 유지한다.
+
+레벨 값 기준:
+- 레벨별 값은 “해당 레벨의 최종 증가값”이다.
+- 런타임에서는 이전 레벨값과 새 레벨값의 차이만 계산해 적용한다.
+- 공격력 증가와 방어력 증가는 퍼센트 입력 기준이다.
+
+예:
+```text
+10 입력 = 10%
+100 입력 = 100%
+```
+
+
+6. UtilityAbilityModule
+
+용도:
+- 회복, 기본 공격 해금, 특수 기능 같은 기능성 스킬.
+
+가지는 값:
+- CooldownSeconds
+- StaminaCost
+- SpecialEffect
+- LevelSettings.healthRestoreAmount
+- LevelSettings.staminaRestoreAmount
+- AnimationClip / AnimationStateName / AnimationTrigger / AnimationSpeed
+- EffectPrefab / EffectLocalOffset / ParentEffectToPlayer
+- SoundClip / SoundVolume / SoundDelay
+
+가지지 않는 값:
+- HitEvents
+- Hitbox
+- Passive 스탯 증가값
+- Active 스킬 데미지 배율
+
+기본 공격 해금처럼 회복량이 필요 없는 Utility는 회복 수치를 0으로 둔다.
+
+
+7. DB Upload 방향
 
 관련 파일:
 - Assets/02. Scripts/DB/Editor/AbilityUploadWindow.cs
-- Assets/02. Scripts/DB/Editor/SoulRushApiSettings.cs
 
-사용 순서:
-1) Project 창에서 업로드할 PlayerAbilityModule 에셋을 선택한다.
-2) Upload 창을 연다.
-3) upload_ability.php 주소를 확인한다.
-4) 선택한 스킬 데이터 DB 업로드 버튼을 누른다.
+현재 주의:
+- 기존 UploadWindow에는 예전 단일 PlayerAbilityModule 업로드 형식이 일부 남아 있다.
+- DB 업로드 기능을 다시 사용할 때는 타입별 모듈 구조에 맞게 수정해야 한다.
 
-DB로 전송하는 값:
-- BitIndex -> bit_index
-- AbilityId -> ability_id
-- DisplayName -> display_name
-- Description -> description
-- AbilityType -> ability_type
-- StaminaCost -> stamina_cost
-- CooldownSeconds -> cooldown_seconds
-- HitboxDamage -> damage_multiplier
-- HitboxLifetime -> duration
-- SpecialEffect -> special_effect
+권장 업로드 구조:
 
-DB로 전송하지 않는 값:
+공통으로 항상 업로드:
+- abilities
+
+Active 업로드:
+- abilities
+- active_abilities
+- active_ability_levels
+
+Passive 업로드:
+- abilities
+- passive_abilities
+- passive_ability_levels
+
+Utility 업로드:
+- abilities
+- utility_abilities
+- utility_ability_levels
+
+코드 기준:
+```csharp
+if (module is ActiveAbilityModule active)
+{
+    // active 전용 데이터 업로드
+}
+else if (module is PassiveAbilityModule passive)
+{
+    // passive 전용 데이터 업로드
+}
+else if (module is UtilityAbilityModule utility)
+{
+    // utility 전용 데이터 업로드
+}
+```
+
+Unity 전용 참조는 DB로 보내지 않는다.
 - Icon
-- 애니메이션
-- VFX와 프리팹
-- 히트박스 프리팹
-- 사운드
+- AnimationClip
+- VFX Prefab
+- Hitbox Prefab
+- SoundClip
 - 그 밖의 UnityEngine.Object 참조
 
-정리:
-- Upload는 Unity 에셋의 밸런스 수치를 DB로 보내는 방향이다.
-- Unity 전용 에셋 참조는 로컬 SkillModule에만 남는다.
 
-
-4. DB 데이터를 에셋으로 받기: Bake
-
-메뉴:
-- Soul Rush/스킬 DB 동기화 (Bake)
+8. DB Bake 방향
 
 관련 파일:
 - Assets/02. Scripts/DB/Editor/AbilityBakeWindow.cs
+- Assets/02. Scripts/DB/AbilityManager.cs
 
-저장 위치:
-- Assets/02. Scripts/Player/Abilities/Resources/SkillModule
+Bake 저장 위치:
+- Active: Assets/02. Scripts/Player/Abilities/Resources/SkillModule/ActiveSkill
+- Passive: Assets/02. Scripts/Player/Abilities/Resources/SkillModule/PassiveSkill
+- Utility: Assets/02. Scripts/Player/Abilities/Resources/SkillModule/UtilitySkill
 
 진행 과정:
-1) SoulRushApiSettings.bakeUrl의 get_abilities.php를 호출한다.
-2) 서버의 AbilityDBResponse를 받는다.
-3) ability_id와 같은 이름의 SkillModule 에셋을 찾는다.
-4) 기존 에셋이면 InitializeFromDB()로 서버 수치를 덮어쓴다.
-5) 에셋이 없으면 새 PlayerAbilityModule을 생성한다.
-6) AssetDatabase.SaveAssets()로 파일에 저장한다.
+1) 서버의 get_abilities.php 또는 새 JSON API를 호출한다.
+2) ability_id와 같은 이름의 SkillModule 에셋을 찾는다.
+3) 기존 에셋이면 InitializeFromDB()로 서버 수치를 갱신한다.
+4) 에셋이 없으면 ability_type에 따라 새 타입을 생성하고 타입별 폴더에 저장한다.
+5) AssetDatabase.SaveAssets()로 저장한다.
 
-InitializeFromDB()가 갱신하는 값:
+생성 타입:
+- Active -> ActiveAbilityModule
+- Passive -> PassiveAbilityModule
+- Utility -> UtilityAbilityModule
+
+Bake가 갱신하는 값:
 - 에셋 이름
 - BitIndex
 - AbilityId
 - DisplayName
 - Description
-- AbilityType
-- StaminaCost
-- CooldownSeconds
-- HitboxDamage
-- HitboxLifetime
-- SpecialEffect
+- BasicSkill
+- Active: StaminaCost, CooldownSeconds, HitboxLifetime
+- Utility: StaminaCost, CooldownSeconds, SpecialEffect
 
-Bake 후에도 유지되는 기존 값:
+Bake 후에도 유지되는 값:
 - Icon
-- 애니메이션과 Trigger
-- VFX 프리팹과 위치
-- 히트박스 프리팹과 세부 설정
-- 사운드
+- AnimationClip / Trigger / StateName
+- VFX Prefab과 위치
+- Hitbox Prefab과 세부 HitEvents
+- SoundClip
 - 서버 응답에 없는 Unity 전용 데이터
 
-중요:
-- 기존 에셋을 Bake하면 에셋 참조는 유지되고 서버 수치만 갱신된다.
-- 서버에만 존재하던 스킬은 새 에셋으로 생성되므로 Unity 전용 참조를 직접 연결해야 한다.
-- Bake 결과물은 로컬 플레이의 기본 데이터이므로 Git에 포함한다.
 
-
-5. 게임 시작: AbilityManager 로컬 초기화
+9. 게임 시작: AbilityManager 로컬 초기화
 
 관련 파일:
 - Assets/02. Scripts/DB/AbilityManager.cs
-- Assets/02. Scripts/System/GameManager.cs
 
 진행 과정:
-1) GameManager가 AbilityManager를 준비한다.
-2) AbilityManager.Awake()가 LoadLocalAbilityCatalog()를 호출한다.
-3) Resources.LoadAll<PlayerAbilityModule>("SkillModule")로 Bake된 에셋을 읽는다.
-4) AbilityId와 BitIndex 기준 딕셔너리를 만든다.
-5) 하나 이상의 모듈이 등록되면 IsLoaded가 true가 된다.
+1) AbilityManager.Awake()가 LoadLocalAbilityCatalog()를 호출한다.
+2) Resources/SkillModule 아래 ActiveSkill, PassiveSkill, UtilitySkill 폴더의 스킬 에셋을 읽는다.
+3) AbilityId와 BitIndex 기준 딕셔너리를 만든다.
+4) 하나 이상의 모듈이 등록되면 IsLoaded가 true가 된다.
 
-이 초기화는 로그인보다 먼저 실행된다.
-따라서 서버를 거치지 않는 로컬 플레이도 SkillModule을 사용할 수 있다.
+새 타입들도 PlayerAbilityModule을 상속하므로 Resources.LoadAll<PlayerAbilityModule>()에 함께 잡힌다.
 
 AbilityManager의 역할:
 - 전체 스킬 원본 카탈로그 관리
@@ -200,7 +325,7 @@ AbilityManager가 관리하지 않는 것:
 위 상태는 각 플레이어의 PlayerAbilityInventory와 PlayerAbilityController가 관리한다.
 
 
-6. 로그인: 서버 최신 데이터 적용
+10. 로그인: 서버 최신 데이터 적용
 
 관련 파일:
 - Assets/02. Scripts/Login/LoginSceneController.cs
@@ -211,7 +336,7 @@ AbilityManager가 관리하지 않는 것:
 1) BackendManager.LoginUser()가 로그인한다.
 2) 유저 정보와 CurrentSkillsBitmask를 저장한다.
 3) LoginSceneController가 AbilityManager.FetchAbilities()를 호출한다.
-4) AbilityManager가 get_abilities.php에서 전체 스킬 수치를 받는다.
+4) AbilityManager가 서버에서 전체 스킬 수치를 받는다.
 5) ability_id로 로컬 SkillModule을 찾는다.
 6) InitializeFromDB()로 메모리상의 서버 관리 수치를 갱신한다.
 7) 변경된 BitIndex에 맞춰 카탈로그 인덱스를 다시 만든다.
@@ -220,236 +345,153 @@ AbilityManager가 관리하지 않는 것:
 
 Bake와 FetchAbilities의 차이:
 - Bake는 .asset 파일을 실제로 저장한다.
-- FetchAbilities는 현재 실행 중인 메모리 데이터만 변경한다.
-- FetchAbilities 결과는 Unity 에셋 파일에 영구 저장되지 않는다.
-
-서버 요청 실패:
-- AbilityManager는 이미 로컬 SkillModule을 가지고 있다.
-- 로컬 카탈로그가 준비되어 있으면 Bake된 기본 수치로 계속 진행할 수 있다.
+- FetchAbilities는 실행 중 메모리상의 모듈만 갱신한다.
 
 
-7. 플레이어 생성과 저장 스킬 복구
+11. 보상 후보 생성과 레벨업
 
 관련 파일:
-- PlayerAbilityInventory.cs
-- NetworkPlayerData.cs
-- PlayerSessionStore.cs
+- Assets/02. Scripts/Player/Abilities/PlayerAbilityInventory.cs
+- Assets/02. Scripts/Player/Core/NetworkPlayerData.cs
+- Assets/02. Scripts/Player/Core/PlayerSessionStore.cs
 
-진행 과정:
-1) 플레이어 프리팹의 PlayerAbilityInventory가 초기화된다.
-2) PlayerAbilityExecutor가 없으면 자동으로 추가한다.
-3) 저장된 abilityId 목록을 NetworkPlayerData 또는 PlayerSessionStore에서 읽는다.
-4) PlayerAbilityInventory.FindModuleById()를 호출한다.
-5) AbilityManager.FindByAbilityId()에서 현재 최신 모듈을 찾는다.
-6) EquipModule()로 다시 장착한다.
+규칙:
+- 처음 획득: Lv.1
+- 동일 스킬 재획득: Lv.2 -> Lv.3 -> ... -> MaxLevel
+- MaxLevel에 도달한 스킬은 보상 후보에서 제외한다.
+- 같은 방에서 씬 이동 시 abilityId + level을 유지한다.
+- 새 매칭 시작 전 PlayerSessionStore.ClearAll()로 초기화한다.
 
-패시브 복구:
-- 스탯 보너스와 특수 효과를 즉시 적용한다.
-
-액티브 복구:
-- PlayerAbilitySlot을 생성한다.
-- 저장된 키가 있으면 PlayerPrefs의 키 설정을 사용한다.
+PlayerAbilityInventory는 PlayerAbilityModule 공통 타입으로 저장한다.
+실제 동작 차이는 Module의 런타임 API와 타입 검사로 처리한다.
 
 
-8. 보스 처치와 스킬 보상 생성
+12. 스킬 사용 흐름
 
 관련 파일:
-- Assets/02. Scripts/RewardManager.cs
-- PlayerAbilityInventory.cs
-- Assets/02. Scripts/Reward/RewardSelectView.cs
+- Assets/02. Scripts/Player/Abilities/PlayerAbilityController.cs
+- Assets/02. Scripts/Player/Abilities/PlayerAbilityExecutor.cs
+- Assets/02. Scripts/Player/Abilities/PlayerAbilitySlot.cs
 
-진행 과정:
-1) RewardManager가 보스 사망을 감지한다.
-2) 상자/컷씬/왜곡 트리거 과정을 실행한다.
-3) 로컬 PlayerAbilityInventory.GenerateRewardOptions()를 호출한다.
-4) Inventory가 AbilityManager.GetUnlockedAbilitiesList()에서 후보를 받는다.
-5) 보스 단계, 보상 풀 포함 여부, 중복 획득 여부를 검사한다.
-6) 후보를 섞고 최대 3개를 반환한다.
-7) RewardManager가 BossRewardOffered 이벤트를 보낸다.
-8) RewardSelectView가 카드를 표시한다.
+흐름:
+1) PlayerAbilityController가 입력을 받는다.
+2) PlayerAbilitySlot에서 모듈과 쿨타임을 확인한다.
+3) module.UsesActiveSlot이 false면 사용하지 않는다.
+4) 스태미나를 검사한다.
+5) 서버 권한에서 사용을 확정한다.
+6) PlayerAbilityExecutor가 모듈 타입에 따라 실행한다.
 
-후보 풀 기준:
-- 로그인 상태: 서버에서 받은 유저 스킬 비트마스크
-- 로그인하지 않은 로컬 상태: SkillModule.IncludeInRewardPool
-
-
-9. 보상 선택과 플레이어 장착
-
-진행 과정:
-1) 플레이어가 RewardCardView에서 카드를 선택한다.
-2) RewardSelectView가 RewardManager.SelectPendingOption()을 호출한다.
-3) RewardManager가 선택된 모듈을 로컬 PlayerAbilityInventory에 전달한다.
-4) PlayerAbilityInventory.SelectRewardOption()이 중복과 장착 가능 여부를 검사한다.
-5) PlayerAbilityExecutor.EquipModule()을 호출한다.
-6) NetworkPlayerData.RecordAbility()로 abilityId를 기록한다.
-7) PlayerSessionStore에 씬 이동용 데이터가 보관된다.
-
-패시브 선택:
-- 스탯 보너스
-- 즉시 효과
-- SpecialEffect
-
-액티브 선택:
-- PlayerAbilitySlot 생성
-- 기본 키 할당
-- HUD 표시 대상에 포함
+타입별 실행:
+- Active: HitEvents 기반 공격 판정 실행
+- Passive: 획득/레벨업 시 스탯 증가 적용
+- Utility + SpecialEffect 없음: 회복형 액티브 슬롯 스킬처럼 사용 가능
+- Utility + SpecialEffect 있음: 획득 시 특수 효과 적용
 
 
-10. 액티브 스킬 입력과 서버 검증
+13. 전투 데미지 연결
 
-관련 파일:
-- PlayerAbilityController.cs
-- PlayerAbilityInventory.cs
-- PlayerAbilitySlot.cs
+Active 스킬은 HitEvents를 기준으로 공격 판정을 만든다.
 
-진행 과정:
-1) InputAuthority를 가진 PlayerAbilityController만 키 입력을 읽는다.
-2) PlayerAbilityInventory.ActiveSlots에서 입력된 슬롯을 찾는다.
-3) 호스트면 TryActivateAbility()를 직접 호출한다.
-4) 클라이언트면 RPC_RequestActivateAbility()로 StateAuthority에 요청한다.
-5) StateAuthority가 최종 사용 가능 여부를 검사한다.
+최종 데미지 기본 흐름:
+```text
+기본 공격력
+x HitEvent.damageRate
+x ActiveAbilityLevelData.damageMultiplier
+x 패시브 공격력 증가
+x 버프/디버프
+x 보스 방어 보정
+```
 
-검사 항목:
-- 슬롯과 모듈 존재 여부
-- Active 타입 여부
-- 쿨다운
-- 스태미나
-- 사망 상태
-- 액션 애니메이션 잠금
-- PlayerControlLockFlags.Skill
-
-조작 잠금 규칙:
-- 컷씬이나 UI를 PlayerAbilityController에서 직접 검사하지 않는다.
-- 외부 시스템은 NetworkPlayerController.SetControlLock()으로 Skill 잠금을 건다.
-- 새로운 스킬 입력 경로도 같은 잠금 검사를 사용해야 한다.
+`damageMultiplier`는 스킬 전체에 남아 있는 낡은 HitboxDamage가 아니다.
+현재는 레벨별 스킬 배율이며, HitEvent의 damageRate와 함께 사용된다.
 
 
-11. 스킬 효과, 히트박스, 표현 실행
+14. 설명 토큰
+
+설명은 고정 숫자를 직접 적기보다 토큰을 사용한다.
+
+예:
+```text
+전방으로 도약하여 {hit1}배의 데미지를 준다
+스태미나 {staminaCost} 소모, 쿨타임 {cooldown}초
+```
+
+표시 단계에서 현재 레벨의 값으로 치환한다.
+레벨 수치가 바뀌어도 설명 문장을 매번 수정하지 않아도 된다.
+
+
+15. 에디터 도구
 
 관련 파일:
-- PlayerAbilityExecutor.cs
-- PlayerAbilityContext.cs
-- PlayerSkillHitbox.cs
+- Assets/02. Scripts/Player/Editor/PlayerAbilityModuleEditor.cs
+- Assets/02. Scripts/Player/Editor/PlayerAbilityAssetSearch.cs
+- Assets/02. Scripts/Player/Editor/PlayerAbilityPoolSetupTool.cs
+- Assets/02. Scripts/Player/Editor/PlayerAnimatorSetupTool.cs
 
-사용 성공 후:
-1) PlayerAbilityExecutor.Activate()가 게임 결과를 실행한다.
-2) 회복 효과를 적용한다.
-3) HitboxPrefab을 생성한다.
-4) PlayerSkillHitbox에 공격자, 데미지, 부활 수치, 지연, 수명을 전달한다.
-5) 슬롯 쿨다운을 시작한다.
-6) RPC_PlayAbilityPresentation()을 모든 클라이언트에 전송한다.
-7) 각 클라이언트가 애니메이션과 VFX를 재생한다.
-8) 서버가 확정한 쿨다운 종료 시간을 각 로컬 슬롯에 적용한다.
-
-권한 규칙:
-- Activate()는 게임 결과를 만들므로 StateAuthority에서 실행한다.
-- PlayPresentation()은 애니메이션/VFX 표현만 담당한다.
-- 표현 함수에 데미지 판정을 넣으면 클라이언트별 결과가 달라질 수 있다.
-
-히트박스:
-- HitboxDelay 후 Collider 활성화
-- HitboxLifetime 후 Despawn
-- 살아있는 대상은 TakeDamage()
-- 죽은 대상은 RegisterReviveHit()
+주의:
+- 에디터 자동화 도구는 이제 `t:PlayerAbilityModule` 단일 검색이 아니라 Active/Passive/Utility 세 타입을 모두 검색해야 한다.
+- 이를 위해 PlayerAbilityAssetSearch가 세 타입 검색을 묶어서 제공한다.
 
 
-12. HUD와 키 변경
+16. 체크리스트
 
-HUD 흐름:
-PlayerAbilityInventory.GetSkillSlotUIData(currentTime)
--> SkillSlotUIData 목록 생성
--> HUDManager
--> SkillSlotHUDView.SetData()
+새 Active 스킬:
+1) Active Ability 생성
+2) AbilityId / BitIndex 설정
+3) Cooldown / Stamina 설정
+4) LevelSettings.damageMultiplier 설정
+5) Animation / VFX / Sound 연결
+6) HitEvents 설정
+7) 보상 후보에서 등장할 AppearStage 확인
+8) 필요 시 DB Upload/Bake
+9) SkillModule 변경 Git 포함
 
-표시 데이터:
-- AbilityId
-- DisplayName
-- Icon
-- KeyCode
-- 남은 쿨다운
-- 전체 쿨다운
-- 사용 가능 상태
-
-UI 규칙:
-- UI는 PlayerAbilitySlot 내부 값을 직접 조합하지 않는다.
-- GetSkillSlotUIData()가 만든 읽기 전용 데이터만 사용한다.
-
-키 변경:
-- PlayerAbilityInventory.TryChangeActiveKey()
-- PlayerPrefs에 슬롯별 키 저장
-- ActiveKeyChanged 이벤트로 UI 갱신
-
-
-13. 주요 클래스 역할 요약
-
-PlayerAbilityModule:
-- 스킬 원본 데이터와 Unity 에셋 참조
-
-AbilityManager:
-- 전체 스킬 카탈로그와 서버 수치 최신화
-
-PlayerAbilityInventory:
-- 플레이어별 획득 스킬, 액티브 슬롯, 키, 보상 후보
-
-RewardManager:
-- 보상 진행, 후보 대기 상태, 선택 결과 전달
-
-PlayerAbilityController:
-- 입력 감지, RPC 요청, 서버 사용 검증
-
-PlayerAbilityExecutor:
-- 패시브/액티브 효과, 히트박스, 애니메이션/VFX 실행
-
-PlayerAbilitySlot:
-- 액티브 모듈, 키, 쿨다운 상태
-
-PlayerAbilityContext:
-- 실행 대상, Stats, Runner 묶음
-
-PlayerSkillHitbox:
-- 네트워크 스킬 충돌과 데미지/부활 판정
-
-
-14. 작업 상황별 권장 순서
-
-기존 스킬 밸런스 변경:
-1) SkillModule 수정
-2) DB Upload
-3) 서버 DB 확인
-4) Bake
-5) Unity 에셋 참조 유지 확인
-6) 로컬/로그인 테스트
+새 Passive 스킬:
+1) Passive Ability 생성
+2) AbilityId / BitIndex 설정
+3) LevelSettings 스탯 증가값 설정
+4) 획득 연출용 Animation / VFX / Sound 연결
+5) AppearStage 확인
+6) 필요 시 DB Upload/Bake
 7) SkillModule 변경 Git 포함
 
-새 스킬 추가:
-1) PlayerAbilityModule 생성
-2) 고유 AbilityId와 BitIndex 지정
-3) 타입과 밸런스 수치 설정
-4) 애니메이션/VFX/히트박스/사운드 연결
-5) DB Upload
-6) Bake
-7) 에셋 참조 재확인
-8) 필요하면 PlayerAnimatorSetupTool의 스킬 동기화 실행
-9) 로컬/호스트/클라이언트 테스트
-10) 생성된 SkillModule Git 포함
-
-서버에서 먼저 스킬을 추가한 경우:
-1) Bake
-2) 새로 생성된 SkillModule 확인
-3) Unity 전용 참조 연결
-4) 로컬 테스트
-5) 로그인 최신화 테스트
+새 Utility 스킬:
+1) Utility Ability 생성
+2) AbilityId / BitIndex 설정
+3) SpecialEffect 또는 회복 수치 설정
+4) 필요하면 Cooldown / Stamina 설정
+5) Animation / VFX / Sound 연결
+6) AppearStage 확인
+7) 필요 시 DB Upload/Bake
+8) SkillModule 변경 Git 포함
 
 
-15. 필수 점검 목록
+17. 문제 확인 포인트
 
+스킬이 보상 후보에 안 뜰 때:
+- SkillModule이 Resources/SkillModule의 타입별 폴더 아래에 있는가?
 - AbilityId가 비어 있거나 중복되지 않았는가?
-- BitIndex가 0~62 범위이며 중복되지 않았는가?
-- SkillModule이 Resources/SkillModule 아래에 있는가?
-- 새 Bake 에셋에 Icon/애니메이션/VFX/히트박스가 연결됐는가?
-- 액티브 스킬에 AnimationTrigger가 Animator와 일치하는가?
-- HitboxPrefab이 NetworkObject를 사용한다면 Fusion Prefab 등록이 되어 있는가?
-- 로컬 모드에서 로그인 없이 스킬 카탈로그가 로드되는가?
-- 로그인 후 서버 수치가 반영되는가?
-- 호스트와 클라이언트에서 스킬이 한 번만 실행되는가?
-- 씬 이동 후 abilityId 기준으로 스킬이 복구되는가?
+- BitIndex가 중복되지 않았는가?
+- BitIndex가 타입별 범위에 들어가는가? Active 1~19, Passive 20~39, Utility 40~60.
+- UnlockedSkill 또는 유저 비트마스크 조건을 만족하는가?
+- AppearStage 조건을 만족하는가?
+- 이미 MaxLevel에 도달한 스킬은 아닌가?
+
+스킬 사용이 안 될 때:
+- module.UsesActiveSlot이 true인가?
+- Active 또는 사용형 Utility인가?
+- PlayerAbilitySlot에 들어갔는가?
+- 쿨타임 중은 아닌가?
+- 스태미나가 충분한가?
+- 서버 권한에서 사용 요청이 거절되지 않았는가?
+
+공격 데미지가 이상할 때:
+- ActiveAbilityModule인지 확인한다.
+- HitEvents의 damageRate를 확인한다.
+- LevelSettings.damageMultiplier를 확인한다.
+- 패시브 공격력 증가가 중복 적용되지 않았는지 확인한다.
+
+인스펙터에 이상한 필드가 보일 때:
+- 에셋의 실제 타입이 ActiveAbilityModule / PassiveAbilityModule / UtilityAbilityModule 중 맞는지 확인한다.
+- 예전 PlayerAbilityModule 단일 에셋 GUID를 물고 있는지 확인한다.
+- Unity 리프레시 후에도 이상하면 해당 .asset의 m_Script GUID를 확인한다.

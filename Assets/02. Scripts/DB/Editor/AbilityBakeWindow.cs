@@ -103,7 +103,19 @@ public class AbilityBakeWindow : EditorWindow
             // 4. 스킬 파일(.asset) 생성 및 데이터 덮어쓰기
             foreach (var dbData in res.data)
             {
-                string assetPath = $"{SAVE_PATH}/{dbData.ability_id}.asset";
+                string assetPath = FindExistingModuleAssetPath(dbData.ability_id);
+                if (string.IsNullOrWhiteSpace(assetPath))
+                {
+                    string saveFolder = GetSaveFolderForType(dbData.ability_type);
+                    if (!Directory.Exists(saveFolder))
+                    {
+                        Directory.CreateDirectory(saveFolder);
+                        AssetDatabase.Refresh();
+                    }
+
+                    assetPath = $"{saveFolder}/{dbData.ability_id}.asset";
+                }
+
                 PlayerAbilityModule module = AssetDatabase.LoadAssetAtPath<PlayerAbilityModule>(assetPath);
 
                 bool isNew = false;
@@ -162,5 +174,36 @@ public class AbilityBakeWindow : EditorWindow
         }
 
         return ScriptableObject.CreateInstance<PassiveAbilityModule>();
+    }
+
+    private static string FindExistingModuleAssetPath(string abilityId)
+    {
+        string expectedFileName = $"{abilityId}.asset";
+        string[] guids = PlayerAbilityAssetSearch.FindAbilityAssetGuids(new[] { SAVE_PATH });
+        for (int i = 0; i < guids.Length; i++)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(guids[i]);
+            if (Path.GetFileName(path) == expectedFileName)
+            {
+                return path;
+            }
+        }
+
+        return null;
+    }
+
+    private static string GetSaveFolderForType(string abilityType)
+    {
+        if (System.Enum.TryParse(abilityType, true, out AbilityType parsedType))
+        {
+            return parsedType switch
+            {
+                AbilityType.Active => $"{SAVE_PATH}/ActiveSkill",
+                AbilityType.Utility => $"{SAVE_PATH}/UtilitySkill",
+                _ => $"{SAVE_PATH}/PassiveSkill"
+            };
+        }
+
+        return $"{SAVE_PATH}/PassiveSkill";
     }
 }
