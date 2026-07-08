@@ -15,25 +15,40 @@ MonoBehaviour:
   bitIndex: 8
   abilityId: stamina_up
   displayName: "\uC2A4\uD14C\uBBF8\uB098 \uC99D\uAC00"
-  description: "\uCD5C\uB300 \uC2A4\uD14C\uBBF8\uB098\uB97C 3000\uB9CC\uD07C \uC99D\uAC00\uC2DC\uD0A8\uB2E4"
+  description: "\uCD5C\uB300 \uC2A4\uD14C\uBBF8\uB098\uB97C {maxStaminaIncrease}\uB9CC\uD07C \uC99D\uAC00\uC2DC\uD0A8\uB2E4"
   icon: {fileID: 644248103, guid: 7d4e7f6eb9b67bc4da7d17ee567dd146, type: 3}
   abilityType: 0
-  minBossStage: 1
-  maxBossStage: 8
+  appearStage: 1
   unlockedSkill: 1
   basicSkill: 1
-  staminaCost: 500
-  cooldownSeconds: 12
+  maxLevel: 4
+  levelSettings:
+  - damageMultiplier: 1
+    maxHealthBonus: 0
+    maxStaminaBonus: 3000
+    defenseBonusPercent: 0
+    attackDamageBonusPercent: 0
+  - damageMultiplier: 1
+    maxHealthBonus: 0
+    maxStaminaBonus: 6000
+    defenseBonusPercent: 0
+    attackDamageBonusPercent: 0
+  - damageMultiplier: 1
+    maxHealthBonus: 0
+    maxStaminaBonus: 9000
+    defenseBonusPercent: 0
+    attackDamageBonusPercent: 0
+  - damageMultiplier: 1
+    maxHealthBonus: 0
+    maxStaminaBonus: 12000
+    defenseBonusPercent: 0
+    attackDamageBonusPercent: 0
   healthRestoreAmount: 0
   staminaRestoreAmount: 0
   specialEffect: 0
-  maxHealthBonus: 0
-  maxStaminaBonus: 3000
-  defenseRateBonus: 0
-  attackDamageBonusPercent: 0
   animationClip: {fileID: 0}
-  animationStateName: StaminaUp
-  animationTrigger: StaminaUp
+  animationStateName:
+  animationTrigger:
   animationSpeed: 1.7
   rootMotionMode: 0
   staminaRecoveryDelayMode: 0
@@ -44,7 +59,6 @@ MonoBehaviour:
   parentEffectToPlayer: 0
   hitboxPrefab: {fileID: 0}
   hitboxLocalOffset: {x: 0, y: 0, z: 0}
-  hitboxDamage: 0
   hitboxRevivePower: 34
   hitboxDelay: 0
   hitboxLifetime: 0.3

@@ -80,13 +80,14 @@ public class PlayerAbilityController : NetworkBehaviour
         PlayerAbilitySlot slot = _inventory.GetActiveSlot(activeSlotIndex);
         PlayerAbilityModule module = slot?.Module;
         // 슬롯이 비어 있거나 패시브/보상용 모듈이면 액티브 스킬로 실행하지 않는다.
-        if (module == null || !module.IsActive)
+        if (module == null || !module.UsesActiveSlot)
         {
             return false;
         }
 
         float currentTime = Runner != null ? Runner.SimulationTime : Time.time;
         PlayerAbilityContext context = _inventory.CreateContext();
+        int abilityLevel = slot.Level;
 
         // 공통 사용 조건: 쿨다운 완료 + 모듈별 사용 가능 조건.
         if (!slot.IsReady(currentTime) || _executor == null || !_executor.CanActivate(module, context))
@@ -97,17 +98,18 @@ public class PlayerAbilityController : NetworkBehaviour
         // 스태미나 소모는 모든 액티브 모듈에 공통으로 적용한다.
         // 스태미나를 쓰지 않는 능력은 모듈의 staminaCost를 0으로 두면 된다.
         bool waitsForSkillAnimationEnd = !string.IsNullOrWhiteSpace(module.AnimationTrigger);
+        float staminaCost = module.StaminaCost;
         if (_stats != null &&
             !(waitsForSkillAnimationEnd
-                ? _stats.TryUseActionStamina(module.StaminaCost)
-                : _stats.TryUseStamina(module.StaminaCost)))
+                ? _stats.TryUseActionStamina(staminaCost)
+                : _stats.TryUseStamina(staminaCost)))
         {
             return false;
         }
 
         // 실제 효과와 히트박스는 서버 권한에서 확정하고, 표현 재생은 아래 RPC로 모든 클라이언트에 알린다.
         // Activate는 게임 결과, PlayPresentation은 애니메이션/VFX 표현이라는 식으로 역할을 나눈다.
-        _executor.Activate(module, context);
+        _executor.Activate(module, context, abilityLevel);
         slot.StartCooldown(currentTime);
         RPC_PlayAbilityPresentation(module.AbilityId, slot.NextReadyTime);
         return true;

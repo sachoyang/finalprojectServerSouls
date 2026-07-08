@@ -15,23 +15,46 @@ MonoBehaviour:
   bitIndex: 3
   abilityId: high_spin_attack
   displayName: "\uD48D\uCC28 \uB3CC\uB9AC\uAE30"
-  description: "\uBE60\uB974\uAC8C 2\uBC88 \uB3CC\uB824\uBCA0\uC5B4 1.5\uBC30, 2\uBC30\uC758
-    \uB370\uBBF8\uC9C0\uB97C \uC900\uB2E4"
+  description: "\uBE60\uB974\uAC8C {hitCount}\uBC88 \uB3CC\uB824\uBCA0\uC5B4 {hit1}\uBC30,
+    {hit2}\uBC30\uC758 \uB370\uBBF8\uC9C0\uB97C \uC900\uB2E4"
   icon: {fileID: -1116392742, guid: 602013fcc1a5c4a48ad04a33a93cf811, type: 3}
   abilityType: 1
-  minBossStage: 1
-  maxBossStage: 8
+  appearStage: 1
   unlockedSkill: 1
   basicSkill: 1
+  maxLevel: 4
   staminaCost: 400
   cooldownSeconds: 8
-  healthRestoreAmount: 0
-  staminaRestoreAmount: 0
+  levelSettings:
+  - damageMultiplier: 1
+    maxHealthBonus: 0
+    maxStaminaBonus: 0
+    defenseBonusPercent: 0
+    attackDamageBonusPercent: 0
+    healthRestoreAmount: 0
+    staminaRestoreAmount: 0
+  - damageMultiplier: 6
+    maxHealthBonus: 0
+    maxStaminaBonus: 0
+    defenseBonusPercent: 0
+    attackDamageBonusPercent: 0
+    healthRestoreAmount: 0
+    staminaRestoreAmount: 0
+  - damageMultiplier: 8
+    maxHealthBonus: 0
+    maxStaminaBonus: 0
+    defenseBonusPercent: 0
+    attackDamageBonusPercent: 0
+    healthRestoreAmount: 0
+    staminaRestoreAmount: 0
+  - damageMultiplier: 10
+    maxHealthBonus: 0
+    maxStaminaBonus: 0
+    defenseBonusPercent: 0
+    attackDamageBonusPercent: 0
+    healthRestoreAmount: 0
+    staminaRestoreAmount: 0
   specialEffect: 0
-  maxHealthBonus: 0
-  maxStaminaBonus: 0
-  defenseRateBonus: 0
-  attackDamageBonusPercent: 0
   animationClip: {fileID: -203655887218126122, guid: 6e2e5d6f257b702419afdb91532e3d2e, type: 3}
   animationStateName: HighSpinAttack
   animationTrigger: HighSpinAttack
@@ -45,7 +68,6 @@ MonoBehaviour:
   parentEffectToPlayer: 0
   hitboxPrefab: {fileID: 0}
   hitboxLocalOffset: {x: 0, y: 0, z: 0}
-  hitboxDamage: 0
   hitboxRevivePower: 34
   hitboxDelay: 0
   hitboxLifetime: 0

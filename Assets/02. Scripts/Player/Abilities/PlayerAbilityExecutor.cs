@@ -22,26 +22,37 @@ public class PlayerAbilityExecutor : MonoBehaviour
     public bool CanActivate(PlayerAbilityModule module, PlayerAbilityContext context)
     {
         return module != null &&
-               module.IsActive &&
+               module.UsesActiveSlot &&
                context.Owner != null &&
                (context.Stats == null || !context.Stats.IsDead);
     }
 
     public void EquipModule(PlayerAbilityModule module, PlayerAbilityContext context)
     {
+        ApplyLevelChange(module, context, 0, 1);
+    }
+
+    public void ApplyLevelChange(
+        PlayerAbilityModule module,
+        PlayerAbilityContext context,
+        int previousLevel,
+        int newLevel)
+    {
         if (module == null)
         {
             return;
         }
 
-        if (!module.IsActive)
+        if (module.IsPassive)
         {
-            context.Stats?.ApplyPassiveStatBonus(module);
+            context.Stats?.ApplyPassiveStatBonus(module, previousLevel, newLevel);
             PlayPresentation(module, context);
-            ApplyEffect(module, context);
         }
-
-        ApplySpecialEffect(module, context);
+        else if (module.IsUtility && module.SpecialEffect != PlayerAbilitySpecialEffect.None)
+        {
+            PlayPresentation(module, context);
+            ApplySpecialEffect(module, context);
+        }
     }
 
     public void EquipPassive(PlayerAbilityModule module, PlayerAbilityContext context)
@@ -58,23 +69,31 @@ public class PlayerAbilityExecutor : MonoBehaviour
             return;
         }
 
-        ApplySpecialEffect(module, context);
+        if (module.IsUtility && module.SpecialEffect != PlayerAbilitySpecialEffect.None)
+        {
+            ApplySpecialEffect(module, context);
+        }
     }
 
-    public void Activate(PlayerAbilityModule module, PlayerAbilityContext context)
+    public void Activate(PlayerAbilityModule module, PlayerAbilityContext context, int level)
     {
         if (!CanActivate(module, context))
         {
             return;
         }
 
-        ApplyEffect(module, context);
+        if (module.IsUtility)
+        {
+            ApplyEffect(module, context, level);
+            return;
+        }
+
         if (module.HitEvents == null || module.HitEvents.Length == 0)
         {
             return;
         }
 
-        StartCoroutine(ProcessHitEvents(context, module));
+        StartCoroutine(ProcessHitEvents(context, module, level));
     }
 
     public void PlayPresentation(PlayerAbilityModule module, PlayerAbilityContext context)
@@ -151,16 +170,18 @@ public class PlayerAbilityExecutor : MonoBehaviour
             Mathf.Max(0f, module.SoundDelay));
     }
 
-    private static void ApplyEffect(PlayerAbilityModule module, PlayerAbilityContext context)
+    private static void ApplyEffect(PlayerAbilityModule module, PlayerAbilityContext context, int level)
     {
-        if (module.HealthRestoreAmount > 0f)
+        float healthRestoreAmount = module.GetHealthRestoreAmount(level);
+        float staminaRestoreAmount = module.GetStaminaRestoreAmount(level);
+        if (healthRestoreAmount > 0f)
         {
-            context.Stats?.Heal(module.HealthRestoreAmount);
+            context.Stats?.Heal(healthRestoreAmount);
         }
 
-        if (module.StaminaRestoreAmount > 0f)
+        if (staminaRestoreAmount > 0f)
         {
-            context.Stats?.RestoreStamina(module.StaminaRestoreAmount);
+            context.Stats?.RestoreStamina(staminaRestoreAmount);
         }
 
     }
@@ -173,7 +194,7 @@ public class PlayerAbilityExecutor : MonoBehaviour
         }
     }
 
-    private IEnumerator ProcessHitEvents(PlayerAbilityContext context, PlayerAbilityModule module)
+    private IEnumerator ProcessHitEvents(PlayerAbilityContext context, PlayerAbilityModule module, int level)
     {
         if (context.Owner == null || context.Transform == null)
         {
@@ -231,7 +252,7 @@ public class PlayerAbilityExecutor : MonoBehaviour
                         context.Transform,
                         hitEvent,
                         module.AbilityId,
-                        module.HitboxDamage,
+                        module.GetDamageMultiplier(level),
                         outgoingMultiplier);
                 }
 
@@ -245,7 +266,8 @@ public class PlayerAbilityExecutor : MonoBehaviour
 
             Debug.Log(
                 $"[SkillHitEvent] {module.AbilityId}/{hitEvent.Label} " +
-                $"damageRate={hitEvent.DamageRate}, attackPower={context.Stats?.AttackPower ?? 0f}, " +
+                $"level={level}, damageRate={module.GetDamageMultiplier(level)}, " +
+                $"attackPower={context.Stats?.AttackPower ?? 0f}, " +
                 $"raw={maxRawHits}, cylinder={maxFilteredHits}, " +
                 $"bossHurtbox={maxBossHurtboxes}, applied={hitBoss}",
                 context.Owner);

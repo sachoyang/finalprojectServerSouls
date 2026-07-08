@@ -3,11 +3,29 @@ using Fusion;
 
 public static class PlayerSessionStore
 {
-    private static readonly Dictionary<int, List<string>> AbilityIdsByPlayer = new Dictionary<int, List<string>>();
+    public readonly struct AbilityState
+    {
+        public readonly string AbilityId;
+        public readonly int Level;
+
+        public AbilityState(string abilityId, int level)
+        {
+            AbilityId = abilityId;
+            Level = level;
+        }
+    }
+
+    private static readonly Dictionary<int, List<AbilityState>> AbilitiesByPlayer =
+        new Dictionary<int, List<AbilityState>>();
     private static readonly Dictionary<int, int> SelectedRewardStageByPlayer = new Dictionary<int, int>();
     private static readonly Dictionary<int, PlayerStats.SessionSnapshot> StatsByPlayer = new Dictionary<int, PlayerStats.SessionSnapshot>();
 
     public static void SaveAbility(PlayerRef player, string abilityId)
+    {
+        SetAbilityLevel(player, abilityId, 1);
+    }
+
+    public static void SetAbilityLevel(PlayerRef player, string abilityId, int level)
     {
         if (string.IsNullOrWhiteSpace(abilityId))
         {
@@ -15,23 +33,30 @@ public static class PlayerSessionStore
         }
 
         int key = GetKey(player);
-        if (!AbilityIdsByPlayer.TryGetValue(key, out List<string> abilityIds))
+        if (!AbilitiesByPlayer.TryGetValue(key, out List<AbilityState> abilities))
         {
-            abilityIds = new List<string>();
-            AbilityIdsByPlayer[key] = abilityIds;
+            abilities = new List<AbilityState>();
+            AbilitiesByPlayer[key] = abilities;
         }
 
-        if (!abilityIds.Contains(abilityId))
+        int clampedLevel = UnityEngine.Mathf.Clamp(level, 1, byte.MaxValue);
+        for (int i = 0; i < abilities.Count; i++)
         {
-            abilityIds.Add(abilityId);
+            if (abilities[i].AbilityId == abilityId)
+            {
+                abilities[i] = new AbilityState(abilityId, clampedLevel);
+                return;
+            }
         }
+
+        abilities.Add(new AbilityState(abilityId, clampedLevel));
     }
 
-    public static IReadOnlyList<string> GetAbilityIds(PlayerRef player)
+    public static IReadOnlyList<AbilityState> GetAbilities(PlayerRef player)
     {
-        return AbilityIdsByPlayer.TryGetValue(GetKey(player), out List<string> abilityIds)
-            ? abilityIds
-            : System.Array.Empty<string>();
+        return AbilitiesByPlayer.TryGetValue(GetKey(player), out List<AbilityState> abilities)
+            ? abilities
+            : System.Array.Empty<AbilityState>();
     }
 
     public static void MarkRewardSelected(PlayerRef player, int bossStage)
@@ -88,6 +113,13 @@ public static class PlayerSessionStore
     public static bool TryGetStats(PlayerRef player, out PlayerStats.SessionSnapshot snapshot)
     {
         return StatsByPlayer.TryGetValue(GetKey(player), out snapshot);
+    }
+
+    public static void ClearAll()
+    {
+        AbilitiesByPlayer.Clear();
+        SelectedRewardStageByPlayer.Clear();
+        StatsByPlayer.Clear();
     }
 
     private static int GetKey(PlayerRef player)

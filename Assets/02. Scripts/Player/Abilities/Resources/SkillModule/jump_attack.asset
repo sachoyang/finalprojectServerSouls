@@ -16,23 +16,46 @@ MonoBehaviour:
   abilityId: jump_attack
   displayName: "\uB9AC\uD504 \uC5B4\uD0DD"
   description: "\uC804\uBC29\uC73C\uB85C \uB3C4\uC57D\uD558\uC5EC \uD06C\uAC8C \uBCA0\uC5B4
-    3\uBC30\uC758 \uB370\uBBF8\uC9C0\uB97C \uC900\uB2E4\n\uC2A4\uD14C\uBBF8\uB098
-    400 \uC18C\uBAA8 \uCFE8\uD0C0\uC784 8\uCD08"
+    {hit1}\uBC30\uC758 \uB370\uBBF8\uC9C0\uB97C \uC900\uB2E4\n\uC2A4\uD14C\uBBF8\uB098
+    {staminaCost} \uC18C\uBAA8 \uCFE8\uD0C0\uC784 {cooldown}\uCD08"
   icon: {fileID: 721787287, guid: 7d4e7f6eb9b67bc4da7d17ee567dd146, type: 3}
   abilityType: 1
-  minBossStage: 1
-  maxBossStage: 8
+  appearStage: 1
   unlockedSkill: 1
   basicSkill: 1
+  maxLevel: 4
   staminaCost: 400
   cooldownSeconds: 8
-  healthRestoreAmount: 0
-  staminaRestoreAmount: 0
+  levelSettings:
+  - damageMultiplier: 1
+    maxHealthBonus: 0
+    maxStaminaBonus: 0
+    defenseBonusPercent: 0
+    attackDamageBonusPercent: 0
+    healthRestoreAmount: 0
+    staminaRestoreAmount: 0
+  - damageMultiplier: 1.4512479
+    maxHealthBonus: 0
+    maxStaminaBonus: 0
+    defenseBonusPercent: 0
+    attackDamageBonusPercent: 0
+    healthRestoreAmount: 0
+    staminaRestoreAmount: 0
+  - damageMultiplier: 1
+    maxHealthBonus: 0
+    maxStaminaBonus: 0
+    defenseBonusPercent: 0
+    attackDamageBonusPercent: 0
+    healthRestoreAmount: 0
+    staminaRestoreAmount: 0
+  - damageMultiplier: 1.495285
+    maxHealthBonus: 0
+    maxStaminaBonus: 0
+    defenseBonusPercent: 0
+    attackDamageBonusPercent: 0
+    healthRestoreAmount: 0
+    staminaRestoreAmount: 0
   specialEffect: 0
-  maxHealthBonus: 0
-  maxStaminaBonus: 0
-  defenseRateBonus: 0
-  attackDamageBonusPercent: 0
   animationClip: {fileID: -203655887218126122, guid: 2e360ce02ed05d04faec51172d19bb6d, type: 3}
   animationStateName: JumpAttack
   animationTrigger: JumpAttack
@@ -46,7 +69,6 @@ MonoBehaviour:
   parentEffectToPlayer: 0
   hitboxPrefab: {fileID: 0}
   hitboxLocalOffset: {x: 0, y: 0, z: 0}
-  hitboxDamage: 0
   hitboxRevivePower: 34
   hitboxDelay: 0
   hitboxLifetime: 0.3

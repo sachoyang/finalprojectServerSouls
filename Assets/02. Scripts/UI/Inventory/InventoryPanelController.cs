@@ -27,6 +27,12 @@ public class InventoryPanelController : MonoBehaviour
     private int lastEquippedModuleCount = -1;
     private Coroutine bindCoroutine;
 
+    private void OnDestroy()
+    {
+        if (abilityInventory != null)
+            abilityInventory.AbilityLevelChanged -= OnAbilityLevelChanged;
+    }
+
     private void Start()
     {
         SetInventoryVisible(false);
@@ -71,6 +77,7 @@ public class InventoryPanelController : MonoBehaviour
 
         List<PlayerAbilityModule> activeModules = new List<PlayerAbilityModule>();
         List<PlayerAbilityModule> passiveModules = new List<PlayerAbilityModule>();
+        List<PlayerAbilityModule> utilityModules = new List<PlayerAbilityModule>();
 
         for (int i = 0; i < equippedModules.Count; i++)
         {
@@ -81,11 +88,16 @@ public class InventoryPanelController : MonoBehaviour
 
             if (module.IsActive)
                 activeModules.Add(module);
-            else
+            else if (module.IsPassive)
                 passiveModules.Add(module);
+            else
+                utilityModules.Add(module);
         }
 
-        bool hasAnySkill = activeModules.Count > 0 || passiveModules.Count > 0;
+        bool hasAnySkill =
+            activeModules.Count > 0 ||
+            passiveModules.Count > 0 ||
+            utilityModules.Count > 0;
         SetEmptyTextVisible(!hasAnySkill);
 
         if (!hasAnySkill)
@@ -93,10 +105,15 @@ public class InventoryPanelController : MonoBehaviour
 
         CreateSlots(activeModules);
 
-        if (activeModules.Count > 0 && passiveModules.Count > 0)
+        if (activeModules.Count > 0 && (passiveModules.Count > 0 || utilityModules.Count > 0))
             CreatePassiveGroupSpacing();
 
         CreateSlots(passiveModules);
+
+        if (passiveModules.Count > 0 && utilityModules.Count > 0)
+            CreatePassiveGroupSpacing();
+
+        CreateSlots(utilityModules);
     }
 
     private bool IsInventoryHoldKeyPressed()
@@ -124,7 +141,7 @@ public class InventoryPanelController : MonoBehaviour
         for (int i = 0; i < modules.Count; i++)
         {
             InventoryCardSlotView slot = Instantiate(cardSlotPrefab, cardSlotParent);
-            slot.SetModule(modules[i], tooltipView);
+            slot.SetModule(modules[i], abilityInventory.GetAbilityLevel(modules[i]), tooltipView);
             spawnedObjects.Add(slot.gameObject);
         }
     }
@@ -171,8 +188,15 @@ public class InventoryPanelController : MonoBehaviour
             yield return new WaitForSeconds(referenceSearchInterval);
         }
 
+        abilityInventory.AbilityLevelChanged -= OnAbilityLevelChanged;
+        abilityInventory.AbilityLevelChanged += OnAbilityLevelChanged;
         RefreshCardList();
         bindCoroutine = null;
+    }
+
+    private void OnAbilityLevelChanged(PlayerAbilityModule module, int level)
+    {
+        RefreshCardList();
     }
 
     private void SetEmptyTextVisible(bool isVisible)

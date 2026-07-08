@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Fusion;
 using UnityEngine;
 
@@ -11,16 +12,34 @@ public class NetworkPlayerData : NetworkBehaviour
     [Networked] public int SavedAbilityCount { get; private set; }
     [Networked] public int LastSelectedRewardStage { get; private set; }
     [Networked, Capacity(MaxSavedAbilities)] public NetworkArray<NetworkString<_64>> SavedAbilityIds => default;
+    [Networked, Capacity(MaxSavedAbilities)] public NetworkArray<byte> SavedAbilityLevels => default;
 
     public override void Spawned()
     {
         if (HasStateAuthority)
         {
             Owner = Object.InputAuthority;
+            RestoreNetworkAbilitiesFromSession(Owner);
         }
 
         SyncUnlockedSkillsBitmask();
         GetComponent<PlayerAbilityInventory>()?.RestoreFromSessionData(Object.InputAuthority);
+    }
+
+    private void RestoreNetworkAbilitiesFromSession(PlayerRef owner)
+    {
+        IReadOnlyList<PlayerSessionStore.AbilityState> abilities = PlayerSessionStore.GetAbilities(owner);
+        int count = Mathf.Min(abilities.Count, MaxSavedAbilities);
+        for (int i = 0; i < count; i++)
+        {
+            SavedAbilityIds.Set(i, abilities[i].AbilityId);
+            SavedAbilityLevels.Set(i, (byte)Mathf.Clamp(
+                abilities[i].Level,
+                1,
+                GetAbilityMaxLevel(abilities[i].AbilityId)));
+        }
+
+        SavedAbilityCount = count;
     }
 
     private void SyncUnlockedSkillsBitmask()
@@ -45,17 +64,17 @@ public class NetworkPlayerData : NetworkBehaviour
         return BackendManager.HasInstance ? BackendManager.Instance.CurrentSkillsBitmask : 0L;
     }
 
-    public void RecordAbility(PlayerAbilityModule module)
+    public void RecordAbility(PlayerAbilityModule module, int level)
     {
         if (module == null)
         {
             return;
         }
 
-        RecordAbilityId(module.AbilityId);
+        RecordAbilityId(module.AbilityId, level);
     }
 
-    public void RecordAbilityId(string abilityId)
+    public void RecordAbilityId(string abilityId, int localLevel)
     {
         if (string.IsNullOrWhiteSpace(abilityId))
         {
@@ -64,15 +83,14 @@ public class NetworkPlayerData : NetworkBehaviour
 
         if (HasStateAuthority)
         {
-            PlayerSessionStore.SaveAbility(Owner, abilityId);
             // 방장 플레이어는 보상 선택 시 같은 오브젝트에서 이미 획득 효과를 적용했다.
-            AddAbilityId(abilityId, false);
+            AddOrLevelAbility(abilityId, false);
             return;
         }
 
         if (Object != null && Object.HasInputAuthority)
         {
-            PlayerSessionStore.SaveAbility(Object.InputAuthority, abilityId);
+            PlayerSessionStore.SetAbilityLevel(Object.InputAuthority, abilityId, localLevel);
             RPC_RecordAbilityId(abilityId);
         }
     }
@@ -85,6 +103,19 @@ public class NetworkPlayerData : NetworkBehaviour
         }
 
         return SavedAbilityIds[index].ToString();
+    }
+
+    public int GetAbilityLevel(int index)
+    {
+        if (index < 0 || index >= SavedAbilityCount || index >= MaxSavedAbilities)
+        {
+            return 0;
+        }
+
+        return Mathf.Clamp(
+            SavedAbilityLevels[index],
+            1,
+            GetAbilityMaxLevel(SavedAbilityIds[index].ToString()));
     }
 
     public bool HasAbilityId(string abilityId)
@@ -129,9 +160,8 @@ public class NetworkPlayerData : NetworkBehaviour
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
     private void RPC_RecordAbilityId(string abilityId)
     {
-        // 일반 참가자의 로컬 PlayerStats에는 StateAuthority가 없으므로
-        // 기존 보상 기록 RPC가 도착한 권한 오브젝트에서 획득 효과를 적용한다.
-        AddAbilityId(abilityId, true);
+        // 요청자가 임의의 레벨을 보내지 못하도록 서버의 현재 레벨에서 정확히 1만 올린다.
+        AddOrLevelAbility(abilityId, true);
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
@@ -147,30 +177,68 @@ public class NetworkPlayerData : NetworkBehaviour
         LastSelectedRewardStage = Mathf.Max(LastSelectedRewardStage, bossStage);
     }
 
-    private void AddAbilityId(string abilityId, bool applyAcquireEffects)
+    private void AddOrLevelAbility(string abilityId, bool applyAcquireEffects)
     {
-        if (HasAbilityId(abilityId) || SavedAbilityCount >= MaxSavedAbilities)
+        PlayerAbilityInventory inventory = GetComponent<PlayerAbilityInventory>();
+        PlayerAbilityModule module = inventory != null ? inventory.FindModuleById(abilityId) : null;
+        if (module == null)
         {
             return;
         }
 
-        SavedAbilityIds.Set(SavedAbilityCount, abilityId);
-        SavedAbilityCount++;
+        int index = FindAbilityIndex(abilityId);
+        if (index < 0 && SavedAbilityCount >= MaxSavedAbilities)
+        {
+            return;
+        }
 
-        PlayerSessionStore.SaveAbility(Owner, abilityId);
-        PlayerAbilityInventory inventory = GetComponent<PlayerAbilityInventory>();
-        inventory?.RestoreFromSessionData(Owner);
+        int currentLevel = index >= 0 ? SavedAbilityLevels[index] : 0;
+        if (currentLevel >= module.MaxLevel)
+        {
+            return;
+        }
+
+        int newLevel = currentLevel + 1;
+        if (index < 0)
+        {
+            index = SavedAbilityCount;
+            SavedAbilityIds.Set(index, abilityId);
+            SavedAbilityCount++;
+        }
+
+        SavedAbilityLevels.Set(index, (byte)newLevel);
+        PlayerSessionStore.SetAbilityLevel(Owner, abilityId, newLevel);
 
         if (!applyAcquireEffects || inventory == null)
         {
             return;
         }
 
-        PlayerAbilityModule module = inventory.FindModuleById(abilityId);
-        PlayerAbilityExecutor executor = GetComponent<PlayerAbilityExecutor>();
-        if (module != null && executor != null)
+        inventory.ApplyServerReward(module);
+    }
+
+    private int FindAbilityIndex(string abilityId)
+    {
+        if (string.IsNullOrWhiteSpace(abilityId))
         {
-            executor.EquipModule(module, inventory.CreateContext());
+            return -1;
         }
+
+        for (int i = 0; i < SavedAbilityCount && i < MaxSavedAbilities; i++)
+        {
+            if (SavedAbilityIds[i].ToString() == abilityId)
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    private int GetAbilityMaxLevel(string abilityId)
+    {
+        PlayerAbilityInventory inventory = GetComponent<PlayerAbilityInventory>();
+        PlayerAbilityModule module = inventory != null ? inventory.FindModuleById(abilityId) : null;
+        return module != null ? module.MaxLevel : byte.MaxValue;
     }
 }

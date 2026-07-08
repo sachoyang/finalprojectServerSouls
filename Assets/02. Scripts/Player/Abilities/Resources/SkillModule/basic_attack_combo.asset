@@ -18,20 +18,20 @@ MonoBehaviour:
   description: "\uAE30\uBCF8 \uACF5\uACA9\uC758 \uCF64\uBCF4\uB97C \uCD1D 3\uD0C0\uAE4C\uC9C0
     \uCD94\uAC00\uD55C\uB2E4"
   icon: {fileID: -1062722195, guid: 602013fcc1a5c4a48ad04a33a93cf811, type: 3}
-  abilityType: 1
-  minBossStage: 1
-  maxBossStage: 8
+  abilityType: 2
+  appearStage: 1
   unlockedSkill: 0
   basicSkill: 0
-  staminaCost: 0
-  cooldownSeconds: 0
-  healthRestoreAmount: 0
-  staminaRestoreAmount: 0
+  maxLevel: 1
+  levelSettings:
+  - damageMultiplier: 1
+    maxHealthBonus: 0
+    maxStaminaBonus: 0
+    defenseBonusPercent: 0
+    attackDamageBonusPercent: 0
+    healthRestoreAmount: 0
+    staminaRestoreAmount: 0
   specialEffect: 1
-  maxHealthBonus: 0
-  maxStaminaBonus: 0
-  defenseRateBonus: 0
-  attackDamageBonusPercent: 0
   animationClip: {fileID: -203655887218126122, guid: f1d1bf1bca092184498421e5bb785168, type: 3}
   animationStateName: 
   animationTrigger: 
@@ -45,7 +45,6 @@ MonoBehaviour:
   parentEffectToPlayer: 0
   hitboxPrefab: {fileID: 0}
   hitboxLocalOffset: {x: 0, y: 0, z: 0}
-  hitboxDamage: 0
   hitboxRevivePower: 34
   hitboxDelay: 0
   hitboxLifetime: 0.3

@@ -47,7 +47,7 @@ public class PlayerStats : NetworkBehaviour
     // 플레이어 최대 기력. 공격, 구르기, 달리기, 스킬 사용 가능 여부의 기준이 된다.
     [SerializeField] private float maxStamina = 1000f;
     // 기력 회복 지연 시간이 끝난 뒤 초당 회복되는 기력량.
-    [SerializeField] private float staminaRegenPerSecond = 100f;
+    [SerializeField] private float staminaRegenPerSecond = 200f;
     // 액션 모션이 끝난 뒤 기력 회복이 다시 시작되기까지의 시간.
     [SerializeField] private float staminaRegenDelay = 1f;
     // 연속 충돌로 한 공격이 여러 번 들어가는 것을 막기 위한 짧은 피격 무적 시간.
@@ -501,32 +501,43 @@ public class PlayerStats : NetworkBehaviour
     // 실제 네트워크 스탯 값은 StateAuthority에서만 바꿔야 모든 클라이언트가 같은 결과를 받는다.
     public void ApplyPassiveStatBonus(PlayerAbilityModule module)
     {
-        if (module == null || module.IsActive || !HasStateAuthority)
+        ApplyPassiveStatBonus(module, 0, 1);
+    }
+
+    public void ApplyPassiveStatBonus(PlayerAbilityModule module, int previousLevel, int newLevel)
+    {
+        if (module == null || !module.IsPassive || !HasStateAuthority)
         {
             return;
         }
 
-        BonusMaxHealth += module.MaxHealthBonus;
-        BonusMaxStamina += module.MaxStaminaBonus;
-        BonusDefenseRate += module.DefenseRateBonus;
-        BonusAttackDamageRate += module.AttackDamageBonusRate;
+        float maxHealthDelta = module.GetMaxHealthBonus(newLevel) - module.GetMaxHealthBonus(previousLevel);
+        float maxStaminaDelta = module.GetMaxStaminaBonus(newLevel) - module.GetMaxStaminaBonus(previousLevel);
+        float defenseDelta = module.GetDefenseRateBonus(newLevel) - module.GetDefenseRateBonus(previousLevel);
+        float attackDamageDelta =
+            module.GetAttackDamageBonusRate(newLevel) - module.GetAttackDamageBonusRate(previousLevel);
+
+        BonusMaxHealth += maxHealthDelta;
+        BonusMaxStamina += maxStaminaDelta;
+        BonusDefenseRate += defenseDelta;
+        BonusAttackDamageRate += attackDamageDelta;
 
         // 최대치가 늘어나는 보상은 획득 즉시 체감되도록 현재 값도 함께 올린다.
-        if (module.MaxHealthBonus > 0f && !IsDead)
+        if (maxHealthDelta > 0f && !IsDead)
         {
-            CurrentHealth = Mathf.Min(MaxHealth, CurrentHealth + module.MaxHealthBonus);
+            CurrentHealth = Mathf.Min(MaxHealth, CurrentHealth + maxHealthDelta);
         }
 
-        if (module.MaxStaminaBonus > 0f && !IsDead)
+        if (maxStaminaDelta > 0f && !IsDead)
         {
-            CurrentStamina = Mathf.Min(MaxStamina, CurrentStamina + module.MaxStaminaBonus);
+            CurrentStamina = Mathf.Min(MaxStamina, CurrentStamina + maxStaminaDelta);
         }
     }
 
     // 장비 해제나 테스트 리셋처럼 패시브 보너스를 되돌릴 일이 생겼을 때 사용할 수 있는 함수다.
     public void RemovePassiveStatBonus(PlayerAbilityModule module)
     {
-        if (module == null || module.IsActive || !HasStateAuthority)
+        if (module == null || !module.IsPassive || !HasStateAuthority)
         {
             return;
         }
@@ -578,7 +589,7 @@ public class PlayerStats : NetworkBehaviour
             return;
         }
 
-        // 방어율을 적용한 최종 피해만 체력에서 차감한다.
+        // 방어력을 적용한 최종 피해만 체력에서 차감한다.
         float finalDamage = damage * (1f - DefenseRate);
         if (_statusController != null)
         {

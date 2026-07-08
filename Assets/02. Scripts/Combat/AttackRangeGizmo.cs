@@ -179,7 +179,8 @@ public class AttackRangeGizmo : MonoBehaviour
             Handles.Label(
                 top + Vector3.up * 0.1f,
                 $"{module.AbilityId} / Hit {eventIndex + 1}\n" +
-                $"R {radius:0.00}, H {hitEvent.Height:0.00}, Damage Rate x{hitEvent.DamageRate:0.##}" +
+                $"R {radius:0.00}, H {hitEvent.Height:0.00}, " +
+                $"Hit x{hitEvent.DamageRate:0.##}, Lv.1 x{module.GetDamageMultiplier(1):0.##}" +
                 diagnostics);
         }
 #endif
