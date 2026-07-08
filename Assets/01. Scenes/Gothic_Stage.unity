@@ -30761,7 +30761,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!108 &1218179766
 Light:
   m_ObjectHideFlags: 0
@@ -40152,7 +40152,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!108 &1787128034
 Light:
   m_ObjectHideFlags: 0
@@ -40165,13 +40165,13 @@ Light:
   m_Type: 1
   m_Shape: 0
   m_Color: {r: 0.990566, g: 0.90789825, b: 0.82702917, a: 1}
-  m_Intensity: 50
+  m_Intensity: 2
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
   m_Shadows:
-    m_Type: 1
+    m_Type: 2
     m_Resolution: -1
     m_CustomResolution: -1
     m_Strength: 1
@@ -40252,7 +40252,7 @@ MonoBehaviour:
   m_ShadowRenderingLayers: 1
   m_LightCookieSize: {x: 1, y: 1}
   m_LightCookieOffset: {x: 0, y: 0}
-  m_SoftShadowQuality: 1
+  m_SoftShadowQuality: 2
 --- !u!1 &1788627962
 GameObject:
   m_ObjectHideFlags: 0
@@ -41730,6 +41730,33 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.1184845, y: 0.9090729, z: 2}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &1858547637 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 677352226991656366, guid: 65432257accb15643b5c55b7a632b14c, type: 3}
+  m_PrefabInstance: {fileID: 7984036903182539346}
+  m_PrefabAsset: {fileID: 0}
+--- !u!64 &1858547640
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1858547637}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 4300006, guid: abc00000000001319918456853161054, type: 3}
 --- !u!1 &1860864433
 GameObject:
   m_ObjectHideFlags: 0
@@ -64515,6 +64542,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5784737063372972131, guid: 65432257accb15643b5c55b7a632b14c, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2035721085}
+    - targetCorrespondingSourceObject: {fileID: 677352226991656366, guid: 65432257accb15643b5c55b7a632b14c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1858547640}
     - targetCorrespondingSourceObject: {fileID: 3467590887417328479, guid: 65432257accb15643b5c55b7a632b14c, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1371014107}
