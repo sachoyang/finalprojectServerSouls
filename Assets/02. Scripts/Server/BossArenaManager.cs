@@ -19,6 +19,10 @@ public class BossArenaManager : NetworkBehaviour, INetworkRunnerCallbacks
     // 방장이 클라이언트들에게 현재 층수를 알려주기 위한 통신 변수
     [Networked] public int NetworkedStageLevel { get; set; }
 
+    // 🕒 방장이 잰 '전투 소요 시간(초)'을 클라이언트에게 동기화하기 위한 통신 변수.
+    //    같이 플레이한 사람 모두 엔딩에서 같은 시간을 봐야 하므로 호스트 값이 기준이다.
+    [Networked] public float NetworkedRunSeconds { get; set; }
+
     public override void Spawned()
     {
         Runner.AddCallbacks(this);
@@ -39,12 +43,25 @@ public class BossArenaManager : NetworkBehaviour, INetworkRunnerCallbacks
         }
     }
 
+    public override void FixedUpdateNetwork()
+    {
+        // 🕒 방장은 자신이 잰 전투 소요 시간을 매 틱 네트워크 변수에 올린다. (게스트가 이 값으로 맞춤)
+        if (HasStateAuthority && GameProgressionManager.Instance != null)
+        {
+            NetworkedRunSeconds = GameProgressionManager.Instance.RunCombatSeconds;
+        }
+    }
+
     public override void Render()
     {
         // 클라이언트는 방장이 올려둔 층수를 계속 읽어와서 자기 통제실을 업데이트합니다.
-        if (!HasStateAuthority && GameProgressionManager.Instance != null && NetworkedStageLevel > 0)
+        if (!HasStateAuthority && GameProgressionManager.Instance != null)
         {
-            GameProgressionManager.Instance.SetLevelFromHost(NetworkedStageLevel);
+            if (NetworkedStageLevel > 0)
+                GameProgressionManager.Instance.SetLevelFromHost(NetworkedStageLevel);
+
+            // 🕒 전투 소요 시간도 방장 값으로 계속 덮어써서 모두 동일하게 유지한다.
+            GameProgressionManager.Instance.SetRunSecondsFromHost(NetworkedRunSeconds);
         }
     }
 

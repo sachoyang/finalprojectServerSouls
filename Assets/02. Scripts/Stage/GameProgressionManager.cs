@@ -27,6 +27,19 @@ public class GameProgressionManager : MonoBehaviour // 런(Run) 동안 유지되
     public bool IsNextLevelFinal => CurrentLevel + 1 >= maxLevel;
 
     // ==========================================
+    // 🕒 [전투 소요 시간] 이번 런에서 '전투(보스) 씬'에 머문 시간만 누적한다.
+    //  - Path 씬(scPath/scPathLast)·로비·엔딩·타이틀은 측정 제외 (아래 IsCombatScene 참고)
+    //  - 클리어(scEnding) 씬에서 GameProgressionManager.Instance.RunCombatSeconds로 읽어 표시
+    //  - 죽어서 로비로 돌아가면 ResetRun()에서 0으로 초기화된다
+    // ==========================================
+    public float RunCombatSeconds { get; private set; }
+    private bool _measuringCombatTime;
+
+    // 게스트는 호스트가 내려주는 값만 쓰고 스스로는 누적하지 않는다(중복/드리프트 방지).
+    //  BossArenaManager가 호스트→게스트로 시간을 내려줄 때 true로 켜진다(게스트에서만 호출됨).
+    private bool _hostDrivesTime;
+
+    // ==========================================
     // 보스 추첨용 '셔플백(가방)'.
     //  완전 랜덤이 아니라, bossPool의 보스가 전부 한 번씩 나올 때까지 중복 없이 뽑는다.
     //  (예: 보스 5마리 & 5층이면 1~5층에 5마리가 전부 한 번씩 등장)
@@ -54,6 +67,9 @@ public class GameProgressionManager : MonoBehaviour // 런(Run) 동안 유지되
     //  🔥 [버그 픽스] 기존엔 "scLobby"라는 존재하지 않는 씬 이름을 검사해 로비 복귀 시 아무 정리도 안 됐다.
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        // 🕒 로드된 씬이 전투(보스) 씬일 때만 시간 측정을 켠다. 그 외(Path/로비/엔딩/타이틀)는 멈춤.
+        _measuringCombatTime = IsCombatScene(scene.name);
+
         if (scene.name == titleSceneName)
         {
             Destroy(gameObject);
@@ -62,6 +78,14 @@ public class GameProgressionManager : MonoBehaviour // 런(Run) 동안 유지되
         {
             ResetRun();
         }
+    }
+
+    private void Update()
+    {
+        // 🕒 전투 씬에 있는 동안만 소요 시간을 누적한다. (일시정지로 timeScale=0이면 자동으로 안 쌓임)
+        //    게스트는 호스트 값만 받으므로 자가 누적하지 않는다.
+        if (_measuringCombatTime && !_hostDrivesTime)
+            RunCombatSeconds += Time.deltaTime;
     }
 
     // ==========================================
@@ -74,6 +98,12 @@ public class GameProgressionManager : MonoBehaviour // 런(Run) 동안 유지되
         CurrentLevel = 1;
         CurrentBossData = null;
         _bossBag.Clear(); // 새 런에서는 새 가방으로 다시 추첨
+
+        // 🕒 죽어서 로비로 돌아온 것이므로 전투 소요 시간도 리셋한다.
+        RunCombatSeconds = 0f;
+        _measuringCombatTime = false;
+        // 호스트 주도 여부는 다음 보스 씬에서 BossArenaManager가 다시 결정한다(역할 변경 대비).
+        _hostDrivesTime = false;
 
         // 아직 재생 중이던 전투 이펙트가 로비까지 끌려오지 않게 전부 풀로 회수
         if (EffectPoolManager.Instance != null)
@@ -107,6 +137,7 @@ public class GameProgressionManager : MonoBehaviour // 런(Run) 동안 유지되
         CurrentLevel = 1;
         _bossBag.Clear(); // 런 시작은 항상 새 가방으로 (로비를 안 거치는 디버그 진입 대비)
         CurrentBossData = null;
+        RunCombatSeconds = 0f; // 🕒 새 런 시작이므로 소요 시간도 0에서 시작
         LoadNextRandomLevel(runner);
     }
 
@@ -171,6 +202,47 @@ public class GameProgressionManager : MonoBehaviour // 런(Run) 동안 유지되
     public void SetLevelFromHost(int level)
     {
         CurrentLevel = level;
+    }
+
+    // 🕒 게스트가 호스트의 전투 소요 시간을 그대로 받아 맞춘다.
+    //  같이 플레이한 사람 모두 엔딩에서 같은 시간을 봐야 하므로 '호스트 값'이 기준.
+    //  (BossArenaManager가 층수처럼 매 틱 호스트→게스트로 흘려보낸다)
+    public void SetRunSecondsFromHost(float seconds)
+    {
+        _hostDrivesTime = true; // 이 매니저는 게스트 → 자가 누적을 끄고 호스트 값만 따른다
+        RunCombatSeconds = seconds;
+    }
+
+    // ==========================================
+    // 🕒 로드된 씬이 '전투(보스) 씬'인지 판별.
+    //  보스 풀(bossPool)에 등록된 sceneName 중 하나면 전투 씬으로 본다.
+    //  → 경유 씬(scPath/scPathLast)·로비·엔딩(scEnding)·타이틀은 자동으로 제외되어 측정되지 않는다.
+    // ==========================================
+    private bool IsCombatScene(string sceneName)
+    {
+        if (bossPool == null || string.IsNullOrEmpty(sceneName))
+            return false;
+
+        for (int i = 0; i < bossPool.Count; i++)
+        {
+            if (bossPool[i] != null && bossPool[i].sceneName == sceneName)
+                return true;
+        }
+
+        return false;
+    }
+
+    // 🕒 엔딩/결과 화면 표시용 문자열. 1시간 이상이면 h:mm:ss, 아니면 mm:ss.
+    public string GetRunCombatTimeText()
+    {
+        int total = Mathf.FloorToInt(RunCombatSeconds);
+        int hours = total / 3600;
+        int minutes = (total % 3600) / 60;
+        int seconds = total % 60;
+
+        return hours > 0
+            ? $"{hours}:{minutes:00}:{seconds:00}"
+            : $"{minutes:00}:{seconds:00}";
     }
 
     // ▼▼▼ [디버그 전용] 씬 이동 없이 층/보스 데이터만 세팅 (DebugQuickEntry 에서 사용) ▼▼▼

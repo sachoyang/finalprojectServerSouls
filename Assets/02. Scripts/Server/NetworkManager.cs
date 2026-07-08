@@ -89,6 +89,24 @@ public class NetworkManager : MonoSingleton<NetworkManager>, ISessionGuard // �
         }
     }
 
+    // ==========================================
+    // 세션을 깔끔히 종료하고 지정 씬으로 이동한다. (엔딩 → 타이틀 복귀 등에서 사용)
+    //  HandleSessionExpired 와 동일한 셧다운 패턴을 쓰되, 목적지 씬만 바꿀 수 있게 분리했다.
+    // ==========================================
+    public async void ShutdownAndLoad(string sceneName)
+    {
+        if (_runner != null && _runner.IsRunning)
+        {
+            await _runner.Shutdown();
+        }
+        _runner = null; // 다음 세션에서 새 러너를 붙일 수 있도록 참조 정리
+
+        if (!string.IsNullOrEmpty(sceneName))
+        {
+            SceneManager.LoadScene(sceneName);
+        }
+    }
+
     public void StartAlone()
     {
         StartSession(GameMode.Host, "ALONE_" + Random.Range(1000, 9999));
