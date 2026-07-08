@@ -55,9 +55,13 @@ public class GameOverView : MonoBehaviour
             continueButtonText.text = continueText;
 
         SetAlpha(startAlpha);
-        SetInputEnabled(false);
 
-        gameObject.SetActive(false);
+        // 🔥 [수정] 예전엔 gameObject.SetActive(false)로 숨겼는데, 프리팹에서 이 오브젝트가
+        //    비활성으로 시작하면(항복 UI 커밋이 GameOver의 m_IsActive를 0으로 바꿈) Play()의
+        //    SetActive(true) 순간 Awake가 '처음' 실행되며 여기서 다시 스스로를 꺼버려
+        //    바로 뒤 StartCoroutine이 "game object is inactive"로 실패했다.
+        //    이제 자기 자신을 끄지 않고 CanvasGroup(alpha 0 · 입력 차단)으로만 숨긴다.
+        HidePanel();
     }
 
     private void Update()
@@ -84,7 +88,10 @@ public class GameOverView : MonoBehaviour
         if (isPlaying)
             return;
 
+        // 프리팹에서 비활성으로 시작했더라도 여기서 활성화한다.
+        // (Awake는 더 이상 자신을 끄지 않으므로 이 SetActive(true)가 그대로 유지됨)
         gameObject.SetActive(true);
+        ShowPanel();
 
         // 🔥 게임오버 화면부터 마우스 커서를 되살린다 (Continue 버튼 클릭용).
         //    커서 잠금은 ThirdPersonCameraController가 매 프레임 다시 걸기 때문에,
@@ -154,6 +161,27 @@ public class GameOverView : MonoBehaviour
 
         if (continueButton != null)
             continueButton.interactable = enabled;
+    }
+
+    // 게임오버 화면 표시(오브젝트는 항상 활성, 표시 여부는 CanvasGroup으로만 제어).
+    private void ShowPanel()
+    {
+        if (canvasGroup != null)
+        {
+            canvasGroup.alpha = 1f;
+            canvasGroup.blocksRaycasts = true;
+        }
+    }
+
+    // 대기 중(전투 진행 중)에는 완전히 숨기고 입력도 차단해 HUD 클릭을 막지 않는다.
+    private void HidePanel()
+    {
+        if (canvasGroup != null)
+        {
+            canvasGroup.alpha = 0f;
+            canvasGroup.blocksRaycasts = false;
+            canvasGroup.interactable = false;
+        }
     }
 
     // ==========================================
