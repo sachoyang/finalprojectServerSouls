@@ -58,8 +58,7 @@ public class AbilityManager : MonoSingleton<AbilityManager>
     // ==========================================
     private void LoadLocalAbilityCatalog()
     {
-        PlayerAbilityModule[] localModules =
-            Resources.LoadAll<PlayerAbilityModule>("SkillModule");
+        PlayerAbilityModule[] localModules = LoadLocalSkillModules();
 
         AllAbilitiesDict.Clear();
         AllAbilitiesById.Clear();
@@ -82,6 +81,27 @@ public class AbilityManager : MonoSingleton<AbilityManager>
         {
             Debug.LogWarning(
                 "[AbilityManager] Resources/SkillModule에서 PlayerAbilityModule을 찾지 못했습니다.");
+        }
+    }
+
+    private static PlayerAbilityModule[] LoadLocalSkillModules()
+    {
+        List<PlayerAbilityModule> modules = new List<PlayerAbilityModule>();
+        LoadLocalSkillModules("SkillModule/ActiveSkill", modules);
+        LoadLocalSkillModules("SkillModule/PassiveSkill", modules);
+        LoadLocalSkillModules("SkillModule/UtilitySkill", modules);
+        return modules.ToArray();
+    }
+
+    private static void LoadLocalSkillModules(string resourcesPath, List<PlayerAbilityModule> modules)
+    {
+        PlayerAbilityModule[] loadedModules = Resources.LoadAll<PlayerAbilityModule>(resourcesPath);
+        for (int i = 0; i < loadedModules.Length; i++)
+        {
+            if (loadedModules[i] != null && !modules.Contains(loadedModules[i]))
+            {
+                modules.Add(loadedModules[i]);
+            }
         }
     }
 

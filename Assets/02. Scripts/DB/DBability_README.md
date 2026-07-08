@@ -1,217 +1,320 @@
-📢 [필독] Soul Rush 스킬 시스템 사용 가이드 (Data-Driven)
-이제 우리 게임의 모든 스킬(이름, 데미지, 쿨타임, 이펙트)은 관리자 웹사이트(Admin Hub)에서 중앙 통제됩니다. 유니티에서 수동으로 스킬 프리팹을 만들거나 수치를 고칠 필요가 없습니다!
+# Soul Rush 스킬 DB 연동 가이드
 
-## 현재 스킬 시스템 변경 방향
+현재 Unity 스킬 모듈은 단일 `PlayerAbilityModule` 에셋이 아니라 타입별 ScriptableObject로 분리되어 있습니다.
 
-현재 Unity 쪽 스킬 구조는 다음 기준으로 정리합니다.
+- `ActiveAbilityModule`
+- `PassiveAbilityModule`
+- `UtilityAbilityModule`
 
-- 스킬은 Active / Passive / Utility 3종류로 분류합니다.
-- Effect 분류명은 Utility로 변경합니다.
-- Active 스킬의 레벨 배율은 스킬 전체 데미지에 직접 곱하는 값이 아니라, 각 Hit Event의 Damage Multiplier에 곱해지는 레벨별 배율로 사용합니다.
-- Passive는 레벨별 최종 증가값을 사용합니다. 레벨업할 때 차감분을 누적 적용하는 방식이 아니라, 현재 레벨의 값을 기준으로 다시 적용하는 구조가 안전합니다.
-- Utility는 회복, 기본공격 해금, 특수 기능처럼 전투 데미지와 직접 연결되지 않는 기능성 스킬을 담당합니다.
-- 쿨타임과 스태미나 소모량은 레벨에 따라 변하지 않는 기본값으로 둡니다.
-- 스킬 설명은 DB에 완성 문장으로 저장하기보다, Unity 표시 단계에서 토큰을 해석해 현재 레벨 수치가 반영되도록 처리합니다.
-- DB Bake / Upload 쪽은 별도 담당 영역이므로, Unity 로컬 테스트 중에는 실제 적용 로직과 에디터 표시만 우선 정리합니다.
+세 타입 모두 공통 부모는 `PlayerAbilityModule`입니다. 그래서 런타임에서는 기존처럼 `PlayerAbilityModule`로 조회하고, 실제 저장되는 필드는 타입별 모듈에 필요한 것만 가집니다.
 
-## DB 쪽에서 수정해야 할 권장 테이블 구조
+## Unity 에셋 생성 방식
 
-레벨별 수치를 관리자 사이트에서 자주 조정할 예정이라면, 레벨 데이터는 별도 테이블로 분리하는 편이 좋습니다. 테이블 수는 늘어나지만, 특정 레벨만 수정하거나 검증하기 쉬워지고 Unity로 내려줄 JSON 응답도 만들기 쉬워집니다.
+Project 창에서 새 스킬을 만들 때 아래 메뉴 중 하나를 선택합니다.
 
-권장 구조는 총 7개입니다.
+- `Create > ServerSouls > Player Modules > Active Ability`
+- `Create > ServerSouls > Player Modules > Passive Ability`
+- `Create > ServerSouls > Player Modules > Utility Ability`
 
-- abilities
-- active_abilities
-- active_ability_levels
-- passive_abilities
-- passive_ability_levels
-- utility_abilities
-- utility_ability_levels
+처음 만들 때 타입을 선택하는 구조입니다. 이후 인스펙터에서 `Ability Type`을 바꾸는 방식이 아닙니다.
 
-### abilities
+## 타입별 Unity 데이터 범위
 
-모든 스킬이 공통으로 가지는 기본 정보만 둡니다.
+### 공통: `PlayerAbilityModule`
 
-- ability_id
-- ability_type
-- display_name
-- description_template
-- icon_key
-- bit_index
-- appear_stage
-- is_basic_skill
-- is_unlocked
-- max_level
+모든 스킬이 가지는 값입니다.
 
-여기에는 cooldown_seconds, stamina_cost, special_effect 같은 타입별 값은 넣지 않습니다.
+- `bitIndex`
+- `abilityId`
+- `displayName`
+- `description`
+- `icon`
+- `appearStage`
+- `unlockedSkill`
+- `basicSkill`
+- `maxLevel`
 
-### active_abilities
+### Active: `ActiveAbilityModule`
 
-Active 스킬의 레벨과 무관한 기본 사용값만 둡니다.
+공격/사용형 스킬입니다.
 
-- ability_id
-- cooldown_seconds
-- stamina_cost
+- `staminaCost`
+- `cooldownSeconds`
+- `levelSettings.damageMultiplier`
+- 애니메이션
+- VFX
+- 사운드
+- 공격 판정 `hitEvents`
 
-### active_ability_levels
+Active의 레벨 배율은 최종 데미지를 직접 대체하는 값이 아니라, 각 Hit Event의 `damageRate`에 곱해지는 레벨별 배율입니다.
 
-Active 스킬의 레벨별 배율만 둡니다.
+### Passive: `PassiveAbilityModule`
 
-- ability_id
-- level
-- skill_multiplier
+획득/레벨업 시 플레이어 스탯을 올리는 스킬입니다.
 
-이 값은 Hit Event의 Damage Multiplier에 곱해지는 레벨 배율입니다.
+- `levelSettings.maxHealthBonus`
+- `levelSettings.maxStaminaBonus`
+- `levelSettings.defenseBonusPercent`
+- `levelSettings.attackDamageBonusPercent`
+- 애니메이션
+- VFX
+- 사운드
 
-### passive_abilities
+Passive도 획득 연출이 필요할 수 있으므로 애니메이션/VFX/사운드는 유지합니다. 대신 쿨타임, 스태미나 소모량, 공격 판정, 회복량은 가지지 않습니다.
 
-현재 Passive는 레벨과 무관한 기본값이 따로 없으면 ability_id만 두거나, 추후 확장용으로 비워둘 수 있습니다.
+공격력 증가와 방어력 증가는 퍼센트 입력 기준입니다.
 
-- ability_id
+- `10` 입력 = 10%
+- `100` 입력 = 100%
 
-### passive_ability_levels
+### Utility: `UtilityAbilityModule`
 
-Passive 스킬의 레벨별 최종 증가값을 둡니다.
+회복, 기본 공격 해금, 기능성 효과를 담당합니다.
 
-- ability_id
-- level
-- health
-- stamina
-- defense
-- attack
+- `staminaCost`
+- `cooldownSeconds`
+- `specialEffect`
+- `levelSettings.healthRestoreAmount`
+- `levelSettings.staminaRestoreAmount`
+- 애니메이션
+- VFX
+- 사운드
 
-공격력 증가, 방어력 증가 같은 값은 10을 입력하면 10% 증가로 해석하는 기준을 권장합니다.
+기본 공격 해금처럼 쿨타임/스태미나/레벨별 회복량이 필요 없는 Utility는 해당 값을 `0`으로 둡니다.
 
-### utility_abilities
+## 권장 DB 테이블 구조
 
-Utility 스킬의 레벨과 무관한 기본값을 둡니다.
+Unity 모듈이 타입별로 분리되었으므로 DB도 타입별로 분리하는 구조를 권장합니다.
 
-- ability_id
-- cooldown_seconds
-- stamina_cost
-- special_effect
+총 7개 테이블 구조입니다.
 
-쿨타임이나 스태미나가 필요 없는 Utility라면 0 또는 null 허용 기준을 DB 쪽에서 정하면 됩니다.
+- `abilities`
+- `active_abilities`
+- `active_ability_levels`
+- `passive_abilities`
+- `passive_ability_levels`
+- `utility_abilities`
+- `utility_ability_levels`
 
-### utility_ability_levels
+## `abilities`
 
-Utility 스킬의 레벨별 수치만 둡니다.
+모든 스킬의 공통 정보만 저장합니다.
 
-- ability_id
-- level
-- health_restore
-- stamina_restore
+| 컬럼 | 설명 |
+| --- | --- |
+| `ability_id` | 스킬 고유 ID, PK |
+| `ability_type` | `Active`, `Passive`, `Utility` |
+| `bit_index` | 해금 비트마스크 인덱스 |
+| `display_name` | 표시 이름 |
+| `description_template` | 토큰 포함 설명문 |
+| `appear_stage` | 몇 스테이지부터 등장할지 |
+| `is_unlocked` | 기본 해금 여부 |
+| `is_basic_skill` | 기본 스킬 여부 |
+| `max_level` | 최대 레벨 |
 
-기본공격 해금처럼 레벨별 회복 수치가 필요 없는 Utility라면 0 또는 null 허용 기준을 사용합니다.
+여기에는 쿨타임, 스태미나, 특수효과, 레벨별 수치를 넣지 않습니다.
 
-### DB에서 검증하면 좋은 규칙
+### bit_index 범위 규칙
 
-- ability_id + level 조합은 중복되지 않아야 합니다.
-- level은 1 이상 max_level 이하만 허용합니다.
-- max_level에 도달한 스킬은 보상 후보에서 제외할 수 있어야 합니다.
-- bit_index는 중복되지 않아야 합니다.
-- ability_type에 맞는 타입별 테이블과 레벨 테이블이 존재해야 합니다.
-- appear_stage는 “몇 스테이지부터 등장” 기준으로 사용합니다.
+스킬 타입별로 bit_index 범위를 분리합니다.
 
-### Unity로 내려주는 데이터
+| 타입 | bit_index 범위 |
+| --- | --- |
+| Active | 1 ~ 19 |
+| Passive | 20 ~ 39 |
+| Utility | 40 ~ 60 |
 
-DB 내부 저장은 위처럼 정규화된 테이블로 관리하고, Unity 응답은 JSON으로 묶어서 내려주는 방식을 권장합니다.
+Unity 에디터에서는 새 SkillModule 에셋의 bitIndex가 0이면 타입별 범위에서 다음 빈 번호를 자동 할당합니다.
 
-이 방식의 장점은 다음과 같습니다.
+DB의 `abilities.bit_index`도 이 범위 규칙과 동일하게 관리해야 합니다. 이미 운영 중인 계정의 해금 비트마스크가 있다면 bit_index 재배치는 기존 저장값과 호환이 깨질 수 있으므로, DB 마이그레이션 또는 초기화 기준을 먼저 정해야 합니다.
 
-- 사이트에서 레벨별 행 수정이 쉽습니다.
-- 특정 레벨만 업데이트할 수 있습니다.
-- 잘못된 레벨이나 중복 레벨 검증이 쉽습니다.
-- Unity 응답 JSON 생성이 단순합니다.
-- 나중에 스킬마다 최대 레벨이 달라져도 컬럼 추가가 필요 없습니다.
+## `active_abilities`
 
-👩‍💻 기획자 & 아티스트 (작업 흐름)
-1. 스킬 만들기 & 수치 밸런싱
+Active 스킬의 레벨과 무관한 사용값만 저장합니다.
 
-admin_hub.php에 접속해서 [⚔️ 스킬 모듈 관리]로 들어갑니다.
+| 컬럼 | 설명 |
+| --- | --- |
+| `ability_id` | `abilities.ability_id` FK |
+| `cooldown_seconds` | 쿨타임 |
+| `stamina_cost` | 스태미나 소모량 |
 
-새로운 스킬의 스탯(데미지, 쿨타임, 아이콘 키값 등)을 입력하고 저장합니다.
+## `active_ability_levels`
 
-(중요) 수치를 바꾸고 싶을 때도 여기서 수정만 하면 끝입니다.
+Active 스킬의 레벨별 배율을 저장합니다.
 
-2. 유니티에 스킬 가져오기 (Bake)
+| 컬럼 | 설명 |
+| --- | --- |
+| `ability_id` | `abilities.ability_id` FK |
+| `level` | 레벨 |
+| `skill_multiplier` | Hit Event damageRate에 곱할 배율 |
 
-유니티 에디터를 열고 상단 메뉴에서 Soul Rush -> ⚔️ 스킬 DB 동기화 (Bake)를 누릅니다.
+권장 고유키:
 
-[🚀 스킬 동기화 실행] 버튼을 누르면, 웹에서 만든/수정한 스킬들이 Assets/Resources/GeneratedAbilities 폴더에 .asset 파일로 짠! 하고 생겨납니다.
+```text
+ability_id + level
+```
 
-3. 스킬 사용하기
+## `passive_abilities`
 
-이제 생성된 .asset 파일을 보스 몬스터의 드랍 테이블이나, 인벤토리 초기 지급 리스트에 마우스로 드래그 앤 드롭해서 마음껏 쓰시면 됩니다.
+현재 Passive는 레벨과 무관한 기본값이 없습니다. 그래도 타입별 테이블을 유지하면 구조가 일관됩니다.
 
-👨‍💻 프로그래머 (코드 활용법)
-프로그래머분들은 이제 하드코딩된 모듈 대신 AbilityManager가 관리하는 살아있는 데이터를 가져다 써야 합니다.
+| 컬럼 | 설명 |
+| --- | --- |
+| `ability_id` | `abilities.ability_id` FK |
 
-1. "내가 가진 스킬 목록" 가져오기 (UI 갱신할 때)
-유저가 로그인하면 서버에서 알아서 최신 스킬 패치 내역을 받아옵니다. 여러분은 현재 유저의 '비트마스크'를 던져주고, 해금된 스킬(SO) 리스트만 받아오면 됩니다.
+## `passive_ability_levels`
 
-C#
-// 현재 로그인한 유저의 비트마스크(예: 5) 가져오기
-long myBitmask = BackendManager.Instance.CurrentSkillsBitmask;
+Passive 스킬의 레벨별 최종 증가값을 저장합니다.
 
-// 비트마스크를 해독해서, 내가 진짜 가진 스킬 파일(.asset)들만 List로 뽑아줌!
-List<PlayerAbilityModule> myUnlockedSkills = AbilityManager.Instance.GetUnlockedAbilitiesList(myBitmask);
+| 컬럼 | 설명 |
+| --- | --- |
+| `ability_id` | `abilities.ability_id` FK |
+| `level` | 레벨 |
+| `max_health_bonus` | 최대 체력 증가 |
+| `max_stamina_bonus` | 최대 스태미나 증가 |
+| `defense_bonus_percent` | 방어력 증가율 |
+| `attack_damage_bonus_percent` | 공격력 증가율 |
 
-// UI에 그리기
-foreach (PlayerAbilityModule skill in myUnlockedSkills)
+레벨업 시 “이번 레벨에서 더해질 차이값”이 아니라 “현재 레벨의 최종값”을 저장합니다. Unity 런타임에서 이전 레벨값과 새 레벨값의 차이를 계산해 적용합니다.
+
+## `utility_abilities`
+
+Utility 스킬의 레벨과 무관한 기본값을 저장합니다.
+
+| 컬럼 | 설명 |
+| --- | --- |
+| `ability_id` | `abilities.ability_id` FK |
+| `cooldown_seconds` | 쿨타임 |
+| `stamina_cost` | 스태미나 소모량 |
+| `special_effect` | 특수 효과 enum 이름 |
+
+## `utility_ability_levels`
+
+Utility 스킬의 레벨별 회복 수치를 저장합니다.
+
+| 컬럼 | 설명 |
+| --- | --- |
+| `ability_id` | `abilities.ability_id` FK |
+| `level` | 레벨 |
+| `health_restore_amount` | 체력 회복량 |
+| `stamina_restore_amount` | 스태미나 회복량 |
+
+기본 공격 해금처럼 회복 수치가 없는 Utility는 0으로 저장하면 됩니다.
+
+## Unity로 내려줄 JSON 권장 구조
+
+DB는 테이블을 나눠 관리하더라도 Unity 응답은 JSON으로 묶어서 내려주는 편이 좋습니다.
+
+예시:
+
+```json
 {
-    Debug.Log($"스킬 이름: {skill.DisplayName}, 데미지: {skill.HitboxDamage}");
-    // slot.SetIcon(skill.Icon);
-}
-2. 특정 스킬 하나만 콕 집어서 가져오기
-"0번 비트에 있는 파이어볼 스킬 데이터 좀 줘!" 할 때는 딕셔너리에서 바로 꺼내 씁니다.
-
-C#
-int bitIndex = 0; // 파이어볼의 고유 인덱스
-
-if (AbilityManager.Instance.AllAbilitiesDict.TryGetValue(bitIndex, out PlayerAbilityModule fireSkill))
-{
-    // 여기서 fireSkill.CooldownSeconds 등을 읽어서 사용!
-}
-💡 핵심 주의사항
-🚨 절대 유니티 인스펙터에서 스킬 .asset 파일의 수치(데미지, 쿨타임 등)를 수동으로 수정하지 마세요.
-
-어차피 게임을 실행(Play)하는 순간, 서버(DB)에 적힌 최신 수치로 알아서 덮어씌워집니다. (라이브 패치 적용)
-
-무언가 수정하고 싶다면 반드시 관리자 웹사이트(Admin Hub)에서 고친 뒤, 유니티에서 Bake 버튼을 한 번 눌러주세요.
-
-📢 [플레이어 스킬 연동 가이드]
-
-플레이어 전투 로직 짜실 때 스킬 데이터는 직접 하드코딩하지 마시고 아래 방법대로 연동해 주세요! 서버 데이터 기반으로 라이브 연동 다 끝내놨습니다.
-
-1. 테스트할 때 스킬 세팅법
-유니티 상단 메뉴에 [Soul Rush] -> [스킬 DB 동기화] 툴 만들어 놨습니다. 버튼 한 번 누르면 서버에 있는 스킬 수치들이 Assets/Resources/GeneratedAbilities 폴더 안에 .asset 파일로 쫙 구워집니다.
-플레이어 프리팹이나 스킬 슬롯 인스펙터에 이 파일들을 드래그 앤 드롭해서 꽂아놓고 테스트하시면 됩니다!
-
-2. 실제 코드에서 스킬 수치 꺼내 쓰는 법
-PlayerAbilityModule에 들어있는 변수들을 그대로 가져다 쓰시면 됩니다.
-
-C#
-// [플레이어 전투 스크립트 예시]
-public class PlayerCombat : MonoBehaviour
-{
-    // 인스펙터에 아까 구운 스킬 파일(.asset)을 드래그해서 넣거나, 
-    // 장착 UI에서 넘겨받은 모듈을 여기에 할당합니다.
-    public PlayerAbilityModule equippedSkill; 
-
-    public void UseSkill()
+  "status": "success",
+  "data": [
     {
-        // 1. 스태미나가 충분한지 검사
-        if (PlayerStats.CurrentStamina < equippedSkill.StaminaCost) return;
-
-        // 2. 공격 애니메이션 실행
-        animator.Play(equippedSkill.AnimationStateName);
-
-        // 3. 데미지 계산 및 히트박스 생성 (서버 수치 그대로 적용됨!)
-        float finalDamage = CalculateDamage(equippedSkill.HitboxDamage);
-        
-        // (이펙트, 사운드 등도 equippedSkill 안에 다 들어있습니다)
+      "ability_id": "jump_attack",
+      "ability_type": "Active",
+      "bit_index": 6,
+      "display_name": "리프 어택",
+      "description": "전방으로 도약하여 {hit1}배의 데미지를 준다",
+      "appear_stage": 1,
+      "basic_skill": 1,
+      "unlocked_skill": 1,
+      "max_level": 4,
+      "active": {
+        "cooldown_seconds": 8,
+        "stamina_cost": 400
+      },
+      "levels": [
+        { "level": 1, "skill_multiplier": 1.0 },
+        { "level": 2, "skill_multiplier": 1.2 },
+        { "level": 3, "skill_multiplier": 1.4 },
+        { "level": 4, "skill_multiplier": 1.6 }
+      ]
     }
+  ]
 }
-※ 주의사항: > 테스트하다가 데미지나 쿨타임을 바꾸고 싶으면 절대 유니티 인스펙터에서 직접 숫자를 고치지 마세요. 어차피 게임 실행하면 서버 최신 수치로 알아서 덮어씌워집니다.
-수정이 필요하면 저한테 말씀해 주시면 DB 웹에서 바로 고쳐드리겠습니다! (고치고 Bake 툴 한 번만 다시 돌리면 끝납니다.)
+```
+
+서버 내부 테이블이 7개여도 Unity는 위처럼 한 스킬 단위로 묶인 JSON을 받으면 됩니다.
+
+## Upload 방향
+
+Unity에서 DB로 업로드할 때도 이제 타입별로 나눠 보내야 합니다.
+
+```csharp
+if (module is ActiveAbilityModule active)
+{
+    // abilities + active_abilities + active_ability_levels
+}
+else if (module is PassiveAbilityModule passive)
+{
+    // abilities + passive_abilities + passive_ability_levels
+}
+else if (module is UtilityAbilityModule utility)
+{
+    // abilities + utility_abilities + utility_ability_levels
+}
+```
+
+현재 `AbilityUploadWindow`는 예전 단일 모듈 업로드 형식이 남아 있습니다. DB 업로드 기능을 다시 사용할 때는 위 타입별 구조에 맞게 수정해야 합니다.
+
+## Bake 방향
+
+Bake는 서버 JSON을 받아 `Assets/02. Scripts/Player/Abilities/Resources/SkillModule` 아래 타입별 폴더의 에셋을 갱신합니다.
+
+저장 폴더:
+
+```text
+Assets/02. Scripts/Player/Abilities/Resources/SkillModule
+├─ ActiveSkill
+├─ PassiveSkill
+└─ UtilitySkill
+```
+
+현재 구조에서는 `ability_type`에 따라 생성 타입이 달라져야 합니다.
+
+- `Active` → `ActiveAbilityModule`
+- `Passive` → `PassiveAbilityModule`
+- `Utility` → `UtilityAbilityModule`
+
+새 에셋을 만들 때는 `ability_type`에 따라 위 타입별 폴더에 저장합니다.
+
+기존 에셋이 있으면 같은 `ability_id`의 에셋을 찾아 수치만 갱신합니다. 애니메이션, VFX, 사운드, 프리팹 참조 같은 Unity 전용 데이터는 DB에서 내려오지 않으므로 로컬 에셋에 유지합니다.
+
+## 설명 토큰
+
+설명은 DB에 완성된 숫자 문장으로 박아두기보다 토큰 문장으로 저장하는 방식을 권장합니다.
+
+예시:
+
+```text
+전방으로 도약하여 {hit1}배의 데미지를 준다
+스태미나 {staminaCost} 소모, 쿨타임 {cooldown}초
+```
+
+Unity 표시 단계에서 현재 레벨과 모듈 값을 기준으로 토큰을 치환합니다. 그러면 레벨별 수치가 바뀌어도 설명 문구를 매번 다시 쓰지 않아도 됩니다.
+
+## 검증 규칙
+
+DB 또는 Admin 사이트에서 아래 규칙을 검증하는 것이 좋습니다.
+
+- `ability_id`는 중복되면 안 됩니다.
+- `bit_index`는 중복되면 안 됩니다.
+- `bit_index`는 타입별 범위 규칙을 지켜야 합니다.
+- `ability_id + level` 조합은 중복되면 안 됩니다.
+- `level`은 1 이상 `max_level` 이하만 허용합니다.
+- `ability_type`에 맞는 타입별 기본 테이블과 레벨 테이블 행이 있어야 합니다.
+- `special_effect`는 Utility에서만 사용합니다.
+- `appear_stage`는 “몇 스테이지부터 등장” 기준입니다.
+
+## 런타임 연결
+
+런타임에서는 여전히 `PlayerAbilityModule` 공통 타입으로 다룹니다.
+
+- `AbilityManager`는 `Resources/SkillModule/ActiveSkill`, `PassiveSkill`, `UtilitySkill` 세 폴더에서 모듈을 로드합니다.
+- `PlayerAbilityInventory`는 `PlayerAbilityModule` 리스트로 장착/레벨을 관리합니다.
+- `PlayerAbilityExecutor`는 `module.IsActive`, `module.IsPassive`, `module.IsUtility`, `module.UsesActiveSlot` 기준으로 실행 방식을 나눕니다.
+- `PlayerStats`는 Passive 모듈의 레벨별 최종 증가값을 읽어 이전 레벨과 새 레벨의 차이만 적용합니다.
+
+즉, 에셋 저장 구조는 타입별로 분리되었지만 전투/인벤토리 연결은 공통 부모 타입으로 유지됩니다.

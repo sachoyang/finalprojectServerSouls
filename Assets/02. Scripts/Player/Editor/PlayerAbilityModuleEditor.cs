@@ -185,6 +185,20 @@ public class PlayerAbilityModuleEditor : Editor
     private void DrawReward()
     {
         EditorGUILayout.PropertyField(_bitIndex, new GUIContent("비트 인덱스"));
+        string rangeLabel = PlayerAbilityBitIndexUtility.GetRangeLabel(Module.AbilityType);
+        MessageType rangeMessageType = PlayerAbilityBitIndexUtility.IsInTypeRange(Module)
+            ? MessageType.Info
+            : MessageType.Warning;
+        EditorGUILayout.HelpBox(
+            $"{GetAbilityTypeLabel(Module.AbilityType)} BitIndex 권장 범위: {rangeLabel}",
+            rangeMessageType);
+
+        if (GUILayout.Button("다음 빈 BitIndex 자동 할당"))
+        {
+            PlayerAbilityBitIndexUtility.TryAssignNextBitIndex(Module);
+            serializedObject.Update();
+        }
+
         EditorGUILayout.PropertyField(_abilityId, new GUIContent("스킬 ID"));
         EditorGUILayout.PropertyField(_displayName, new GUIContent("표시 이름"));
         EditorGUILayout.PropertyField(
