@@ -65,19 +65,27 @@ public class RankingManager : MonoSingleton<RankingManager>
     {
         BackendManager backend = BackendManager.Instance;
 
+        // 팀원 리스트를 폼 전송용 JSON 문자열로 직렬화. 예) {"members":[{"nickname":"peace","damage":0},...]}
+        //  서버는 이 players_json 을 파싱해 저장하고, 조회 시엔 중첩 members 배열로 다시 내려준다.
+        PartyMemberList memberWrap = new PartyMemberList
+        {
+            members = payload.members ?? new List<PartyMember>()
+        };
+        string playersJson = JsonUtility.ToJson(memberWrap);
+
         WWWForm form = new WWWForm();
         // 인증(기존 규격과 동일) — 서버가 세션을 검증하고, 없으면 무시하도록 확장 가능
         form.AddField("login_id", backend.CurrentLoginID ?? "");
         form.AddField("session_token", backend.CurrentSessionToken ?? "");
 
-        // 기록 본문
-        form.AddField("nickname", string.IsNullOrEmpty(payload.nickname) ? "Unknown" : payload.nickname);
+        // 팀 기록 본문
+        form.AddField("team_name", string.IsNullOrEmpty(payload.team_name) ? "Unknown" : payload.team_name);
         form.AddField("clear_time_seconds", payload.clear_time_seconds.ToString());
         form.AddField("cleared_level", payload.cleared_level.ToString());
-        // 확장 필드(지금은 0/빈값이지만 규격을 미리 맞춰 전송)
-        form.AddField("total_damage", payload.total_damage.ToString());
         form.AddField("party_size", payload.party_size.ToString());
-        form.AddField("players_json", payload.players_json ?? "");
+        // 딜량은 지금 0이지만 규격을 미리 맞춰 전송 (담당자가 members 를 채우면 자동 반영)
+        form.AddField("total_damage", payload.total_damage.ToString());
+        form.AddField("players_json", playersJson);
 
         using (UnityWebRequest www = UnityWebRequest.Post(baseUrl + SubmitEndpoint, form))
         {

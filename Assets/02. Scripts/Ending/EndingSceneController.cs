@@ -1,29 +1,43 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 // ==========================================
-// 🏁 EndingSceneController — 게임 클리어(scEnding) 화면 + 랭킹 표
+// 🏁 EndingSceneController — 게임 클리어(scEnding) 화면 + "팀 단위" 랭킹 표
 //  흐름:
 //   1) "GAME CLEAR" 배너와 이번 판 소요 시간(GameProgressionManager 기준)을 보여준다.
-//   2) 방장(HasStateAuthority/솔로)이고 로그인 상태면 이번 기록을 서버에 등록한다.
-//   3) 서버에서 상위 랭킹을 받아와 표(순위 / 이름 / 소요 시간 / 딜량)로 그린다.
+//   2) 3인 협동이고 방장이며 로그인 상태면, 이 팀의 기록을 서버에 등록한다.
+//   3) 서버에서 상위 팀 랭킹을 받아와 표로 그린다.
+//      - 각 팀은 [순위 / 팀 / 소요 시간 / 총 딜량] 한 줄로 나오고,
+//        그 아래에 팀원별 [이름 · 딜량] 소줄이 붙는다(팀 안에서 서로의 딜량/이름 확인).
 //   4) [타이틀로] 버튼으로 세션을 끊고 타이틀 씬으로 복귀.
 //
-//  UI는 코드로 자동 생성한다(별도 프리팹/캔버스 배선 불필요). 디자인을 바꾸고 싶으면
-//  이 스크립트의 Build* 메서드를 수정하거나, 나중에 손으로 만든 캔버스로 교체하면 된다.
+//  ⚠️ 지금은 "소요 시간"만 실제 값이다. 팀원별 딜량/이름은 아직 안 채운다.
+//     → 딜량 담당자는 EndingSceneController.PartyMembersProvider 에 팀원 리스트를
+//        돌려주는 함수만 꽂으면(구조는 이미 준비됨) 표/서버에 자동으로 반영된다.
 //
-//  ⚠️ "지금은 소요 시간만" 표시한다. 딜량/파티원 이름 컬럼은 이미 자리를 잡아두었고,
-//     RankingEntry.total_damage / players_json 값이 채워지면 자동으로 표시된다.
+//  UI는 코드로 자동 생성한다(별도 프리팹/캔버스 배선 불필요).
 // ==========================================
 public class EndingSceneController : MonoBehaviour
 {
+    // 랭킹은 3인 협동에서만 등록/집계한다.
+    private const int RankingPartySize = 3;
+
+    // ▼▼▼ [딜량 담당자용 확장 훅] ▼▼▼
+    //  이 런에서 팀원별 (이름, 딜량) 리스트를 돌려주는 함수를 꽂아두면,
+    //  엔딩에서 그대로 서버 등록 payload.members 와 표 표시에 사용된다.
+    //  예) EndingSceneController.PartyMembersProvider = () => MyDamageLedger.BuildMembers();
+    //  꽂지 않으면(지금 상태) 팀원 목록은 비어 있고 소요 시간만 등록된다.
+    public static Func<List<PartyMember>> PartyMembersProvider;
+    // ▲▲▲ 확장 훅 ▲▲▲
+
     [Header("씬 이름")]
     [SerializeField] private string titleSceneName = "scTitle uicreate Main";
 
     [Header("랭킹 설정")]
-    [Tooltip("표에 보여줄 상위 기록 개수")]
+    [Tooltip("표에 보여줄 상위 팀 개수")]
     [SerializeField] private int rankingLimit = 10;
 
     [Header("색상 테마")]
@@ -32,19 +46,20 @@ public class EndingSceneController : MonoBehaviour
     [SerializeField] private Color panelColor = new Color(0.10f, 0.10f, 0.14f, 0.92f);
     [SerializeField] private Color headerColor = new Color(0.8f, 0.8f, 0.9f, 1f);
     [SerializeField] private Color rowColor = new Color(0.95f, 0.95f, 0.95f, 1f);
+    [SerializeField] private Color memberColor = new Color(0.68f, 0.72f, 0.82f, 1f);
     [SerializeField] private Color myRowColor = new Color(1f, 0.85f, 0.35f, 1f);
 
     private Font _font;
-    private Transform _rowsParent;   // 랭킹 줄들이 들어갈 컨테이너
+    private Transform _rowsParent;   // 팀/팀원 줄들이 들어갈 컨테이너
     private Text _statusText;        // "불러오는 중..." 같은 안내 문구
     private Text _myRecordText;      // 이번 판 내 기록
 
-    // 이번 판이 몇 등인지(서버가 알려주면 하이라이트에 사용)
+    // 이번 팀이 몇 등인지(서버가 알려주면 하이라이트에 사용)
     private int _myRank = -1;
 
-    // 컬럼 폭(픽셀) — 헤더/각 줄이 같은 폭을 써야 정렬이 맞는다.
+    // 팀 줄 컬럼 폭(픽셀). 헤더/각 팀 줄이 같은 폭을 써야 정렬이 맞는다.
     private static readonly float[] ColumnWidths = { 90f, 320f, 220f, 180f };
-    private static readonly string[] ColumnHeaders = { "순위", "이름", "소요 시간", "딜량" };
+    private static readonly string[] ColumnHeaders = { "순위", "팀", "소요 시간", "총 딜량" };
 
     private void Start()
     {
@@ -90,51 +105,74 @@ public class EndingSceneController : MonoBehaviour
             }
 
             PopulateTable(entries);
-            SetStatus(entries.Count > 0 ? "" : "아직 등록된 기록이 없습니다.");
+            SetStatus(entries.Count > 0 ? "" : "아직 등록된 팀 기록이 없습니다.");
         });
     }
 
-    // 이 클라이언트가 기록을 등록해야 하는지 판단한다.
-    //  - 방장(또는 솔로/네트워크 없음)만 등록 → 파티에서 중복 등록 방지
+    // 이 클라이언트가 팀 기록을 등록해야 하는지 판단한다.
+    //  - 랭킹은 3인 협동에서만 등록 (party_size == 3)
+    //  - 방장(호스트)만 등록 → 파티에서 팀 기록이 3번 중복 등록되는 것을 방지
     //  - 로그인한 계정만 등록 → 게스트 모드는 랭킹 오염 방지(조회는 가능)
     private bool ShouldSubmitRecord(out RunRecordPayload payload)
     {
         payload = null;
 
         var runner = NetworkManager.HasInstance ? NetworkManager.Instance.Runner : null;
-        bool isHost = runner == null || runner.IsServer; // 러너가 없으면 솔로/디버그 → 등록 허용
-        if (!isHost)
-        {
-            return false;
-        }
+        if (runner == null) return false;           // 네트워크 세션 없음(솔로/디버그) → 등록 안 함
+
+        if (!runner.IsServer) return false;          // 방장만 등록
+
+        int partySize = CountActivePlayers(runner);
+        if (partySize != RankingPartySize) return false; // 3인 협동에서만 등록
 
         if (!BackendManager.HasInstance || string.IsNullOrEmpty(BackendManager.Instance.CurrentLoginID))
         {
-            // 로그인 안 된 상태(게스트)면 등록하지 않는다.
-            return false;
+            return false;                            // 로그인 안 됨(게스트)
         }
 
         BackendManager backend = BackendManager.Instance;
         GameProgressionManager gpm = GameProgressionManager.Instance;
 
+        List<PartyMember> members = CollectPartyMembers();
+        int totalDamage = 0;
+        for (int i = 0; i < members.Count; i++) totalDamage += Mathf.Max(0, members[i].damage);
+
         payload = new RunRecordPayload
         {
-            nickname = string.IsNullOrEmpty(backend.CurrentNickname) ? backend.CurrentLoginID : backend.CurrentNickname,
+            team_name = string.IsNullOrEmpty(backend.CurrentNickname) ? backend.CurrentLoginID : backend.CurrentNickname,
             clear_time_seconds = GetRunSeconds(),
             cleared_level = gpm != null ? gpm.maxLevel : 0,
-            // ▼ 확장 필드: 딜량/파티 집계가 붙기 전까지는 기본값으로 보낸다 ▼
-            total_damage = 0,
-            party_size = runner != null ? CountActivePlayers(runner) : 1,
-            players_json = ""
+            party_size = partySize,
+            total_damage = totalDamage,   // 지금은 members 가 비어 0
+            members = members,
         };
         return true;
+    }
+
+    // 팀원별 (이름, 딜량) 리스트. 지금은 확장 훅이 꽂혀 있으면 그 값을, 아니면 빈 목록을 준다.
+    //  → 딜량 담당자가 PartyMembersProvider 만 채우면 여기서 자동으로 값이 흘러들어온다.
+    private static List<PartyMember> CollectPartyMembers()
+    {
+        if (PartyMembersProvider != null)
+        {
+            try
+            {
+                List<PartyMember> provided = PartyMembersProvider.Invoke();
+                if (provided != null) return provided;
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[EndingSceneController] PartyMembersProvider 실행 중 예외: " + e.Message);
+            }
+        }
+        return new List<PartyMember>(); // 아직 딜량 집계 미구현 → 빈 목록(팀 줄만 표시)
     }
 
     private static int CountActivePlayers(Fusion.NetworkRunner runner)
     {
         int count = 0;
         foreach (var _ in runner.ActivePlayers) count++;
-        return Mathf.Max(1, count);
+        return count;
     }
 
     private int GetRunSeconds()
@@ -154,11 +192,10 @@ public class EndingSceneController : MonoBehaviour
     }
 
     // ==========================================
-    // 표 채우기
+    // 표 채우기 (팀 줄 + 그 아래 팀원 소줄)
     // ==========================================
     private void PopulateTable(List<RankingEntry> entries)
     {
-        // 기존 줄 제거
         for (int i = _rowsParent.childCount - 1; i >= 0; i--)
         {
             Destroy(_rowsParent.GetChild(i).gameObject);
@@ -172,17 +209,34 @@ public class EndingSceneController : MonoBehaviour
 
             bool isMine = _myRank > 0
                 ? entry.rank == _myRank
-                : (!string.IsNullOrEmpty(myNickname) && entry.nickname == myNickname);
+                : (!string.IsNullOrEmpty(myNickname) && entry.team_name == myNickname);
 
-            string[] cells =
+            // 팀 줄 (대표 한 줄)
+            string[] teamCells =
             {
                 entry.rank > 0 ? entry.rank.ToString() : "-",
-                string.IsNullOrEmpty(entry.nickname) ? "-" : entry.nickname,
+                string.IsNullOrEmpty(entry.team_name) ? "-" : entry.team_name,
                 FormatTime(entry.clear_time_seconds),
-                entry.total_damage > 0 ? entry.total_damage.ToString("N0") : "-", // 딜량 붙으면 자동 표시
+                entry.total_damage > 0 ? entry.total_damage.ToString("N0") : "-",
             };
+            BuildRow(_rowsParent, teamCells, isMine ? myRowColor : rowColor, RowStyle.Team);
 
-            BuildRow(_rowsParent, cells, isMine ? myRowColor : rowColor, false);
+            // 팀원 소줄 (이름 · 개인 딜량) — 팀 안에서 서로 확인. 지금은 members 가 비어 생략됨.
+            if (entry.members != null)
+            {
+                foreach (PartyMember m in entry.members)
+                {
+                    if (m == null) continue;
+                    string[] memberCells =
+                    {
+                        "",
+                        "   · " + (string.IsNullOrEmpty(m.nickname) ? "-" : m.nickname),
+                        "",
+                        m.damage > 0 ? m.damage.ToString("N0") : "-",
+                    };
+                    BuildRow(_rowsParent, memberCells, memberColor, RowStyle.Member);
+                }
+            }
         }
     }
 
@@ -191,7 +245,6 @@ public class EndingSceneController : MonoBehaviour
     // ==========================================
     private void BuildUI()
     {
-        // --- Canvas ---
         GameObject canvasObj = new GameObject("EndingCanvas",
             typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
         Canvas canvas = canvasObj.GetComponent<Canvas>();
@@ -201,7 +254,6 @@ public class EndingSceneController : MonoBehaviour
         scaler.referenceResolution = new Vector2(1920, 1080);
         scaler.matchWidthOrHeight = 0.5f;
 
-        // EventSystem (버튼 클릭 처리에 필요) — 없으면 만든다.
         if (FindObjectOfType<UnityEngine.EventSystems.EventSystem>() == null)
         {
             new GameObject("EventSystem",
@@ -209,11 +261,9 @@ public class EndingSceneController : MonoBehaviour
                 typeof(UnityEngine.EventSystems.StandaloneInputModule));
         }
 
-        // --- 배경 ---
         Image bg = CreateChildImage(canvasObj.transform, "Background", backgroundColor);
         StretchFull(bg.rectTransform);
 
-        // --- "GAME CLEAR" 배너 ---
         Text title = CreateText(canvasObj.transform, "ClearTitle", "GAME CLEAR", 96, clearTitleColor, FontStyle.Bold, TextAnchor.MiddleCenter);
         RectTransform titleRt = title.rectTransform;
         titleRt.anchorMin = new Vector2(0.5f, 1f);
@@ -222,7 +272,6 @@ public class EndingSceneController : MonoBehaviour
         titleRt.anchoredPosition = new Vector2(0, -60);
         titleRt.sizeDelta = new Vector2(1200, 140);
 
-        // --- 이번 판 내 기록 ---
         _myRecordText = CreateText(canvasObj.transform, "MyRecord", "", 44, clearTitleColor, FontStyle.Normal, TextAnchor.MiddleCenter);
         _myRecordText.supportRichText = true;
         RectTransform recRt = _myRecordText.rectTransform;
@@ -232,16 +281,14 @@ public class EndingSceneController : MonoBehaviour
         recRt.anchoredPosition = new Vector2(0, -210);
         recRt.sizeDelta = new Vector2(1200, 60);
 
-        // --- 랭킹 패널 ---
         Image panel = CreateChildImage(canvasObj.transform, "RankingPanel", panelColor);
         RectTransform panelRt = panel.rectTransform;
         panelRt.anchorMin = new Vector2(0.5f, 0.5f);
         panelRt.anchorMax = new Vector2(0.5f, 0.5f);
         panelRt.pivot = new Vector2(0.5f, 0.5f);
         panelRt.anchoredPosition = new Vector2(0, -60);
-        panelRt.sizeDelta = new Vector2(900, 620);
+        panelRt.sizeDelta = new Vector2(900, 640);
 
-        // 패널 세로 배치(헤더 + 줄 목록)
         VerticalLayoutGroup panelLayout = panel.gameObject.AddComponent<VerticalLayoutGroup>();
         panelLayout.padding = new RectOffset(20, 20, 20, 20);
         panelLayout.spacing = 6;
@@ -250,18 +297,15 @@ public class EndingSceneController : MonoBehaviour
         panelLayout.childForceExpandWidth = true;
         panelLayout.childForceExpandHeight = false;
 
-        // "RANKING" 소제목
-        Text rankTitle = CreateText(panel.transform, "PanelTitle", "RANKING", 40, headerColor, FontStyle.Bold, TextAnchor.MiddleCenter);
+        Text rankTitle = CreateText(panel.transform, "PanelTitle", "TEAM RANKING", 40, headerColor, FontStyle.Bold, TextAnchor.MiddleCenter);
         AddFixedHeight(rankTitle.gameObject, 56);
 
-        // 헤더 줄
-        BuildRow(panel.transform, ColumnHeaders, headerColor, true);
+        BuildRow(panel.transform, ColumnHeaders, headerColor, RowStyle.Header);
 
-        // 줄 목록 컨테이너
         GameObject rows = new GameObject("Rows", typeof(RectTransform));
         rows.transform.SetParent(panel.transform, false);
         VerticalLayoutGroup rowsLayout = rows.AddComponent<VerticalLayoutGroup>();
-        rowsLayout.spacing = 4;
+        rowsLayout.spacing = 3;
         rowsLayout.childControlWidth = true;
         rowsLayout.childControlHeight = false;
         rowsLayout.childForceExpandWidth = true;
@@ -270,11 +314,9 @@ public class EndingSceneController : MonoBehaviour
         rowsLe.flexibleHeight = 1;
         _rowsParent = rows.transform;
 
-        // 상태 문구
         _statusText = CreateText(panel.transform, "Status", "", 26, headerColor, FontStyle.Italic, TextAnchor.MiddleCenter);
         AddFixedHeight(_statusText.gameObject, 40);
 
-        // --- [타이틀로] 버튼 ---
         BuildReturnButton(canvasObj.transform);
     }
 
@@ -308,10 +350,12 @@ public class EndingSceneController : MonoBehaviour
         }
     }
 
-    // 한 줄(행)을 만들어 parent 밑에 붙인다. isHeader면 살짝 다른 스타일.
-    private void BuildRow(Transform parent, IReadOnlyList<string> cells, Color textColor, bool isHeader)
+    private enum RowStyle { Header, Team, Member }
+
+    // 한 줄(행)을 만들어 parent 밑에 붙인다. 스타일별로 크기/굵기를 다르게.
+    private void BuildRow(Transform parent, IReadOnlyList<string> cells, Color textColor, RowStyle style)
     {
-        GameObject row = new GameObject(isHeader ? "HeaderRow" : "Row", typeof(RectTransform));
+        GameObject row = new GameObject(style.ToString() + "Row", typeof(RectTransform));
         row.transform.SetParent(parent, false);
 
         HorizontalLayoutGroup h = row.AddComponent<HorizontalLayoutGroup>();
@@ -320,14 +364,18 @@ public class EndingSceneController : MonoBehaviour
         h.childControlHeight = true;
         h.childForceExpandWidth = false;
         h.childForceExpandHeight = true;
-        AddFixedHeight(row, isHeader ? 48 : 44);
+
+        float rowHeight = style == RowStyle.Member ? 34 : (style == RowStyle.Header ? 48 : 44);
+        AddFixedHeight(row, rowHeight);
+
+        int fontSize = style == RowStyle.Member ? 24 : (style == RowStyle.Header ? 28 : 30);
+        FontStyle fs = style == RowStyle.Team || style == RowStyle.Header ? FontStyle.Bold : FontStyle.Normal;
 
         for (int i = 0; i < cells.Count; i++)
         {
-            TextAnchor anchor = i == 1 ? TextAnchor.MiddleLeft : TextAnchor.MiddleCenter; // 이름만 좌측 정렬
-            Text cell = CreateText(row.transform, "Cell" + i, cells[i],
-                isHeader ? 28 : 30, textColor,
-                isHeader ? FontStyle.Bold : FontStyle.Normal, anchor);
+            TextAnchor anchor = i == 1 ? TextAnchor.MiddleLeft : TextAnchor.MiddleCenter; // 이름 컬럼만 좌측 정렬
+            Text cell = CreateText(row.transform, "Cell" + i, cells[i], fontSize, textColor,
+                i == 1 ? fs : (style == RowStyle.Header ? FontStyle.Bold : FontStyle.Normal), anchor);
             LayoutElement le = cell.gameObject.AddComponent<LayoutElement>();
             float w = i < ColumnWidths.Length ? ColumnWidths[i] : 150f;
             le.preferredWidth = w;
@@ -357,7 +405,6 @@ public class EndingSceneController : MonoBehaviour
 
     private Font ResolveFont()
     {
-        // Unity 2022 내장 폰트. 버전에 따라 이름이 달라 순차 시도한다.
         Font f = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         if (f == null) f = Resources.GetBuiltinResource<Font>("Arial.ttf");
         return f;
