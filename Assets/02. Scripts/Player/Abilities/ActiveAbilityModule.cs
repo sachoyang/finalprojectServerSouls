@@ -74,7 +74,20 @@ public sealed class ActiveAbilityModule : PlayerAbilityModule
         base.InitializeFromDB(dbData);
         staminaCost = dbData.stamina_cost;
         cooldownSeconds = dbData.cooldown_seconds;
-        hitboxLifetime = dbData.duration;
+
+        // 레벨별 배율을 DB에서 재구성. 히트박스 수명 등 연출값은 DB에 없으므로 로컬 유지.
+        int max = MaxLevel;
+        var arr = new ActiveAbilityLevelData[max];
+        for (int i = 0; i < max; i++) arr[i] = new ActiveAbilityLevelData();
+        if (dbData.levels != null)
+        {
+            foreach (AbilityLevelDBData lv in dbData.levels)
+            {
+                int idx = lv.level - 1;
+                if (idx >= 0 && idx < max) arr[idx].ApplyFromDB(lv);
+            }
+        }
+        levelSettings = arr;
     }
 
     private void EnsureLevelSettings()

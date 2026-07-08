@@ -80,17 +80,24 @@ public class AbilityUploadWindow : EditorWindow
                 PlayerAbilityModule module = (PlayerAbilityModule)obj;
 
                 WWWForm form = new WWWForm();
+                // 공통 (abilities)
                 form.AddField("bit_index", module.BitIndex);
                 form.AddField("ability_id", module.AbilityId ?? "");
+                form.AddField("ability_type", module.AbilityType.ToString());
                 form.AddField("display_name", module.DisplayName ?? "");
                 form.AddField("description", module.Description ?? "");
-                form.AddField("ability_type", module.AbilityType.ToString());
+                form.AddField("appear_stage", module.AppearStage);
                 form.AddField("basic_skill", module.BasicSkill ? 1 : 0);
-                form.AddField("stamina_cost", module.StaminaCost.ToString());
+                form.AddField("unlocked_skill", module.UnlockedSkill ? 1 : 0);
+                form.AddField("max_level", module.MaxLevel);
+
+                // 타입별 레벨무관 기본값 (active/utility). Passive는 0/빈값으로 전송된다.
                 form.AddField("cooldown_seconds", module.CooldownSeconds.ToString());
-               // form.AddField("damage_multiplier", module.HitboxDamage.ToString());
-                form.AddField("duration", module.HitboxLifetime.ToString());
+                form.AddField("stamina_cost", module.StaminaCost.ToString());
                 form.AddField("special_effect", module.SpecialEffect.ToString());
+
+                // 레벨별 값은 배열이므로 JSON 문자열로 묶어서 보낸다. (서버는 파싱해 _levels 테이블에 저장)
+                form.AddField("levels_json", BuildLevelsJson(module));
 
                 using (UnityWebRequest www = UnityWebRequest.Post(settings.uploadUrl, form))
                 {
@@ -116,6 +123,41 @@ public class AbilityUploadWindow : EditorWindow
             isUploading = false;
             Repaint();
         }
+    }
+
+    // 모듈의 레벨별 값을 타입에 맞게 뽑아 levels_json({"levels":[...]}) 문자열로 만든다.
+    //  값은 공개 접근자(Get*)로 읽는다. Passive의 방어/공격 증가율은 내부적으로 rate(÷100)로
+    //  저장되므로 업로드 시 다시 퍼센트(×100)로 되돌려 보낸다.
+    private static string BuildLevelsJson(PlayerAbilityModule module)
+    {
+        AbilityLevelDBList wrap = new AbilityLevelDBList();
+        int max = module.MaxLevel;
+
+        for (int level = 1; level <= max; level++)
+        {
+            AbilityLevelDBData row = new AbilityLevelDBData { level = level };
+
+            switch (module.AbilityType)
+            {
+                case AbilityType.Active:
+                    row.skill_multiplier = module.GetDamageMultiplier(level);
+                    break;
+                case AbilityType.Passive:
+                    row.max_health_bonus = module.GetMaxHealthBonus(level);
+                    row.max_stamina_bonus = module.GetMaxStaminaBonus(level);
+                    row.defense_bonus_percent = module.GetDefenseRateBonus(level) * 100f;
+                    row.attack_damage_bonus_percent = module.GetAttackDamageBonusRate(level) * 100f;
+                    break;
+                case AbilityType.Utility:
+                    row.health_restore_amount = module.GetHealthRestoreAmount(level);
+                    row.stamina_restore_amount = module.GetStaminaRestoreAmount(level);
+                    break;
+            }
+
+            wrap.levels.Add(row);
+        }
+
+        return JsonUtility.ToJson(wrap);
     }
 
     private void SaveSettingsIfRequired()

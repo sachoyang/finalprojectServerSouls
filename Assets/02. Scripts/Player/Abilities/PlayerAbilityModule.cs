@@ -53,6 +53,13 @@ public class ActiveAbilityLevelData
     [SerializeField] private float damageMultiplier = 1f;
 
     public float DamageMultiplier => damageMultiplier;
+
+    // DB 레벨 한 줄로부터 값 주입 (Bake/서버 동기화용)
+    public void ApplyFromDB(AbilityLevelDBData data)
+    {
+        if (data == null) return;
+        damageMultiplier = data.skill_multiplier;
+    }
 }
 
 [System.Serializable]
@@ -70,6 +77,16 @@ public class PassiveAbilityLevelData
     public float MaxStaminaBonus => maxStaminaBonus;
     public float DefenseRateBonus => defenseBonusPercent * 0.01f;
     public float AttackDamageBonusRate => attackDamageBonusPercent * 0.01f;
+
+    // DB에는 퍼센트 입력값(10 = 10%)이 그대로 들어온다. 로컬 필드도 퍼센트 그대로 저장한다.
+    public void ApplyFromDB(AbilityLevelDBData data)
+    {
+        if (data == null) return;
+        maxHealthBonus = data.max_health_bonus;
+        maxStaminaBonus = data.max_stamina_bonus;
+        defenseBonusPercent = data.defense_bonus_percent;
+        attackDamageBonusPercent = data.attack_damage_bonus_percent;
+    }
 }
 
 [System.Serializable]
@@ -80,6 +97,13 @@ public class UtilityAbilityLevelData
 
     public float HealthRestoreAmount => healthRestoreAmount;
     public float StaminaRestoreAmount => staminaRestoreAmount;
+
+    public void ApplyFromDB(AbilityLevelDBData data)
+    {
+        if (data == null) return;
+        healthRestoreAmount = data.health_restore_amount;
+        staminaRestoreAmount = data.stamina_restore_amount;
+    }
 }
 
 public abstract class PlayerAbilityModule : ScriptableObject
@@ -113,6 +137,7 @@ public abstract class PlayerAbilityModule : ScriptableObject
     public virtual float CooldownSeconds => 0f;
     public bool UnlockedSkill => unlockedSkill;
     public bool BasicSkill => basicSkill;
+    public int AppearStage => Mathf.Max(1, appearStage);
     public int MaxLevel => Mathf.Clamp(maxLevel, 1, byte.MaxValue);
     public float MaxHealthBonus => GetMaxHealthBonus(1);
     public float MaxStaminaBonus => GetMaxStaminaBonus(1);
@@ -168,15 +193,22 @@ public abstract class PlayerAbilityModule : ScriptableObject
         unlockedSkill = value;
     }
 
+    // 공통 필드(연출 제외)를 DB에서 주입한다. 타입별 모듈이 override로 base 호출 후
+    //  자기 레벨무관 값 + 레벨 배열까지 채운다. 애니/VFX/사운드/히트박스는 로컬 유지.
     public virtual void InitializeFromDB(AbilityDBData dbData)
     {
+        if (dbData == null) return;
+
         name = dbData.ability_id;
 
         bitIndex = dbData.bit_index;
         abilityId = dbData.ability_id;
         displayName = dbData.display_name;
         description = dbData.description;
+        appearStage = Mathf.Max(1, dbData.appear_stage);
         basicSkill = dbData.basic_skill != 0;
+        unlockedSkill = dbData.unlocked_skill != 0;
+        maxLevel = Mathf.Max(1, dbData.max_level);
     }
 
     protected int GetLevelIndex(int level)

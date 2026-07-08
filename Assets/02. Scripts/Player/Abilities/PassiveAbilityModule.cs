@@ -66,6 +66,25 @@ public sealed class PassiveAbilityModule : PlayerAbilityModule
         return level > 0 ? levelSettings[GetLevelIndex(level)].AttackDamageBonusRate : 0f;
     }
 
+    public override void InitializeFromDB(AbilityDBData dbData)
+    {
+        base.InitializeFromDB(dbData);
+
+        // Passive는 레벨무관 기본값이 없다. 레벨별 최종 증가값만 DB에서 재구성. 연출값은 로컬 유지.
+        int max = MaxLevel;
+        var arr = new PassiveAbilityLevelData[max];
+        for (int i = 0; i < max; i++) arr[i] = new PassiveAbilityLevelData();
+        if (dbData.levels != null)
+        {
+            foreach (AbilityLevelDBData lv in dbData.levels)
+            {
+                int idx = lv.level - 1;
+                if (idx >= 0 && idx < max) arr[idx].ApplyFromDB(lv);
+            }
+        }
+        levelSettings = arr;
+    }
+
     private void EnsureLevelSettings()
     {
         int maxLevel = MaxLevel;

@@ -4,21 +4,64 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 
-// 1. 서버 JSON 규격에 맞춘 데이터 클래스
+// ==========================================
+// 1. 서버 JSON 규격에 맞춘 데이터 클래스 (타입 분리 + 레벨별 데이터)
+//  스킬 모듈이 Active/Passive/Utility로 분리되면서 DB도 타입별 테이블로 나뉘었다.
+//  단, Unity로 내려올 때는 한 스킬 = 한 오브젝트로 묶여서 온다.
+//  (연출값(애니/VFX/사운드/히트박스)은 DB에 없다 → 로컬 에셋 유지)
+//  자세한 규격: Assets/02. Scripts/DB/DBability_README.md,  루트 SKILL_DB_SERVER_SPEC.md
+// ==========================================
+
+// 스킬 한 개의 '레벨 한 줄'. 타입에 따라 쓰이는 필드만 채워지고 나머지는 0/빈값(JsonUtility 안전).
+[Serializable]
+public class AbilityLevelDBData
+{
+    public int level;
+
+    // Active: Hit Event damageRate에 곱할 레벨별 배율
+    public float skill_multiplier;
+
+    // Passive: 레벨별 '최종' 증가값 (차이값 아님). defense/attack은 퍼센트 입력값(10 = 10%)
+    public float max_health_bonus;
+    public float max_stamina_bonus;
+    public float defense_bonus_percent;
+    public float attack_damage_bonus_percent;
+
+    // Utility: 레벨별 회복량
+    public float health_restore_amount;
+    public float stamina_restore_amount;
+}
+
+// 레벨 배열을 JSON 문자열로 주고받을 때 쓰는 래퍼 (업로드 시 levels_json 필드로 전송)
+[Serializable]
+public class AbilityLevelDBList
+{
+    public List<AbilityLevelDBData> levels = new List<AbilityLevelDBData>();
+}
+
+// 스킬 한 개 전체 (공통 + 타입별 레벨무관 기본값 + 레벨 배열)
 [Serializable]
 public class AbilityDBData
 {
-    public int bit_index;
+    // 공통 (abilities 테이블)
     public string ability_id;
+    public string ability_type;   // "Active" / "Passive" / "Utility"
+    public int bit_index;
     public string display_name;
-    public string description;
-    public string ability_type;
-    public int basic_skill;
-    public float stamina_cost;
+    public string description;     // 토큰 포함 설명문
+    public int appear_stage;       // 몇 스테이지부터 등장하는지
+    public int basic_skill;        // 기본 스킬 여부 (0/1)
+    public int unlocked_skill;     // 기본 해금 여부 (0/1)
+    public int max_level;
+
+    // 타입별 레벨무관 기본값 (active_abilities / utility_abilities)
+    //  - Passive는 이 값들을 안 쓴다(0/빈값으로 옴).
     public float cooldown_seconds;
-    public float damage_multiplier;
-    public float duration;
-    public string special_effect;
+    public float stamina_cost;
+    public string special_effect;  // Utility 전용 (enum 이름)
+
+    // 레벨별 값 (active/passive/utility _levels 테이블)
+    public List<AbilityLevelDBData> levels;
 }
 
 [Serializable]
