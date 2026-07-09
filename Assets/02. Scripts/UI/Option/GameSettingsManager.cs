@@ -74,7 +74,13 @@ public class GameSettingsManager : MonoBehaviour
         if (key == SettingKey.GraphicsQuality)
         {
             int qualityIndex = Mathf.Clamp(value, 0, QualitySettings.names.Length - 1);
-            QualitySettings.SetQualityLevel(qualityIndex);
+            QualitySettings.SetQualityLevel(qualityIndex, true);
+
+            Debug.Log(
+                $"[Settings] Quality Changed: " +
+                $"{QualitySettings.GetQualityLevel()} / " +
+                $"{QualitySettings.names[QualitySettings.GetQualityLevel()]}, " +
+                $"Pipeline: {QualitySettings.renderPipeline?.name}");
         }
     }
 

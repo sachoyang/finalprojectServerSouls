@@ -17,11 +17,16 @@ MonoBehaviour:
   - categoryName: "\uAE30\uBCF8 \uC124\uC815"
     items:
     - itemName: "\uADF8\uB798\uD53D \uD488\uC9C8"
+      itemType: 0
+      settingKey: 1
       options:
       - "\uB0AE\uC74C"
       - "\uC911\uAC04"
       - "\uB192\uC74C"
       defaultIndex: 0
+      minValue: 0
+      maxValue: 1
+      defaultValue: 0.5
     - itemName: "\uCD5C\uB300 FPS"
       options:
       - 30

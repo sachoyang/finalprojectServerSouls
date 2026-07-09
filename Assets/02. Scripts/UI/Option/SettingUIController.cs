@@ -9,13 +9,14 @@ public class SettingUIController : MonoBehaviour
 
     [Header("UI References")]
     public Transform contentParent;
+    [SerializeField] private GameObject closeTarget;
 
     [Header("Prefabs")]
-    public GameObject categoryPrefab;  // OptionTop
-    public GameObject itemPrefab;      // OptionMid (버튼형)
-    public GameObject sliderItemPrefab; // OptionMid_Slider (슬라이더형)
+    public GameObject categoryPrefab;
+    public GameObject itemPrefab;
+    public GameObject sliderItemPrefab;
 
-    void Start()
+    private void Start()
     {
         if (currentTabData != null)
         {
@@ -25,44 +26,60 @@ public class SettingUIController : MonoBehaviour
 
     public void ChangeTab(SettingData newData)
     {
-        if (newData == null) return;
+        if (newData == null)
+            return;
+
         currentTabData = newData;
         RefreshUI();
     }
 
+    public void CloseOption()
+    {
+        GameObject target = closeTarget != null ? closeTarget : gameObject;
+        target.SetActive(false);
+    }
+
     public void RefreshUI()
     {
-        // 1. 기존 UI 제거
+        if (contentParent == null || currentTabData == null)
+            return;
+
         foreach (Transform child in contentParent)
         {
             Destroy(child.gameObject);
         }
 
-        // 2. 데이터 기반 생성
-        foreach (var cat in currentTabData.categories)
+        foreach (SettingCategory category in currentTabData.categories)
         {
-            // 대항목 생성
-            GameObject catObj = Instantiate(categoryPrefab, contentParent);
-            Text categoryText = catObj.GetComponentInChildren<Text>();
-            if (categoryText != null) categoryText.text = cat.categoryName;
+            GameObject categoryObject = Instantiate(categoryPrefab, contentParent);
+            Text categoryText = categoryObject.GetComponentInChildren<Text>();
 
-            // 중항목 생성
-            foreach (var item in cat.items)
+            if (categoryText != null)
+                categoryText.text = category.categoryName;
+
+            foreach (SettingItem item in category.items)
             {
-                // 타입에 따라 프리팹 결정
-                GameObject prefabToUse = (item.itemType == SettingType.Slider) ? sliderItemPrefab : itemPrefab;
-                GameObject itemObj = Instantiate(prefabToUse, contentParent);
+                GameObject prefabToUse =
+                    item.itemType == SettingType.Slider
+                        ? sliderItemPrefab
+                        : itemPrefab;
 
-                // 타입에 맞는 셋업 실행
+                if (prefabToUse == null)
+                    continue;
+
+                GameObject itemObject = Instantiate(prefabToUse, contentParent);
+
                 if (item.itemType == SettingType.Slider)
                 {
-                    SettingSliderUI sliderScript = itemObj.GetComponent<SettingSliderUI>();
-                    if (sliderScript != null) sliderScript.Setup(item);
+                    SettingSliderUI sliderUI = itemObject.GetComponent<SettingSliderUI>();
+                    if (sliderUI != null)
+                        sliderUI.Setup(item);
                 }
                 else
                 {
-                    SettingItemUI itemScript = itemObj.GetComponent<SettingItemUI>();
-                    if (itemScript != null) itemScript.Setup(item);
+                    SettingItemUI itemUI = itemObject.GetComponent<SettingItemUI>();
+                    if (itemUI != null)
+                        itemUI.Setup(item);
                 }
             }
         }
