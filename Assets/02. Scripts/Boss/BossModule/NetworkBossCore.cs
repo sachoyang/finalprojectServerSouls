@@ -118,12 +118,6 @@ public class NetworkBossCore : NetworkBehaviour
     [Range(0.001f, 1f)]
     public float maxSingleHitPercent = 1f;
 
-    [Header("디버그 킬 (릴리즈 빌드 admin 전용)")]
-    [Tooltip("릴리즈 빌드에서 디버그 강제 킬(F5)을 허용할 admin 계정의 login_id 목록.\n" +
-             "에디터/개발(Development) 빌드에서는 이 목록과 무관하게 항상 허용된다.\n" +
-             "릴리즈에서는 login_id가 이 목록에 있고, 호스트가 백엔드(check_session.php)로 세션 토큰이 진짜임을 확인한 경우에만 발동.")]
-    public List<string> debugKillAdminIds = new List<string>();
-
     [Header("벽 충돌 설정 (미끄러짐)")]
     public LayerMask wallLayerMask;
     public float bodyRadius = 2.0f;
@@ -206,6 +200,9 @@ public class NetworkBossCore : NetworkBehaviour
     protected IBossVisual _visual;
     private int _lastPatternIndex = -1;
     private int _lastStepIndex = -1;
+
+    // 현재 액션의 actionSound를 이미 틀었는지. 액션(스텝)이 바뀔 때마다 false로 되돌린다.
+    private bool _actionSoundPlayed = false;
 
     // 방금 전 프레임의 상태를 기억하여 중복 실행을 막는 플래그
     private BossState _lastState = (BossState)(-1);
@@ -704,6 +701,36 @@ public class NetworkBossCore : NetworkBehaviour
         CurrentState = newState;
     }
 
+    // ==========================================
+    // [액션 효과음] 패턴 SO의 BossActionModule.actionSound를 액션당 1회 재생한다.
+    //  - Render()는 모든 피어에서 돌기 때문에 호스트/클라이언트 모두 소리가 난다(RPC 불필요).
+    //  - StateTimer는 [Networked]라 진행률도 모든 피어에서 동일하다.
+    //  - 보스가 움직이는 패턴이 많아, 재생 시점의 실제 위치를 써야 소리가 따라간다.
+    // ==========================================
+    private void TryPlayActionSound(BossActionModule action)
+    {
+        if (_actionSoundPlayed || action == null || action.actionSound == null) return;
+
+        // 진행률 0이면 앞동작 없이 액션 시작과 동시에 재생.
+        if (action.actionSoundPercent > 0f && action.duration > 0f)
+        {
+            float remaining = StateTimer.RemainingTime(Runner) ?? 0f;
+            float progress = Mathf.Clamp01((action.duration - remaining) / action.duration);
+            if (progress < action.actionSoundPercent) return;
+        }
+
+        _actionSoundPlayed = true;
+
+        if (SoundManager.HasInstance)
+        {
+            SoundManager.Instance.PlaySFX_3D(
+                action.actionSound,
+                transform.position,
+                SoundCategory.BossGimmick,
+                action.actionSoundVolume);
+        }
+    }
+
     public override void Render()
     {
         if (_visual == null) return;
@@ -738,13 +765,20 @@ public class NetworkBossCore : NetworkBehaviour
                 _lastPatternIndex = CurrentPatternIndex;
                 _lastStepIndex = CurrentStepIndex;
                 _lastState = CurrentState; // 상태 갱신
+                _actionSoundPlayed = false; // 새 액션 → 효과음 다시 틀 수 있게
             }
+
+            // 액션 효과음. actionSoundPercent 시점에 딱 1회.
+            // Render는 매 프레임 돌기 때문에 진행률로 판정해야 앞동작 뒤에 소리를 낼 수 있다.
+            // 인덱스로 직접 꺼내면 스텝 전환 프레임에 범위를 벗어날 수 있어 가드가 들어간 프로퍼티를 쓴다.
+            TryPlayActionSound(CurrentAction);
         }
         else
         {
             // 2. 패턴 중이 아닐 때 (지속 상태 초기화)
             _lastPatternIndex = -1;
             _lastStepIndex = -1;
+            _actionSoundPlayed = false;
 
             // 상태가 '방금 딱 바뀌었을 때만' 1회 호출
             if (_lastState != CurrentState)
@@ -784,6 +818,7 @@ public class NetworkBossCore : NetworkBehaviour
         }
 
         UpdateLocomotionVisuals();
+
 
         // ==========================================
         // 기믹 시각 효과(불 끄기/켜기) 클라이언트 동기화!
@@ -926,10 +961,10 @@ public class NetworkBossCore : NetworkBehaviour
     // ==========================================
     // 디버그 강제 킬 (F5)
     //  - 에디터/개발(Development) 빌드: 무조건 허용 (기존 개발 흐름 그대로)
-    //  - 릴리즈 빌드: debugKillAdminIds에 등록된 admin 계정만.
-    //    호출자가 자기 login_id + 세션 토큰을 같이 보내면, 호스트가 백엔드(check_session.php)에
-    //    "이 토큰이 이 계정의 살아있는 세션이 맞냐"고 물어본 뒤에만 실행한다.
-    //    → login_id만 알아서는 발동 불가. 살아있는 세션 토큰까지 가진 진짜 admin만 가능.
+    //  - 릴리즈 빌드: 서버가 admin으로 인정한 계정만.
+    //    호출자가 자기 login_id + 세션 토큰을 같이 보내면, 호스트가 백엔드(check_admin.php)에
+    //    "이 토큰이 이 계정의 살아있는 세션이고, 이 계정이 admin이 맞냐"고 물어본 뒤에만 실행한다.
+    //    → 클라이언트가 보내는 값은 하나도 신뢰하지 않는다. 판정은 전적으로 서버 몫.
     // ==========================================
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
     public void RPC_DebugKillBoss(string loginId, string sessionToken)
@@ -944,14 +979,15 @@ public class NetworkBossCore : NetworkBehaviour
         ExecuteDeath(); // 공통 사망 함수 호출!
 #else
         if (string.IsNullOrEmpty(loginId) || string.IsNullOrEmpty(sessionToken)) return;
-        if (!debugKillAdminIds.Contains(loginId)) return;
 
         StartCoroutine(VerifyAdminSessionAndKill(loginId, sessionToken));
 #endif
     }
 
 #if !UNITY_EDITOR && !DEVELOPMENT_BUILD
-    // 릴리즈 빌드 전용: 호스트가 직접 백엔드에 세션 토큰의 진위를 확인한 뒤 보스를 처치한다.
+    // 릴리즈 빌드 전용: 호스트가 직접 백엔드에 "세션 유효 + admin" 을 확인한 뒤 보스를 처치한다.
+    //  서버가 check_admin.php를 아직 안 올렸다면 요청이 실패하고 아무 일도 일어나지 않는다(fail-closed).
+    //  일반 유저가 RPC를 위조해 보내도 서버가 is_admin=0을 돌려주므로 막힌다.
     private IEnumerator VerifyAdminSessionAndKill(string loginId, string sessionToken)
     {
         if (!BackendManager.HasInstance || !BackendManager.Instance.isServerReady) yield break;
@@ -960,18 +996,39 @@ public class NetworkBossCore : NetworkBehaviour
         form.AddField("login_id", loginId);
         form.AddField("session_token", sessionToken);
 
-        using (UnityWebRequest www = UnityWebRequest.Post(BackendManager.Instance.BASE_URL + "check_session.php", form))
+        using (UnityWebRequest www = UnityWebRequest.Post(BackendManager.Instance.BASE_URL + "check_admin.php", form))
         {
+            www.timeout = 5;
             yield return www.SendWebRequest();
 
-            if (www.result != UnityWebRequest.Result.Success) yield break;
-            if (www.downloadHandler.text.Contains("invalid")) yield break; // 위조/만료된 토큰
+            if (www.result != UnityWebRequest.Result.Success)
+            {
+                Debug.LogWarning($"[Boss Debug] admin 검증 실패(네트워크/엔드포인트 없음): {www.error}");
+                yield break;
+            }
+
+            AdminCheckResponse res = null;
+            try
+            {
+                res = JsonUtility.FromJson<AdminCheckResponse>(www.downloadHandler.text);
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogWarning($"[Boss Debug] admin 검증 응답 파싱 실패: {ex.Message}");
+            }
+
+            // 세션 무효(invalid)거나 admin이 아니면 조용히 무시.
+            if (res == null || res.status != "success" || res.is_admin != 1)
+            {
+                Debug.LogWarning($"[Boss Debug] admin 아님 또는 세션 무효 → 강제 킬 거부. ({loginId})");
+                yield break;
+            }
         }
 
         // 검증하는 동안 이미 죽었을 수 있으니 마지막으로 한 번 더 확인
         if (!HasStateAuthority || CurrentState == BossState.Die || CurrentHP <= 0) yield break;
 
-        Debug.Log($"[Boss Debug] admin 계정({loginId}) 검증 완료. 디버그 강제 킬 실행!");
+        Debug.Log($"[Boss Debug] admin 계정({loginId}) 서버 검증 완료. 디버그 강제 킬 실행!");
         ExecuteDeath();
     }
 #endif

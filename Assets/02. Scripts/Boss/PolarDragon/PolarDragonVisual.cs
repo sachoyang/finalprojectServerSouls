@@ -96,8 +96,24 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
     public AudioClip wakeUpSound;
     public AudioClip groggySound;
     public AudioClip dieSound;
+    [Tooltip("걷기 발소리. 클립의 발 닿는 프레임에 PlayFootstep() 애니메이션 이벤트가 걸려 있어야 한다.")]
     public AudioClip walkSound;
+    [Tooltip("얼음창 발사 / 브레스 등 얼음 마법 공용 효과음.")]
     public AudioClip iceMagicSound;
+    [Tooltip("무는 공격. 기존 EnableBiteHitbox() 애니메이션 이벤트에서 함께 재생된다.")]
+    public AudioClip biteSound;
+    [Tooltip("2페이즈 이륙(TakeOff). 비워두면 wakeUpSound를 대신 쓴다.")]
+    public AudioClip takeOffSound;
+
+    // 패턴(공격 모션)별 효과음은 여기가 아니라 각 패턴 SO(BossPatternModule)의
+    // 액션마다 있는 actionSound 필드에서 지정한다. NetworkBossCore가 재생해 준다.
+
+    // SoundManager가 씬에 없을 때 MonoSingleton이 빈 오브젝트를 자동 생성하지 않도록 HasInstance로 막는다.
+    private void Play3D(AudioClip clip, SoundCategory category)
+    {
+        if (clip == null || !SoundManager.HasInstance) return;
+        SoundManager.Instance.PlaySFX_3D(clip, transform.position, category);
+    }
 
     [Header("공중 피격(Groggy) 설정")]
     [Tooltip("FlyStationaryGetHit 클립의 원본 길이(초). 지상 GetHit1과 길이가 달라 별도 지정.")]
@@ -335,7 +351,8 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
         GameObject fx = EffectPoolManager.SpawnPooled(napalmPoolPrefab, spawnPos, Quaternion.identity);
         InitAoeForRole(fx, boss);
 
-        if (napalmSound != null)
+        // 네이팜은 보스가 아니라 불장판이 떨어진 지면에서 소리가 나야 한다.
+        if (napalmSound != null && SoundManager.HasInstance)
             SoundManager.Instance.PlaySFX_3D(napalmSound, spawnPos, SoundCategory.BossGimmick);
     }
 
@@ -454,7 +471,7 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
     public void PlayWakeUp(int wakeUpHash)
     {
         PlayAction(wakeUpHash);
-        if (wakeUpSound != null) SoundManager.Instance.PlaySFX_3D(wakeUpSound, transform.position, SoundCategory.BossGimmick);
+        Play3D(wakeUpSound, SoundCategory.BossGimmick);
     }
 
     public void PlayPhaseTransition(int wakeUpHash)
@@ -462,8 +479,8 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
         // 서버가 "체력 50% 이하! 변신해라!" 라고 명령하면 이륙 애니메이션을 틉니다.
         PlayAction(Animator.StringToHash("TakeOff"));
 
-        if (wakeUpSound != null)
-            SoundManager.Instance.PlaySFX_3D(wakeUpSound, transform.position, SoundCategory.BossGimmick);
+        // 전용 이륙음이 없으면 각성음으로 폴백 (기존 동작 유지)
+        Play3D(takeOffSound != null ? takeOffSound : wakeUpSound, SoundCategory.BossGimmick);
     }
 
     [Header("그로기 모션 방식")]
@@ -500,14 +517,14 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
 
         _groggyRecoverPending = true; // 다음 Locomotion 복귀는 긴 블렌드로
 
-        if (groggySound != null) SoundManager.Instance.PlaySFX_3D(groggySound, transform.position, SoundCategory.BossGimmick);
+        Play3D(groggySound, SoundCategory.BossGimmick);
     }
 
     public void PlayDie()
     {
         // 올려주신 Animator 이미지에 있는 "Death" State 사용
         PlayAction(Animator.StringToHash("Death"));
-        if (dieSound != null) SoundManager.Instance.PlaySFX_3D(dieSound, transform.position, SoundCategory.BossGimmick);
+        Play3D(dieSound, SoundCategory.BossGimmick);
     }
 
     public void SetDirection(float dirX, float dirY)
@@ -589,10 +606,14 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
     // ==========================================
     public void PlayFootstep()
     {
-        if (walkSound != null) SoundManager.Instance.PlaySFX_3D(walkSound, transform.position, SoundCategory.Footstep);
+        Play3D(walkSound, SoundCategory.Footstep);
     }
 
-    public void EnableBiteHitbox() { if (biteAttack != null) biteAttack.StartAttack(); }
+    public void EnableBiteHitbox()
+    {
+        if (biteAttack != null) biteAttack.StartAttack();
+        Play3D(biteSound, SoundCategory.CombatHit);
+    }
     public void DisableBiteHitbox() { if (biteAttack != null) biteAttack.StopAttack(); }
 
     // ==========================================
@@ -626,7 +647,7 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
             proj.Launch(targetPos, energyExplosionPrefab, applyDamage, mult);
         }
 
-        if (iceMagicSound != null) SoundManager.Instance.PlaySFX_3D(iceMagicSound, transform.position, SoundCategory.BossGimmick);
+        Play3D(iceMagicSound, SoundCategory.BossGimmick);
     }
 
     // 애니메이션: SpreadFrozenBreath 프레임에 맞춤
@@ -639,7 +660,7 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
             GameObject effect = EffectPoolManager.SpawnPooled(spreadFrozenBreathPrefab, breathSpawnPoint.position, breathSpawnPoint.rotation, breathSpawnPoint);
             BossAoEAttack aoe = effect.GetComponent<BossAoEAttack>();
             if (aoe != null && _bossCore != null) aoe.Initialize(_bossCore.GetOutgoingDamageMultiplier());
-            if (iceMagicSound != null) SoundManager.Instance.PlaySFX_3D(iceMagicSound, transform.position, SoundCategory.BossGimmick);
+            Play3D(iceMagicSound, SoundCategory.BossGimmick);
         }
     }
 }
