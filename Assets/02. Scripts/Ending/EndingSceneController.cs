@@ -14,9 +14,7 @@ using UnityEngine.UI;
 //        그 아래에 팀원별 [이름 · 딜량] 소줄이 붙는다(팀 안에서 서로의 딜량/이름 확인).
 //   4) [타이틀로] 버튼으로 세션을 끊고 타이틀 씬으로 복귀.
 //
-//  ⚠️ 지금은 "소요 시간"만 실제 값이다. 팀원별 딜량/이름은 아직 안 채운다.
-//     → 딜량 담당자는 EndingSceneController.PartyMembersProvider 에 팀원 리스트를
-//        돌려주는 함수만 꽂으면(구조는 이미 준비됨) 표/서버에 자동으로 반영된다.
+//  팀원별 딜량/사망 횟수는 EndingSceneController.PartyMembersProvider 훅으로 받는다.
 //
 //  UI는 코드로 자동 생성한다(별도 프리팹/캔버스 배선 불필요).
 // ==========================================
@@ -25,11 +23,11 @@ public class EndingSceneController : MonoBehaviour
     // 랭킹은 3인 협동에서만 등록/집계한다.
     private const int RankingPartySize = 3;
 
-    // ▼▼▼ [딜량 담당자용 확장 훅] ▼▼▼
-    //  이 런에서 팀원별 (이름, 딜량) 리스트를 돌려주는 함수를 꽂아두면,
+    // ▼▼▼ [런 결과 확장 훅] ▼▼▼
+    //  이 런에서 팀원별 (이름, 딜량, 사망 횟수) 리스트를 돌려주는 함수를 꽂아두면,
     //  엔딩에서 그대로 서버 등록 payload.members 와 표 표시에 사용된다.
-    //  예) EndingSceneController.PartyMembersProvider = () => MyDamageLedger.BuildMembers();
-    //  꽂지 않으면(지금 상태) 팀원 목록은 비어 있고 소요 시간만 등록된다.
+    //  예) EndingSceneController.PartyMembersProvider = () => GameProgressionManager.Instance.BuildPartyMembers();
+    //  꽂지 않으면 팀원 목록은 비어 있고 소요 시간만 등록된다.
     public static Func<List<PartyMember>> PartyMembersProvider;
     // ▲▲▲ 확장 훅 ▲▲▲
 
@@ -143,14 +141,13 @@ public class EndingSceneController : MonoBehaviour
             clear_time_seconds = GetRunSeconds(),
             cleared_level = gpm != null ? gpm.maxLevel : 0,
             party_size = partySize,
-            total_damage = totalDamage,   // 지금은 members 가 비어 0
+            total_damage = totalDamage,
             members = members,
         };
         return true;
     }
 
-    // 팀원별 (이름, 딜량) 리스트. 지금은 확장 훅이 꽂혀 있으면 그 값을, 아니면 빈 목록을 준다.
-    //  → 딜량 담당자가 PartyMembersProvider 만 채우면 여기서 자동으로 값이 흘러들어온다.
+    // 팀원별 (이름, 딜량, 사망 횟수) 리스트.
     private static List<PartyMember> CollectPartyMembers()
     {
         if (PartyMembersProvider != null)
@@ -165,7 +162,7 @@ public class EndingSceneController : MonoBehaviour
                 Debug.LogWarning("[EndingSceneController] PartyMembersProvider 실행 중 예외: " + e.Message);
             }
         }
-        return new List<PartyMember>(); // 아직 딜량 집계 미구현 → 빈 목록(팀 줄만 표시)
+        return new List<PartyMember>();
     }
 
     private static int CountActivePlayers(Fusion.NetworkRunner runner)
@@ -221,18 +218,19 @@ public class EndingSceneController : MonoBehaviour
             };
             BuildRow(_rowsParent, teamCells, isMine ? myRowColor : rowColor, RowStyle.Team);
 
-            // 팀원 소줄 (이름 · 개인 딜량) — 팀 안에서 서로 확인. 지금은 members 가 비어 생략됨.
+            // 팀원 소줄 (이름 · 개인 딜량 · 사망 횟수) — 팀 안에서 서로 확인.
             if (entry.members != null)
             {
                 foreach (PartyMember m in entry.members)
                 {
                     if (m == null) continue;
+                    string deathText = m.death_count > 0 ? $" / Death {m.death_count}" : "";
                     string[] memberCells =
                     {
                         "",
                         "   · " + (string.IsNullOrEmpty(m.nickname) ? "-" : m.nickname),
                         "",
-                        m.damage > 0 ? m.damage.ToString("N0") : "-",
+                        (m.damage > 0 ? m.damage.ToString("N0") : "-") + deathText,
                     };
                     BuildRow(_rowsParent, memberCells, memberColor, RowStyle.Member);
                 }

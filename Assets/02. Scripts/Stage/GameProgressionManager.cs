@@ -7,6 +7,34 @@ public class GameProgressionManager : MonoBehaviour // 런(Run) 동안 유지되
 {
     public static GameProgressionManager Instance { get; private set; } // 정적 인스턴스
 
+    public readonly struct StagePlayerCombatResult
+    {
+        public readonly PlayerRef Player;
+        public readonly string Nickname;
+        public readonly int BossDamage;
+        public readonly int DeathCount;
+
+        public StagePlayerCombatResult(
+            PlayerRef player,
+            string nickname,
+            int bossDamage,
+            int deathCount)
+        {
+            Player = player;
+            Nickname = nickname;
+            BossDamage = bossDamage;
+            DeathCount = deathCount;
+        }
+    }
+
+    private sealed class RunPlayerCombatResult
+    {
+        public PlayerRef Player;
+        public string Nickname;
+        public int BossDamage;
+        public int DeathCount;
+    }
+
     [Header("등장 가능한 보스 풀 (랜덤 추첨)")]
     public List<BossEncounterData> bossPool;
 
@@ -46,6 +74,8 @@ public class GameProgressionManager : MonoBehaviour // 런(Run) 동안 유지되
     //  가방이 비면 다시 풀 전체로 채워서 반복 → 6층부터는 새 가방에서 다시 랜덤.
     // ==========================================
     private readonly List<BossEncounterData> _bossBag = new List<BossEncounterData>();
+    private readonly Dictionary<int, RunPlayerCombatResult> _runCombatResults =
+        new Dictionary<int, RunPlayerCombatResult>();
 
     [Header("씬 이름 (생명주기 기준)")]
     [Tooltip("세션을 유지한 채 복귀하는 로비 씬. 이 씬이 로드되면 런 상태를 초기화(ResetRun)한다.")]
@@ -59,6 +89,7 @@ public class GameProgressionManager : MonoBehaviour // 런(Run) 동안 유지되
         Instance = this;
         DontDestroyOnLoad(gameObject); // 런(Run) 유지용 (scPath 등 전환 시 생존)
         SceneManager.sceneLoaded += OnSceneLoaded; // 복귀 감지용 구독
+        EndingSceneController.PartyMembersProvider = BuildPartyMembers;
     }
 
     // 씬 로드 기준 생명주기 정리.
@@ -98,6 +129,7 @@ public class GameProgressionManager : MonoBehaviour // 런(Run) 동안 유지되
         CurrentLevel = 1;
         CurrentBossData = null;
         _bossBag.Clear(); // 새 런에서는 새 가방으로 다시 추첨
+        _runCombatResults.Clear();
 
         // 🕒 죽어서 로비로 돌아온 것이므로 전투 소요 시간도 리셋한다.
         RunCombatSeconds = 0f;
@@ -116,12 +148,9 @@ public class GameProgressionManager : MonoBehaviour // 런(Run) 동안 유지되
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
-        // ▼▼▼ [플레이어팀 작업 필요] ▼▼▼
-        // PlayerSessionStore에 ClearAll()을 추가하고 아래 주석을 해제해 주세요.
-        // static 저장소 3종(스탯 스냅샷 / 어빌리티 목록 / 보상 선택 기록)을 비워야
-        // 다음 런에서 이전 런의 체력·어빌리티가 복원되는 버그가 사라집니다.
-        // PlayerSessionStore.ClearAll();
-        // ▲▲▲ [플레이어팀 작업 필요] ▲▲▲
+        // static 저장소 3종(스탯 스냅샷 / 어빌리티 목록 / 보상 선택 기록)을 비워
+        // 다음 런에서 이전 런의 체력·어빌리티가 복원되지 않게 한다.
+        PlayerSessionStore.ClearAll();
 
         Debug.Log("[GameProgressionManager] 런 상태 초기화 완료 (로비 복귀).");
     }
@@ -129,6 +158,8 @@ public class GameProgressionManager : MonoBehaviour // 런(Run) 동안 유지되
     private void OnDestroy()
     {
         SceneManager.sceneLoaded -= OnSceneLoaded; // 핸들러 누수 방지
+        if (Instance == this)
+            EndingSceneController.PartyMembersProvider = null;
     }
 
     // 로비에서 레디가 끝나면 호출됨
@@ -136,6 +167,7 @@ public class GameProgressionManager : MonoBehaviour // 런(Run) 동안 유지되
     {
         CurrentLevel = 1;
         _bossBag.Clear(); // 런 시작은 항상 새 가방으로 (로비를 안 거치는 디버그 진입 대비)
+        _runCombatResults.Clear();
         CurrentBossData = null;
         RunCombatSeconds = 0f; // 🕒 새 런 시작이므로 소요 시간도 0에서 시작
         LoadNextRandomLevel(runner);
@@ -211,6 +243,51 @@ public class GameProgressionManager : MonoBehaviour // 런(Run) 동안 유지되
     {
         _hostDrivesTime = true; // 이 매니저는 게스트 → 자가 누적을 끄고 호스트 값만 따른다
         RunCombatSeconds = seconds;
+    }
+
+    public void AbsorbCombatResult(IReadOnlyList<StagePlayerCombatResult> stageResults)
+    {
+        if (stageResults == null)
+            return;
+
+        for (int i = 0; i < stageResults.Count; i++)
+        {
+            StagePlayerCombatResult stageResult = stageResults[i];
+            int key = stageResult.Player.RawEncoded;
+            if (!_runCombatResults.TryGetValue(key, out RunPlayerCombatResult runResult))
+            {
+                runResult = new RunPlayerCombatResult
+                {
+                    Player = stageResult.Player
+                };
+                _runCombatResults[key] = runResult;
+            }
+
+            runResult.Nickname = string.IsNullOrWhiteSpace(stageResult.Nickname)
+                ? $"Player {key}"
+                : stageResult.Nickname;
+            runResult.BossDamage += Mathf.Max(0, stageResult.BossDamage);
+            runResult.DeathCount = Mathf.Max(runResult.DeathCount, stageResult.DeathCount);
+        }
+    }
+
+    public List<PartyMember> BuildPartyMembers()
+    {
+        List<PartyMember> members = new List<PartyMember>(_runCombatResults.Count);
+        foreach (RunPlayerCombatResult result in _runCombatResults.Values)
+        {
+            members.Add(new PartyMember
+            {
+                nickname = string.IsNullOrWhiteSpace(result.Nickname)
+                    ? $"Player {result.Player.RawEncoded}"
+                    : result.Nickname,
+                damage = Mathf.Max(0, result.BossDamage),
+                death_count = Mathf.Max(0, result.DeathCount),
+            });
+        }
+
+        members.Sort((left, right) => right.damage.CompareTo(left.damage));
+        return members;
     }
 
     // ==========================================

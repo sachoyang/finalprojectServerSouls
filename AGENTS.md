@@ -10,3 +10,10 @@
 - Keep progress updates short and skip repeated explanations once context is established.
 - When diagnosing visual/editor issues, verify the exact source before making broad guesses.
 - After changes, report only the files changed and the essential verification result.
+
+## Local tool/runtime notes
+
+- Python 3.12 and `uv` are installed on the user machine and visible to Unity MCP. For project-local analysis scripts, prefer `python <script>` first.
+- If `python <script>` is blocked by the Codex sandbox even though Python is installed, request escalation for that exact script command instead of falling back to broad or noisy shell workarounds.
+- Avoid inline Python heredocs/herestrings for analysis. Put temporary analysis scripts under `Tools/*_tmp.py`, run them narrowly, then delete them before finishing.
+- Unity MCP setup has been completed for Codex. When editor-side inspection is useful, prefer MCP/editor-backed inspection over guessing from screenshots, while still keeping file searches scoped.

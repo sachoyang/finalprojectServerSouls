@@ -852,7 +852,9 @@ public class NetworkBossCore : NetworkBehaviour
             finalDamage *= groggyDamageTakenMultiplier;
         }
 
+        float appliedDamage = Mathf.Min(CurrentHP, Mathf.Max(0f, finalDamage));
         CurrentHP -= finalDamage;
+        CombatResultManager.Instance?.RecordBossDamage(attacker, appliedDamage);
 
         // 4. 데미지를 입고 나서 체력이 0 이하가 되었는지 확인!!
         if (CurrentHP <= 0)
@@ -863,7 +865,7 @@ public class NetworkBossCore : NetworkBehaviour
 
         // 5. 어그로 딜미터기 기록 (장부 관리는 헬퍼에 위임)
         //    페이즈 전환 체크보다 먼저 기록해야, 정확히 50% 컷을 낸 마지막 타격이 딜미터에서 누락되지 않는다.
-        _aggroTracker.Record(attacker, damage);
+        _aggroTracker.Record(attacker, appliedDamage);
 
         // 6. 그로기 수치 누적 (무적 연출 중이 아닐 때만)
         if (CurrentState != BossState.PhaseTransition && CurrentState != BossState.Groggy)

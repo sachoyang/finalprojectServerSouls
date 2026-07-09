@@ -1,4 +1,5 @@
 using Fusion;
+using System.Collections.Generic;
 using UnityEngine;
 
 public enum CombatResultType
@@ -11,6 +12,8 @@ public enum CombatResultType
 
 public class CombatResultManager : MonoBehaviour
 {
+    public static CombatResultManager Instance { get; private set; }
+
     [Header("Boss")]
     [SerializeField] private NetworkBossCore boss;
 
@@ -23,8 +26,21 @@ public class CombatResultManager : MonoBehaviour
 
     private CombatResultType currentResult = CombatResultType.None;
     private float allPlayersDeadTimer;
+    private bool _combatResultAbsorbed;
+    private readonly Dictionary<int, float> _bossDamageByPlayer = new Dictionary<int, float>();
 
     public bool HasResult => currentResult != CombatResultType.None;
+
+    private void Awake()
+    {
+        Instance = this;
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
+    }
 
     private void Update()
     {
@@ -48,6 +64,16 @@ public class CombatResultManager : MonoBehaviour
         CompleteCombat(CombatResultType.Retreat);
     }
 
+    public void RecordBossDamage(NetworkObject attacker, float appliedDamage)
+    {
+        if (attacker == null || appliedDamage <= 0f)
+            return;
+
+        int key = attacker.InputAuthority.RawEncoded;
+        _bossDamageByPlayer.TryGetValue(key, out float savedDamage);
+        _bossDamageByPlayer[key] = savedDamage + appliedDamage;
+    }
+
     private void CheckVictory()
     {
         if (boss == null || !boss.IsSpawnedReady)
@@ -62,22 +88,45 @@ public class CombatResultManager : MonoBehaviour
 
     private void CheckDefeat()
     {
-        PlayerStats[] players = FindObjectsOfType<PlayerStats>();
+        NetworkRunner runner = GetRunner();
         int playerCount = 0;
         int aliveCount = 0;
 
-        for (int i = 0; i < players.Length; i++)
+        if (runner != null)
         {
-            PlayerStats stats = players[i];
+            foreach (PlayerRef player in runner.ActivePlayers)
+            {
+                if (!runner.TryGetPlayerObject(player, out NetworkObject playerObject) ||
+                    !PlayerRegistry.TryGetStats(playerObject, out PlayerStats stats) ||
+                    !stats.IsSpawnedReady)
+                {
+                    continue;
+                }
 
-            if (stats == null || !stats.IsSpawnedReady)
-                continue;
-
-            playerCount++;
-
-            if (!stats.IsDead)
-                aliveCount++;
+                playerCount++;
+                if (!stats.IsDead)
+                    aliveCount++;
+            }
         }
+        else
+        {
+            IReadOnlyList<NetworkPlayerController> players = PlayerRegistry.All;
+            for (int i = 0; i < players.Count; i++)
+            {
+                NetworkPlayerController player = players[i];
+                if (player == null ||
+                    !PlayerRegistry.TryGetStats(player.Object, out PlayerStats stats) ||
+                    !stats.IsSpawnedReady)
+                {
+                    continue;
+                }
+
+                playerCount++;
+                if (!stats.IsDead)
+                    aliveCount++;
+            }
+        }
+
 
         if (playerCount <= 0)
             return;
@@ -102,6 +151,10 @@ public class CombatResultManager : MonoBehaviour
             return;
 
         currentResult = result;
+        if (result == CombatResultType.Victory)
+        {
+            AbsorbStageResult();
+        }
 
         switch (result)
         {
@@ -132,5 +185,81 @@ public class CombatResultManager : MonoBehaviour
 
         if (gameOverView == null)
             gameOverView = FindObjectOfType<GameOverView>(true);
+    }
+
+    private void AbsorbStageResult()
+    {
+        if (_combatResultAbsorbed || GameProgressionManager.Instance == null)
+            return;
+
+        _combatResultAbsorbed = true;
+        GameProgressionManager.Instance.AbsorbCombatResult(BuildStageResults());
+    }
+
+    private List<GameProgressionManager.StagePlayerCombatResult> BuildStageResults()
+    {
+        List<GameProgressionManager.StagePlayerCombatResult> results =
+            new List<GameProgressionManager.StagePlayerCombatResult>();
+        NetworkRunner runner = GetRunner();
+
+        if (runner != null)
+        {
+            foreach (PlayerRef player in runner.ActivePlayers)
+            {
+                if (!runner.TryGetPlayerObject(player, out NetworkObject playerObject))
+                    continue;
+
+                AddPlayerResult(results, player, playerObject);
+            }
+        }
+        else
+        {
+            IReadOnlyList<NetworkPlayerController> players = PlayerRegistry.All;
+            for (int i = 0; i < players.Count; i++)
+            {
+                NetworkPlayerController player = players[i];
+                if (player == null || player.Object == null)
+                    continue;
+
+                AddPlayerResult(results, player.Object.InputAuthority, player.Object);
+            }
+        }
+
+        return results;
+    }
+
+    private void AddPlayerResult(
+        List<GameProgressionManager.StagePlayerCombatResult> results,
+        PlayerRef player,
+        NetworkObject playerObject)
+    {
+        int key = player.RawEncoded;
+        _bossDamageByPlayer.TryGetValue(key, out float bossDamage);
+        int deathCount = 0;
+
+        if (PlayerRegistry.TryGetStats(playerObject, out PlayerStats stats) &&
+            stats.IsSpawnedReady)
+        {
+            deathCount = stats.DeathCount;
+        }
+
+        results.Add(new GameProgressionManager.StagePlayerCombatResult(
+            player,
+            ResolvePlayerNickname(player),
+            Mathf.FloorToInt(Mathf.Max(0f, bossDamage)),
+            Mathf.Max(0, deathCount)));
+    }
+
+    private static string ResolvePlayerNickname(PlayerRef player)
+    {
+        return $"Player {player.RawEncoded}";
+    }
+
+    private NetworkRunner GetRunner()
+    {
+        if (boss != null && boss.Runner != null)
+            return boss.Runner;
+
+        return NetworkManager.HasInstance ? NetworkManager.Instance.Runner : null;
     }
 }

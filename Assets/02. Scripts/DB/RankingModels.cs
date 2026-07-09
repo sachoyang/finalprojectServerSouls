@@ -17,7 +17,8 @@ using System.Collections.Generic;
 public class PartyMember
 {
     public string nickname;   // 팀원 표시 이름
-    public int damage;        // 개인 딜량 (지금은 0 → 나중에 채움)
+    public int damage;        // 개인 딜량
+    public int death_count;   // 죽어서 부활 대기 상태가 된 횟수
 }
 
 // members 배열을 폼 전송용 JSON 문자열로 감쌀 때 쓰는 래퍼.
