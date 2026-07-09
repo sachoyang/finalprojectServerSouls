@@ -3391,10 +3391,10 @@ MonoBehaviour:
     m_Alignment: 4
     m_AlignByGeometry: 0
     m_RichText: 1
-    m_HorizontalOverflow: 0
+    m_HorizontalOverflow: 1
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Access
+  m_Text: ACCESS
 --- !u!222 &1403465462
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -3473,7 +3473,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Register
+  m_Text: REGISTER
 --- !u!222 &1422386181
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -4089,10 +4089,10 @@ MonoBehaviour:
     m_Alignment: 4
     m_AlignByGeometry: 0
     m_RichText: 1
-    m_HorizontalOverflow: 0
+    m_HorizontalOverflow: 1
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Guest
+  m_Text: GUEST
 --- !u!222 &1743516964
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -4699,10 +4699,10 @@ MonoBehaviour:
     m_Alignment: 4
     m_AlignByGeometry: 0
     m_RichText: 1
-    m_HorizontalOverflow: 0
+    m_HorizontalOverflow: 1
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Register
+  m_Text: REGISTER
 --- !u!222 &2009381708
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -4771,6 +4771,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ceca30047cb7c146854c3fb86faf96b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  useServerAbilityBalance: 0
   _debugLoadedAbilities: []
 --- !u!1 &2060979117
 GameObject:
