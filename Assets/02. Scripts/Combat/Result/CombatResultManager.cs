@@ -245,13 +245,19 @@ public class CombatResultManager : MonoBehaviour
 
         results.Add(new GameProgressionManager.StagePlayerCombatResult(
             player,
-            ResolvePlayerNickname(player),
+            ResolvePlayerNickname(player, playerObject),
             Mathf.FloorToInt(Mathf.Max(0f, bossDamage)),
             Mathf.Max(0, deathCount)));
     }
 
-    private static string ResolvePlayerNickname(PlayerRef player)
+    private static string ResolvePlayerNickname(PlayerRef player, NetworkObject playerObject)
     {
+        NetworkPlayerData playerData = playerObject != null
+            ? playerObject.GetComponent<NetworkPlayerData>()
+            : null;
+        if (playerData != null)
+            return playerData.DisplayNickname;
+
         return $"Player {player.RawEncoded}";
     }
 

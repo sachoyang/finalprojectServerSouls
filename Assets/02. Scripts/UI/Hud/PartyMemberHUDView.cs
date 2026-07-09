@@ -7,6 +7,9 @@ public class PartyMemberHUDView : MonoBehaviour
     [Header("Root")]
     [SerializeField] private GameObject rootObject;
 
+    [Header("Name")]
+    [SerializeField] private Text nicknameText;
+
     [Header("HP")]
     [SerializeField] private Image hpFillImage;
 
@@ -16,9 +19,16 @@ public class PartyMemberHUDView : MonoBehaviour
     [Header("Skill")]
     [SerializeField] private PartyMemberSkillBarView skillBarView;
 
+    private void Awake()
+    {
+        ResolveReferences();
+    }
+
     public void SetData(PartyMemberUIData data)
     {
+        ResolveReferences();
         SetVisible(true);
+        SetName(data.DisplayName);
         SetStats(
             data.CurrentHealth,
             data.MaxHealth,
@@ -53,6 +63,36 @@ public class PartyMemberHUDView : MonoBehaviour
     {
         if (skillBarView != null)
             skillBarView.Clear();
+    }
+
+    private void SetName(string displayName)
+    {
+        if (nicknameText != null)
+            nicknameText.text = string.IsNullOrWhiteSpace(displayName) ? "-" : displayName;
+    }
+
+    private void ResolveReferences()
+    {
+        if (nicknameText != null)
+            return;
+
+        Text[] texts = GetComponentsInChildren<Text>(true);
+        for (int i = 0; i < texts.Length; i++)
+        {
+            Text candidate = texts[i];
+            if (candidate == null)
+                continue;
+
+            string objectName = candidate.gameObject.name;
+            if (objectName.Contains("Name") ||
+                objectName.Contains("Nickname") ||
+                objectName.Contains("Player") ||
+                objectName.Contains("이름"))
+            {
+                nicknameText = candidate;
+                return;
+            }
+        }
     }
 
     private float GetSafeRatio(float currentValue, float maxValue)
