@@ -39,7 +39,10 @@ public class CombatQuickMenuView : MonoBehaviour
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            ThirdPersonCameraController.SuppressEscapeToggleThisFrame();
             ToggleMenu();
+        }
     }
 
     public void ToggleMenu()
@@ -72,7 +75,7 @@ public class CombatQuickMenuView : MonoBehaviour
         if (quickMenuRoot != null)
             quickMenuRoot.SetActive(false);
 
-        ThirdPersonCameraController.ForceCursorVisible = false;
+        ThirdPersonCameraController.RequestCursorLock();
     }
 
     public void OnClickRetreat()

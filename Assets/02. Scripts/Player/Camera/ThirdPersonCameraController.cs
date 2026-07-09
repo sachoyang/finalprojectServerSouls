@@ -1,7 +1,12 @@
 using UnityEngine;
 public class ThirdPersonCameraController : MonoBehaviour
 {
+    private const float OrbitPitchLimit = 89f;
+
     public static bool ForceCursorVisible { get; set; }
+    private static bool _cursorReleasedByEscape;
+    private static int _escapeToggleSuppressedFrame = -1;
+    private static int _cursorLockRequestFrames;
 
     [Header("Target")]
     [SerializeField] private Transform target;
@@ -21,6 +26,10 @@ public class ThirdPersonCameraController : MonoBehaviour
     [SerializeField] private float collisionSmoothTime = 0.06f;
     [SerializeField] private float collisionReturnSmoothTime = 0.18f;
     [SerializeField] private float collisionReturnDelay = 0.12f;
+    [SerializeField] private float groundProbeHeight = 2.5f;
+    [SerializeField] private float groundProbeDistance = 6f;
+    [SerializeField] private float groundClearance = 0.35f;
+    [SerializeField] private float minGroundNormalY = 0.35f;
 
     [Header("Rotation")]
     [SerializeField] private float mouseSensitivity = 4f;
@@ -52,8 +61,6 @@ public class ThirdPersonCameraController : MonoBehaviour
     private float _currentCollisionDistance = -1f;
     private float _collisionDistanceVelocity;
     private float _lastCollisionTime = -999f;
-    private bool _cursorReleasedByEscape;
-
     public Transform Target => target;
     public Vector3 TargetOffset => targetOffset;
     public float Distance => distance;
@@ -67,7 +74,7 @@ public class ThirdPersonCameraController : MonoBehaviour
     {
         Vector3 currentEuler = transform.eulerAngles;
         _yaw = currentEuler.y;
-        _pitch = NormalizeAngle(currentEuler.x);
+        _pitch = ClampGameplayPitch(NormalizeAngle(currentEuler.x));
         _targetYaw = _yaw;
         _targetPitch = _pitch;
 
@@ -125,9 +132,27 @@ public class ThirdPersonCameraController : MonoBehaviour
         _lockOnTarget = null;
         Vector3 currentEuler = transform.eulerAngles;
         _yaw = currentEuler.y;
-        _pitch = NormalizeAngle(currentEuler.x);
+        _pitch = ClampGameplayPitch(NormalizeAngle(currentEuler.x));
         _targetYaw = _yaw;
         _targetPitch = _pitch;
+    }
+
+    public static void SuppressEscapeToggleThisFrame()
+    {
+        _escapeToggleSuppressedFrame = Time.frameCount;
+    }
+
+    public static void SetEscapeCursorReleased(bool released)
+    {
+        _cursorReleasedByEscape = released;
+    }
+
+    public static void RequestCursorLock()
+    {
+        ForceCursorVisible = false;
+        _cursorReleasedByEscape = false;
+        _cursorLockRequestFrames = 3;
+        SetCursorLock(true);
     }
 
     private void UpdateRotation()
@@ -147,7 +172,7 @@ public class ThirdPersonCameraController : MonoBehaviour
 
         _targetYaw += yawDelta;
         _targetPitch -= pitchDelta;
-        _targetPitch = Mathf.Clamp(_targetPitch, minPitch, maxPitch);
+        _targetPitch = ClampGameplayPitch(_targetPitch);
         _yaw = _targetYaw;
         _pitch = _targetPitch;
     }
@@ -167,7 +192,7 @@ public class ThirdPersonCameraController : MonoBehaviour
 
         Quaternion targetRotation = Quaternion.LookRotation(targetForward.normalized, Vector3.up);
         _yaw = targetRotation.eulerAngles.y;
-        _pitch = Mathf.Clamp(startPitch, minPitch, maxPitch);
+        _pitch = ClampGameplayPitch(startPitch);
         _targetYaw = _yaw;
         _targetPitch = _pitch;
         _currentVelocity = Vector3.zero;
@@ -204,12 +229,13 @@ public class ThirdPersonCameraController : MonoBehaviour
         Vector3 desiredPosition = focusPoint - rotation * Vector3.forward * distance;
         desiredPosition = ResolveCameraCollision(focusPoint, desiredPosition);
 
-        transform.position = Vector3.SmoothDamp(
+        Vector3 resolvedPosition = Vector3.SmoothDamp(
             transform.position,
             desiredPosition,
             ref _currentVelocity,
             positionSmoothTime);
 
+        transform.position = PreventCameraGroundClip(resolvedPosition, focusPoint);
         transform.rotation = rotation;
     }
 
@@ -234,11 +260,13 @@ public class ThirdPersonCameraController : MonoBehaviour
         desiredPosition = KeepClearOfLockOnTarget(desiredPosition, lockPoint, flatToLock);
         desiredPosition = ResolveCameraCollision(focusPoint, desiredPosition);
 
-        transform.position = Vector3.SmoothDamp(
+        Vector3 resolvedPosition = Vector3.SmoothDamp(
             transform.position,
             desiredPosition,
             ref _currentVelocity,
             positionSmoothTime);
+
+        transform.position = PreventCameraGroundClip(resolvedPosition, focusPoint);
 
         Vector3 lookDirection = lockPoint - transform.position;
         if (lookDirection.sqrMagnitude > 0.0001f)
@@ -249,7 +277,7 @@ public class ThirdPersonCameraController : MonoBehaviour
 
             Vector3 currentEuler = transform.eulerAngles;
             _yaw = currentEuler.y;
-            _pitch = NormalizeAngle(currentEuler.x);
+            _pitch = ClampGameplayPitch(NormalizeAngle(currentEuler.x));
             _targetYaw = _yaw;
             _targetPitch = _pitch;
         }
@@ -324,7 +352,7 @@ public class ThirdPersonCameraController : MonoBehaviour
             ref _collisionDistanceVelocity,
             smoothTime);
 
-        return focusPoint + direction * _currentCollisionDistance;
+        return PreventCameraGroundClip(focusPoint + direction * _currentCollisionDistance, focusPoint);
     }
 
     private bool TryGetNearestCameraObstruction(
@@ -369,12 +397,79 @@ public class ThirdPersonCameraController : MonoBehaviour
         return target != null && candidate.transform.IsChildOf(target);
     }
 
+    private Vector3 PreventCameraGroundClip(Vector3 cameraPosition, Vector3 focusPoint)
+    {
+        if (groundClearance <= 0f || groundProbeHeight <= 0f || groundProbeDistance <= 0f)
+        {
+            return cameraPosition;
+        }
+
+        Vector3 origin = cameraPosition;
+        origin.y = Mathf.Max(cameraPosition.y, focusPoint.y) + groundProbeHeight;
+
+        RaycastHit[] hits = Physics.RaycastAll(
+            origin,
+            Vector3.down,
+            groundProbeHeight + groundProbeDistance,
+            obstructionLayers,
+            QueryTriggerInteraction.Ignore);
+
+        bool foundGround = false;
+        float highestGroundY = float.NegativeInfinity;
+        for (int i = 0; i < hits.Length; i++)
+        {
+            RaycastHit candidate = hits[i];
+            if (candidate.collider == null ||
+                candidate.normal.y < minGroundNormalY ||
+                IsTargetCollider(candidate.collider))
+            {
+                continue;
+            }
+
+            if (candidate.point.y <= highestGroundY)
+            {
+                continue;
+            }
+
+            highestGroundY = candidate.point.y;
+            foundGround = true;
+        }
+
+        if (!foundGround)
+        {
+            return cameraPosition;
+        }
+
+        float minCameraY = highestGroundY + groundClearance;
+        if (cameraPosition.y >= minCameraY)
+        {
+            return cameraPosition;
+        }
+
+        cameraPosition.y = minCameraY;
+        _currentCollisionDistance = -1f;
+        _collisionDistanceVelocity = 0f;
+        return cameraPosition;
+    }
+
     private Quaternion GetClampedLockOnRotation(Vector3 lookDirection)
     {
         Quaternion rawRotation = Quaternion.LookRotation(lookDirection.normalized, Vector3.up);
         Vector3 euler = rawRotation.eulerAngles;
         float pitch = Mathf.Clamp(NormalizeAngle(euler.x), lockOnMinLookPitch, lockOnMaxLookPitch);
         return Quaternion.Euler(pitch, euler.y, 0f);
+    }
+
+    private float ClampGameplayPitch(float pitch)
+    {
+        float safeMinPitch = Mathf.Max(minPitch, -OrbitPitchLimit);
+        float safeMaxPitch = Mathf.Min(maxPitch, OrbitPitchLimit);
+        if (safeMinPitch > safeMaxPitch)
+        {
+            return Mathf.Clamp(pitch, -OrbitPitchLimit, OrbitPitchLimit);
+        }
+
+        return Mathf.Clamp(pitch, safeMinPitch, safeMaxPitch);
     }
 
     private static float NormalizeAngle(float angle)
@@ -394,7 +489,7 @@ public class ThirdPersonCameraController : MonoBehaviour
 
     private void UpdateCursorState()
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
+        if (Input.GetKeyDown(KeyCode.Escape) && _escapeToggleSuppressedFrame != Time.frameCount)
         {
             _cursorReleasedByEscape = !_cursorReleasedByEscape;
             _currentVelocity = Vector3.zero;
@@ -404,8 +499,14 @@ public class ThirdPersonCameraController : MonoBehaviour
         bool altHeld = Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt);
         if (ForceCursorVisible || altHeld || _cursorReleasedByEscape)
         {
+            _cursorLockRequestFrames = 0;
             SetCursorLock(false);
             return;
+        }
+
+        if (_cursorLockRequestFrames > 0)
+        {
+            _cursorLockRequestFrames--;
         }
 
         SetCursorLock(true);

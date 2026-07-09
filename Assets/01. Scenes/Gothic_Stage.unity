@@ -28971,7 +28971,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!108 &1218179766
 Light:
   m_ObjectHideFlags: 0
@@ -30330,7 +30330,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7407937258704617196, guid: 6d20a782034a2b54cb58bd21837c95bb, type: 3}
       propertyPath: maxPitch
-      value: 0
+      value: 89
+      objectReference: {fileID: 0}
+    - target: {fileID: 7407937258704617196, guid: 6d20a782034a2b54cb58bd21837c95bb, type: 3}
+      propertyPath: minPitch
+      value: -60
       objectReference: {fileID: 0}
     - target: {fileID: 7407937258704617196, guid: 6d20a782034a2b54cb58bd21837c95bb, type: 3}
       propertyPath: mouseSensitivity
@@ -39774,7 +39778,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   debugBossPool:
-  - {fileID: 11400000, guid: e99e869d0eaa98f489081edfaa900f92, type: 2}
+  - {fileID: 11400000, guid: d44bf377fd236af4ab2f6d958435f890, type: 2}
   useRandomBoss: 0
   debugUserId: 
   warmupThroughLoadingScene: 1
@@ -39812,6 +39816,8 @@ MonoBehaviour:
   teleportToChestKey: 288
   loadPathSceneKey: 289
   pathSceneName: scPathNew
+  enableCrashTestKey: 1
+  crashTestKey: 291
 --- !u!114 &1881547196
 MonoBehaviour:
   m_ObjectHideFlags: 0
