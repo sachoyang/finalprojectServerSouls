@@ -299,7 +299,6 @@ MonoBehaviour:
   _maxHP: 0
   _CurrentHP: 0
   maxSingleHitPercent: 0.05
-  debugKillAdminIds: []
   wallLayerMask:
     serializedVersion: 2
     m_Bits: 128
@@ -1757,11 +1756,14 @@ MonoBehaviour:
   napalmRayDownAngle: 45
   napalmSound: {fileID: 0}
   debugNapalmRay: 1
-  wakeUpSound: {fileID: 0}
-  groggySound: {fileID: 0}
-  dieSound: {fileID: 0}
-  walkSound: {fileID: 0}
-  iceMagicSound: {fileID: 0}
+  wakeUpSound: {fileID: 8300000, guid: ff3ab9b48f6d1654d85b6a96c777a750, type: 3}
+  groggySound: {fileID: 8300000, guid: ac6541c88c2c9794ea1b6541dea9d10e, type: 3}
+  dieSound: {fileID: 8300000, guid: d0fff63a4823ab1408d6f9b45cc9e8f4, type: 3}
+  walkSound: {fileID: 8300000, guid: 5bf241f4a6c7ed64282fe23b3cb373fb, type: 3}
+  wingSound: {fileID: 8300000, guid: 43e46f8695cd22c479d8aeaaf4772752, type: 3}
+  iceMagicSound: {fileID: 8300000, guid: 7acaee68165daaf4e94bda7774c91070, type: 3}
+  biteSound: {fileID: 8300000, guid: 891e89c994b64214c99bf28d6f536f72, type: 3}
+  takeOffSound: {fileID: 8300000, guid: ac4b5e31be799dd4aa4bee96709bef8f, type: 3}
   flyingGetHitLength: 0.833
   rootMotionCapture: {fileID: 1268043131240937855}
   groggyRecoverBlendTime: 0.5

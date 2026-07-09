@@ -1,207 +1,584 @@
 fileFormatVersion: 2
 guid: bd6bd723d64eb65468eef542be8d1957
-timeCreated: 1523637168
-licenseType: Store
 ModelImporter:
-  serializedVersion: 19
-  fileIDToRecycleName:
-    100000: //RootNode
-    100002: PolarDragon_
-    100004: PolarDragon_ Head
-    100006: PolarDragon_ L Calf
-    100008: PolarDragon_ L Clavicle
-    100010: PolarDragon_ L Finger0
-    100012: PolarDragon_ L Finger01
-    100014: PolarDragon_ L Finger1
-    100016: PolarDragon_ L Finger11
-    100018: PolarDragon_ L Finger2
-    100020: PolarDragon_ L Finger21
-    100022: PolarDragon_ L Finger3
-    100024: PolarDragon_ L Finger31
-    100026: PolarDragon_ L Foot
-    100028: PolarDragon_ L Forearm
-    100030: PolarDragon_ L Hand
-    100032: PolarDragon_ L HorseLink
-    100034: PolarDragon_ L Thigh
-    100036: PolarDragon_ L Toe0
-    100038: PolarDragon_ L Toe01
-    100040: PolarDragon_ L Toe1
-    100042: PolarDragon_ L Toe11
-    100044: PolarDragon_ L Toe2
-    100046: PolarDragon_ L Toe21
-    100048: PolarDragon_ L Toe3
-    100050: PolarDragon_ L Toe31
-    100052: PolarDragon_ L UpperArm
-    100054: PolarDragon_ Neck
-    100056: PolarDragon_ Neck1
-    100058: PolarDragon_ Pelvis
-    100060: PolarDragon_ Ponytail1
-    100062: PolarDragon_ R Calf
-    100064: PolarDragon_ R Clavicle
-    100066: PolarDragon_ R Finger0
-    100068: PolarDragon_ R Finger01
-    100070: PolarDragon_ R Finger1
-    100072: PolarDragon_ R Finger11
-    100074: PolarDragon_ R Finger2
-    100076: PolarDragon_ R Finger21
-    100078: PolarDragon_ R Finger3
-    100080: PolarDragon_ R Finger31
-    100082: PolarDragon_ R Foot
-    100084: PolarDragon_ R Forearm
-    100086: PolarDragon_ R Hand
-    100088: PolarDragon_ R HorseLink
-    100090: PolarDragon_ R Thigh
-    100092: PolarDragon_ R Toe0
-    100094: PolarDragon_ R Toe01
-    100096: PolarDragon_ R Toe1
-    100098: PolarDragon_ R Toe11
-    100100: PolarDragon_ R Toe2
-    100102: PolarDragon_ R Toe21
-    100104: PolarDragon_ R Toe3
-    100106: PolarDragon_ R Toe31
-    100108: PolarDragon_ R UpperArm
-    100110: PolarDragon_ Spine
-    100112: PolarDragon_ Spine1
-    100114: PolarDragon_ Tail
-    100116: PolarDragon_ Tail1
-    100118: PolarDragon_ Tail10
-    100120: PolarDragon_ Tail2
-    100122: PolarDragon_ Tail3
-    100124: PolarDragon_ Tail4
-    100126: PolarDragon_ Tail5
-    100128: PolarDragon_ Tail6
-    100130: PolarDragon_ Tail7
-    100132: PolarDragon_ Tail8
-    100134: PolarDragon_ Tail9
-    100136: PolarDragon_WingL_Arm
-    100138: PolarDragon_WingL_FingerA_1
-    100140: PolarDragon_WingL_FingerA_2
-    100142: PolarDragon_WingL_FingerA_3
-    100144: PolarDragon_WingL_FingerB_1
-    100146: PolarDragon_WingL_FingerB_2
-    100148: PolarDragon_WingL_FingerB_3
-    100150: PolarDragon_WingL_FingerC_1
-    100152: PolarDragon_WingL_FingerC_2
-    100154: PolarDragon_WingL_FingerC_3
-    100156: PolarDragon_WingL_ForeArm
-    100158: PolarDragon_WingL_Hand
-    100160: PolarDragon_WingR_Arm
-    100162: PolarDragon_WingR_FingerA_1
-    100164: PolarDragon_WingR_FingerA_2
-    100166: PolarDragon_WingR_FingerA_3
-    100168: PolarDragon_WingR_FingerB_1
-    100170: PolarDragon_WingR_FingerB_2
-    100172: PolarDragon_WingR_FingerB_3
-    100174: PolarDragon_WingR_FingerC_1
-    100176: PolarDragon_WingR_FingerC_2
-    100178: PolarDragon_WingR_FingerC_3
-    100180: PolarDragon_WingR_ForeArm
-    100182: PolarDragon_WingR_Hand
-    100184: root
-    400000: //RootNode
-    400002: PolarDragon_
-    400004: PolarDragon_ Head
-    400006: PolarDragon_ L Calf
-    400008: PolarDragon_ L Clavicle
-    400010: PolarDragon_ L Finger0
-    400012: PolarDragon_ L Finger01
-    400014: PolarDragon_ L Finger1
-    400016: PolarDragon_ L Finger11
-    400018: PolarDragon_ L Finger2
-    400020: PolarDragon_ L Finger21
-    400022: PolarDragon_ L Finger3
-    400024: PolarDragon_ L Finger31
-    400026: PolarDragon_ L Foot
-    400028: PolarDragon_ L Forearm
-    400030: PolarDragon_ L Hand
-    400032: PolarDragon_ L HorseLink
-    400034: PolarDragon_ L Thigh
-    400036: PolarDragon_ L Toe0
-    400038: PolarDragon_ L Toe01
-    400040: PolarDragon_ L Toe1
-    400042: PolarDragon_ L Toe11
-    400044: PolarDragon_ L Toe2
-    400046: PolarDragon_ L Toe21
-    400048: PolarDragon_ L Toe3
-    400050: PolarDragon_ L Toe31
-    400052: PolarDragon_ L UpperArm
-    400054: PolarDragon_ Neck
-    400056: PolarDragon_ Neck1
-    400058: PolarDragon_ Pelvis
-    400060: PolarDragon_ Ponytail1
-    400062: PolarDragon_ R Calf
-    400064: PolarDragon_ R Clavicle
-    400066: PolarDragon_ R Finger0
-    400068: PolarDragon_ R Finger01
-    400070: PolarDragon_ R Finger1
-    400072: PolarDragon_ R Finger11
-    400074: PolarDragon_ R Finger2
-    400076: PolarDragon_ R Finger21
-    400078: PolarDragon_ R Finger3
-    400080: PolarDragon_ R Finger31
-    400082: PolarDragon_ R Foot
-    400084: PolarDragon_ R Forearm
-    400086: PolarDragon_ R Hand
-    400088: PolarDragon_ R HorseLink
-    400090: PolarDragon_ R Thigh
-    400092: PolarDragon_ R Toe0
-    400094: PolarDragon_ R Toe01
-    400096: PolarDragon_ R Toe1
-    400098: PolarDragon_ R Toe11
-    400100: PolarDragon_ R Toe2
-    400102: PolarDragon_ R Toe21
-    400104: PolarDragon_ R Toe3
-    400106: PolarDragon_ R Toe31
-    400108: PolarDragon_ R UpperArm
-    400110: PolarDragon_ Spine
-    400112: PolarDragon_ Spine1
-    400114: PolarDragon_ Tail
-    400116: PolarDragon_ Tail1
-    400118: PolarDragon_ Tail10
-    400120: PolarDragon_ Tail2
-    400122: PolarDragon_ Tail3
-    400124: PolarDragon_ Tail4
-    400126: PolarDragon_ Tail5
-    400128: PolarDragon_ Tail6
-    400130: PolarDragon_ Tail7
-    400132: PolarDragon_ Tail8
-    400134: PolarDragon_ Tail9
-    400136: PolarDragon_WingL_Arm
-    400138: PolarDragon_WingL_FingerA_1
-    400140: PolarDragon_WingL_FingerA_2
-    400142: PolarDragon_WingL_FingerA_3
-    400144: PolarDragon_WingL_FingerB_1
-    400146: PolarDragon_WingL_FingerB_2
-    400148: PolarDragon_WingL_FingerB_3
-    400150: PolarDragon_WingL_FingerC_1
-    400152: PolarDragon_WingL_FingerC_2
-    400154: PolarDragon_WingL_FingerC_3
-    400156: PolarDragon_WingL_ForeArm
-    400158: PolarDragon_WingL_Hand
-    400160: PolarDragon_WingR_Arm
-    400162: PolarDragon_WingR_FingerA_1
-    400164: PolarDragon_WingR_FingerA_2
-    400166: PolarDragon_WingR_FingerA_3
-    400168: PolarDragon_WingR_FingerB_1
-    400170: PolarDragon_WingR_FingerB_2
-    400172: PolarDragon_WingR_FingerB_3
-    400174: PolarDragon_WingR_FingerC_1
-    400176: PolarDragon_WingR_FingerC_2
-    400178: PolarDragon_WingR_FingerC_3
-    400180: PolarDragon_WingR_ForeArm
-    400182: PolarDragon_WingR_Hand
-    400184: root
-    7400000: TakeOff
-    9500000: //RootNode
+  serializedVersion: 22200
+  internalIDToNameTable:
+  - first:
+      1: 100000
+    second: //RootNode
+  - first:
+      1: 100002
+    second: PolarDragon_
+  - first:
+      1: 100004
+    second: PolarDragon_ Head
+  - first:
+      1: 100006
+    second: PolarDragon_ L Calf
+  - first:
+      1: 100008
+    second: PolarDragon_ L Clavicle
+  - first:
+      1: 100010
+    second: PolarDragon_ L Finger0
+  - first:
+      1: 100012
+    second: PolarDragon_ L Finger01
+  - first:
+      1: 100014
+    second: PolarDragon_ L Finger1
+  - first:
+      1: 100016
+    second: PolarDragon_ L Finger11
+  - first:
+      1: 100018
+    second: PolarDragon_ L Finger2
+  - first:
+      1: 100020
+    second: PolarDragon_ L Finger21
+  - first:
+      1: 100022
+    second: PolarDragon_ L Finger3
+  - first:
+      1: 100024
+    second: PolarDragon_ L Finger31
+  - first:
+      1: 100026
+    second: PolarDragon_ L Foot
+  - first:
+      1: 100028
+    second: PolarDragon_ L Forearm
+  - first:
+      1: 100030
+    second: PolarDragon_ L Hand
+  - first:
+      1: 100032
+    second: PolarDragon_ L HorseLink
+  - first:
+      1: 100034
+    second: PolarDragon_ L Thigh
+  - first:
+      1: 100036
+    second: PolarDragon_ L Toe0
+  - first:
+      1: 100038
+    second: PolarDragon_ L Toe01
+  - first:
+      1: 100040
+    second: PolarDragon_ L Toe1
+  - first:
+      1: 100042
+    second: PolarDragon_ L Toe11
+  - first:
+      1: 100044
+    second: PolarDragon_ L Toe2
+  - first:
+      1: 100046
+    second: PolarDragon_ L Toe21
+  - first:
+      1: 100048
+    second: PolarDragon_ L Toe3
+  - first:
+      1: 100050
+    second: PolarDragon_ L Toe31
+  - first:
+      1: 100052
+    second: PolarDragon_ L UpperArm
+  - first:
+      1: 100054
+    second: PolarDragon_ Neck
+  - first:
+      1: 100056
+    second: PolarDragon_ Neck1
+  - first:
+      1: 100058
+    second: PolarDragon_ Pelvis
+  - first:
+      1: 100060
+    second: PolarDragon_ Ponytail1
+  - first:
+      1: 100062
+    second: PolarDragon_ R Calf
+  - first:
+      1: 100064
+    second: PolarDragon_ R Clavicle
+  - first:
+      1: 100066
+    second: PolarDragon_ R Finger0
+  - first:
+      1: 100068
+    second: PolarDragon_ R Finger01
+  - first:
+      1: 100070
+    second: PolarDragon_ R Finger1
+  - first:
+      1: 100072
+    second: PolarDragon_ R Finger11
+  - first:
+      1: 100074
+    second: PolarDragon_ R Finger2
+  - first:
+      1: 100076
+    second: PolarDragon_ R Finger21
+  - first:
+      1: 100078
+    second: PolarDragon_ R Finger3
+  - first:
+      1: 100080
+    second: PolarDragon_ R Finger31
+  - first:
+      1: 100082
+    second: PolarDragon_ R Foot
+  - first:
+      1: 100084
+    second: PolarDragon_ R Forearm
+  - first:
+      1: 100086
+    second: PolarDragon_ R Hand
+  - first:
+      1: 100088
+    second: PolarDragon_ R HorseLink
+  - first:
+      1: 100090
+    second: PolarDragon_ R Thigh
+  - first:
+      1: 100092
+    second: PolarDragon_ R Toe0
+  - first:
+      1: 100094
+    second: PolarDragon_ R Toe01
+  - first:
+      1: 100096
+    second: PolarDragon_ R Toe1
+  - first:
+      1: 100098
+    second: PolarDragon_ R Toe11
+  - first:
+      1: 100100
+    second: PolarDragon_ R Toe2
+  - first:
+      1: 100102
+    second: PolarDragon_ R Toe21
+  - first:
+      1: 100104
+    second: PolarDragon_ R Toe3
+  - first:
+      1: 100106
+    second: PolarDragon_ R Toe31
+  - first:
+      1: 100108
+    second: PolarDragon_ R UpperArm
+  - first:
+      1: 100110
+    second: PolarDragon_ Spine
+  - first:
+      1: 100112
+    second: PolarDragon_ Spine1
+  - first:
+      1: 100114
+    second: PolarDragon_ Tail
+  - first:
+      1: 100116
+    second: PolarDragon_ Tail1
+  - first:
+      1: 100118
+    second: PolarDragon_ Tail10
+  - first:
+      1: 100120
+    second: PolarDragon_ Tail2
+  - first:
+      1: 100122
+    second: PolarDragon_ Tail3
+  - first:
+      1: 100124
+    second: PolarDragon_ Tail4
+  - first:
+      1: 100126
+    second: PolarDragon_ Tail5
+  - first:
+      1: 100128
+    second: PolarDragon_ Tail6
+  - first:
+      1: 100130
+    second: PolarDragon_ Tail7
+  - first:
+      1: 100132
+    second: PolarDragon_ Tail8
+  - first:
+      1: 100134
+    second: PolarDragon_ Tail9
+  - first:
+      1: 100136
+    second: PolarDragon_WingL_Arm
+  - first:
+      1: 100138
+    second: PolarDragon_WingL_FingerA_1
+  - first:
+      1: 100140
+    second: PolarDragon_WingL_FingerA_2
+  - first:
+      1: 100142
+    second: PolarDragon_WingL_FingerA_3
+  - first:
+      1: 100144
+    second: PolarDragon_WingL_FingerB_1
+  - first:
+      1: 100146
+    second: PolarDragon_WingL_FingerB_2
+  - first:
+      1: 100148
+    second: PolarDragon_WingL_FingerB_3
+  - first:
+      1: 100150
+    second: PolarDragon_WingL_FingerC_1
+  - first:
+      1: 100152
+    second: PolarDragon_WingL_FingerC_2
+  - first:
+      1: 100154
+    second: PolarDragon_WingL_FingerC_3
+  - first:
+      1: 100156
+    second: PolarDragon_WingL_ForeArm
+  - first:
+      1: 100158
+    second: PolarDragon_WingL_Hand
+  - first:
+      1: 100160
+    second: PolarDragon_WingR_Arm
+  - first:
+      1: 100162
+    second: PolarDragon_WingR_FingerA_1
+  - first:
+      1: 100164
+    second: PolarDragon_WingR_FingerA_2
+  - first:
+      1: 100166
+    second: PolarDragon_WingR_FingerA_3
+  - first:
+      1: 100168
+    second: PolarDragon_WingR_FingerB_1
+  - first:
+      1: 100170
+    second: PolarDragon_WingR_FingerB_2
+  - first:
+      1: 100172
+    second: PolarDragon_WingR_FingerB_3
+  - first:
+      1: 100174
+    second: PolarDragon_WingR_FingerC_1
+  - first:
+      1: 100176
+    second: PolarDragon_WingR_FingerC_2
+  - first:
+      1: 100178
+    second: PolarDragon_WingR_FingerC_3
+  - first:
+      1: 100180
+    second: PolarDragon_WingR_ForeArm
+  - first:
+      1: 100182
+    second: PolarDragon_WingR_Hand
+  - first:
+      1: 100184
+    second: root
+  - first:
+      4: 400000
+    second: //RootNode
+  - first:
+      4: 400002
+    second: PolarDragon_
+  - first:
+      4: 400004
+    second: PolarDragon_ Head
+  - first:
+      4: 400006
+    second: PolarDragon_ L Calf
+  - first:
+      4: 400008
+    second: PolarDragon_ L Clavicle
+  - first:
+      4: 400010
+    second: PolarDragon_ L Finger0
+  - first:
+      4: 400012
+    second: PolarDragon_ L Finger01
+  - first:
+      4: 400014
+    second: PolarDragon_ L Finger1
+  - first:
+      4: 400016
+    second: PolarDragon_ L Finger11
+  - first:
+      4: 400018
+    second: PolarDragon_ L Finger2
+  - first:
+      4: 400020
+    second: PolarDragon_ L Finger21
+  - first:
+      4: 400022
+    second: PolarDragon_ L Finger3
+  - first:
+      4: 400024
+    second: PolarDragon_ L Finger31
+  - first:
+      4: 400026
+    second: PolarDragon_ L Foot
+  - first:
+      4: 400028
+    second: PolarDragon_ L Forearm
+  - first:
+      4: 400030
+    second: PolarDragon_ L Hand
+  - first:
+      4: 400032
+    second: PolarDragon_ L HorseLink
+  - first:
+      4: 400034
+    second: PolarDragon_ L Thigh
+  - first:
+      4: 400036
+    second: PolarDragon_ L Toe0
+  - first:
+      4: 400038
+    second: PolarDragon_ L Toe01
+  - first:
+      4: 400040
+    second: PolarDragon_ L Toe1
+  - first:
+      4: 400042
+    second: PolarDragon_ L Toe11
+  - first:
+      4: 400044
+    second: PolarDragon_ L Toe2
+  - first:
+      4: 400046
+    second: PolarDragon_ L Toe21
+  - first:
+      4: 400048
+    second: PolarDragon_ L Toe3
+  - first:
+      4: 400050
+    second: PolarDragon_ L Toe31
+  - first:
+      4: 400052
+    second: PolarDragon_ L UpperArm
+  - first:
+      4: 400054
+    second: PolarDragon_ Neck
+  - first:
+      4: 400056
+    second: PolarDragon_ Neck1
+  - first:
+      4: 400058
+    second: PolarDragon_ Pelvis
+  - first:
+      4: 400060
+    second: PolarDragon_ Ponytail1
+  - first:
+      4: 400062
+    second: PolarDragon_ R Calf
+  - first:
+      4: 400064
+    second: PolarDragon_ R Clavicle
+  - first:
+      4: 400066
+    second: PolarDragon_ R Finger0
+  - first:
+      4: 400068
+    second: PolarDragon_ R Finger01
+  - first:
+      4: 400070
+    second: PolarDragon_ R Finger1
+  - first:
+      4: 400072
+    second: PolarDragon_ R Finger11
+  - first:
+      4: 400074
+    second: PolarDragon_ R Finger2
+  - first:
+      4: 400076
+    second: PolarDragon_ R Finger21
+  - first:
+      4: 400078
+    second: PolarDragon_ R Finger3
+  - first:
+      4: 400080
+    second: PolarDragon_ R Finger31
+  - first:
+      4: 400082
+    second: PolarDragon_ R Foot
+  - first:
+      4: 400084
+    second: PolarDragon_ R Forearm
+  - first:
+      4: 400086
+    second: PolarDragon_ R Hand
+  - first:
+      4: 400088
+    second: PolarDragon_ R HorseLink
+  - first:
+      4: 400090
+    second: PolarDragon_ R Thigh
+  - first:
+      4: 400092
+    second: PolarDragon_ R Toe0
+  - first:
+      4: 400094
+    second: PolarDragon_ R Toe01
+  - first:
+      4: 400096
+    second: PolarDragon_ R Toe1
+  - first:
+      4: 400098
+    second: PolarDragon_ R Toe11
+  - first:
+      4: 400100
+    second: PolarDragon_ R Toe2
+  - first:
+      4: 400102
+    second: PolarDragon_ R Toe21
+  - first:
+      4: 400104
+    second: PolarDragon_ R Toe3
+  - first:
+      4: 400106
+    second: PolarDragon_ R Toe31
+  - first:
+      4: 400108
+    second: PolarDragon_ R UpperArm
+  - first:
+      4: 400110
+    second: PolarDragon_ Spine
+  - first:
+      4: 400112
+    second: PolarDragon_ Spine1
+  - first:
+      4: 400114
+    second: PolarDragon_ Tail
+  - first:
+      4: 400116
+    second: PolarDragon_ Tail1
+  - first:
+      4: 400118
+    second: PolarDragon_ Tail10
+  - first:
+      4: 400120
+    second: PolarDragon_ Tail2
+  - first:
+      4: 400122
+    second: PolarDragon_ Tail3
+  - first:
+      4: 400124
+    second: PolarDragon_ Tail4
+  - first:
+      4: 400126
+    second: PolarDragon_ Tail5
+  - first:
+      4: 400128
+    second: PolarDragon_ Tail6
+  - first:
+      4: 400130
+    second: PolarDragon_ Tail7
+  - first:
+      4: 400132
+    second: PolarDragon_ Tail8
+  - first:
+      4: 400134
+    second: PolarDragon_ Tail9
+  - first:
+      4: 400136
+    second: PolarDragon_WingL_Arm
+  - first:
+      4: 400138
+    second: PolarDragon_WingL_FingerA_1
+  - first:
+      4: 400140
+    second: PolarDragon_WingL_FingerA_2
+  - first:
+      4: 400142
+    second: PolarDragon_WingL_FingerA_3
+  - first:
+      4: 400144
+    second: PolarDragon_WingL_FingerB_1
+  - first:
+      4: 400146
+    second: PolarDragon_WingL_FingerB_2
+  - first:
+      4: 400148
+    second: PolarDragon_WingL_FingerB_3
+  - first:
+      4: 400150
+    second: PolarDragon_WingL_FingerC_1
+  - first:
+      4: 400152
+    second: PolarDragon_WingL_FingerC_2
+  - first:
+      4: 400154
+    second: PolarDragon_WingL_FingerC_3
+  - first:
+      4: 400156
+    second: PolarDragon_WingL_ForeArm
+  - first:
+      4: 400158
+    second: PolarDragon_WingL_Hand
+  - first:
+      4: 400160
+    second: PolarDragon_WingR_Arm
+  - first:
+      4: 400162
+    second: PolarDragon_WingR_FingerA_1
+  - first:
+      4: 400164
+    second: PolarDragon_WingR_FingerA_2
+  - first:
+      4: 400166
+    second: PolarDragon_WingR_FingerA_3
+  - first:
+      4: 400168
+    second: PolarDragon_WingR_FingerB_1
+  - first:
+      4: 400170
+    second: PolarDragon_WingR_FingerB_2
+  - first:
+      4: 400172
+    second: PolarDragon_WingR_FingerB_3
+  - first:
+      4: 400174
+    second: PolarDragon_WingR_FingerC_1
+  - first:
+      4: 400176
+    second: PolarDragon_WingR_FingerC_2
+  - first:
+      4: 400178
+    second: PolarDragon_WingR_FingerC_3
+  - first:
+      4: 400180
+    second: PolarDragon_WingR_ForeArm
+  - first:
+      4: 400182
+    second: PolarDragon_WingR_Hand
+  - first:
+      4: 400184
+    second: root
+  - first:
+      74: 7400000
+    second: TakeOff
+  - first:
+      95: 9500000
+    second: //RootNode
+  externalObjects: {}
   materials:
-    importMaterials: 1
+    materialImportMode: 1
     materialName: 0
     materialSearch: 1
+    materialLocation: 0
   animations:
     legacyGenerateAnimations: 4
     bakeSimulation: 0
     resampleCurves: 1
     optimizeGameObjects: 0
+    removeConstantScaleCurves: 0
     motionNodeName: 
     rigImportErrors: 
     rigImportWarnings: 
@@ -209,16 +586,20 @@ ModelImporter:
     animationImportWarnings: 
     animationRetargetingWarnings: 
     animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    importConstraints: 0
     animationCompression: 0
     animationRotationError: 0.5
     animationPositionError: 0.5
     animationScaleError: 0.5
     animationWrapMode: 0
     extraExposedTransformPaths: []
+    extraUserProperties: []
     clipAnimations:
     - serializedVersion: 16
       name: TakeOff
       takeName: Take 001
+      internalID: 0
       firstFrame: 0
       lastFrame: 55
       wrapMode: 0
@@ -239,7 +620,21 @@ ModelImporter:
       mirror: 0
       bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
       curves: []
-      events: []
+      events:
+      - time: 0.3201058
+        functionName: PlayWing
+        data: 
+        objectReferenceParameter: {instanceID: 0}
+        floatParameter: 0
+        intParameter: 0
+        messageOptions: 0
+      - time: 0.7830688
+        functionName: PlayWing
+        data: 
+        objectReferenceParameter: {instanceID: 0}
+        floatParameter: 0
+        intParameter: 0
+        messageOptions: 0
       transformMask:
       - path: 
         weight: 1
@@ -556,26 +951,49 @@ ModelImporter:
     globalScale: 1
     meshCompression: 0
     addColliders: 0
+    useSRGBMaterialColor: 1
+    sortHierarchyByName: 1
+    importPhysicalCameras: 0
+    importVisibility: 0
     importBlendShapes: 1
+    importCameras: 0
+    importLights: 0
+    nodeNameCollisionStrategy: 0
+    fileIdsGeneration: 1
     swapUVChannels: 0
     generateSecondaryUV: 0
     useFileUnits: 1
-    optimizeMeshForGPU: 1
     keepQuads: 0
     weldVertices: 1
+    bakeAxisConversion: 0
+    preserveHierarchy: 0
+    skinWeightsMode: 0
+    maxBonesPerVertex: 4
+    minBoneWeight: 0.001
+    optimizeBones: 1
+    meshOptimizationFlags: -1
+    indexFormat: 1
     secondaryUVAngleDistortion: 8
     secondaryUVAreaDistortion: 15.000001
     secondaryUVHardAngle: 88
+    secondaryUVMarginMethod: 0
+    secondaryUVMinLightmapResolution: 40
+    secondaryUVMinObjectScale: 1
     secondaryUVPackMargin: 4
     useFileScale: 1
+    strictVertexDataChecks: 0
   tangentSpace:
     normalSmoothAngle: 60
     normalImportMode: 0
     tangentImportMode: 3
+    normalCalculationMode: 0
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 1
+    blendShapeNormalImportMode: 1
+    normalSmoothingSource: 0
+  referencedClips: []
   importAnimation: 1
-  copyAvatar: 1
   humanDescription:
-    serializedVersion: 2
+    serializedVersion: 3
     human: []
     skeleton: []
     armTwist: 0.5
@@ -585,15 +1003,19 @@ ModelImporter:
     armStretch: 0.05
     legStretch: 0.05
     feetSpacing: 0
+    globalScale: 1
     rootMotionBoneName: root
-    rootMotionBoneRotation: {x: 0, y: 0, z: 0, w: 1}
     hasTranslationDoF: 0
     hasExtraRoot: 0
     skeletonHasParents: 1
-  lastHumanDescriptionAvatarSource: {fileID: 9000000, guid: c18b0041706c9d248bb71c8ff5e60314,
-    type: 3}
+  lastHumanDescriptionAvatarSource: {fileID: 9000000, guid: c18b0041706c9d248bb71c8ff5e60314, type: 3}
+  autoGenerateAvatarMappingIfUnspecified: 1
   animationType: 2
   humanoidOversampling: 1
+  avatarSetup: 2
+  addHumanoidExtraRootOnlyWhenUsingAvatar: 0
+  importBlendShapeDeformPercent: 0
+  remapMaterialsIfMaterialImportModeIsNone: 1
   additionalBone: 0
   userData: 
   assetBundleName: 

@@ -98,15 +98,17 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
     public AudioClip dieSound;
     [Tooltip("걷기 발소리. 클립의 발 닿는 프레임에 PlayFootstep() 애니메이션 이벤트가 걸려 있어야 한다.")]
     public AudioClip walkSound;
-    [Tooltip("얼음창 발사 / 브레스 등 얼음 마법 공용 효과음.")]
-    public AudioClip iceMagicSound;
-    [Tooltip("무는 공격. 기존 EnableBiteHitbox() 애니메이션 이벤트에서 함께 재생된다.")]
-    public AudioClip biteSound;
+    public AudioClip wingSound;
     [Tooltip("2페이즈 이륙(TakeOff). 비워두면 wakeUpSound를 대신 쓴다.")]
     public AudioClip takeOffSound;
 
-    // 패턴(공격 모션)별 효과음은 여기가 아니라 각 패턴 SO(BossPatternModule)의
-    // 액션마다 있는 actionSound 필드에서 지정한다. NetworkBossCore가 재생해 준다.
+    // 🔊 공격/패턴 효과음(물기, 얼음창, 브레스 등)은 여기가 아니라
+    //    각 패턴 SO(BossPatternModule)의 액션마다 있는 actionSound 필드에서 지정한다.
+    //    NetworkBossCore가 actionSoundPercent 타이밍에 맞춰 재생해 준다.
+    //    여기 남은 건 패턴으로 표현할 수 없는 것들뿐이다:
+    //      - 상태 사운드(각성/그로기/사망/이륙)
+    //      - 발소리(Locomotion은 패턴이 아님)
+    //      - 네이팜(액션당 1회가 아니라 장판마다, 보스가 아닌 지면 위치에서 울림)
 
     // SoundManager가 씬에 없을 때 MonoSingleton이 빈 오브젝트를 자동 생성하지 않도록 HasInstance로 막는다.
     private void Play3D(AudioClip clip, SoundCategory category)
@@ -460,7 +462,9 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
         if (boss != null && boss.HasStateAuthority)
             aoe.Initialize(boss.GetOutgoingDamageMultiplier());
         else
-            aoe.enabled = false;
+            // 시각/사운드는 모든 클라이언트가, 데미지 판정만 권한자가.
+            // 컴포넌트를 통째로 끄면 풀 재사용 시 OnEnable이 안 와서 스폰 사운드가 빠진다.
+            aoe.SetDamageEnabled(false);
     }
 
     // ==========================================
@@ -609,11 +613,13 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
         Play3D(walkSound, SoundCategory.Footstep);
     }
 
-    public void EnableBiteHitbox()
+    public void PlayWing()
     {
-        if (biteAttack != null) biteAttack.StartAttack();
-        Play3D(biteSound, SoundCategory.CombatHit);
+        Play3D(wingSound, SoundCategory.Footstep);
     }
+
+    // 물기 효과음은 BiteAttack 패턴 SO의 actionSound에서 지정한다.
+    public void EnableBiteHitbox() { if (biteAttack != null) biteAttack.StartAttack(); }
     public void DisableBiteHitbox() { if (biteAttack != null) biteAttack.StopAttack(); }
 
     // ==========================================
@@ -645,22 +651,6 @@ public class PolarDragonVisual : MonoBehaviour, IBossVisual
             bool applyDamage = _bossCore != null && _bossCore.HasStateAuthority;
             float mult = _bossCore != null ? _bossCore.GetOutgoingDamageMultiplier() : 1f;
             proj.Launch(targetPos, energyExplosionPrefab, applyDamage, mult);
-        }
-
-        Play3D(iceMagicSound, SoundCategory.BossGimmick);
-    }
-
-    // 애니메이션: SpreadFrozenBreath 프레임에 맞춤
-    public void SpawnFrozenBreath()
-    {
-        if (spreadFrozenBreathPrefab != null && breathSpawnPoint != null)
-        {
-            // 브레스는 고개를 따라가야 하므로 breathSpawnPoint를 부모로 지정.
-            // 풀에서 꺼내 재사용(파티클 끝나면 자동 회수). 풀 없으면 폴백 생성.
-            GameObject effect = EffectPoolManager.SpawnPooled(spreadFrozenBreathPrefab, breathSpawnPoint.position, breathSpawnPoint.rotation, breathSpawnPoint);
-            BossAoEAttack aoe = effect.GetComponent<BossAoEAttack>();
-            if (aoe != null && _bossCore != null) aoe.Initialize(_bossCore.GetOutgoingDamageMultiplier());
-            Play3D(iceMagicSound, SoundCategory.BossGimmick);
         }
     }
 }

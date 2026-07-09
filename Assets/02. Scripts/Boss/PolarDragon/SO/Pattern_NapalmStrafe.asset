@@ -15,7 +15,7 @@ MonoBehaviour:
   patternId: 
   displayName: 
   minRange: 0
-  maxRange: 25
+  maxRange: 20
   weight: 10
   actions:
   - animationClip: {fileID: 7400000, guid: bd6bd723d64eb65468eef542be8d1957, type: 3}
@@ -53,6 +53,9 @@ MonoBehaviour:
     enableTracking: 0
     trackingStopPercent: 0
     trackingSpeed: 0
+    actionSound: {fileID: 0}
+    actionSoundVolume: 1
+    actionSoundPercent: 0
     emitBreath: 0
     breathDownAngle: 0
     breathAimAtTarget: 0
@@ -79,6 +82,9 @@ MonoBehaviour:
     enableTracking: 1
     trackingStopPercent: 1
     trackingSpeed: 3
+    actionSound: {fileID: 0}
+    actionSoundVolume: 1
+    actionSoundPercent: 0
     emitBreath: 0
     breathDownAngle: 0
     breathAimAtTarget: 0
@@ -123,6 +129,9 @@ MonoBehaviour:
     enableTracking: 0
     trackingStopPercent: 1
     trackingSpeed: 1
+    actionSound: {fileID: 8300000, guid: d0157fe6aef65224e9a00a22292da983, type: 3}
+    actionSoundVolume: 1
+    actionSoundPercent: 0
     emitBreath: 1
     breathDownAngle: 45
     breathAimAtTarget: 0
@@ -167,6 +176,9 @@ MonoBehaviour:
     enableTracking: 0
     trackingStopPercent: 0
     trackingSpeed: 0
+    actionSound: {fileID: 0}
+    actionSoundVolume: 1
+    actionSoundPercent: 0
     emitBreath: 0
     breathDownAngle: 0
     breathAimAtTarget: 0

@@ -4871,7 +4871,7 @@ ParticleSystem:
     startLifetime:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 4
+      scalar: 5
       minScalar: 4
       maxCurve:
         serializedVersion: 2
@@ -9623,6 +9623,11 @@ MonoBehaviour:
   targetLayer:
     serializedVersion: 2
     m_Bits: 256
+  spawnSound: {fileID: 0}
+  spawnSoundVolume: 1
+  hitSound: {fileID: 0}
+  hitSoundVolume: 1
+  soundCategory: 6
 --- !u!1 &1982324152055030
 GameObject:
   m_ObjectHideFlags: 0

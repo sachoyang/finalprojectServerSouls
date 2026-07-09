@@ -53,6 +53,9 @@ MonoBehaviour:
     enableTracking: 1
     trackingStopPercent: 1
     trackingSpeed: 2
+    actionSound: {fileID: 0}
+    actionSoundVolume: 1
+    actionSoundPercent: 0
     emitBreath: 0
     breathDownAngle: 0
     breathAimAtTarget: 0
@@ -97,6 +100,9 @@ MonoBehaviour:
     enableTracking: 1
     trackingStopPercent: 1
     trackingSpeed: 2
+    actionSound: {fileID: 0}
+    actionSoundVolume: 1
+    actionSoundPercent: 0
     emitBreath: 0
     breathDownAngle: 0
     breathAimAtTarget: 0
@@ -141,6 +147,9 @@ MonoBehaviour:
     enableTracking: 1
     trackingStopPercent: 1
     trackingSpeed: 2
+    actionSound: {fileID: 0}
+    actionSoundVolume: 1
+    actionSoundPercent: 0
     emitBreath: 0
     breathDownAngle: 0
     breathAimAtTarget: 0
@@ -185,6 +194,9 @@ MonoBehaviour:
     enableTracking: 1
     trackingStopPercent: 1
     trackingSpeed: 2
+    actionSound: {fileID: 0}
+    actionSoundVolume: 1
+    actionSoundPercent: 0
     emitBreath: 0
     breathDownAngle: 0
     breathAimAtTarget: 0
@@ -211,6 +223,9 @@ MonoBehaviour:
     enableTracking: 0
     trackingStopPercent: 0
     trackingSpeed: 0
+    actionSound: {fileID: 8300000, guid: d0157fe6aef65224e9a00a22292da983, type: 3}
+    actionSoundVolume: 1
+    actionSoundPercent: 0.1
     emitBreath: 1
     breathDownAngle: 0
     breathAimAtTarget: 1

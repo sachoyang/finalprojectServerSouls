@@ -33,6 +33,39 @@ public class BossAoEAttack : MonoBehaviour
     public float hitInterval = 0.5f;
     public LayerMask targetLayer;
 
+    [Header("사운드")]
+    [Tooltip("이펙트가 나타나는 순간 1회 재생. 이펙트 위치에서 울린다.\n" +
+             "데미지 권한과 무관하게 모든 클라이언트에서 들린다.")]
+    public AudioClip spawnSound;
+    [Range(0f, 2f)] public float spawnSoundVolume = 1.0f;
+
+    [Tooltip("플레이어가 맞았을 때 피격 지점에서 재생. 모든 클라이언트에서 들린다.\n" +
+             "(판정은 각 클라이언트가 로컬로 돌리고, 데미지만 권한자가 적용한다)\n" +
+             "isMultiHit이면 hitInterval마다 반복 재생되니 짧은 클립을 권장.")]
+    public AudioClip hitSound;
+    [Range(0f, 2f)] public float hitSoundVolume = 1.0f;
+
+    [Tooltip("ON: 이펙트가 살아있는 동안 loopSound를 계속 반복 재생한다.\n" +
+             "불장판(WildFire) 타닥거림, 브레스 분사음처럼 지속되는 소리에 쓴다.\n" +
+             "파티클 방출이 끝나면(또는 판정 구간이 끝나면) 자동으로 멈춘다.")]
+    public bool useLoopSound = false;
+
+    [Tooltip("반복 재생할 소리. 앞뒤가 자연스럽게 이어지는 루프 클립이어야 뚝뚝 끊기지 않는다.")]
+    public AudioClip loopSound;
+    [Range(0f, 2f)] public float loopSoundVolume = 1.0f;
+
+    [Tooltip("SoundManager의 카테고리별 볼륨/거리 설정에 사용된다.")]
+    public SoundCategory soundCategory = SoundCategory.BossGimmick;
+
+    // 루프 사운드 전용 AudioSource. SFX 풀은 원샷 전용이라 루프를 걸면 슬롯을 영영 점유한다.
+    // 그래서 이펙트 오브젝트가 자기 것을 하나 들고 다닌다(풀 재사용 시 그대로 재활용).
+    private AudioSource _loopSource;
+
+    // 데미지 판정을 돌릴지 여부. 원격 클라이언트는 false(시각/사운드만).
+    // 예전엔 이 컴포넌트를 통째로 껐는데, 그러면 풀에서 재사용될 때 OnEnable이 오지 않아
+    // 스폰 사운드가 울리지 않고 상태 초기화도 누락된다.
+    private bool _damageEnabled = true;
+
     private float _timer = 0f;
     private float _bossDamageMultiplier = 1.0f;
     private float _maxEndTime = 0f; 
@@ -55,6 +88,66 @@ public class BossAoEAttack : MonoBehaviour
         _timer = 0f;
         _finished = false;
         _hitTargets.Clear();
+
+        // 풀에서 재사용될 때마다 판정을 다시 켠다. 스폰 직후 호출되는 Initialize/SetDamageEnabled가
+        // 원격 클라이언트에서만 이 값을 다시 끈다.
+        _damageEnabled = true;
+
+        // 원격 클라이언트는 Initialize()를 받지 않는다. 여기서도 종료 시각을 구해두지 않으면
+        // _maxEndTime이 0으로 남아 판정 루프가 스스로 멈추지 못한다.
+        CacheMaxEndTime();
+
+        PlayClip(spawnSound, transform.position, spawnSoundVolume);
+        StartLoopSound();
+    }
+
+    // 풀에 반납되거나 파괴될 때 소리가 남지 않도록 확실히 끈다.
+    private void OnDisable()
+    {
+        StopLoopSound();
+    }
+
+    private void StartLoopSound()
+    {
+        if (!useLoopSound || loopSound == null || !SoundManager.HasInstance) return;
+
+        if (_loopSource == null)
+        {
+            _loopSource = gameObject.AddComponent<AudioSource>();
+            _loopSource.playOnAwake = false;
+        }
+
+        SoundManager.Instance.ApplyCategoryTo3DSource(_loopSource, soundCategory, loopSoundVolume);
+        _loopSource.clip = loopSound;
+        _loopSource.loop = true;
+        _loopSource.Play();
+    }
+
+    private void StopLoopSound()
+    {
+        if (_loopSource != null && _loopSource.isPlaying) _loopSource.Stop();
+    }
+
+    private void CacheMaxEndTime()
+    {
+        _maxEndTime = 0f;
+        foreach (var zone in hitZones)
+        {
+            float endTime = zone.startTime + zone.duration;
+            if (endTime > _maxEndTime) _maxEndTime = endTime;
+        }
+    }
+
+    // 원격 클라이언트에서 데미지 판정만 끈다(시각/사운드는 그대로).
+    public void SetDamageEnabled(bool enabledFlag)
+    {
+        _damageEnabled = enabledFlag;
+    }
+
+    private void PlayClip(AudioClip clip, Vector3 position, float volume)
+    {
+        if (clip == null || !SoundManager.HasInstance) return;
+        SoundManager.Instance.PlaySFX_3D(clip, position, soundCategory, volume);
     }
 
     public void Initialize(float bossOutgoingMultiplier)
@@ -66,12 +159,7 @@ public class BossAoEAttack : MonoBehaviour
         _finished = false;
         _hitTargets.Clear();
 
-        _maxEndTime = 0f;
-        foreach (var zone in hitZones)
-        {
-            float endTime = zone.startTime + zone.duration;
-            if (endTime > _maxEndTime) _maxEndTime = endTime;
-        }
+        CacheMaxEndTime();
     }
 
     private void Update()
@@ -83,10 +171,15 @@ public class BossAoEAttack : MonoBehaviour
         {
             _timer = syncParticle.time; // 파티클의 현재 재생 시간을 그대로 가져옴!
 
+            // 🔁 방출(emission)이 끝나면 루프 사운드부터 끊는다.
+            //    남은 파티클이 스러지는 동안(IsAlive) 타닥거리는 소리가 계속 나면 어색하다.
+            if (!syncParticle.isEmitting) StopLoopSound();
+
             // 파티클 수명이 완전히 끝났다면 판정 정지
             if (!syncParticle.IsAlive(true))
             {
                 _finished = true;
+                StopLoopSound();
                 return;
             }
         }
@@ -97,13 +190,19 @@ public class BossAoEAttack : MonoBehaviour
             if (_timer > _maxEndTime && _maxEndTime > 0f)
             {
                 _finished = true;
+                StopLoopSound();
                 return;
             }
         }
 
+        // 데미지도 안 주고 히트 사운드도 없으면 오버랩 검사를 돌릴 이유가 없다(원격 클라 부하 절약).
+        if (!_damageEnabled && hitSound == null) return;
+
         DetectAndDamage();
     }
 
+    // 판정은 모든 클라이언트가 로컬로 돌린다(히트 사운드를 전원이 듣기 위해).
+    // 단 실제 데미지 적용은 _damageEnabled인 권한자만 한다 → 인원수만큼 중복 피해 방지.
     private void DetectAndDamage()
     {
         foreach (var zone in hitZones)
@@ -145,15 +244,24 @@ public class BossAoEAttack : MonoBehaviour
                     if (Time.time - lastHitTime < hitInterval) continue;
                 }
 
-                float finalDamage = baseDamage * _bossDamageMultiplier;
                 GetHitSurface(
                     hit,
                     centerPosition,
                     out Vector3 hitPoint,
                     out Vector3 hitNormal);
-                playerStats.TakeDamage(finalDamage, hitPoint, hitNormal);
-                BossLog.Info($"[AoE Hit] 광역 이펙트 연쇄 적중! 파티클 동기화 딜: {finalDamage}");
+
+                // 데미지는 권한자만. 원격 클라이언트는 같은 지점에서 소리만 낸다.
+                if (_damageEnabled)
+                {
+                    float finalDamage = baseDamage * _bossDamageMultiplier;
+                    playerStats.TakeDamage(finalDamage, hitPoint, hitNormal);
+                    BossLog.Info($"[AoE Hit] 광역 이펙트 연쇄 적중! 파티클 동기화 딜: {finalDamage}");
+                }
+
+                // 다단 히트 간격은 양쪽 다 관리해야 소리도 같은 주기로 울린다.
                 _hitTargets[playerStats] = Time.time;
+
+                PlayClip(hitSound, hitPoint, hitSoundVolume);
             }
         }
     }

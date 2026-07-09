@@ -1531,6 +1531,10 @@ MonoBehaviour:
   collisionSmoothTime: 0.06
   collisionReturnSmoothTime: 0.18
   collisionReturnDelay: 0.12
+  groundProbeHeight: 2.5
+  groundProbeDistance: 6
+  groundClearance: 0.35
+  minGroundNormalY: 0.35
   mouseSensitivity: 180
   maxMouseDelta: 8
   startPitch: 15
@@ -1907,6 +1911,14 @@ PrefabInstance:
       propertyPath: SortKey
       value: 2685750842
       objectReference: {fileID: 0}
+    - target: {fileID: 8063045673467612749, guid: 8834dc9c55ad8c748964fb9d77490052, type: 3}
+      propertyPath: fireSound
+      value: 
+      objectReference: {fileID: 8300000, guid: d0157fe6aef65224e9a00a22292da983, type: 3}
+    - target: {fileID: 8063045673467612749, guid: 8834dc9c55ad8c748964fb9d77490052, type: 3}
+      propertyPath: napalmSound
+      value: 
+      objectReference: {fileID: 8300000, guid: d0157fe6aef65224e9a00a22292da983, type: 3}
     - target: {fileID: 8521524127431077655, guid: 8834dc9c55ad8c748964fb9d77490052, type: 3}
       propertyPath: m_Name
       value: PolarDragonBoss

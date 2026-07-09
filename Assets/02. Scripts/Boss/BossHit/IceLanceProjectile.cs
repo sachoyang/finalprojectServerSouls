@@ -108,7 +108,9 @@ public class IceLanceProjectile : MonoBehaviour
                 }
                 else
                 {
-                    aoe.enabled = false; // 그 외 클라이언트: 시각 폭발만, 데미지 끔(중복 방지)
+                    // 그 외 클라이언트: 시각 폭발 + 사운드만, 데미지 판정만 끔(중복 방지).
+                    // 컴포넌트를 통째로 끄면 풀 재사용 시 OnEnable이 안 와서 스폰 사운드가 빠진다.
+                    aoe.SetDamageEnabled(false);
                 }
             }
         }

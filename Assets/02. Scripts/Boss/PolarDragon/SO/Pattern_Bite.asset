@@ -15,8 +15,8 @@ MonoBehaviour:
   patternId: 
   displayName: 
   minRange: 0
-  maxRange: 10
-  weight: 10
+  maxRange: 15
+  weight: 15
   actions:
   - animationClip: {fileID: 7400000, guid: 1e8f032d6458c5a47a778c68df4f9201, type: 3}
     animationStateName: GetHit2
@@ -35,6 +35,18 @@ MonoBehaviour:
     enableTracking: 0
     trackingStopPercent: 0
     trackingSpeed: 0
+    actionSound: {fileID: 8300000, guid: 758e068136b6926489cc09641a043693, type: 3}
+    actionSoundVolume: 0.56
+    actionSoundPercent: 0
+    emitBreath: 0
+    breathDownAngle: 0
+    breathAimAtTarget: 0
+    breathStartPercent: 0
+    breathStopPercent: 1
+    dropNapalm: 0
+    napalmInterval: 0.35
+    napalmStartPercent: 0
+    napalmStopPercent: 1
   - animationClip: {fileID: 7400000, guid: ca98f50ccc6d58447972c6b9cbe14276, type: 3}
     animationStateName: BiteAttack_RM
     animationHash: -241013570
@@ -52,3 +64,15 @@ MonoBehaviour:
     enableTracking: 0
     trackingStopPercent: 0
     trackingSpeed: 0
+    actionSound: {fileID: 8300000, guid: 891e89c994b64214c99bf28d6f536f72, type: 3}
+    actionSoundVolume: 0.6
+    actionSoundPercent: 0
+    emitBreath: 0
+    breathDownAngle: 0
+    breathAimAtTarget: 0
+    breathStartPercent: 0
+    breathStopPercent: 1
+    dropNapalm: 0
+    napalmInterval: 0.35
+    napalmStartPercent: 0
+    napalmStopPercent: 1

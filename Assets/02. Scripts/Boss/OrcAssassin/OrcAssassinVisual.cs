@@ -44,8 +44,6 @@ public class OrcAssassinVisual : MonoBehaviour, IBossVisual
     [Header("사운드")]
     [Tooltip("걷기 발소리. Locomotion 클립의 발 닿는 프레임에 PlayFootstep() 애니메이션 이벤트를 찍어야 난다.")]
     public AudioClip walkSound;
-    [Tooltip("단검 휘두르는 소리. 기존 EnableRightDagger() 애니메이션 이벤트에서 함께 재생된다.")]
-    public AudioClip attackSound;
     public AudioClip vanishSound;          // 은신 소리
     [Tooltip("각성(전투 진입) 포효.")]
     public AudioClip wakeUpSound;
@@ -53,11 +51,11 @@ public class OrcAssassinVisual : MonoBehaviour, IBossVisual
     public AudioClip groggySound;
     [Tooltip("사망.")]
     public AudioClip dieSound;
-    [Tooltip("독 단검을 던지는 순간. ThrowPoisonDagger() 애니메이션 이벤트에서 재생된다.")]
-    public AudioClip daggerThrowSound;
 
-    // 패턴(공격 모션)별 효과음은 여기가 아니라 각 패턴 SO(BossPatternModule)의
-    // 액션마다 있는 actionSound 필드에서 지정한다. NetworkBossCore가 재생해 준다.
+    // 🔊 공격/패턴 효과음(단검 휘두르기, 독 단검 투척 등)은 여기가 아니라
+    //    각 패턴 SO(BossPatternModule)의 액션마다 있는 actionSound 필드에서 지정한다.
+    //    NetworkBossCore가 actionSoundPercent 타이밍에 맞춰 재생해 준다.
+    //    여기 남은 건 패턴으로 표현할 수 없는 상태 사운드와 발소리뿐이다.
 
     // SoundManager가 씬에 없을 때 MonoSingleton이 빈 오브젝트를 자동 생성하지 않도록 HasInstance로 막는다.
     private void Play3D(AudioClip clip, SoundCategory category)
@@ -296,13 +294,12 @@ public class OrcAssassinVisual : MonoBehaviour, IBossVisual
     // ==========================================
     // [애니메이션 이벤트용 함수] 
     // ==========================================
+    // 휘두르는 효과음은 해당 공격 패턴 SO의 actionSound에서 지정한다.
     public void EnableRightDagger()
     {
         // 🔥 [수정됨] 신형 근접 공격 시스템 호출
         if (rightDaggerAttack != null) rightDaggerAttack.StartAttack();
         if (leftDaggerAttack != null) leftDaggerAttack.StartAttack();
-
-        Play3D(attackSound, SoundCategory.CombatHit);
     }
     public void DisableRightDagger()
     {
@@ -316,11 +313,10 @@ public class OrcAssassinVisual : MonoBehaviour, IBossVisual
         Play3D(walkSound, SoundCategory.Footstep);
     }
 
+    // 투척 효과음은 해당 패턴 SO의 actionSound에서 지정한다.
     public void ThrowPoisonDagger()
     {
         if (poisonDaggerPrefab && daggerSpawnPoint)
             Instantiate(poisonDaggerPrefab, daggerSpawnPoint.position, daggerSpawnPoint.rotation);
-
-        Play3D(daggerThrowSound, SoundCategory.BossGimmick);
     }
 }

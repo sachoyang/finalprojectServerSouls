@@ -297,6 +297,25 @@ public class SoundManager : MonoSingleton<SoundManager>
         PlaySFX_3D(clip, playPosition, category, baseVolume, 0f);
     }
 
+    // ==========================================
+    // 🔁 루프 사운드용 — 외부 AudioSource에 카테고리 설정을 입혀준다.
+    //  SFX 풀은 원샷 전용이라, 불장판 타닥거림처럼 계속 나는 소리는
+    //  이펙트 오브젝트가 자기 AudioSource를 들고 있어야 한다(풀 슬롯 점유 방지).
+    // ==========================================
+    public void ApplyCategoryTo3DSource(AudioSource source, SoundCategory category, float baseVolume = 1.0f)
+    {
+        if (source == null) return;
+
+        SoundCategorySetting setting = GetCategorySetting(category);
+
+        source.outputAudioMixerGroup = sfxMixerGroup;
+        source.spatialBlend = 1f;
+        source.rolloffMode = AudioRolloffMode.Linear;
+        source.minDistance = setting.minDistance;
+        source.maxDistance = setting.maxDistance;
+        source.volume = baseVolume * setting.volumeMultiplier;
+    }
+
     private AudioSource GetAvailableSFXSource()
     {
         foreach (AudioSource source in _sfxSources)

@@ -35,3 +35,15 @@ MonoBehaviour:
     enableTracking: 1
     trackingStopPercent: 1
     trackingSpeed: 2
+    actionSound: {fileID: 8300000, guid: 7acaee68165daaf4e94bda7774c91070, type: 3}
+    actionSoundVolume: 1
+    actionSoundPercent: 0.2
+    emitBreath: 0
+    breathDownAngle: 0
+    breathAimAtTarget: 0
+    breathStartPercent: 0
+    breathStopPercent: 1
+    dropNapalm: 0
+    napalmInterval: 0.35
+    napalmStartPercent: 0
+    napalmStopPercent: 1
