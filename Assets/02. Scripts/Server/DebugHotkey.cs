@@ -10,6 +10,7 @@ using UnityEngine.SceneManagement;
 // F6: 보상 상자 재소환
 // F7: 로컬 플레이어를 상자 생성 위치로 이동
 // F8: Path 씬으로 강제 이동
+// F9: 크래시 리포트 테스트용 예외 발생 (Sentry + CrashReporter 동작 확인)
 [DisallowMultipleComponent]
 public class DebugHotkey : MonoBehaviour
 {
@@ -18,7 +19,12 @@ public class DebugHotkey : MonoBehaviour
     [SerializeField] private KeyCode respawnChestKey = KeyCode.F6;
     [SerializeField] private KeyCode teleportToChestKey = KeyCode.F7;
     [SerializeField] private KeyCode loadPathSceneKey = KeyCode.F8;
-    [SerializeField] private string pathSceneName = "scPath";
+    [SerializeField] private string pathSceneName = "scPathNew";
+
+    [Header("Crash Report Test")]
+    [Tooltip("누르면 일부러 예외를 던진다. Sentry 대시보드와 crash_reports 테이블에 들어오는지 확인용.")]
+    [SerializeField] private bool enableCrashTestKey = true;
+    [SerializeField] private KeyCode crashTestKey = KeyCode.F9;
 
     // 디버그 키 사용 가능 여부.
     //  - 에디터/개발(Development) 빌드: 항상 허용
@@ -62,6 +68,13 @@ public class DebugHotkey : MonoBehaviour
         if (Input.GetKeyDown(loadPathSceneKey))
         {
             LoadPathScene();
+        }
+
+        if (enableCrashTestKey && Input.GetKeyDown(crashTestKey))
+        {
+            // Update에서 던진 예외는 Unity가 잡아서 LogType.Exception으로 흘려보낸다.
+            // 게임은 죽지 않고, Sentry와 CrashReporter가 각각 이 프레임에 리포트를 만든다.
+            throw new System.Exception("[DebugHotkey] F9 크래시 리포트 테스트용 예외입니다.");
         }
     }
 

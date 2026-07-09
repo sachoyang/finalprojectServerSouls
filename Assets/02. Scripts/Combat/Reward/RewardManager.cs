@@ -31,7 +31,7 @@ public class RewardManager : MonoBehaviour
     [SerializeField] private GameObject distortionAllProperties;
     [SerializeField] private RewardDistortionTrigger distortionTrigger;
     [SerializeField] private float rewardSelectionTimeout = 60f;
-    [SerializeField] private string nextSceneName = "scPath";
+    [SerializeField] private string nextSceneName = "scPathNew";
 
     [Tooltip("다음 층이 '마지막 보스층'일 때 대신 로드할 전용 Path 씬.\n" +
              "(마지막 층 여부는 GameProgressionManager.maxLevel 기준. Build Settings에 등록 필수!)")]
@@ -361,7 +361,7 @@ public class RewardManager : MonoBehaviour
 
     // 보스 클리어 후 이동할 Path 씬 결정.
     //  - 다음 층이 마지막 보스층이면 → 전용 씬(scPathLast)
-    //  - 그 외(마지막 보스를 방금 잡은 경우 포함) → 일반 scPath (포탈이 엔딩으로 보내줌)
+    //  - 그 외(마지막 보스를 방금 잡은 경우 포함) → 일반 scPathNew (포탈이 엔딩으로 보내줌)
     private string GetNextSceneName()
     {
         GameProgressionManager gpm = GameProgressionManager.Instance;
