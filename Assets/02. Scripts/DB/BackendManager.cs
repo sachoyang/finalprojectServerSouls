@@ -23,6 +23,15 @@ public class SkillResponse
     public long updated_skills;
 }
 
+// check_admin.php 응답. 호스트가 "이 요청자가 진짜 admin이냐"를 서버에 되물을 때 쓴다.
+// (세션 무효면 status="invalid", is_admin=0)
+[Serializable]
+public class AdminCheckResponse
+{
+    public string status;
+    public int is_admin;
+}
+
 public class BackendManager : MonoSingleton<BackendManager> // 제네릭 모노싱글톤 상속
 {
     [Header("서버 IP 자동화 세팅")]

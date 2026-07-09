@@ -54,7 +54,12 @@ ALTER TABLE `users`
 
 ---
 
-## 3. (권장) `check_admin.php` — admin 서버 권위 검증
+## 3. ⚠️ `check_admin.php` — admin 서버 권위 검증 (**이제 필수**)
+
+> 🔴 **클라이언트는 이미 이 엔드포인트를 호출하도록 수정되었습니다.**
+> 하드코딩 목록(`debugKillAdminIds`)을 제거했기 때문에, 이 파일이 없으면
+> **F5 보스 강제 킬은 릴리즈 빌드에서 영영 동작하지 않습니다** (fail-closed).
+> `login.php`의 `is_admin`(2번)만으로는 F6/F7/F8만 열립니다.
 
 F5 보스 강제 킬처럼 **네트워크로 남을 죽이는 조작**은, 호스트가 "요청자가 진짜 admin인지"를
 서버에 되물어 확정하는 게 안전합니다. 지금은 세션만 확인(`check_session.php`)하고 admin은 클라 하드코딩
@@ -102,12 +107,13 @@ echo json_encode(['status'=>'success','is_admin'=>(int)$row['is_admin']], JSON_N
 
 ---
 
-## 4. 클라이언트 후속 (서버 반영 후, 우리가 처리)
+## 4. 클라이언트 후속 — ✅ 완료됨
 
-서버가 위를 제공하면 Unity 쪽에서 이렇게 정리합니다(참고용, 서버 작업엔 영향 없음):
-- `login.php`의 `is_admin` → 이미 `IsAdminAccount`로 반영됨(코드 변경 없음).
-- `check_admin.php`(또는 확장된 check_session.php)가 생기면, `NetworkBossCore.RPC_DebugKillBoss`의
-  릴리즈 검증을 **하드코딩 `debugKillAdminIds` 대신 서버 응답**으로 바꿉니다 → 보스 프리팹의 admin 목록 제거.
+- `login.php`의 `is_admin` → `IsAdminAccount`로 반영됨. F5~F8 키 게이트가 이 값을 본다.
+- `NetworkBossCore.RPC_DebugKillBoss`의 릴리즈 검증을 **`check_admin.php` 응답**으로 교체 완료.
+  하드코딩 `debugKillAdminIds` 목록과 보스 프리팹의 해당 필드는 제거됨.
+- 호스트는 `{"status":"success","is_admin":1}` 을 받은 경우에만 보스를 죽인다.
+  응답이 없거나/`invalid`거나/`is_admin=0`이면 조용히 거부한다.
 
 ---
 
