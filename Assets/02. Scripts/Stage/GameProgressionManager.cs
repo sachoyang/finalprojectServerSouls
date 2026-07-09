@@ -56,7 +56,7 @@ public class GameProgressionManager : MonoBehaviour // 런(Run) 동안 유지되
 
     // ==========================================
     // 🕒 [전투 소요 시간] 이번 런에서 '전투(보스) 씬'에 머문 시간만 누적한다.
-    //  - Path 씬(scPath/scPathLast)·로비·엔딩·타이틀은 측정 제외 (아래 IsCombatScene 참고)
+    //  - Path 씬(scPathNew/scPathLast)·로비·엔딩·타이틀은 측정 제외 (아래 IsCombatScene 참고)
     //  - 클리어(scEnding) 씬에서 GameProgressionManager.Instance.RunCombatSeconds로 읽어 표시
     //  - 죽어서 로비로 돌아가면 ResetRun()에서 0으로 초기화된다
     // ==========================================
@@ -87,7 +87,7 @@ public class GameProgressionManager : MonoBehaviour // 런(Run) 동안 유지되
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
-        DontDestroyOnLoad(gameObject); // 런(Run) 유지용 (scPath 등 전환 시 생존)
+        DontDestroyOnLoad(gameObject); // 런(Run) 유지용 (scPathNew 등 전환 시 생존)
         SceneManager.sceneLoaded += OnSceneLoaded; // 복귀 감지용 구독
         EndingSceneController.PartyMembersProvider = BuildPartyMembers;
     }
@@ -293,7 +293,7 @@ public class GameProgressionManager : MonoBehaviour // 런(Run) 동안 유지되
     // ==========================================
     // 🕒 로드된 씬이 '전투(보스) 씬'인지 판별.
     //  보스 풀(bossPool)에 등록된 sceneName 중 하나면 전투 씬으로 본다.
-    //  → 경유 씬(scPath/scPathLast)·로비·엔딩(scEnding)·타이틀은 자동으로 제외되어 측정되지 않는다.
+    //  → 경유 씬(scPathNew/scPathLast)·로비·엔딩(scEnding)·타이틀은 자동으로 제외되어 측정되지 않는다.
     // ==========================================
     private bool IsCombatScene(string sceneName)
     {
