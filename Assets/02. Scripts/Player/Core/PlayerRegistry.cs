@@ -176,9 +176,12 @@ public static class PlayerRegistry
         }
 
         int playerKey = player.Object.InputAuthority.RawEncoded;
+        string displayName = TryGetNetworkPlayerData(player, out NetworkPlayerData playerData)
+            ? playerData.DisplayNickname
+            : $"Player {playerKey}";
         uiData = new PartyMemberUIData(
             playerKey,
-            $"Player {playerKey}",
+            displayName,
             hudData.CurrentHealth,
             hudData.MaxHealth,
             hudData.CurrentStamina,

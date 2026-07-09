@@ -6,13 +6,26 @@ using UnityEngine;
 public class NetworkPlayerData : NetworkBehaviour
 {
     public const int MaxSavedAbilities = 16;
+    private const string CurrentNicknameKey = "CurrentNickname";
 
     [Networked] public PlayerRef Owner { get; private set; }
+    [Networked] public NetworkString<_32> Nickname { get; private set; }
     [Networked] public long UnlockedSkillsBitmask { get; private set; }
     [Networked] public int SavedAbilityCount { get; private set; }
     [Networked] public int LastSelectedRewardStage { get; private set; }
     [Networked, Capacity(MaxSavedAbilities)] public NetworkArray<NetworkString<_64>> SavedAbilityIds => default;
     [Networked, Capacity(MaxSavedAbilities)] public NetworkArray<byte> SavedAbilityLevels => default;
+
+    public string DisplayNickname
+    {
+        get
+        {
+            string nickname = Nickname.ToString();
+            return string.IsNullOrWhiteSpace(nickname)
+                ? $"Player {Object.InputAuthority.RawEncoded}"
+                : nickname;
+        }
+    }
 
     public override void Spawned()
     {
@@ -23,7 +36,38 @@ public class NetworkPlayerData : NetworkBehaviour
         }
 
         SyncUnlockedSkillsBitmask();
+        SyncNickname();
         GetComponent<PlayerAbilityInventory>()?.RestoreFromSessionData(Object.InputAuthority);
+    }
+
+    private void SyncNickname()
+    {
+        if (Object == null || !Object.HasInputAuthority)
+        {
+            return;
+        }
+
+        string nickname = ResolveLocalNickname();
+        if (HasStateAuthority)
+        {
+            Nickname = nickname;
+            return;
+        }
+
+        RPC_SetNickname(nickname);
+    }
+
+    private static string ResolveLocalNickname()
+    {
+        if (BackendManager.HasInstance && !string.IsNullOrWhiteSpace(BackendManager.Instance.CurrentNickname))
+        {
+            return BackendManager.Instance.CurrentNickname;
+        }
+
+        string savedNickname = PlayerPrefs.GetString(CurrentNicknameKey, string.Empty);
+        return string.IsNullOrWhiteSpace(savedNickname)
+            ? string.Empty
+            : savedNickname;
     }
 
     private void RestoreNetworkAbilitiesFromSession(PlayerRef owner)
@@ -168,6 +212,14 @@ public class NetworkPlayerData : NetworkBehaviour
     private void RPC_SetUnlockedSkillsBitmask(long unlockedSkillsBitmask)
     {
         UnlockedSkillsBitmask = unlockedSkillsBitmask;
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    private void RPC_SetNickname(string nickname)
+    {
+        Nickname = string.IsNullOrWhiteSpace(nickname)
+            ? string.Empty
+            : nickname.Trim();
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
