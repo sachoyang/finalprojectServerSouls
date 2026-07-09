@@ -207,6 +207,9 @@ public class NetworkBossCore : NetworkBehaviour
     private int _lastPatternIndex = -1;
     private int _lastStepIndex = -1;
 
+    // 현재 액션의 actionSound를 이미 틀었는지. 액션(스텝)이 바뀔 때마다 false로 되돌린다.
+    private bool _actionSoundPlayed = false;
+
     // 방금 전 프레임의 상태를 기억하여 중복 실행을 막는 플래그
     private BossState _lastState = (BossState)(-1);
 
@@ -704,6 +707,36 @@ public class NetworkBossCore : NetworkBehaviour
         CurrentState = newState;
     }
 
+    // ==========================================
+    // [액션 효과음] 패턴 SO의 BossActionModule.actionSound를 액션당 1회 재생한다.
+    //  - Render()는 모든 피어에서 돌기 때문에 호스트/클라이언트 모두 소리가 난다(RPC 불필요).
+    //  - StateTimer는 [Networked]라 진행률도 모든 피어에서 동일하다.
+    //  - 보스가 움직이는 패턴이 많아, 재생 시점의 실제 위치를 써야 소리가 따라간다.
+    // ==========================================
+    private void TryPlayActionSound(BossActionModule action)
+    {
+        if (_actionSoundPlayed || action == null || action.actionSound == null) return;
+
+        // 진행률 0이면 앞동작 없이 액션 시작과 동시에 재생.
+        if (action.actionSoundPercent > 0f && action.duration > 0f)
+        {
+            float remaining = StateTimer.RemainingTime(Runner) ?? 0f;
+            float progress = Mathf.Clamp01((action.duration - remaining) / action.duration);
+            if (progress < action.actionSoundPercent) return;
+        }
+
+        _actionSoundPlayed = true;
+
+        if (SoundManager.HasInstance)
+        {
+            SoundManager.Instance.PlaySFX_3D(
+                action.actionSound,
+                transform.position,
+                SoundCategory.BossGimmick,
+                action.actionSoundVolume);
+        }
+    }
+
     public override void Render()
     {
         if (_visual == null) return;
@@ -738,13 +771,20 @@ public class NetworkBossCore : NetworkBehaviour
                 _lastPatternIndex = CurrentPatternIndex;
                 _lastStepIndex = CurrentStepIndex;
                 _lastState = CurrentState; // 상태 갱신
+                _actionSoundPlayed = false; // 새 액션 → 효과음 다시 틀 수 있게
             }
+
+            // 액션 효과음. actionSoundPercent 시점에 딱 1회.
+            // Render는 매 프레임 돌기 때문에 진행률로 판정해야 앞동작 뒤에 소리를 낼 수 있다.
+            // 인덱스로 직접 꺼내면 스텝 전환 프레임에 범위를 벗어날 수 있어 가드가 들어간 프로퍼티를 쓴다.
+            TryPlayActionSound(CurrentAction);
         }
         else
         {
             // 2. 패턴 중이 아닐 때 (지속 상태 초기화)
             _lastPatternIndex = -1;
             _lastStepIndex = -1;
+            _actionSoundPlayed = false;
 
             // 상태가 '방금 딱 바뀌었을 때만' 1회 호출
             if (_lastState != CurrentState)
@@ -784,6 +824,7 @@ public class NetworkBossCore : NetworkBehaviour
         }
 
         UpdateLocomotionVisuals();
+
 
         // ==========================================
         // 기믹 시각 효과(불 끄기/켜기) 클라이언트 동기화!

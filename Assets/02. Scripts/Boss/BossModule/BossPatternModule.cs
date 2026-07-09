@@ -51,6 +51,20 @@ public class BossActionModule
     [Tooltip("트래킹(회전) 속도")]
     public float trackingSpeed = 3.0f;
 
+    [Header("사운드")]
+    [Tooltip("이 액션이 재생될 때 보스 위치에서 1회 재생할 효과음. 비워두면 소리 없음.\n" +
+             "애니메이션 이벤트를 안 찍어도 되고, 패턴 SO에서 액션별로 바로 지정할 수 있다.")]
+    public AudioClip actionSound;
+
+    [Tooltip("효과음 볼륨 배율. SoundManager의 BossGimmick 카테고리 볼륨에 곱해진다.")]
+    [Range(0f, 2f)]
+    public float actionSoundVolume = 1.0f;
+
+    [Tooltip("효과음 재생 시점 (액션 진행률 0~1). 0이면 액션 시작과 동시.\n" +
+             "예) 칼을 치켜드는 앞동작이 클립의 40%까지라면 0.4로 두면 내려치는 순간 소리가 난다.")]
+    [Range(0f, 1f)]
+    public float actionSoundPercent = 0f;
+
     [Header("브레스 스트림 (IceThrower)")]
     [Tooltip("ON: 이 액션이 시작될 때 입/머리에서 브레스 스트림(IceThrower)을 뿜기 시작한다(루프).\n" +
              "브레스 구간(emitBreath 또는 dropNapalm 액션이 연달아 이어지는 동안)이 끝나면 자동으로 멈춘다.\n" +
