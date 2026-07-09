@@ -29864,6 +29864,52 @@ MonoBehaviour:
   m_LightCookieSize: {x: 1, y: 1}
   m_LightCookieOffset: {x: 0, y: 0}
   m_SoftShadowQuality: 1
+--- !u!1 &1274395266
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1274395268}
+  - component: {fileID: 1274395267}
+  m_Layer: 0
+  m_Name: abilitymanager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1274395267
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1274395266}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ceca30047cb7c146854c3fb86faf96b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  useServerAbilityBalance: 0
+  _debugLoadedAbilities: []
+--- !u!4 &1274395268
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1274395266}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!64 &1279063982
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -39753,7 +39799,6 @@ GameObject:
   - component: {fileID: 1881547193}
   - component: {fileID: 1881547192}
   - component: {fileID: 1881547195}
-  - component: {fileID: 1881547196}
   m_Layer: 0
   m_Name: DebugGame
   m_TagString: Untagged
@@ -39812,20 +39857,8 @@ MonoBehaviour:
   teleportToChestKey: 288
   loadPathSceneKey: 289
   pathSceneName: scPathNew
---- !u!114 &1881547196
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1881547191}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1ceca30047cb7c146854c3fb86faf96b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  useServerAbilityBalance: 0
-  _debugLoadedAbilities: []
+  enableCrashTestKey: 1
+  crashTestKey: 291
 --- !u!1 &1893642755
 GameObject:
   m_ObjectHideFlags: 0
@@ -65666,3 +65699,4 @@ SceneRoots:
   - {fileID: 690942098}
   - {fileID: 1111948389}
   - {fileID: 1196333010}
+  - {fileID: 1274395268}
