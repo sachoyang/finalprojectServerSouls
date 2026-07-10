@@ -6645,7 +6645,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: -74.57654, y: 27.776062}
-  m_SizeDelta: {x: 56, y: 56}
+  m_SizeDelta: {x: 40, y: 40}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5114382085701861252
 CanvasRenderer:
@@ -6680,7 +6680,7 @@ MonoBehaviour:
   m_PreserveAspect: 1
   m_FillCenter: 1
   m_FillMethod: 4
-  m_FillAmount: 1
+  m_FillAmount: 0
   m_FillClockwise: 0
   m_FillOrigin: 2
   m_UseSpriteMesh: 0
@@ -9422,9 +9422,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   minImage: {fileID: 6632320659723206427}
   fullGauge: {fileID: 8471453927160183406}
-  normalMinColor: {r: 1, g: 1, b: 1, a: 1}
+  normalMinColor: {r: 1, g: 1, b: 1, a: 0.05882353}
   groggyMinColor: {r: 1, g: 0.82, b: 0.1, a: 1}
-  hideWhenTargetHasNoBossCore: 1
+  hideMinWhenTargetHasNoBossCore: 0
 --- !u!1 &6781553290505594988
 GameObject:
   m_ObjectHideFlags: 0
@@ -12017,7 +12017,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: -74.57654, y: 27.776062}
-  m_SizeDelta: {x: 56, y: 56}
+  m_SizeDelta: {x: 40, y: 40}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4421725374718480565
 CanvasRenderer:

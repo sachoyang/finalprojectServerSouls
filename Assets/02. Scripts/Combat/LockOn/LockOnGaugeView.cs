@@ -12,7 +12,7 @@ public class LockOnGaugeView : MonoBehaviour
     [SerializeField] private Color groggyMinColor = new Color(1f, 0.82f, 0.1f, 1f);
 
     [Header("Options")]
-    [SerializeField] private bool hideWhenTargetHasNoBossCore = true;
+    [SerializeField] private bool hideMinWhenTargetHasNoBossCore = false;
 
     private Transform _target;
     private NetworkBossCore _boss;
@@ -38,13 +38,11 @@ public class LockOnGaugeView : MonoBehaviour
 
         if (_boss == null)
         {
-            SetVisible(!hideWhenTargetHasNoBossCore);
-            SetFullGaugeAmount(0f);
-            SetMinColor(normalMinColor);
+            UpdateNonBossTarget();
             return;
         }
 
-        UpdateGauge();
+        UpdateBossTarget();
     }
 
     public void SetTarget(Transform target)
@@ -55,7 +53,13 @@ public class LockOnGaugeView : MonoBehaviour
         _target = target;
         _boss = _target != null ? _target.GetComponentInParent<NetworkBossCore>() : null;
 
-        SetVisible(_target != null);
+        if (_target == null)
+        {
+            ClearTarget();
+            return;
+        }
+
+        SetMinVisible(true);
     }
 
     public void ClearTarget()
@@ -64,22 +68,27 @@ public class LockOnGaugeView : MonoBehaviour
         _boss = null;
 
         SetMinColor(normalMinColor);
-        SetFullGaugeAmount(0f);
-        SetVisible(false);
+        SetMinVisible(false);
+        SetFullGaugeVisible(false);
     }
 
-    private void UpdateGauge()
+    private void UpdateNonBossTarget()
     {
+        SetMinVisible(!hideMinWhenTargetHasNoBossCore);
+        SetMinColor(normalMinColor);
+        SetFullGaugeVisible(false);
+    }
+
+    private void UpdateBossTarget()
+    {
+        SetMinVisible(true);
+
         bool isGroggy = _boss.CurrentState == BossState.Groggy;
 
         if (isGroggy)
         {
             SetMinColor(groggyMinColor);
-
-            if (fullGauge != null)
-                fullGauge.gameObject.SetActive(false);
-
-            SetVisible(true);
+            SetFullGaugeVisible(false);
             return;
         }
 
@@ -90,31 +99,32 @@ public class LockOnGaugeView : MonoBehaviour
             : 0f;
 
         float remainingRatio = 1f - ratio;
+
+        SetFullGaugeVisible(remainingRatio > 0f);
         SetFullGaugeAmount(remainingRatio);
-        SetVisible(true);
+    }
+
+    private void SetMinVisible(bool visible)
+    {
+        if (minImage != null && minImage.gameObject.activeSelf != visible)
+            minImage.gameObject.SetActive(visible);
+    }
+
+    private void SetFullGaugeVisible(bool visible)
+    {
+        if (fullGauge != null && fullGauge.gameObject.activeSelf != visible)
+            fullGauge.gameObject.SetActive(visible);
     }
 
     private void SetFullGaugeAmount(float amount)
     {
-        if (fullGauge == null)
-            return;
-
-        fullGauge.gameObject.SetActive(amount > 0f);
-        fullGauge.fillAmount = Mathf.Clamp01(amount);
+        if (fullGauge != null)
+            fullGauge.fillAmount = Mathf.Clamp01(amount);
     }
 
     private void SetMinColor(Color color)
     {
         if (minImage != null)
             minImage.color = color;
-    }
-
-    private void SetVisible(bool visible)
-    {
-        if (minImage != null && minImage.gameObject.activeSelf != visible)
-            minImage.gameObject.SetActive(visible);
-
-        if (fullGauge != null && !visible)
-            fullGauge.gameObject.SetActive(false);
     }
 }
