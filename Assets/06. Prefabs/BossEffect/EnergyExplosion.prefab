@@ -9767,6 +9767,14 @@ MonoBehaviour:
   targetLayer:
     serializedVersion: 2
     m_Bits: 256
+  spawnSound: {fileID: 8300000, guid: abcba2de235dd854fb5cb2f365dd1015, type: 3}
+  spawnSoundVolume: 0.5
+  hitSound: {fileID: 0}
+  hitSoundVolume: 1
+  useLoopSound: 0
+  loopSound: {fileID: 0}
+  loopSoundVolume: 1
+  soundCategory: 6
 --- !u!1 &1367458547200666
 GameObject:
   m_ObjectHideFlags: 0

@@ -35,6 +35,18 @@ MonoBehaviour:
     enableTracking: 0
     trackingStopPercent: 0.5
     trackingSpeed: 3
+    actionSound: {fileID: 0}
+    actionSoundVolume: 1
+    actionSoundPercent: 0
+    emitBreath: 0
+    breathDownAngle: 0
+    breathAimAtTarget: 0
+    breathStartPercent: 0
+    breathStopPercent: 1
+    dropNapalm: 0
+    napalmInterval: 0.35
+    napalmStartPercent: 0
+    napalmStopPercent: 1
   - animationClip: {fileID: 7400000, guid: f882585276163954fbc547e18dea9d6b, type: 3}
     animationStateName: Basic Attack
     animationHash: -1155614474
@@ -49,9 +61,21 @@ MonoBehaviour:
       m_RotationOrder: 0
     hitboxIndex: 0
     hasSuperArmor: 0
-    enableTracking: 0
+    enableTracking: 1
     trackingStopPercent: 0.5
     trackingSpeed: 3
+    actionSound: {fileID: 0}
+    actionSoundVolume: 1
+    actionSoundPercent: 0
+    emitBreath: 0
+    breathDownAngle: 0
+    breathAimAtTarget: 0
+    breathStartPercent: 0
+    breathStopPercent: 1
+    dropNapalm: 0
+    napalmInterval: 0.35
+    napalmStartPercent: 0
+    napalmStopPercent: 1
   - animationClip: {fileID: 7400000, guid: f882585276163954fbc547e18dea9d6b, type: 3}
     animationStateName: Basic Attack
     animationHash: -1155614474
@@ -66,6 +90,18 @@ MonoBehaviour:
       m_RotationOrder: 0
     hitboxIndex: 0
     hasSuperArmor: 0
-    enableTracking: 0
+    enableTracking: 1
     trackingStopPercent: 0.5
     trackingSpeed: 3
+    actionSound: {fileID: 0}
+    actionSoundVolume: 1
+    actionSoundPercent: 0
+    emitBreath: 0
+    breathDownAngle: 0
+    breathAimAtTarget: 0
+    breathStartPercent: 0
+    breathStopPercent: 1
+    dropNapalm: 0
+    napalmInterval: 0.35
+    napalmStartPercent: 0
+    napalmStopPercent: 1
