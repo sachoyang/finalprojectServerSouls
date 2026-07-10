@@ -24936,6 +24936,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CombatResultSystem
       objectReference: {fileID: 0}
+    - target: {fileID: 9023405128169120185, guid: 90005bf5c67b43f4886eb0a24d0d1351, type: 3}
+      propertyPath: SortKey
+      value: 628163684
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -35473,7 +35477,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   debugBossPool:
-  - {fileID: 11400000, guid: e99e869d0eaa98f489081edfaa900f92, type: 2}
+  - {fileID: 11400000, guid: d44bf377fd236af4ab2f6d958435f890, type: 2}
   useRandomBoss: 0
   debugUserId: 
   warmupThroughLoadingScene: 1

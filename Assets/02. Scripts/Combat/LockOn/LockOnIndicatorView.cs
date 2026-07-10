@@ -154,7 +154,21 @@ public class LockOnIndicatorView : MonoBehaviour
             return;
         }
 
-        indicatorRoot.position = screenPosition;
+        // 일부 기존 HUD 프리팹은 indicatorRoot가 RectTransform이 아닌 일반 Transform이고,
+        // 실제 아이콘 자식에 부모 위치를 상쇄하는 로컬 오프셋이 들어 있다.
+        // 부모를 화면 좌표로 바로 옮기면 그 오프셋만큼 락온 표시가 타깃에서 벗어나므로
+        // 실제로 보이는 아이콘 중심이 screenPosition에 오도록 보정한다.
+        Transform visualAnchor = lockOnFull != null
+            ? lockOnFull.transform
+            : lockOnMin != null
+                ? lockOnMin.transform
+                : indicatorRoot;
+        Vector3 visualOffset = visualAnchor.position - indicatorRoot.position;
+        Vector3 targetPosition = new Vector3(
+            screenPosition.x - visualOffset.x,
+            screenPosition.y - visualOffset.y,
+            indicatorRoot.position.z);
+        indicatorRoot.position = targetPosition;
     }
 
     private void ShowVisuals(Transform target)

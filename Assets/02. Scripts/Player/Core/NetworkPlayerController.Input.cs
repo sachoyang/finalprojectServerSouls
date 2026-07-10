@@ -21,6 +21,7 @@ public partial class NetworkPlayerController
 
     public override void FixedUpdateNetwork()
     {
+        ApplyDeterministicGravity();
         UpdateAnimatorRootMotionMode();
         RestoreDefaultGravityIfGrounded();
         UpdateJumpGroundContact();

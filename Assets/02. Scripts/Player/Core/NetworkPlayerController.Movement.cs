@@ -171,6 +171,26 @@ public partial class NetworkPlayerController
         _networkCharacterController.Jump(false, impulse);
     }
 
+    private void ApplyDeterministicGravity()
+    {
+        if (_networkCharacterController == null)
+        {
+            return;
+        }
+
+        // gravity는 NetworkCharacterController의 일반 C# 필드라 Fusion 재시뮬레이션에서 되감기지 않는다.
+        // 되감기는 Grounded/Velocity를 기준으로 매 틱 같은 값을 다시 계산해 클라이언트 예측을 결정적으로 만든다.
+        if (_networkCharacterController.Grounded)
+        {
+            _networkCharacterController.gravity = _networkControllerGravity;
+            return;
+        }
+
+        float height = Mathf.Max(0.01f, jumpHeight);
+        float airTime = Mathf.Max(0.1f, jumpAirTime);
+        _networkCharacterController.gravity = -(8f * height / (airTime * airTime));
+    }
+
     private void RestoreDefaultGravityIfGrounded()
     {
         if (_networkCharacterController == null ||
@@ -286,6 +306,7 @@ public partial class NetworkPlayerController
     private void MoveWithStepUpCorrection(Vector3 moveDirection)
     {
         bool wasGrounded = _networkCharacterController.Grounded;
+        bool hadUpwardVelocity = _networkCharacterController.Velocity.y > 0f;
         float previousHeight = transform.position.y;
 
         _networkCharacterController.Move(moveDirection);
@@ -295,6 +316,7 @@ public partial class NetworkPlayerController
         // 한 틱의 이동 속도로 환산한다. 0.3m 턱을 한 틱에 오르면 큰 양의 Y 속도가 저장되어
         // 다음 틱에 캐릭터가 점프한 것처럼 위로 튀므로, 정상적인 점프가 아닐 때만 제거한다.
         if (!wasGrounded ||
+            hadUpwardVelocity ||
             (IsJumpAction(LastAction) && IsActionAnimationLocked) ||
             maximumStepUpHeight <= 0f)
         {
