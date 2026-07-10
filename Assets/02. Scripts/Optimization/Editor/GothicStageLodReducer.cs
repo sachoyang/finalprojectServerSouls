@@ -25,6 +25,18 @@ public static class GothicStageLodReducer
         ReduceScene(OriginalScenePath);
     }
 
+    [MenuItem("Tools/Optimization/Keep Only LOD0 In Original Gothic Stage")]
+    public static void KeepOnlyLodZeroInOriginalGothicStage()
+    {
+        KeepOnlyLodZero(OriginalScenePath);
+    }
+
+    // Entry point for a non-interactive Unity batch run.
+    public static void KeepOnlyLodZeroInOriginalGothicStageBatch()
+    {
+        KeepOnlyLodZero(OriginalScenePath, false);
+    }
+
     private static void ReduceScene(string scenePath)
     {
         if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
@@ -120,6 +132,108 @@ public static class GothicStageLodReducer
             $"[GothicStageLodReducer] Complete: {scenePath}. " +
             $"Changed LODGroups={changedGroups}, " +
             $"Removed LOD objects={removedObjects}, " +
+            $"Skipped groups={skippedGroups}.");
+    }
+
+    private static void KeepOnlyLodZero(string scenePath, bool askToSave = true)
+    {
+        if (askToSave && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+        {
+            return;
+        }
+
+        Scene scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
+        LODGroup[] groups = Object.FindObjectsByType<LODGroup>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+
+        int changedGroups = 0;
+        int removedObjects = 0;
+        int skippedGroups = 0;
+
+        foreach (LODGroup group in groups)
+        {
+            LOD[] sourceLods = group.GetLODs();
+            if (sourceLods.Length == 0)
+            {
+                skippedGroups++;
+                continue;
+            }
+
+            List<Renderer> lod0Renderers = new List<Renderer>();
+            HashSet<GameObject> lowerLodObjects = new HashSet<GameObject>();
+
+            foreach (LOD sourceLod in sourceLods)
+            {
+                foreach (Renderer renderer in sourceLod.renderers)
+                {
+                    if (renderer == null)
+                    {
+                        continue;
+                    }
+
+                    if (GetLodIndex(renderer.gameObject.name) == 0)
+                    {
+                        lod0Renderers.Add(renderer);
+                    }
+                    else
+                    {
+                        lowerLodObjects.Add(renderer.gameObject);
+                    }
+                }
+            }
+
+            // Some assets do not encode the level in renderer names. In that case,
+            // the first configured LOD is the authoritative highest-detail level.
+            if (lod0Renderers.Count == 0)
+            {
+                foreach (Renderer renderer in sourceLods[0].renderers)
+                {
+                    if (renderer != null)
+                    {
+                        lod0Renderers.Add(renderer);
+                        lowerLodObjects.Remove(renderer.gameObject);
+                    }
+                }
+            }
+
+            if (lod0Renderers.Count == 0)
+            {
+                skippedGroups++;
+                continue;
+            }
+
+            Undo.RecordObject(group, "Keep Only Gothic LOD0");
+            group.SetLODs(new[]
+            {
+                // Keep LOD0 visible until the object is effectively sub-pixel sized.
+                new LOD(0.0001f, lod0Renderers.ToArray())
+            });
+            group.RecalculateBounds();
+            EditorUtility.SetDirty(group);
+
+            foreach (GameObject lowerLodObject in lowerLodObjects)
+            {
+                if (lowerLodObject == null || lod0Renderers.Exists(r => r != null && r.gameObject == lowerLodObject))
+                {
+                    continue;
+                }
+
+                Undo.DestroyObjectImmediate(lowerLodObject);
+                removedObjects++;
+            }
+
+            changedGroups++;
+        }
+
+        EditorSceneManager.MarkSceneDirty(scene);
+        EditorSceneManager.SaveScene(scene);
+        AssetDatabase.SaveAssets();
+
+        Debug.Log(
+            $"[GothicStageLodReducer] LOD0-only complete: {scenePath}. " +
+            $"Changed LODGroups={changedGroups}, " +
+            $"Removed lower-LOD objects={removedObjects}, " +
             $"Skipped groups={skippedGroups}.");
     }
 
