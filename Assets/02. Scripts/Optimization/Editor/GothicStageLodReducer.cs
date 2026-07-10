@@ -25,6 +25,25 @@ public static class GothicStageLodReducer
         ReduceScene(OriginalScenePath);
     }
 
+    [MenuItem("Tools/Optimization/Keep Only LOD0 In Original Gothic Stage")]
+    public static void KeepOnlyLodZeroInOriginalGothicStage()
+    {
+        KeepOnlyLodZero(OriginalScenePath);
+    }
+
+    // Entry point for a non-interactive Unity batch run.
+    public static void KeepOnlyLodZeroInOriginalGothicStageBatch()
+    {
+        KeepOnlyLodZero(OriginalScenePath, false);
+    }
+
+    [MenuItem("Tools/Optimization/Flatten LOD0 Wrappers In Original Gothic Stage")]
+    public static void FlattenLodZeroWrappersInOriginalGothicStage()
+    {
+        Debug.LogError(
+            "LOD0 wrapper flatten is disabled. Prefab instance children must not be reparented without a verified unpack workflow.");
+    }
+
     private static void ReduceScene(string scenePath)
     {
         if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
@@ -121,6 +140,207 @@ public static class GothicStageLodReducer
             $"Changed LODGroups={changedGroups}, " +
             $"Removed LOD objects={removedObjects}, " +
             $"Skipped groups={skippedGroups}.");
+    }
+
+    private static void KeepOnlyLodZero(string scenePath, bool askToSave = true)
+    {
+        if (askToSave && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+        {
+            return;
+        }
+
+        Scene scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
+        LODGroup[] groups = Object.FindObjectsByType<LODGroup>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+
+        int changedGroups = 0;
+        int removedObjects = 0;
+        int removedGroups = 0;
+        int skippedGroups = 0;
+
+        foreach (LODGroup group in groups)
+        {
+            LOD[] sourceLods = group.GetLODs();
+            if (sourceLods.Length == 0)
+            {
+                Object.DestroyImmediate(group);
+                removedGroups++;
+                continue;
+            }
+
+            List<Renderer> lod0Renderers = new List<Renderer>();
+            HashSet<GameObject> lowerLodObjects = new HashSet<GameObject>();
+
+            foreach (LOD sourceLod in sourceLods)
+            {
+                foreach (Renderer renderer in sourceLod.renderers)
+                {
+                    if (renderer == null)
+                    {
+                        continue;
+                    }
+
+                    if (GetLodIndex(renderer.gameObject.name) == 0)
+                    {
+                        lod0Renderers.Add(renderer);
+                    }
+                    else
+                    {
+                        lowerLodObjects.Add(renderer.gameObject);
+                    }
+                }
+            }
+
+            // Some assets do not encode the level in renderer names. In that case,
+            // the first configured LOD is the authoritative highest-detail level.
+            if (lod0Renderers.Count == 0)
+            {
+                foreach (Renderer renderer in sourceLods[0].renderers)
+                {
+                    if (renderer != null)
+                    {
+                        lod0Renderers.Add(renderer);
+                        lowerLodObjects.Remove(renderer.gameObject);
+                    }
+                }
+            }
+
+            if (lod0Renderers.Count == 0)
+            {
+                // No renderer is assigned, so the LODGroup component has no useful
+                // runtime role. Preserve the hierarchy and remove only the component.
+                Object.DestroyImmediate(group);
+                removedGroups++;
+                continue;
+            }
+
+            group.SetLODs(new[]
+            {
+                // Keep LOD0 visible until the object is effectively sub-pixel sized.
+                new LOD(0.0001f, lod0Renderers.ToArray())
+            });
+            group.RecalculateBounds();
+            EditorUtility.SetDirty(group);
+
+            foreach (GameObject lowerLodObject in lowerLodObjects)
+            {
+                if (lowerLodObject == null || lod0Renderers.Exists(r => r != null && r.gameObject == lowerLodObject))
+                {
+                    continue;
+                }
+
+                // This operation can remove thousands of objects. Recording every
+                // deletion overflows Unity's undo stack, so rely on the saved scene
+                // and source control for rollback instead.
+                Object.DestroyImmediate(lowerLodObject);
+                removedObjects++;
+            }
+
+            Object.DestroyImmediate(group);
+            removedGroups++;
+            changedGroups++;
+        }
+
+        EditorSceneManager.MarkSceneDirty(scene);
+        EditorSceneManager.SaveScene(scene);
+        AssetDatabase.SaveAssets();
+
+        Debug.Log(
+            $"[GothicStageLodReducer] LOD0-only complete: {scenePath}. " +
+            $"Changed LODGroups={changedGroups}, " +
+            $"Removed LODGroup components={removedGroups}, " +
+            $"Removed lower-LOD objects={removedObjects}, " +
+            $"Skipped groups={skippedGroups}.");
+    }
+
+    private static void FlattenLodZeroWrappers(string scenePath)
+    {
+        if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+        {
+            return;
+        }
+
+        Scene scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
+        List<Transform> wrappers = new List<Transform>();
+        foreach (GameObject root in scene.GetRootGameObjects())
+        {
+            wrappers.AddRange(root.GetComponentsInChildren<Transform>(true));
+        }
+
+        // Process deepest objects first so hierarchy promotion cannot invalidate a
+        // parent candidate that still has to be inspected.
+        wrappers.Sort((a, b) => GetDepth(b).CompareTo(GetDepth(a)));
+
+        int flattened = 0;
+        int skipped = 0;
+        foreach (Transform wrapper in wrappers)
+        {
+            if (wrapper == null || wrapper.parent == null || wrapper.childCount != 1)
+            {
+                continue;
+            }
+
+            Transform lod0 = wrapper.GetChild(0);
+            if (GetLodIndex(lod0.name) != 0 || lod0.GetComponent<Renderer>() == null)
+            {
+                continue;
+            }
+
+            Component[] wrapperComponents = wrapper.GetComponents<Component>();
+            bool safeWrapper = true;
+            foreach (Component component in wrapperComponents)
+            {
+                if (component != null && !(component is Transform) && !(component is LODGroup))
+                {
+                    safeWrapper = false;
+                    break;
+                }
+            }
+
+            if (!safeWrapper)
+            {
+                skipped++;
+                continue;
+            }
+
+            Transform destinationParent = wrapper.parent;
+            int siblingIndex = wrapper.GetSiblingIndex();
+            string wrapperName = wrapper.name;
+            int wrapperLayer = wrapper.gameObject.layer;
+            string wrapperTag = wrapper.gameObject.tag;
+            StaticEditorFlags wrapperStaticFlags = GameObjectUtility.GetStaticEditorFlags(wrapper.gameObject);
+
+            lod0.SetParent(destinationParent, true);
+            lod0.SetSiblingIndex(siblingIndex);
+            lod0.name = wrapperName;
+            lod0.gameObject.layer = wrapperLayer;
+            lod0.gameObject.tag = wrapperTag;
+            GameObjectUtility.SetStaticEditorFlags(lod0.gameObject, wrapperStaticFlags);
+
+            Object.DestroyImmediate(wrapper.gameObject);
+            flattened++;
+        }
+
+        EditorSceneManager.MarkSceneDirty(scene);
+        EditorSceneManager.SaveScene(scene);
+        AssetDatabase.SaveAssets();
+
+        Debug.Log(
+            $"[GothicStageLodReducer] LOD0 wrapper flatten complete: {scenePath}. " +
+            $"Flattened wrappers={flattened}, Skipped unsafe wrappers={skipped}.");
+    }
+
+    private static int GetDepth(Transform transform)
+    {
+        int depth = 0;
+        while (transform != null && transform.parent != null)
+        {
+            depth++;
+            transform = transform.parent;
+        }
+
+        return depth;
     }
 
     [MenuItem("Tools/Optimization/Set Gothic Stage Culled To 1 Percent")]
