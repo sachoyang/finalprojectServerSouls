@@ -194,6 +194,10 @@ public partial class NetworkPlayerController :
     private bool _queuedComboAttack;
     private int _queuedComboActionId;
     private int _lastLocalConsumedActionId;
+    // 비호스트 로컬 플레이어의 점프 표현만 입력 즉시 시작하고,
+    // 같은 서버 확정 이벤트가 돌아왔을 때 중복 재생하지 않기 위한 로컬 캐시다.
+    private int _predictedJumpActionId;
+    private byte _predictedJumpActionType;
     private bool _showPlayerDebug;
 
     public bool IsLockOnActive => IsLockOnNetworked;

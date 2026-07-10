@@ -27428,14 +27428,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: Main Camera
       objectReference: {fileID: 0}
-    - target: {fileID: 7407937258704617196, guid: 6d20a782034a2b54cb58bd21837c95bb, type: 3}
-      propertyPath: maxPitch
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7407937258704617196, guid: 6d20a782034a2b54cb58bd21837c95bb, type: 3}
-      propertyPath: mouseSensitivity
-      value: 4
-      objectReference: {fileID: 0}
     - target: {fileID: 7825816007320001631, guid: 6d20a782034a2b54cb58bd21837c95bb, type: 3}
       propertyPath: m_LocalPosition.x
       value: 96.97831
@@ -28949,31 +28941,31 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2000000000000000007, guid: f4b2e2d4a2f04b3d8df86001ca1e4fbc, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -13.98248
+      value: -7.259659
       objectReference: {fileID: 0}
     - target: {fileID: 2000000000000000007, guid: f4b2e2d4a2f04b3d8df86001ca1e4fbc, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -4.0580387
+      value: -4.5399275
       objectReference: {fileID: 0}
     - target: {fileID: 2000000000000000007, guid: f4b2e2d4a2f04b3d8df86001ca1e4fbc, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 10.019768
+      value: -7.7135744
       objectReference: {fileID: 0}
     - target: {fileID: 2000000000000000007, guid: f4b2e2d4a2f04b3d8df86001ca1e4fbc, type: 3}
       propertyPath: m_LocalRotation.w
-      value: -0.9133574
+      value: -0.99252343
       objectReference: {fileID: 0}
     - target: {fileID: 2000000000000000007, guid: f4b2e2d4a2f04b3d8df86001ca1e4fbc, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0.08044548
+      value: 0.004533719
       objectReference: {fileID: 0}
     - target: {fileID: 2000000000000000007, guid: f4b2e2d4a2f04b3d8df86001ca1e4fbc, type: 3}
       propertyPath: m_LocalRotation.y
-      value: -0.39441067
+      value: -0.11768781
       objectReference: {fileID: 0}
     - target: {fileID: 2000000000000000007, guid: f4b2e2d4a2f04b3d8df86001ca1e4fbc, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0.061213695
+      value: 0.03203486
       objectReference: {fileID: 0}
     - target: {fileID: 2000000000000000009, guid: f4b2e2d4a2f04b3d8df86001ca1e4fbc, type: 3}
       propertyPath: m_LocalPosition.x
@@ -29002,6 +28994,10 @@ PrefabInstance:
     - target: {fileID: 2000000000000000009, guid: f4b2e2d4a2f04b3d8df86001ca1e4fbc, type: 3}
       propertyPath: m_LocalRotation.z
       value: 0.13119115
+      objectReference: {fileID: 0}
+    - target: {fileID: 2000000000000000011, guid: f4b2e2d4a2f04b3d8df86001ca1e4fbc, type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2000000000000000011, guid: f4b2e2d4a2f04b3d8df86001ca1e4fbc, type: 3}
       propertyPath: field of view

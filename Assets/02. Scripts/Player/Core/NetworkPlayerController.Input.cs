@@ -161,7 +161,9 @@ public partial class NetworkPlayerController
 
                     _jumpAirborneObserved = false;
                     ApplyJumpPhysics(useForwardJump);
-                    StartAction(useForwardJump ? ActionJumpForward : ActionJump, BufferedJumpActionId);
+                    byte jumpAction = useForwardJump ? ActionJumpForward : ActionJump;
+                    PredictLocalJumpAnimation(jumpAction, BufferedJumpActionId);
+                    StartAction(jumpAction, BufferedJumpActionId);
                     BufferedJumpActionId = 0;
                     isActing = true;
                     isBusy = true;

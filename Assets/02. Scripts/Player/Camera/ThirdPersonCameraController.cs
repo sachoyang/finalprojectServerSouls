@@ -30,6 +30,7 @@ public class ThirdPersonCameraController : MonoBehaviour
     [SerializeField] private float groundProbeDistance = 6f;
     [SerializeField] private float groundClearance = 0.35f;
     [SerializeField] private float minGroundNormalY = 0.35f;
+    [SerializeField] private float groundHeightSmoothTime = 0.12f;
 
     [Header("Rotation")]
     [SerializeField] private float mouseSensitivity = 4f;
@@ -61,6 +62,9 @@ public class ThirdPersonCameraController : MonoBehaviour
     private float _currentCollisionDistance = -1f;
     private float _collisionDistanceVelocity;
     private float _lastCollisionTime = -999f;
+    private float _smoothedGroundFloorY;
+    private float _groundFloorVelocity;
+    private bool _hasSmoothedGroundFloor;
     public Transform Target => target;
     public Vector3 TargetOffset => targetOffset;
     public float Distance => distance;
@@ -116,6 +120,8 @@ public class ThirdPersonCameraController : MonoBehaviour
     public void SetTarget(Transform newTarget)
     {
         target = newTarget;
+        _hasSmoothedGroundFloor = false;
+        _groundFloorVelocity = 0f;
         if (alignBehindTargetOnStart && !_hasAlignedToTarget)
         {
             AlignBehindTarget(true);
@@ -352,7 +358,9 @@ public class ThirdPersonCameraController : MonoBehaviour
             ref _collisionDistanceVelocity,
             smoothTime);
 
-        return PreventCameraGroundClip(focusPoint + direction * _currentCollisionDistance, focusPoint);
+        // 지면 높이 보정은 최종 카메라 위치에 한 번만 적용한다.
+        // 여기서도 적용하면 계단 한 칸마다 두 번 클램프되어 진동이 커진다.
+        return focusPoint + direction * _currentCollisionDistance;
     }
 
     private bool TryGetNearestCameraObstruction(
@@ -437,18 +445,39 @@ public class ThirdPersonCameraController : MonoBehaviour
 
         if (!foundGround)
         {
+            _hasSmoothedGroundFloor = false;
+            _groundFloorVelocity = 0f;
             return cameraPosition;
         }
 
-        float minCameraY = highestGroundY + groundClearance;
+        float targetGroundFloorY = highestGroundY + groundClearance;
+        if (!_hasSmoothedGroundFloor)
+        {
+            _smoothedGroundFloorY = targetGroundFloorY;
+            _groundFloorVelocity = 0f;
+            _hasSmoothedGroundFloor = true;
+        }
+        else
+        {
+            // 올라오는 지면에는 빠르게 반응해 벽/계단을 뚫지 않고,
+            // 내려가는 계단 높이는 완만하게 따라가 단차가 화면에 직접 전달되지 않게 한다.
+            float smoothTime = targetGroundFloorY > _smoothedGroundFloorY
+                ? Mathf.Min(0.04f, groundHeightSmoothTime)
+                : groundHeightSmoothTime;
+            _smoothedGroundFloorY = Mathf.SmoothDamp(
+                _smoothedGroundFloorY,
+                targetGroundFloorY,
+                ref _groundFloorVelocity,
+                Mathf.Max(0.001f, smoothTime));
+        }
+
+        float minCameraY = _smoothedGroundFloorY;
         if (cameraPosition.y >= minCameraY)
         {
             return cameraPosition;
         }
 
         cameraPosition.y = minCameraY;
-        _currentCollisionDistance = -1f;
-        _collisionDistanceVelocity = 0f;
         return cameraPosition;
     }
 

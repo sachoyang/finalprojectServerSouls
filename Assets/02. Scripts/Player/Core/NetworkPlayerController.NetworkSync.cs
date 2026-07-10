@@ -50,6 +50,8 @@ public partial class NetworkPlayerController
         _animatorStateRootMotionActive = false;
         ClearComboRequests();
         _lastLocalConsumedActionId = 0;
+        _predictedJumpActionId = 0;
+        _predictedJumpActionType = ActionNone;
         if (animator != null)
         {
             ResetActionTriggers();
@@ -139,8 +141,20 @@ public partial class NetworkPlayerController
             if (change == nameof(ActionSequence))
             {
                 // 서버가 확정한 일회성 액션 이벤트만 Animator 트리거로 변환한다.
-                ResetActionTriggers();
-                TriggerAction(LastAction);
+                bool matchesPredictedJump =
+                    Object.HasInputAuthority &&
+                    _predictedJumpActionId != 0 &&
+                    LastActionId == _predictedJumpActionId &&
+                    LastAction == _predictedJumpActionType;
+
+                if (!matchesPredictedJump)
+                {
+                    ResetActionTriggers();
+                    TriggerAction(LastAction);
+                }
+
+                _predictedJumpActionId = 0;
+                _predictedJumpActionType = ActionNone;
             }
         }
 

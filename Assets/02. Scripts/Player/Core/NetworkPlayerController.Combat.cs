@@ -596,6 +596,27 @@ public partial class NetworkPlayerController
         }
     }
 
+    private void PredictLocalJumpAnimation(byte actionType, int actionId)
+    {
+        // 게임 결과는 서버가 확정한다. 여기서는 입력권한 클라이언트의 점프 표현만
+        // 물리 예측과 같은 프레임에 시작해 서버 왕복 시간만큼 늦게 튀는 현상을 없앤다.
+        if (Object == null ||
+            !Object.HasInputAuthority ||
+            HasStateAuthority ||
+            Runner == null ||
+            !Runner.IsForward ||
+            actionId == 0 ||
+            _predictedJumpActionId == actionId)
+        {
+            return;
+        }
+
+        _predictedJumpActionId = actionId;
+        _predictedJumpActionType = actionType;
+        ResetActionTriggers();
+        TriggerAction(actionType);
+    }
+
     private void ResetActionTriggers()
     {
         // 새 액션 트리거를 넣기 전 이전 프레임에 남은 trigger를 모두 비운다.

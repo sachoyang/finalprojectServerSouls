@@ -121,11 +121,15 @@ MonoBehaviour:
   collisionSmoothTime: 0.06
   collisionReturnSmoothTime: 0.18
   collisionReturnDelay: 0.12
-  mouseSensitivity: 5
+  groundProbeHeight: 2.5
+  groundProbeDistance: 6
+  groundClearance: 0.35
+  minGroundNormalY: 0.35
+  mouseSensitivity: 4
   maxMouseDelta: 8
-  startPitch: 15
-  minPitch: -15
-  maxPitch: 65
+  startPitch: 0
+  minPitch: -60
+  maxPitch: 89
   positionSmoothTime: 0
   lockOnRotationSharpness: 14
   alignBehindTargetOnStart: 1
