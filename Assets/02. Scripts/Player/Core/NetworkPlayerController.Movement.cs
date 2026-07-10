@@ -306,7 +306,6 @@ public partial class NetworkPlayerController
     private void MoveWithStepUpCorrection(Vector3 moveDirection)
     {
         bool wasGrounded = _networkCharacterController.Grounded;
-        bool hadUpwardVelocity = _networkCharacterController.Velocity.y > 0f;
         float previousHeight = transform.position.y;
 
         _networkCharacterController.Move(moveDirection);
@@ -316,7 +315,7 @@ public partial class NetworkPlayerController
         // 한 틱의 이동 속도로 환산한다. 0.3m 턱을 한 틱에 오르면 큰 양의 Y 속도가 저장되어
         // 다음 틱에 캐릭터가 점프한 것처럼 위로 튀므로, 정상적인 점프가 아닐 때만 제거한다.
         if (!wasGrounded ||
-            hadUpwardVelocity ||
+            _predictedJumpActionId != 0 ||
             (IsJumpAction(LastAction) && IsActionAnimationLocked) ||
             maximumStepUpHeight <= 0f)
         {
