@@ -976,59 +976,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 89f7573c4d13c8b49bc3f45fe45cec41, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!1 &855044793 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 8981910642265040124, guid: 90005bf5c67b43f4886eb0a24d0d1351, type: 3}
-  m_PrefabInstance: {fileID: 8900651288306080646}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &855044795
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 855044793}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  SortKey: 1657223877
-  ObjectInterest: 1
-  Flags: 262145
-  NestedObjects: []
-  NetworkedBehaviours:
-  - {fileID: 855044796}
-  ForceRemoteRenderTimeframe: 0
---- !u!114 &855044796
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 855044793}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bfeb0fb0958a2f34baeed01dcc30cdee, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  combatResultManager: {fileID: 855044797}
---- !u!114 &855044797
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 855044793}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e05c366879586bc49ad846aa99af53ba, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  boss: {fileID: 0}
-  rewardManager: {fileID: 0}
-  gameOverView: {fileID: 829220470}
-  allPlayersDeadDelay: 2
 --- !u!1 &1505445864
 GameObject:
   m_ObjectHideFlags: 0
@@ -1169,28 +1116,22 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5679934295819518997, guid: 90005bf5c67b43f4886eb0a24d0d1351, type: 3}
+      propertyPath: gameOverView
+      value: 
+      objectReference: {fileID: 829220470}
     - target: {fileID: 8981910642265040124, guid: 90005bf5c67b43f4886eb0a24d0d1351, type: 3}
       propertyPath: m_Name
       value: CombatResultSystem
       objectReference: {fileID: 0}
-    m_RemovedComponents:
-    - {fileID: 1882169824959016284, guid: 90005bf5c67b43f4886eb0a24d0d1351, type: 3}
-    - {fileID: 7332766460739226539, guid: 90005bf5c67b43f4886eb0a24d0d1351, type: 3}
-    m_RemovedGameObjects:
-    - {fileID: 3908202560545934970, guid: 90005bf5c67b43f4886eb0a24d0d1351, type: 3}
-    - {fileID: 2891098656448728005, guid: 90005bf5c67b43f4886eb0a24d0d1351, type: 3}
-    - {fileID: 6858059624950575783, guid: 90005bf5c67b43f4886eb0a24d0d1351, type: 3}
+    - target: {fileID: 9023405128169120185, guid: 90005bf5c67b43f4886eb0a24d0d1351, type: 3}
+      propertyPath: SortKey
+      value: 3025330337
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 8981910642265040124, guid: 90005bf5c67b43f4886eb0a24d0d1351, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 855044797}
-    - targetCorrespondingSourceObject: {fileID: 8981910642265040124, guid: 90005bf5c67b43f4886eb0a24d0d1351, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 855044796}
-    - targetCorrespondingSourceObject: {fileID: 8981910642265040124, guid: 90005bf5c67b43f4886eb0a24d0d1351, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 855044795}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 90005bf5c67b43f4886eb0a24d0d1351, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
