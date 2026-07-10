@@ -31935,7 +31935,6 @@ GameObject:
   m_Component:
   - component: {fileID: 3484478169543289287}
   - component: {fileID: 2555025063384846902}
-  - component: {fileID: 7324182938227823089}
   m_Layer: 7
   m_Name: SM_Door_03a4
   m_TagString: Untagged
@@ -31952,7 +31951,7 @@ Transform:
   m_GameObject: {fileID: 7852451325022170182}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.7071068, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 58.02, y: -17.364483, z: 302.274}
+  m_LocalPosition: {x: 57.544, y: -17.249, z: 302.274}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -31988,27 +31987,6 @@ LODGroup:
     renderers:
     - renderer: {fileID: 4617328969276385455}
   m_Enabled: 1
---- !u!65 &7324182938227823089
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7852451325022170182}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.130109, y: 2.402385, z: 1.039201}
-  m_Center: {x: 0.022541, y: 1.34264, z: 0}
 --- !u!1 &7852818981294506073
 GameObject:
   m_ObjectHideFlags: 0
