@@ -139,11 +139,8 @@ public class PlayerAbilityExecutor : MonoBehaviour
         Vector3 position = context.Transform.TransformPoint(localOffset);
         Quaternion rotation = context.Transform.rotation;
 
-        GameObject instance = Instantiate(prefab, position, rotation);
-        if (parentToPlayer)
-        {
-            instance.transform.SetParent(context.Transform, true);
-        }
+        Transform parent = parentToPlayer ? context.Transform : null;
+        EffectPoolManager.SpawnPooled(prefab, position, rotation, parent);
     }
 
     private static void PlaySound(PlayerAbilityModule module, PlayerAbilityContext context)

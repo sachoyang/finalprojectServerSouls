@@ -58,3 +58,9 @@ MonoBehaviour:
     - prefab: {fileID: 4288107571095694937, guid: c3f8938673a07704e93ac52eee18f410, type: 3}
       prewarmCount: 2
       autoReturnAfter: 0
+  - name: PlayerSkillEffect
+    maxActive: 20
+    prefabs:
+    - prefab: {fileID: 100014, guid: 3aa143f52a2c20e45bf4bc03a7e127fd, type: 3}
+      prewarmCount: 3
+      autoReturnAfter: 1
