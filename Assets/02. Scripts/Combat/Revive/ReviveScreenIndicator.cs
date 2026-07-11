@@ -20,6 +20,10 @@ public class ReviveScreenIndicator : MonoBehaviour
     private TextMeshProUGUI valueText;
     private Camera cachedCamera;
     private bool isOnScreen;
+    private float positionSmoothTime;
+    private float positionSnapDistance;
+    private Vector2 positionVelocity;
+    private bool hasPosition;
 
     public void Bind(
         PlayerStats stats,
@@ -49,6 +53,14 @@ public class ReviveScreenIndicator : MonoBehaviour
 
         UpdateScreenPosition();
         Refresh();
+    }
+
+    public void SetMotion(float smoothTime, float snapDistance)
+    {
+        positionSmoothTime = smoothTime;
+        positionSnapDistance = snapDistance;
+        positionVelocity = Vector2.zero;
+        hasPosition = false;
     }
 
     private void OnDestroy()
@@ -213,9 +225,33 @@ public class ReviveScreenIndicator : MonoBehaviour
         rootRect.gameObject.SetActive(isOnScreen && IsStatsReadable() && targetStats.IsDead);
 
         if (!isOnScreen)
+        {
+            hasPosition = false;
             return;
+        }
 
         if (RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRoot, screenPosition, null, out Vector2 localPoint))
-            rootRect.anchoredPosition = localPoint + screenOffset;
+            MoveToScreenPoint(localPoint + screenOffset);
+    }
+
+    private void MoveToScreenPoint(Vector2 targetPosition)
+    {
+        if (!hasPosition ||
+            positionSmoothTime <= 0f ||
+            Vector2.Distance(rootRect.anchoredPosition, targetPosition) > positionSnapDistance)
+        {
+            rootRect.anchoredPosition = targetPosition;
+            positionVelocity = Vector2.zero;
+            hasPosition = true;
+            return;
+        }
+
+        rootRect.anchoredPosition = Vector2.SmoothDamp(
+            rootRect.anchoredPosition,
+            targetPosition,
+            ref positionVelocity,
+            positionSmoothTime,
+            Mathf.Infinity,
+            Time.unscaledDeltaTime);
     }
 }

@@ -8,7 +8,8 @@ public enum StateActionLockType
     Impact,
     Roll,
     Jump,
-    Skill
+    Skill,
+    Death
 }
 
 public sealed class ActionLockStateBehaviour : AnimatorStateBehaviourBase

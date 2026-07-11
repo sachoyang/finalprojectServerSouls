@@ -341,7 +341,17 @@ public partial class NetworkPlayerController
         LastAction = becameDead ? ActionDeath : ActionImpact;
         LastActionId = 0;
         ActionSequence++;
-        SetActionAnimationLocked(true, GetActionLockType(LastAction));
+        if (becameDead)
+        {
+            _deathAnimationEnteredForRevive = false;
+        }
+
+        StateActionLockType lockType = GetActionLockType(LastAction);
+        if (lockType != StateActionLockType.None)
+        {
+            SetActionAnimationLocked(true, lockType);
+        }
+
         SetComboInputWindowOpen(false);
         ClearComboRequests();
     }
@@ -371,6 +381,7 @@ public partial class NetworkPlayerController
         _parryGuardStateDepth = 0;
         _invincibilityStateDepth = 0;
         _animatorStateRootMotionActive = false;
+        _deathAnimationEnteredForRevive = false;
         ClearComboRequests();
         _lastLocalConsumedActionId = 0;
 
@@ -726,6 +737,50 @@ public partial class NetworkPlayerController
         return actionType == ActionImpact ||
                actionType == ActionParryImpact ||
                actionType == ActionDeath;
+    }
+
+    private bool IsDeathAnimationComplete()
+    {
+        if (_playerStats == null || !_playerStats.IsDead)
+        {
+            return false;
+        }
+
+        if (Application.isBatchMode || animator == null)
+        {
+            return true;
+        }
+
+        AnimatorStateInfo currentState = animator.GetCurrentAnimatorStateInfo(0);
+        bool currentIsDeath = currentState.shortNameHash == DeathState;
+        bool isTransitioning = animator.IsInTransition(0);
+        bool nextIsDeath = false;
+
+        if (currentIsDeath)
+        {
+            _deathAnimationEnteredForRevive = true;
+        }
+
+        if (isTransitioning)
+        {
+            AnimatorStateInfo nextState = animator.GetNextAnimatorStateInfo(0);
+            nextIsDeath = nextState.shortNameHash == DeathState;
+            if (nextIsDeath)
+            {
+                _deathAnimationEnteredForRevive = true;
+                return false;
+            }
+
+            return currentIsDeath &&
+                   currentState.normalizedTime >= activeAnimatorStateEndThreshold;
+        }
+
+        if (currentIsDeath)
+        {
+            return currentState.normalizedTime >= activeAnimatorStateEndThreshold;
+        }
+
+        return _deathAnimationEnteredForRevive && !nextIsDeath;
     }
 
 }

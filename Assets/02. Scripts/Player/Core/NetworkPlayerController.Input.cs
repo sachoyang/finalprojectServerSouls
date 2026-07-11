@@ -36,6 +36,12 @@ public partial class NetworkPlayerController
         // HP가 0이 되면 전투 입력은 막고 느린 크롤링 이동만 허용한다.
         if (_playerStats != null && _playerStats.IsDead)
         {
+            if (IsDeathMotionLocked)
+            {
+                StopForControlLock();
+                return;
+            }
+
             HandleCrawlingMovement();
             return;
         }

@@ -451,6 +451,7 @@ public static class PlayerAnimatorSetupTool
         AnimatorState crawlingState = EnsureState(hitAndDeathMachine, "Crawling", "Assets/04. Images/Animation/Crawling.fbx", new Vector3(740f, 80f, 0f), string.Empty);
         EnsureActionBehaviour(impactState, StateActionLockType.Impact, false);
         EnsureActionBehaviour(parryImpactState, StateActionLockType.Impact, false, enablesInvincibility: true);
+        EnsureActionBehaviour(deathState, StateActionLockType.Death, false);
         EnsureCrawlingCapeResetBehaviour(crawlingState);
         hitAndDeathMachine.defaultState = impactState;
 

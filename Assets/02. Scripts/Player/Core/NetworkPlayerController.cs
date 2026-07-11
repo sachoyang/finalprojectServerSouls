@@ -46,6 +46,7 @@ public partial class NetworkPlayerController :
     private static readonly int Slash2State = Animator.StringToHash("slash2");
     private static readonly int Slash3State = Animator.StringToHash("slash3");
     private static readonly int Slash4State = Animator.StringToHash("slash4");
+    private static readonly int DeathState = Animator.StringToHash("Death");
 
     private const byte ActionNone = 0;
     private const byte ActionAttack = 1;
@@ -198,6 +199,7 @@ public partial class NetworkPlayerController :
     // 같은 서버 확정 이벤트가 돌아왔을 때 중복 재생하지 않기 위한 로컬 캐시다.
     private int _predictedJumpActionId;
     private byte _predictedJumpActionType;
+    private bool _deathAnimationEnteredForRevive;
     private bool _showPlayerDebug;
 
     public bool IsLockOnActive => IsLockOnNetworked;
@@ -209,6 +211,8 @@ public partial class NetworkPlayerController :
     public bool IsDamageOrDeathActionActive =>
         (_playerStats != null && _playerStats.IsDead) ||
         (IsActionAnimationLocked && IsDamageOrDeathAction(LastAction));
+    public bool IsDeathMotionLocked => GetCurrentActionLockType() == StateActionLockType.Death;
+    public bool IsDeathAnimationCompleteForRevive => IsDeathAnimationComplete();
 
     private void Awake()
     {

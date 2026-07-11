@@ -14,6 +14,10 @@ public class ReviveUIManager : MonoBehaviour
     [SerializeField] private Vector2 indicatorSize = new Vector2(96f, 96f);
     [SerializeField] private bool hideLocalPlayerReviveUI = false;
 
+    [Header("Motion")]
+    [SerializeField, Min(0f)] private float positionSmoothTime = 0.05f;
+    [SerializeField, Min(0f)] private float positionSnapDistance = 300f;
+
     [Header("Sprites")]
     [SerializeField] private Sprite backgroundSprite;
     [Tooltip("통 이미지(Revive_gage3) 하나만 사용하므로 Size를 1로 지정하고 등록해주세요.")]
@@ -47,7 +51,10 @@ public class ReviveUIManager : MonoBehaviour
             nextRefreshTime = Time.time + refreshInterval;
             RefreshIndicators();
         }
+    }
 
+    private void LateUpdate()
+    {
         foreach (ReviveScreenIndicator indicator in indicators.Values)
         {
             if (indicator != null)
@@ -58,6 +65,11 @@ public class ReviveUIManager : MonoBehaviour
     private void RefreshIndicators()
     {
         IReadOnlyList<NetworkPlayerController> players = PlayerRegistry.All;
+        if (ShouldHideSoloReviveUI(players))
+        {
+            ClearIndicators();
+            return;
+        }
 
         for (int i = 0; i < players.Count; i++)
         {
@@ -101,6 +113,29 @@ public class ReviveUIManager : MonoBehaviour
         return PlayerRegistry.IsLocalPlayer(controller);
     }
 
+    private static bool ShouldHideSoloReviveUI(IReadOnlyList<NetworkPlayerController> players)
+    {
+        int spawnedPlayerCount = 0;
+        for (int i = 0; i < players.Count; i++)
+        {
+            NetworkPlayerController player = players[i];
+            if (player == null ||
+                !PlayerRegistry.TryGetStats(player.Object, out PlayerStats stats) ||
+                !stats.IsSpawnedReady)
+            {
+                continue;
+            }
+
+            spawnedPlayerCount++;
+            if (spawnedPlayerCount > 1)
+            {
+                return false;
+            }
+        }
+
+        return spawnedPlayerCount == 1;
+    }
+
     private ReviveScreenIndicator CreateIndicator(PlayerStats stats)
     {
         EnsureCanvasRoot();
@@ -111,6 +146,7 @@ public class ReviveUIManager : MonoBehaviour
         ReviveScreenIndicator indicator = indicatorObject.AddComponent<ReviveScreenIndicator>();
         // Bind 함수에서 glowSprites 인자 제거
         indicator.Bind(stats, canvasRoot, headOffset, screenOffset, indicatorSize, backgroundSprite, fillSprites);
+        indicator.SetMotion(positionSmoothTime, positionSnapDistance);
         return indicator;
     }
 

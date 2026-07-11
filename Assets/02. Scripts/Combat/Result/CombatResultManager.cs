@@ -26,6 +26,7 @@ public class CombatResultManager : MonoBehaviour
 
     private CombatResultType currentResult = CombatResultType.None;
     private float allPlayersDeadTimer;
+    private PlayerStats soloSelfReviveTarget;
     private bool _combatResultAbsorbed;
     private readonly Dictionary<int, float> _bossDamageByPlayer = new Dictionary<int, float>();
 
@@ -88,45 +89,11 @@ public class CombatResultManager : MonoBehaviour
 
     private void CheckDefeat()
     {
-        NetworkRunner runner = GetRunner();
-        int playerCount = 0;
-        int aliveCount = 0;
-
-        if (runner != null)
-        {
-            foreach (PlayerRef player in runner.ActivePlayers)
-            {
-                if (!runner.TryGetPlayerObject(player, out NetworkObject playerObject) ||
-                    !PlayerRegistry.TryGetStats(playerObject, out PlayerStats stats) ||
-                    !stats.IsSpawnedReady)
-                {
-                    continue;
-                }
-
-                playerCount++;
-                if (!stats.IsDead)
-                    aliveCount++;
-            }
-        }
-        else
-        {
-            IReadOnlyList<NetworkPlayerController> players = PlayerRegistry.All;
-            for (int i = 0; i < players.Count; i++)
-            {
-                NetworkPlayerController player = players[i];
-                if (player == null ||
-                    !PlayerRegistry.TryGetStats(player.Object, out PlayerStats stats) ||
-                    !stats.IsSpawnedReady)
-                {
-                    continue;
-                }
-
-                playerCount++;
-                if (!stats.IsDead)
-                    aliveCount++;
-            }
-        }
-
+        CollectCombatPlayers(
+            out int playerCount,
+            out int aliveCount,
+            out PlayerStats deadSoloCandidate,
+            out bool isSoloCombat);
 
         if (playerCount <= 0)
             return;
@@ -134,8 +101,18 @@ public class CombatResultManager : MonoBehaviour
         if (aliveCount > 0)
         {
             allPlayersDeadTimer = 0f;
+            ResetSoloSelfRevive();
             return;
         }
+
+        if (ShouldHoldDefeatForSoloSelfRevive(isSoloCombat, deadSoloCandidate))
+        {
+            allPlayersDeadTimer = 0f;
+            UpdateSoloSelfRevive(deadSoloCandidate);
+            return;
+        }
+
+        ResetSoloSelfRevive();
 
         allPlayersDeadTimer += Time.deltaTime;
 
@@ -143,6 +120,134 @@ public class CombatResultManager : MonoBehaviour
         {
             CompleteCombat(CombatResultType.Defeat);
         }
+    }
+
+    private static bool ShouldHoldDefeatForSoloSelfRevive(bool isSoloCombat, PlayerStats deadSoloCandidate)
+    {
+        return isSoloCombat &&
+            deadSoloCandidate != null &&
+            deadSoloCandidate.CanUseSoloSelfRevive;
+    }
+
+    private void CollectCombatPlayers(
+        out int playerCount,
+        out int aliveCount,
+        out PlayerStats deadSoloCandidate,
+        out bool isSoloCombat)
+    {
+        playerCount = 0;
+        aliveCount = 0;
+        deadSoloCandidate = null;
+        isSoloCombat = false;
+        int registryPlayerCount = 0;
+        int runnerPlayerCount = 0;
+        HashSet<NetworkObject> countedObjects = new HashSet<NetworkObject>();
+
+        IReadOnlyList<NetworkPlayerController> registeredPlayers = PlayerRegistry.All;
+        for (int i = 0; i < registeredPlayers.Count; i++)
+        {
+            NetworkPlayerController player = registeredPlayers[i];
+            if (TryCountCombatPlayer(
+                player != null ? player.Object : null,
+                countedObjects,
+                ref playerCount,
+                ref registryPlayerCount,
+                ref aliveCount,
+                ref deadSoloCandidate))
+            {
+                continue;
+            }
+        }
+
+        NetworkRunner runner = GetRunner();
+        if (runner != null)
+        {
+            foreach (PlayerRef player in runner.ActivePlayers)
+            {
+                if (!runner.TryGetPlayerObject(player, out NetworkObject playerObject))
+                    continue;
+
+                TryCountCombatPlayer(
+                    playerObject,
+                    countedObjects,
+                    ref playerCount,
+                    ref runnerPlayerCount,
+                    ref aliveCount,
+                    ref deadSoloCandidate);
+            }
+        }
+
+        if (playerCount <= 0)
+            return;
+
+        isSoloCombat = runnerPlayerCount > 0
+            ? runnerPlayerCount == 1 || playerCount == 1
+            : playerCount == 1 || registryPlayerCount == 1;
+    }
+
+    private static bool TryCountCombatPlayer(
+        NetworkObject playerObject,
+        HashSet<NetworkObject> countedObjects,
+        ref int playerCount,
+        ref int sourcePlayerCount,
+        ref int aliveCount,
+        ref PlayerStats deadSoloCandidate)
+    {
+        if (!PlayerRegistry.TryGetStats(playerObject, out PlayerStats stats) ||
+            !stats.IsSpawnedReady)
+        {
+            return false;
+        }
+
+        if (countedObjects != null && !countedObjects.Add(playerObject))
+        {
+            sourcePlayerCount++;
+            if (stats.IsDead)
+            {
+                deadSoloCandidate = stats;
+            }
+            return true;
+        }
+
+        playerCount++;
+        sourcePlayerCount++;
+        if (!stats.IsDead)
+        {
+            aliveCount++;
+        }
+        else
+        {
+            deadSoloCandidate = stats;
+        }
+
+        return true;
+    }
+
+    private void UpdateSoloSelfRevive(PlayerStats target)
+    {
+        if (!target.HasStateAuthority)
+        {
+            return;
+        }
+
+        if (soloSelfReviveTarget != target)
+        {
+            soloSelfReviveTarget = target;
+        }
+
+        NetworkPlayerController controller = target.GetComponent<NetworkPlayerController>();
+        if (controller != null && !controller.IsDeathAnimationCompleteForRevive)
+        {
+            return;
+        }
+
+        target.ConsumeSoloSelfRevive();
+        ResetSoloSelfRevive();
+    }
+
+    private void ResetSoloSelfRevive()
+    {
+        soloSelfReviveTarget = null;
     }
 
     private void CompleteCombat(CombatResultType result)
