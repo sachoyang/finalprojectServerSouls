@@ -26,9 +26,9 @@ MonoBehaviour:
   cooldownSeconds: 8
   levelSettings:
   - damageMultiplier: 1
-  - damageMultiplier: 6
-  - damageMultiplier: 8
-  - damageMultiplier: 10
+  - damageMultiplier: 1.5
+  - damageMultiplier: 2.3
+  - damageMultiplier: 3
   animationClip: {fileID: -203655887218126122, guid: 6e2e5d6f257b702419afdb91532e3d2e, type: 3}
   animationStateName: HighSpinAttack
   animationTrigger: HighSpinAttack

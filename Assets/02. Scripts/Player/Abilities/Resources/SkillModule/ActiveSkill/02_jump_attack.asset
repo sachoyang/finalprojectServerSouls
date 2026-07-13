@@ -27,9 +27,9 @@ MonoBehaviour:
   cooldownSeconds: 8
   levelSettings:
   - damageMultiplier: 1
-  - damageMultiplier: 1.4512479
-  - damageMultiplier: 1
-  - damageMultiplier: 1.495285
+  - damageMultiplier: 1.3
+  - damageMultiplier: 1.5
+  - damageMultiplier: 2
   animationClip: {fileID: -203655887218126122, guid: 2e360ce02ed05d04faec51172d19bb6d, type: 3}
   animationStateName: JumpAttack
   animationTrigger: JumpAttack

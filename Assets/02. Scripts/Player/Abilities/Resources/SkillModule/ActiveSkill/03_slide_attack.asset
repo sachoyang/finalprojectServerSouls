@@ -27,9 +27,9 @@ MonoBehaviour:
   cooldownSeconds: 6
   levelSettings:
   - damageMultiplier: 1
-  - damageMultiplier: 1
-  - damageMultiplier: 1
-  - damageMultiplier: 1
+  - damageMultiplier: 1.4
+  - damageMultiplier: 1.7
+  - damageMultiplier: 2
   animationClip: {fileID: -203655887218126122, guid: 1a16ca6c2c59c904c8e31ebc395a3e96, type: 3}
   animationStateName: SlideAttack
   animationTrigger: SlideAttack
