@@ -37766,9 +37766,29 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1420586477}
     m_Modifications:
+    - target: {fileID: 2474047220809568159, guid: 65432257accb15643b5c55b7a632b14c, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: 4300006, guid: abc00000000000226998739866126462, type: 3}
+    - target: {fileID: 2474047220809568159, guid: 65432257accb15643b5c55b7a632b14c, type: 3}
+      propertyPath: m_Convex
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2536786619053889134, guid: 65432257accb15643b5c55b7a632b14c, type: 3}
       propertyPath: m_Name
       value: Gothic_Static_Architecture
+      objectReference: {fileID: 0}
+    - target: {fileID: 5192937353042283686, guid: 65432257accb15643b5c55b7a632b14c, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: 4300006, guid: abc00000000000226998739866126462, type: 3}
+    - target: {fileID: 5192937353042283686, guid: 65432257accb15643b5c55b7a632b14c, type: 3}
+      propertyPath: m_Convex
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5221161587827926961, guid: 65432257accb15643b5c55b7a632b14c, type: 3}
+      propertyPath: m_Convex
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6490828079981101093, guid: 65432257accb15643b5c55b7a632b14c, type: 3}
       propertyPath: m_LocalPosition.x
