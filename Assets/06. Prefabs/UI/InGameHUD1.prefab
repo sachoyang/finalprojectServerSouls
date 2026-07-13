@@ -3981,6 +3981,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 399797471695300559}
+  - component: {fileID: 1875981337015050828}
   m_Layer: 0
   m_Name: Player2_Buff (1)
   m_TagString: Untagged
@@ -4015,6 +4016,28 @@ RectTransform:
   m_AnchoredPosition: {x: 56.1, y: -80.1}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1875981337015050828
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3555598710611834698}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 82b0f5ab358716d4d95cbb928f3f7bb9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  statusIconImages:
+  - {fileID: 6130545262466831542}
+  - {fileID: 4277434876757839112}
+  - {fileID: 4023062826558316285}
+  - {fileID: 8516808401710578723}
+  - {fileID: 7093195431576174659}
+  - {fileID: 7435380789794304911}
+  - {fileID: 4845374308789313184}
+  - {fileID: 288565753581095704}
+  moreStatusSprite: {fileID: 0}
 --- !u!1 &3690441117287970374
 GameObject:
   m_ObjectHideFlags: 0
@@ -4302,6 +4325,7 @@ MonoBehaviour:
   hpFillImage: {fileID: 9089419816678843112}
   spFillImage: {fileID: 4300954710099362185}
   skillBarView: {fileID: 5119233805362845183}
+  statusIconBarView: {fileID: 580524176296932203}
 --- !u!1 &3829828083092939740
 GameObject:
   m_ObjectHideFlags: 0
@@ -7834,6 +7858,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6456229999069773462}
+  - component: {fileID: 580524176296932203}
   m_Layer: 0
   m_Name: Player3_Buff (1)
   m_TagString: Untagged
@@ -7868,6 +7893,28 @@ RectTransform:
   m_AnchoredPosition: {x: 56.1, y: -80.1}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &580524176296932203
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6105096265904717246}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 82b0f5ab358716d4d95cbb928f3f7bb9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  statusIconImages:
+  - {fileID: 8636622016687222854}
+  - {fileID: 1762634352697003846}
+  - {fileID: 3084884438798897831}
+  - {fileID: 9157632403947284453}
+  - {fileID: 6728725009412344826}
+  - {fileID: 2592162083365037804}
+  - {fileID: 3376569171629738000}
+  - {fileID: 8142427264072753990}
+  moreStatusSprite: {fileID: 0}
 --- !u!1 &6120650607197283361
 GameObject:
   m_ObjectHideFlags: 0
@@ -11643,6 +11690,7 @@ MonoBehaviour:
   hpFillImage: {fileID: 7550626572674203587}
   spFillImage: {fileID: 6701272932928646033}
   skillBarView: {fileID: 6489545391756329324}
+  statusIconBarView: {fileID: 1875981337015050828}
 --- !u!1 &8292340017370015752
 GameObject:
   m_ObjectHideFlags: 0

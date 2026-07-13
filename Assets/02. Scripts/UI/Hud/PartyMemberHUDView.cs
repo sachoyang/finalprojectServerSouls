@@ -19,6 +19,9 @@ public class PartyMemberHUDView : MonoBehaviour
     [Header("Skill")]
     [SerializeField] private PartyMemberSkillBarView skillBarView;
 
+    [Header("Status")]
+    [SerializeField] private StatusIconBarView statusIconBarView;
+
     private void Awake()
     {
         ResolveReferences();
@@ -63,6 +66,18 @@ public class PartyMemberHUDView : MonoBehaviour
     {
         if (skillBarView != null)
             skillBarView.Clear();
+    }
+
+    public void SetStatuses(IReadOnlyList<ActiveStatusUIInfo> statuses)
+    {
+        if (statusIconBarView != null)
+            statusIconBarView.SetStatuses(statuses);
+    }
+
+    public void ClearStatuses()
+    {
+        if (statusIconBarView != null)
+            statusIconBarView.Clear();
     }
 
     private void SetName(string displayName)
