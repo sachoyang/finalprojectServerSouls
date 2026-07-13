@@ -198,6 +198,12 @@ public static class PlayerRegistry
         return inventory != null;
     }
 
+    public static bool TryGetStatusController(NetworkPlayerController player, out PlayerStatusController statusController)
+    {
+        statusController = player != null ? player.GetComponent<PlayerStatusController>() : null;
+        return statusController != null;
+    }
+
     public static bool TryGetNetworkPlayerData(NetworkPlayerController player, out NetworkPlayerData playerData)
     {
         playerData = player != null ? player.GetComponent<NetworkPlayerData>() : null;

@@ -253,12 +253,14 @@ public class HUDManager : MonoBehaviour
             if (i >= partyMembers.Count)
             {
                 partyMemberHUDViews[i].ClearSkills();
+                partyMemberHUDViews[i].ClearStatuses();
                 partyMemberHUDViews[i].SetVisible(false);
                 continue;
             }
 
             partyMemberHUDViews[i].SetData(partyMembers[i].UIData);
             partyMemberHUDViews[i].SetSkills(partyMembers[i].Skills);
+            partyMemberHUDViews[i].SetStatuses(partyMembers[i].Statuses);
         }
     }
 
@@ -275,11 +277,22 @@ public class HUDManager : MonoBehaviour
                 continue;
 
             List<PartyMemberSkillUIData> skills = BuildPartyMemberSkillUIData(player);
+            IReadOnlyList<ActiveStatusUIInfo> statuses = BuildPartyMemberStatusUIData(player);
 
-            partyMembers.Add(new PartyMemberRuntimeData(uiData, skills));
+            partyMembers.Add(new PartyMemberRuntimeData(uiData, skills, statuses));
         }
 
         return partyMembers;
+    }
+
+    private IReadOnlyList<ActiveStatusUIInfo> BuildPartyMemberStatusUIData(NetworkPlayerController player)
+    {
+        if (player == null)
+            return null;
+
+        return PlayerRegistry.TryGetStatusController(player, out PlayerStatusController statusController)
+            ? statusController.GetActiveStatusesForUI()
+            : null;
     }
 
     private List<PartyMemberSkillUIData> BuildPartyMemberSkillUIData(NetworkPlayerController player)
@@ -413,11 +426,16 @@ public class HUDManager : MonoBehaviour
     {
         public readonly PartyMemberUIData UIData;
         public readonly List<PartyMemberSkillUIData> Skills;
+        public readonly IReadOnlyList<ActiveStatusUIInfo> Statuses;
 
-        public PartyMemberRuntimeData(PartyMemberUIData uiData, List<PartyMemberSkillUIData> skills)
+        public PartyMemberRuntimeData(
+            PartyMemberUIData uiData,
+            List<PartyMemberSkillUIData> skills,
+            IReadOnlyList<ActiveStatusUIInfo> statuses)
         {
             UIData = uiData;
             Skills = skills;
+            Statuses = statuses;
         }
     }
 }
