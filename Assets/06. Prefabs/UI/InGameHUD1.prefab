@@ -1485,7 +1485,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerHUDView: {fileID: 7560511977825129531}
   bossHUDView: {fileID: 2797270223535193496}
-  skillSlotViews: []
+  skillSlotViews:
+  - {fileID: 2816835252287222794}
+  - {fileID: 1602918137268547896}
+  - {fileID: 875924028674077437}
+  - {fileID: 1912451243157786358}
   partyMemberHUDViews:
   - {fileID: 8337415092931222162}
   - {fileID: 6213837335482916431}
