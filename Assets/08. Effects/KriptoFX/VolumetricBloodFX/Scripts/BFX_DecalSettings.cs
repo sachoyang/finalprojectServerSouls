@@ -63,10 +63,20 @@ namespace BFX
             float ground        = currentHeight;
             if (BloodSettings.AutomaticGroundHeightDetection)
             {
-                var raycasts = Physics.RaycastAll(parent.position, Vector3.down, 5);
+                var raycasts = Physics.RaycastAll(parent.position, Vector3.down, 5, ~0, QueryTriggerInteraction.Ignore);
+                var closestGround = float.NegativeInfinity;
                 foreach (var raycastHit in raycasts)
                 {
-                    if (raycastHit.point.y < ground) ground = raycastHit.point.y;
+                    if (raycastHit.point.y <= currentHeight + 0.001f &&
+                        raycastHit.point.y > closestGround)
+                    {
+                        closestGround = raycastHit.point.y;
+                    }
+                }
+
+                if (closestGround > float.NegativeInfinity)
+                {
+                    ground = closestGround;
                 }
             }
             else
