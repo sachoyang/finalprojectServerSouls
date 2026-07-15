@@ -17,6 +17,16 @@ public partial class NetworkPlayerController
         {
             _showPlayerDebug = !_showPlayerDebug;
         }
+
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            RequestLockOn();
+        }
+
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            RequestClearLockOn();
+        }
     }
 
     public override void FixedUpdateNetwork()
@@ -64,7 +74,10 @@ public partial class NetworkPlayerController
             return;
         }
 
-        ProcessLockOnInput(data);
+        if (HasStateAuthority)
+        {
+            UpdateLockOnState();
+        }
 
         // 입력 방향은 대각선 이동이 더 빨라지지 않도록 정규화한다.
         Vector3 desiredMove = data.direction;
@@ -332,20 +345,8 @@ public partial class NetworkPlayerController
         _jumpAirborneObserved = false;
     }
 
-    private void ProcessLockOnInput(NetworkInputData data)
+    private void UpdateLockOnState()
     {
-        // 락온 취소는 다른 락온 처리보다 우선한다.
-        if (data.buttons.IsSet(NetworkInputData.LOCKON_CANCEL))
-        {
-            ClearLockOn();
-            return;
-        }
-
-        if (data.buttons.IsSet(NetworkInputData.LOCKON))
-        {
-            SelectNextLockOnTarget();
-        }
-
         if (_lockOnTarget == null)
         {
             // 선택된 대상이 없으면 네트워크 락온 상태도 꺼서 Animator가 일반 이동으로 돌아간다.
@@ -366,31 +367,85 @@ public partial class NetworkPlayerController
         IsLockOnNetworked = true;
     }
 
-    private void SelectNextLockOnTarget()
+    public bool TryBuildLockOnRequest(out NetworkId targetObjectId, out int targetPointIndex)
     {
-        // 가장 가까운 보스의 락온 포인트들을 순환 선택한다.
+        targetObjectId = default;
+        targetPointIndex = -1;
+
+        if (lockOnTargetSelector == null)
+        {
+            return false;
+        }
+
+        Transform selectedTarget = lockOnTargetSelector.SelectNextTarget(transform, _lockOnTarget, viewCamera);
+        return selectedTarget != null &&
+               lockOnTargetSelector.TryGetTargetIdentity(selectedTarget, out targetObjectId, out targetPointIndex);
+    }
+
+    private void RequestLockOn()
+    {
+        if (!TryBuildLockOnRequest(out NetworkId targetObjectId, out int targetPointIndex))
+        {
+            RequestClearLockOn();
+            return;
+        }
+
+        if (HasStateAuthority)
+        {
+            ApplyRequestedLockOnTarget(targetObjectId, targetPointIndex);
+            return;
+        }
+
+        RPC_RequestLockOn(targetObjectId, targetPointIndex);
+    }
+
+    private void RequestClearLockOn()
+    {
+        if (HasStateAuthority)
+        {
+            ClearLockOn();
+            return;
+        }
+
+        RPC_RequestClearLockOn();
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    private void RPC_RequestLockOn(NetworkId targetObjectId, int targetPointIndex)
+    {
+        ApplyRequestedLockOnTarget(targetObjectId, targetPointIndex);
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    private void RPC_RequestClearLockOn()
+    {
+        ClearLockOn();
+    }
+
+    private void ApplyRequestedLockOnTarget(NetworkId targetObjectId, int targetPointIndex)
+    {
         if (lockOnTargetSelector == null)
         {
             ClearLockOn();
             return;
         }
 
-        // 대상 검색/순환은 선택 전용 컴포넌트가 맡고, 컨트롤러는 전투 상태와 카메라 전달만 갱신한다.
-        // viewCamera를 넘겨 화면 중심에 가장 가까운 후보를 우선 락온하도록 한다.
-        _lockOnTarget = lockOnTargetSelector.SelectNextTarget(transform, _lockOnTarget, viewCamera);
-        if (_lockOnTarget == null)
+        if (!lockOnTargetSelector.TryResolveTarget(
+                Runner,
+                targetObjectId,
+                targetPointIndex,
+                out Transform requestedTarget) ||
+            !lockOnTargetSelector.IsCurrentTargetValid(transform, requestedTarget))
         {
             ClearLockOn();
             return;
         }
 
+        _lockOnTarget = requestedTarget;
+        LockOnTargetObjectId = targetObjectId;
+        LockOnTargetPointIndex = targetPointIndex;
         LockOnPointPosition = _lockOnTarget.position;
         IsLockOnNetworked = true;
-
-        if (Object.HasInputAuthority)
-        {
-            GetCameraManager()?.SetLockOnTarget(_lockOnTarget);
-        }
     }
 
     private void ClearLockOn()
@@ -398,6 +453,8 @@ public partial class NetworkPlayerController
         // 선택기 내부 순환 상태와 컨트롤러의 현재 타겟을 함께 비운다.
         _lockOnTarget = null;
         lockOnTargetSelector?.Clear();
+        LockOnTargetObjectId = default;
+        LockOnTargetPointIndex = -1;
         IsLockOnNetworked = false;
         LockOnMoveNetworked = LockMoveIdle;
 

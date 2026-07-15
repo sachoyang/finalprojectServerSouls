@@ -76,6 +76,11 @@ public partial class NetworkPlayerController
             MoveSpeedBlendNetworked = 0f;
             RollDirection = Vector3.zero;
             ForwardJumpDirection = Vector3.zero;
+            LockOnTargetObjectId = default;
+            LockOnTargetPointIndex = -1;
+            LockOnPointPosition = Vector3.zero;
+            IsLockOnNetworked = false;
+            LockOnMoveNetworked = LockMoveIdle;
             ParryGuardActive = false;
             if (_networkCharacterController != null)
             {
@@ -176,7 +181,7 @@ public partial class NetworkPlayerController
         if (Object.HasInputAuthority)
         {
             // 락온 카메라 타겟도 로컬 플레이어의 카메라에만 반영한다.
-            if (IsLockOnNetworked && _lockOnTarget != null)
+            if (IsLockOnNetworked && ResolveNetworkedLockOnTarget())
             {
                 GetCameraManager()?.SetLockOnTarget(_lockOnTarget);
             }
@@ -194,6 +199,35 @@ public partial class NetworkPlayerController
             : Mathf.Clamp01(MoveSpeedBlendNetworked);
         SetAnimatorFloatDampedAndSnap(MoveSpeed, normalMoveBlend);
         UpdateLockOnAnimatorParameters(lockOnMovement, LockOnMoveNetworked);
+    }
+
+    private bool ResolveNetworkedLockOnTarget()
+    {
+        if (_lockOnTarget != null &&
+            lockOnTargetSelector != null &&
+            lockOnTargetSelector.TryGetTargetIdentity(
+                _lockOnTarget,
+                out NetworkId currentObjectId,
+                out int currentPointIndex) &&
+            currentObjectId == LockOnTargetObjectId &&
+            currentPointIndex == LockOnTargetPointIndex)
+        {
+            return true;
+        }
+
+        if (lockOnTargetSelector == null ||
+            !lockOnTargetSelector.TryResolveTarget(
+                Runner,
+                LockOnTargetObjectId,
+                LockOnTargetPointIndex,
+                out Transform resolvedTarget))
+        {
+            _lockOnTarget = null;
+            return false;
+        }
+
+        _lockOnTarget = resolvedTarget;
+        return true;
     }
 
     private void UpdatePlayerTag()

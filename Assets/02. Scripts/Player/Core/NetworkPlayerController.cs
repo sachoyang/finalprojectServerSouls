@@ -139,6 +139,8 @@ public partial class NetworkPlayerController :
     [Networked] private bool IsLockOnNetworked { get; set; }
     [Networked] private byte LockOnMoveNetworked { get; set; }
     [Networked] private Vector3 LockOnPointPosition { get; set; }
+    [Networked] private NetworkId LockOnTargetObjectId { get; set; }
+    [Networked] private int LockOnTargetPointIndex { get; set; }
     [Networked] private bool WasShiftHeld { get; set; }
     [Networked] private float ShiftHoldTime { get; set; }
     [Networked] private Vector3 RollDirection { get; set; }

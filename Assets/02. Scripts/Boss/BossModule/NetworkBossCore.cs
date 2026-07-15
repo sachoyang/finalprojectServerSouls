@@ -160,13 +160,39 @@ public class NetworkBossCore : NetworkBehaviour
     {
         get
         {
-            if (CurrentState != BossState.ExecutingPattern) return null;
-            var patterns = CurrentAvailablePatterns;
-            if (patterns == null || CurrentPatternIndex < 0 || CurrentPatternIndex >= patterns.Count) return null;
-            var pattern = patterns[CurrentPatternIndex];
-            if (pattern == null || CurrentStepIndex < 0 || CurrentStepIndex >= pattern.ActionCount) return null;
-            return pattern.GetAction(CurrentStepIndex);
+            return TryGetCurrentPatternAction(out _, out BossActionModule action) ? action : null;
         }
+    }
+
+    private bool TryGetCurrentPatternAction(out BossPatternModule pattern, out BossActionModule action)
+    {
+        pattern = null;
+        action = null;
+
+        if (CurrentState != BossState.ExecutingPattern)
+        {
+            return false;
+        }
+
+        List<BossPatternModule> patterns = CurrentAvailablePatterns;
+        if (patterns == null ||
+            CurrentPatternIndex < 0 ||
+            CurrentPatternIndex >= patterns.Count)
+        {
+            return false;
+        }
+
+        pattern = patterns[CurrentPatternIndex];
+        if (pattern == null ||
+            CurrentStepIndex < 0 ||
+            CurrentStepIndex >= pattern.ActionCount)
+        {
+            pattern = null;
+            return false;
+        }
+
+        action = pattern.GetAction(CurrentStepIndex);
+        return action != null;
     }
 
     // ==========================================
@@ -308,12 +334,7 @@ public class NetworkBossCore : NetworkBehaviour
     private bool ShouldHeadTrackTarget()
     {
         if (CurrentState != BossState.ExecutingPattern) return true;
-        if (CurrentPatternIndex < 0 || CurrentStepIndex < 0) return true;
-        if (CurrentPatternIndex >= CurrentAvailablePatterns.Count) return true;
-
-        BossPatternModule pattern = CurrentAvailablePatterns[CurrentPatternIndex];
-        if (CurrentStepIndex >= pattern.ActionCount) return true; // 범위 밖 방어
-        BossActionModule action = pattern.GetAction(CurrentStepIndex);
+        if (!TryGetCurrentPatternAction(out _, out BossActionModule action)) return true;
 
         if (!action.enableTracking) return false; // 트래킹 끈 패턴 → 머리도 고정
 
@@ -384,10 +405,7 @@ public class NetworkBossCore : NetworkBehaviour
     // ==========================================
     private void ProcessPatternMovement()
     {
-        if (CurrentPatternIndex < 0 || CurrentPatternIndex >= CurrentAvailablePatterns.Count) return;
-
-        BossPatternModule pattern = CurrentAvailablePatterns[CurrentPatternIndex];
-        BossActionModule action = pattern.GetAction(CurrentStepIndex);
+        if (!TryGetCurrentPatternAction(out _, out BossActionModule action)) return;
 
         // ★ 루트모션 모드: 비주얼이 모아둔 실제 이동량/회전량을 가져와 적용 (커브 무시)
         if (action.useRootMotion)
@@ -495,10 +513,11 @@ public class NetworkBossCore : NetworkBehaviour
 
     private void ProcessPatternTracking()
     {
-        if (AggroTarget == null || CurrentPatternIndex < 0) return;
-
-        BossPatternModule pattern = CurrentAvailablePatterns[CurrentPatternIndex];
-        BossActionModule action = pattern.GetAction(CurrentStepIndex);
+        if (AggroTarget == null ||
+            !TryGetCurrentPatternAction(out _, out BossActionModule action))
+        {
+            return;
+        }
 
         // 🔥 [회전 이중 적용 버그 픽스] 루트모션 액션(Turn90_RM 등)은 '루트모션 회전'이 방향을 전담한다.
         //    여기서 트래킹 Slerp까지 같이 돌리면 (루트모션 + 트래킹) 회전이 합산되어 타겟을 지나쳐 과회전 →
@@ -584,7 +603,15 @@ public class NetworkBossCore : NetworkBehaviour
         {
             if (StateTimer.Expired(Runner))
             {
-                BossPatternModule pattern = CurrentAvailablePatterns[CurrentPatternIndex];
+                if (!TryGetCurrentPatternAction(out BossPatternModule pattern, out _))
+                {
+                    CurrentPatternIndex = -1;
+                    CurrentStepIndex = -1;
+                    AttackCooldown = TickTimer.CreateFromSeconds(Runner, patternCooldown);
+                    ChangeState(BossState.Idle);
+                    return;
+                }
+
                 CurrentStepIndex++;
 
                 if (CurrentStepIndex < pattern.ActionCount)
@@ -663,11 +690,21 @@ public class NetworkBossCore : NetworkBehaviour
 
     private void StartPattern(int patternIndex)
     {
+        List<BossPatternModule> patterns = CurrentAvailablePatterns;
+        if (patterns == null ||
+            patternIndex < 0 ||
+            patternIndex >= patterns.Count ||
+            patterns[patternIndex] == null ||
+            patterns[patternIndex].ActionCount <= 0)
+        {
+            return;
+        }
+
         CurrentState = BossState.ExecutingPattern;
         CurrentPatternIndex = patternIndex;
         CurrentStepIndex = 0;
 
-        BossPatternModule pattern = CurrentAvailablePatterns[CurrentPatternIndex];
+        BossPatternModule pattern = patterns[CurrentPatternIndex];
         ExecuteCurrentPatternStep(pattern.GetAction(0));
     }
 
@@ -738,10 +775,16 @@ public class NetworkBossCore : NetworkBehaviour
         // 1. 패턴 실행 중일 때 (공격 등)
         if (CurrentState == BossState.ExecutingPattern && CurrentPatternIndex >= 0 && CurrentStepIndex >= 0)
         {
+            if (!TryGetCurrentPatternAction(out _, out BossActionModule action))
+            {
+                _lastPatternIndex = -1;
+                _lastStepIndex = -1;
+                _actionSoundPlayed = false;
+                return;
+            }
+
             if (_lastPatternIndex != CurrentPatternIndex || _lastStepIndex != CurrentStepIndex)
             {
-                BossActionModule action = CurrentAvailablePatterns[CurrentPatternIndex].GetAction(CurrentStepIndex);
-
                 // 해시값으로 애니메이션 실행
                 // SO의 OnValidate에서 미리 구워둔 해시를 사용 (핫패스에서 StringToHash 재계산 방지)
                 // 해시가 비어있으면(0) 실시간으로 문자열을 찾아 변환하는 안전장치만 남긴다.
@@ -771,7 +814,7 @@ public class NetworkBossCore : NetworkBehaviour
             // 액션 효과음. actionSoundPercent 시점에 딱 1회.
             // Render는 매 프레임 돌기 때문에 진행률로 판정해야 앞동작 뒤에 소리를 낼 수 있다.
             // 인덱스로 직접 꺼내면 스텝 전환 프레임에 범위를 벗어날 수 있어 가드가 들어간 프로퍼티를 쓴다.
-            TryPlayActionSound(CurrentAction);
+            TryPlayActionSound(action);
         }
         else
         {
