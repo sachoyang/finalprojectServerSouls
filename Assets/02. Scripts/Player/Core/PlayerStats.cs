@@ -230,6 +230,11 @@ public class PlayerStats : NetworkBehaviour
         ClearReviveProgress();
     }
 
+    public override void Despawned(NetworkRunner runner, bool hasState)
+    {
+        IsSpawnedReady = false;
+    }
+
     public override void Render()
     {
         if (_changeDetector == null)

@@ -199,8 +199,6 @@ public abstract class PlayerAbilityModule : ScriptableObject
     {
         if (dbData == null) return;
 
-        name = dbData.ability_id;
-
         bitIndex = dbData.bit_index;
         abilityId = dbData.ability_id;
         displayName = dbData.display_name;

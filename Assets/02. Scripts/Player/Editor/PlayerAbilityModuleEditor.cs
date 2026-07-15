@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Playables;
 
 [CustomEditor(typeof(PlayerAbilityModule), true)]
 public class PlayerAbilityModuleEditor : Editor
@@ -1712,9 +1713,14 @@ public class PlayerAbilityModuleEditor : Editor
 
     private void CleanupPreview()
     {
+        _previewPlaying = false;
+
         if (_previewAnimator != null)
         {
+            DestroyAnimatorPlayableGraph(_previewAnimator);
             _previewAnimator.Rebind();
+            _previewAnimator.Update(0f);
+            _previewAnimator.runtimeAnimatorController = null;
             _previewAnimator.enabled = false;
         }
 
@@ -1753,6 +1759,20 @@ public class PlayerAbilityModuleEditor : Editor
         {
             _previewUtility.Cleanup();
             _previewUtility = null;
+        }
+    }
+
+    private static void DestroyAnimatorPlayableGraph(Animator animator)
+    {
+        if (animator == null)
+        {
+            return;
+        }
+
+        PlayableGraph graph = animator.playableGraph;
+        if (graph.IsValid())
+        {
+            graph.Destroy();
         }
     }
 
