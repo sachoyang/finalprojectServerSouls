@@ -13,7 +13,7 @@ public class LobbyServerManager : NetworkBehaviour
     [Header("Slot UI")]
     public GameObject[] slotPanels;
 
-    [Tooltip("Slot0, Slot1, Slot2 ��ġ�� Ready üũ ǥ��")]
+    [Tooltip("Slot0, Slot1, Slot2 위치의 Ready 체크 표시")]
     public GameObject[] readyEffects;
 
     public GameObject[] youIndicators;
@@ -25,13 +25,13 @@ public class LobbyServerManager : NetworkBehaviour
     public Button localReadyButton;
     public Text localReadyButtonText;
 
-    [Tooltip("���� �ϴ� ��ư�� BG Image")]
+    [Tooltip("하단 액션 버튼의 BG Image")]
     public Image localReadyButtonBackground;
 
-    [Tooltip("���� �ϴ� ��ư�� EF ������Ʈ")]
+    [Tooltip("하단 액션 버튼의 EF 오브젝트")]
     public GameObject localReadyButtonEffect;
 
-    [Tooltip("���� �ϴ� ��ư EF�� Image")]
+    [Tooltip("하단 액션 버튼 EF의 Image")]
     public Image localReadyButtonEffectImage;
 
     [Header("Button Colors")]
@@ -149,7 +149,7 @@ public class LobbyServerManager : NetworkBehaviour
             }
         }
 
-        // ���� ���� ���Ŀ��� ��ư�� Ȱ��ȭ�ǵ��� �� ������ �����Ѵ�.
+        // 로컬 플레이어 할당 직후에도 버튼이 활성화되도록 매 렌더마다 갱신한다.
         RefreshLocalActionButton();
     }
 
@@ -328,7 +328,7 @@ public class LobbyServerManager : NetworkBehaviour
             }
         }
 
-        // ������ Start�� �Խ�Ʈ�� Cancel ���´� �ʷϻ��̴�.
+        // 호스트의 Start와 게스트의 Cancel 상태는 초록색이다.
         bool useGreen =
             isHost || isLocalPlayerReady;
 
@@ -372,7 +372,7 @@ public class LobbyServerManager : NetworkBehaviour
             return;
         }
 
-        // ������ Ready�� ������� �ʰ� �ٷ� ������ �õ��Ѵ�.
+        // 호스트는 Ready를 누적하지 않고 바로 전투 시작을 시도한다.
         if (HasStateAuthority)
         {
             TryStartBattle();
@@ -395,7 +395,7 @@ public class LobbyServerManager : NetworkBehaviour
         if (!AreAllGuestPlayersReady())
         {
             ShowWarningMessage(
-                "�غ����� ���� �÷��̾ �ֽ��ϴ�.");
+                "준비되지 않은 플레이어가 있습니다.");
 
             return;
         }

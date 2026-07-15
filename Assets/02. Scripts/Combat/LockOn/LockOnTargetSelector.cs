@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Fusion;
 using UnityEngine;
 
 public class LockOnTargetSelector : MonoBehaviour
@@ -59,12 +60,79 @@ public class LockOnTargetSelector : MonoBehaviour
         }
 
         LockOnTargetRoot root = currentTarget.GetComponentInParent<LockOnTargetRoot>();
-        return IsRootSelectable(owner, root);
+        return IsRootSelectable(owner, root) &&
+               (currentTarget.position - owner.position).sqrMagnitude <= searchRadius * searchRadius;
     }
 
     public void Clear()
     {
         _currentIndex = -1;
+    }
+
+    public bool TryGetTargetIdentity(Transform target, out NetworkId objectId, out int pointIndex)
+    {
+        objectId = default;
+        pointIndex = -1;
+
+        if (target == null)
+        {
+            return false;
+        }
+
+        NetworkObject networkObject = target.GetComponentInParent<NetworkObject>();
+        if (networkObject == null)
+        {
+            return false;
+        }
+
+        LockOnTargetPoint targetPoint = target.GetComponent<LockOnTargetPoint>();
+        if (targetPoint == null)
+        {
+            return false;
+        }
+
+        _pointBuffer.Clear();
+        networkObject.GetComponentsInChildren(false, _pointBuffer);
+        for (int i = 0; i < _pointBuffer.Count; i++)
+        {
+            if (_pointBuffer[i] == targetPoint)
+            {
+                objectId = networkObject.Id;
+                pointIndex = i;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public bool TryResolveTarget(
+        NetworkRunner runner,
+        NetworkId objectId,
+        int pointIndex,
+        out Transform target)
+    {
+        target = null;
+        if (runner == null || pointIndex < 0)
+        {
+            return false;
+        }
+
+        if (!runner.TryFindObject(objectId, out NetworkObject networkObject) ||
+            networkObject == null)
+        {
+            return false;
+        }
+
+        _pointBuffer.Clear();
+        networkObject.GetComponentsInChildren(false, _pointBuffer);
+        if (pointIndex >= _pointBuffer.Count || _pointBuffer[pointIndex] == null)
+        {
+            return false;
+        }
+
+        target = _pointBuffer[pointIndex].transform;
+        return true;
     }
 
     private List<TargetCandidate> GetVisibleTargetsSortedByScreenCenter(Transform owner, Camera viewCamera)

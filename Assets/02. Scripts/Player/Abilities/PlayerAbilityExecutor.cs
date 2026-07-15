@@ -207,7 +207,7 @@ public class PlayerAbilityExecutor : MonoBehaviour
         CombatSystem combatSystem = FindFirstObjectByType<CombatSystem>();
         if (combatSystem == null)
         {
-            Debug.LogWarning($"[PlayerAbilityExecutor] CombatSystem not found for ability '{module.AbilityId}'.");
+            // Path/Lobby 같은 비전투 씬에서는 스킬 연출만 재생하고 히트 판정은 생략한다.
             yield break;
         }
 

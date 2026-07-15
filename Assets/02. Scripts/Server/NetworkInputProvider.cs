@@ -15,8 +15,6 @@ public class NetworkInputProvider : MonoBehaviour, INetworkRunnerCallbacks
     private bool _mouseButton0;
     private bool _mouseButton1;
     private bool _jumpPressed;
-    private bool _lockOnPressed;
-    private bool _lockOnCancelPressed;
     private int _nextActionId = 1;
     private int _pendingActionId;
 
@@ -53,9 +51,6 @@ public class NetworkInputProvider : MonoBehaviour, INetworkRunnerCallbacks
             _jumpPressed = true;
             CaptureActionId();
         }
-
-        _lockOnPressed = _lockOnPressed || Input.GetKeyDown(KeyCode.Q);
-        _lockOnCancelPressed = _lockOnCancelPressed || Input.GetKeyDown(KeyCode.E);
     }
 
     private void OnDisable()
@@ -101,14 +96,10 @@ public class NetworkInputProvider : MonoBehaviour, INetworkRunnerCallbacks
         data.buttons.Set(NetworkInputData.MOUSEBUTTON1, _mouseButton1);
         data.buttons.Set(NetworkInputData.SHIFT, Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift));
         data.buttons.Set(NetworkInputData.JUMP, _jumpPressed);
-        data.buttons.Set(NetworkInputData.LOCKON, _lockOnPressed);
-        data.buttons.Set(NetworkInputData.LOCKON_CANCEL, _lockOnCancelPressed);
 
         _mouseButton0 = false;
         _mouseButton1 = false;
         _jumpPressed = false;
-        _lockOnPressed = false;
-        _lockOnCancelPressed = false;
         _pendingActionId = 0;
 
         input.Set(data);
