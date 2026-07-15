@@ -1,0 +1,1329 @@
+<title>Soul Rush — Project Dossier</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  /* ============ Tokens ============ */
+  :root {
+    --void:      #f3ede1;
+    --char:      #e8dfcd;
+    --char-2:    #ddd0b6;
+    --ink:       #241d14;
+    --ink-dim:   #5c5140;
+    --gold:      #92661f;
+    --gold-bright:#b98426;
+    --ember:     #7a2c1e;
+    --line:      rgba(36,29,20,0.14);
+    --shadow:    rgba(36,29,20,0.18);
+    --rail-bg:   rgba(243,237,225,0.9);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --void:      #120e0b;
+      --char:      #1c1712;
+      --char-2:    #271f17;
+      --ink:       #ece3d2;
+      --ink-dim:   #a99c86;
+      --gold:      #c99a4c;
+      --gold-bright:#e8bd72;
+      --ember:     #c65a3f;
+      --line:      rgba(201,154,76,0.16);
+      --shadow:    rgba(0,0,0,0.5);
+      --rail-bg:   rgba(18,14,11,0.9);
+    }
+  }
+  :root[data-theme="dark"] {
+    --void:#120e0b; --char:#1c1712; --char-2:#271f17; --ink:#ece3d2; --ink-dim:#a99c86;
+    --gold:#c99a4c; --gold-bright:#e8bd72; --ember:#c65a3f; --line:rgba(201,154,76,0.16);
+    --shadow:rgba(0,0,0,0.5); --rail-bg:rgba(18,14,11,0.9);
+  }
+  :root[data-theme="light"] {
+    --void:#f3ede1; --char:#e8dfcd; --char-2:#ddd0b6; --ink:#241d14; --ink-dim:#5c5140;
+    --gold:#92661f; --gold-bright:#b98426; --ember:#7a2c1e; --line:rgba(36,29,20,0.14);
+    --shadow:rgba(36,29,20,0.18); --rail-bg:rgba(243,237,225,0.9);
+  }
+
+  --font-kr: -apple-system, "Apple SD Gothic Neo", "Pretendard Variable", "Pretendard",
+             "Malgun Gothic", "Noto Sans KR", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, "Noto Sans Mono CJK KR", monospace;
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; overflow: hidden; }
+  body {
+    background: var(--void);
+    color: var(--ink);
+    font-family: var(--font-kr), var(--font-mono);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 { text-wrap: balance; margin: 0; font-weight: 800; letter-spacing: -0.01em; }
+  p { margin: 0; }
+  ul { margin: 0; padding: 0; list-style: none; }
+  table { border-collapse: collapse; width: 100%; }
+  img, video { max-width: 100%; display: block; }
+
+  .eyebrow {
+    font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--gold);
+    display: flex; align-items: baseline; gap: 0.6em;
+  }
+  .eyebrow .idx { font-variant-numeric: tabular-nums; opacity: 0.7; }
+  .measure { max-width: 62ch; }
+
+  /* ============ Top bar ============ */
+  .topbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 60;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.65rem 1.1rem;
+    background: var(--rail-bg);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .topbar .brand { font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.1em; color: var(--ink-dim); }
+  .topbar .brand strong { color: var(--gold); }
+  .topbar .controls { display: flex; gap: 0.5rem; }
+  /* 전체화면 발표 중에는 편집/다운로드 등 제작 도구를 숨긴다 */
+  body.is-fullscreen .topbar { display: none; }
+  .btn {
+    font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.02em;
+    border: 1px solid var(--line); background: var(--char); color: var(--ink);
+    padding: 0.5rem 0.8rem; border-radius: 3px; cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  }
+  .btn:hover { border-color: var(--gold); color: var(--gold-bright); }
+  .btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .btn[aria-pressed="true"] { background: var(--gold); color: var(--void); border-color: var(--gold); }
+
+  body.edit-mode .editable {
+    outline: 1px dashed var(--gold); outline-offset: 4px; border-radius: 2px; cursor: text;
+  }
+  body.edit-mode .editable:focus { outline: 2px solid var(--gold-bright); background: color-mix(in srgb, var(--gold) 8%, transparent); }
+
+  /* ============ Nav rail (slide picker) ============ */
+  .rail {
+    position: fixed; top: 50%; left: 0.9rem; transform: translateY(-50%);
+    z-index: 55; display: flex; flex-direction: column; gap: 0.4rem;
+    font-family: var(--font-mono);
+    max-height: 74vh; overflow-y: auto; padding-right: 0.3rem;
+  }
+  .rail button {
+    all: unset; display: flex; align-items: center; gap: 0.5rem; cursor: pointer;
+    color: var(--ink-dim); font-size: 0.65rem; letter-spacing: 0.03em; opacity: 0.5;
+    transition: opacity 0.2s ease, color 0.2s ease;
+  }
+  .rail button::before { content: ""; width: 0.9rem; height: 1px; background: currentColor; display: inline-block; flex: none; }
+  .rail button:hover, .rail button:focus-visible { opacity: 1; color: var(--gold); }
+  .rail button.current { opacity: 1; color: var(--gold-bright); font-weight: 600; }
+  .rail button.current::before { background: var(--gold-bright); width: 1.4rem; }
+  @media (max-width: 980px) { .rail { display: none; } }
+
+  /* ============ Pager (bottom-right) ============ */
+  .pager {
+    position: fixed; right: 1.1rem; bottom: 1rem; z-index: 60;
+    display: flex; align-items: center; gap: 0.7rem;
+  }
+  .pager-count {
+    font-family: var(--font-mono); font-size: 0.72rem; color: var(--ink-dim);
+    font-variant-numeric: tabular-nums;
+  }
+  .pager-btn {
+    all: unset; width: 2.1rem; height: 2.1rem; border-radius: 50%;
+    border: 1px solid var(--line); background: var(--char); color: var(--ink);
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+    font-size: 1rem;
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+  .pager-btn:hover { border-color: var(--gold); color: var(--gold-bright); }
+  .pager-btn:disabled { opacity: 0.3; cursor: default; }
+
+  .fs-hint {
+    position: fixed; left: 50%; bottom: 4.2rem; transform: translateX(-50%) translateY(0.4rem);
+    z-index: 70; max-width: min(90vw, 460px);
+    background: var(--char); border: 1px solid var(--gold); border-radius: 4px;
+    color: var(--ink); font-size: 0.78rem; padding: 0.6rem 0.9rem;
+    box-shadow: 0 6px 18px var(--shadow);
+    opacity: 0; pointer-events: none; transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+  .fs-hint.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ============ Slides ============ */
+  .slide {
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    padding: clamp(3.6rem, 9vh, 5.2rem) clamp(1.1rem, 5vw, 4.5rem) clamp(2.6rem, 6vh, 3.4rem);
+    opacity: 0; visibility: hidden; pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  .slide.active { opacity: 1; visibility: visible; pointer-events: auto; }
+  @media (prefers-reduced-motion: reduce) { .slide { transition: none; } }
+
+  .slide-inner { width: 100%; max-width: 1180px; max-height: 100%; overflow-y: auto; margin: 0 auto; }
+  .slide-head { margin-bottom: 1.5rem; }
+  .slide-title { font-size: clamp(1.5rem, 3vw, 2.35rem); margin-top: 0.45rem; }
+
+  .cover-slide {
+    background:
+      radial-gradient(ellipse at 20% -10%, color-mix(in srgb, var(--ember) 22%, transparent), transparent 60%),
+      radial-gradient(ellipse at 85% 110%, color-mix(in srgb, var(--gold) 16%, transparent), transparent 55%);
+  }
+  .cover-slide .slide-inner { text-align: left; }
+  .cover-slide .slide-title { font-size: clamp(2.6rem, 8vw, 5.5rem); line-height: 0.95; }
+  .cover-kicker { font-size: 1.02rem; color: var(--ink-dim); margin-top: 0.9rem; }
+  .cover-credit {
+    margin-top: 1.8rem; display: flex; gap: 1.5rem; flex-wrap: wrap;
+    font-family: var(--font-mono); font-size: 0.75rem; color: var(--ink-dim);
+  }
+  .cover-credit b { color: var(--ink); font-weight: 600; }
+
+  /* ============ Grid helpers ============ */
+  .grid-2 { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: clamp(1.2rem, 3vw, 2.4rem); align-items: start; }
+  @media (max-width: 860px) { .grid-2 { grid-template-columns: 1fr; } }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.9rem; }
+  @media (max-width: 860px) { .grid-3 { grid-template-columns: 1fr; } }
+
+  .stack { display: flex; flex-direction: column; gap: 0.85rem; }
+
+  /* ============ Panels & cards ============ */
+  .panel { background: var(--char); border: 1px solid var(--line); border-radius: 4px; padding: 1.05rem 1.2rem; }
+  .panel h3 { font-size: 1rem; margin-bottom: 0.5rem; }
+  .panel .tag {
+    font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.08em;
+    color: var(--gold); text-transform: uppercase; margin-bottom: 0.3rem; display: block;
+  }
+  .list-dash li {
+    position: relative; padding-left: 1.1rem; color: var(--ink-dim); font-size: 0.87rem;
+    margin-top: 0.4rem;
+  }
+  .list-dash li::before { content: "—"; position: absolute; left: 0; color: var(--gold); }
+  .list-dash li:first-child { margin-top: 0; }
+  .list-dash strong, .list-dash code { color: var(--ink); }
+  code { font-family: var(--font-mono); font-size: 0.87em; background: var(--char-2); padding: 0.05em 0.35em; border-radius: 2px; }
+
+  .person-card { background: var(--char); border: 1px solid var(--line); border-radius: 4px; padding: 1.05rem 1.15rem; }
+  .person-card .name { font-size: 1.1rem; font-weight: 800; }
+  .person-card .role { font-family: var(--font-mono); font-size: 0.68rem; color: var(--gold); letter-spacing: 0.05em; margin-top: 0.2rem; }
+  .person-card .git-id {
+    display: inline-block; margin-top: 0.7rem; font-family: var(--font-mono); font-size: 0.65rem;
+    color: var(--ink-dim); border: 1px solid var(--line); border-radius: 3px; padding: 0.12rem 0.45rem;
+  }
+
+  table.data { font-size: 0.86rem; }
+  table.data th {
+    text-align: left; font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.05em;
+    text-transform: uppercase; color: var(--gold); padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--line);
+  }
+  table.data td { padding: 0.55rem 0.75rem; border-bottom: 1px solid var(--line); color: var(--ink-dim); vertical-align: top; }
+  table.data td strong, table.data td code { color: var(--ink); }
+  table.data tr:last-child td { border-bottom: none; }
+  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 4px; }
+  .table-wrap table.data { min-width: 460px; }
+
+  /* ============ Flow strip ============ */
+  .flow-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; }
+  .flow-step {
+    font-family: var(--font-mono); font-size: 0.72rem;
+    border: 1px solid var(--line); border-radius: 999px; padding: 0.36rem 0.75rem;
+    color: var(--ink); background: var(--char);
+  }
+  .flow-arrow { color: var(--gold); opacity: 0.7; }
+
+  /* ============ Architecture diagram (SVG + animated data flow) ============ */
+  .arch-canvas {
+    position: relative; width: 100%; aspect-ratio: 1000 / 580;
+    margin-top: 0.5rem;
+  }
+  .arch-frame {
+    position: absolute; left: 4%; top: 4.14%; width: 92%; height: 25.86%;
+    border: 1px solid var(--line); border-radius: 8px;
+    background: color-mix(in srgb, var(--char) 55%, transparent);
+    z-index: 1;
+  }
+  .arch-frame-label {
+    position: absolute; top: 0.55rem; left: 0.9rem;
+    font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.07em;
+    text-transform: uppercase; color: var(--gold);
+  }
+  .arch-svg { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; overflow: visible; }
+  .arch-link { fill: none; stroke: var(--line); stroke-width: 2.2; }
+  .arch-arrowhead { fill: var(--line); }
+  .arch-pulse { fill: var(--gold-bright); filter: drop-shadow(0 0 3px var(--gold)); }
+  .arch-pulse-return { fill: var(--gold); opacity: 0.55; }
+  @media (prefers-reduced-motion: reduce) { .arch-pulse, .arch-pulse-return { display: none; } }
+
+  .arch-node {
+    position: absolute; z-index: 3;
+    border: 1px solid var(--line); border-radius: 6px; background: var(--char-2);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 0.35rem 0.6rem; font-size: clamp(0.66rem, 1.3vw, 0.82rem);
+  }
+  .arch-node small { display: block; font-family: var(--font-mono); font-size: 0.85em; color: var(--ink-dim); margin-top: 0.2rem; }
+  .arch-node.host { border-color: var(--gold); color: var(--gold-bright); background: color-mix(in srgb, var(--gold) 12%, var(--char-2)); }
+  .arch-node.hub { border-color: var(--gold); }
+  .arch-node.ghost { border-style: dashed; background: transparent; }
+  .arch-link-label {
+    position: absolute; z-index: 3; transform: translate(-50%, -50%);
+    font-family: var(--font-mono); font-size: 0.6rem; color: var(--ink-dim);
+    background: var(--void); padding: 0.1rem 0.4rem; border-radius: 3px; white-space: nowrap;
+  }
+
+  /* ============ Screenshot slot ============ */
+  .slot { display: flex; flex-direction: column; gap: 0.45rem; }
+  .slot-frame {
+    position: relative; border: 1px dashed var(--line); border-radius: 4px;
+    background: var(--char); aspect-ratio: 16/10; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .slot-media-wrap { display: none; width: 100%; height: 100%; }
+  .slot.filled .slot-media-wrap { display: block; }
+  .slot.filled .slot-empty { display: none; }
+  .slot-media { width: 100%; height: 100%; object-fit: cover; }
+  .slot-empty { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; color: var(--ink-dim); text-align: center; padding: 0.8rem; }
+  .slot-icon { font-size: 1.3rem; opacity: 0.8; }
+  .slot-label { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.03em; }
+  .slot-add {
+    font-family: var(--font-mono); font-size: 0.64rem;
+    border: 1px solid var(--line); background: transparent; color: var(--ink-dim);
+    padding: 0.3rem 0.6rem; border-radius: 3px; cursor: pointer; visibility: hidden;
+  }
+  body.edit-mode .slot-add { visibility: visible; }
+  body.edit-mode .slot-add:hover { border-color: var(--gold); color: var(--gold-bright); }
+  body.edit-mode .slot-frame { cursor: pointer; }
+  .video-slot .slot-frame { aspect-ratio: 16/9; }
+  .strip-slot { margin-top: 1rem; }
+  .strip-slot .slot-frame { aspect-ratio: 21/5; }
+
+  /* ============ Extra slots (edit-mode "add more" affordance) ============ */
+  .extra-slots { display: flex; flex-wrap: wrap; gap: 0.8rem; }
+  .extra-slots:not(:empty) { margin-top: 0.9rem; }
+  .extra-slots .slot { flex: 1 1 220px; max-width: 320px; }
+  .add-slot-btn {
+    display: none; margin-top: 0.8rem;
+    align-items: center; gap: 0.4rem;
+    font-family: var(--font-mono); font-size: 0.68rem;
+    border: 1px dashed var(--line); background: transparent; color: var(--ink-dim);
+    padding: 0.45rem 0.85rem; border-radius: 4px; cursor: pointer;
+  }
+  .add-slot-btn:hover { border-color: var(--gold); color: var(--gold-bright); }
+  body.edit-mode .add-slot-btn { display: inline-flex; }
+
+  .end-note { font-family: var(--font-mono); font-size: 0.7rem; color: var(--ink-dim); text-align: center; margin-top: 1.4rem; }
+</style>
+
+<div class="topbar">
+  <span class="brand"><strong>SOUL RUSH</strong> · project dossier</span>
+  <div class="controls">
+    <button type="button" class="btn" id="editToggle" aria-pressed="false">✏️ 편집 모드</button>
+    <button type="button" class="btn" id="downloadBtn">⬇ 수정본 다운로드</button>
+  </div>
+</div>
+
+<nav class="rail" aria-label="슬라이드 이동"></nav>
+
+<div class="pager">
+  <button type="button" class="btn" id="fsBtn">⛶ 전체화면</button>
+  <button type="button" class="pager-btn" id="prevBtn" aria-label="이전 슬라이드">‹</button>
+  <span class="pager-count" id="pagerCount">01 / 20</span>
+  <button type="button" class="pager-btn" id="nextBtn" aria-label="다음 슬라이드">›</button>
+</div>
+
+<div class="fs-hint" id="fsHint" role="status"></div>
+
+<!-- =========================================================
+     00. COVER
+========================================================= -->
+<section class="slide cover-slide" id="p00" data-label="표지">
+  <div class="slide-inner">
+    <span class="eyebrow"><span class="idx">00</span> PROJECT DOSSIER</span>
+    <h1 class="slide-title editable" contenteditable="false">SOUL RUSH</h1>
+    <p class="cover-kicker editable" contenteditable="false">멀티플레이(3인) 로그라이크 보스러시</p>
+    <div class="cover-credit editable" contenteditable="false">
+      <span><b>양평화</b> · 팀장 / 서버·보스·맵</span>
+      <span><b>임현빈</b> · 플레이어·스킬 시스템·카메라</span>
+      <span><b>이주영</b> · UI/UX·사운드</span>
+    </div>
+    <figure class="slot" data-default="assets/00-cover" data-kind="image" style="margin-top:1.8rem; max-width:520px;">
+      <div class="slot-frame">
+        <div class="slot-media-wrap"></div>
+        <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">타이틀 / 키비주얼</span><button type="button" class="slot-add">추가하기</button></div>
+      </div>
+      <input type="file" class="slot-input" accept="image/*,video/mp4" hidden />
+    </figure>
+    <div class="extra-slots"></div>
+    <button type="button" class="add-slot-btn">+ 스크린샷 / 영상 추가</button>
+  </div>
+</section>
+
+<!-- =========================================================
+     01. 팀원 소개
+========================================================= -->
+<section class="slide" id="p01" data-label="팀원 소개">
+  <div class="slide-inner">
+    <div class="slide-head">
+      <span class="eyebrow"><span class="idx">01</span> TEAM</span>
+      <h2 class="slide-title">팀원 소개</h2>
+    </div>
+    <div class="grid-2">
+      <div class="grid-3">
+        <div class="person-card">
+          <div class="name editable" contenteditable="false">양평화</div>
+          <div class="role editable" contenteditable="false">팀장 · 서버 / 보스 / 맵</div>
+          <ul class="list-dash" style="margin-top:0.7rem;">
+            <li>Photon 방 생성·참가, 백엔드(Apache·PHP·MySQL) 연동</li>
+            <li>보스 AI·패턴 모듈, 채팅·전투 결과·사운드 매니저</li>
+          </ul>
+          <span class="git-id">git: peace</span>
+        </div>
+        <div class="person-card">
+          <div class="name editable" contenteditable="false">임현빈</div>
+          <div class="role editable" contenteditable="false">플레이어 / 스킬 시스템 / 카메라</div>
+          <ul class="list-dash" style="margin-top:0.7rem;">
+            <li>조작·전투·락온·카메라, 컷신 3종 연출</li>
+            <li>스킬 모듈 시스템(Active/Passive/Utility)</li>
+          </ul>
+          <span class="git-id">git: hyunbin802</span>
+        </div>
+        <div class="person-card">
+          <div class="name editable" contenteditable="false">이주영</div>
+          <div class="role editable" contenteditable="false">UI/UX · 사운드</div>
+          <ul class="list-dash" style="margin-top:0.7rem;">
+            <li>HUD·인벤토리·락온 UI, 로비/타이틀 설계</li>
+            <li>항복 투표·게임오버 화면</li>
+          </ul>
+          <span class="git-id">git: desktop</span>
+        </div>
+      </div>
+      <figure class="slot" data-default="assets/01-team" data-kind="image">
+        <div class="slot-frame">
+          <div class="slot-media-wrap"></div>
+          <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">팀 사진 / 스크린샷</span><button type="button" class="slot-add">추가하기</button></div>
+        </div>
+        <input type="file" class="slot-input" accept="image/*,video/mp4" hidden />
+      </figure>
+    </div>
+    <div class="extra-slots"></div>
+    <button type="button" class="add-slot-btn">+ 스크린샷 / 영상 추가</button>
+  </div>
+</section>
+
+<!-- =========================================================
+     02a. 게임 소개 — 핵심 컨셉
+========================================================= -->
+<section class="slide" id="p02a" data-label="게임 소개 · 컨셉">
+  <div class="slide-inner">
+    <div class="slide-head">
+      <span class="eyebrow"><span class="idx">02</span> GAME</span>
+      <h2 class="slide-title">게임 소개 — 핵심 컨셉</h2>
+    </div>
+    <div class="grid-2">
+      <div class="panel">
+        <span class="tag">핵심 컨셉</span>
+        <ul class="list-dash">
+          <li>솔로 플레이 &amp; 멀티 플레이(최대 <strong>3인 협동</strong>)</li>
+          <li>전투는 기본적인 <strong>소울라이크</strong> — 구르기 회피 · 패링 · 스태미나 기반</li>
+          <li>보스 클리어 시 <strong>능력(스킬)을 골라</strong> 강해지는 뱀파이어 서바이벌류의 성장 재미</li>
+          <li><strong>보스러시</strong> 구조 — 던전/전투방을 옮겨가며 연속으로 보스와 싸운다</li>
+        </ul>
+      </div>
+      <figure class="slot" data-default="assets/02-game-intro" data-kind="image">
+        <div class="slot-frame">
+          <div class="slot-media-wrap"></div>
+          <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">게임 소개 스크린샷</span><button type="button" class="slot-add">추가하기</button></div>
+        </div>
+        <input type="file" class="slot-input" accept="image/*,video/mp4" hidden />
+      </figure>
+    </div>
+    <div class="extra-slots"></div>
+    <button type="button" class="add-slot-btn">+ 스크린샷 / 영상 추가</button>
+  </div>
+</section>
+
+<!-- =========================================================
+     02b. 게임 소개 — 로그라이크 규칙 & 루프
+========================================================= -->
+<section class="slide" id="p02b" data-label="게임 소개 · 로그라이크">
+  <div class="slide-inner">
+    <div class="slide-head">
+      <span class="eyebrow"><span class="idx">03</span> GAME</span>
+      <h2 class="slide-title">로그라이크 규칙 &amp; 핵심 루프</h2>
+    </div>
+    <div class="grid-2">
+      <div class="stack">
+        <div class="panel">
+          <span class="tag">로그라이크 규칙</span>
+          <ul class="list-dash">
+            <li>다음 보스로 이동, <strong>보스 레이드 최대 8판</strong>(추후 변경 가능)</li>
+            <li>특수 능력은 해금 조건 달성 / 다회차 플레이로 <strong>영구 해금</strong></li>
+            <li>한 판(런) 종료 시 <strong>런 중 획득 능력은 초기화</strong>, 계정 해금 상태는 유지</li>
+            <li><strong>랭킹(클리어 시간)</strong> 존재 — 팀 단위 기록 경쟁</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <span class="tag">핵심 게임 루프</span>
+          <div class="flow-strip">
+            <span class="flow-step">보스 처치</span><span class="flow-arrow">→</span>
+            <span class="flow-step">스킬 보상 선택/강화</span><span class="flow-arrow">→</span>
+            <span class="flow-step">다음 층 이동</span><span class="flow-arrow">→</span>
+            <span class="flow-step">난이도 상승</span><span class="flow-arrow">→</span>
+            <span class="flow-step">클리어 · 팀 랭킹</span>
+          </div>
+        </div>
+      </div>
+      <figure class="slot" data-default="assets/02b-loop" data-kind="image">
+        <div class="slot-frame">
+          <div class="slot-media-wrap"></div>
+          <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스크린샷 자리</span><button type="button" class="slot-add">추가하기</button></div>
+        </div>
+        <input type="file" class="slot-input" accept="image/*,video/mp4" hidden />
+      </figure>
+    </div>
+    <div class="extra-slots"></div>
+    <button type="button" class="add-slot-btn">+ 스크린샷 / 영상 추가</button>
+  </div>
+</section>
+
+<!-- =========================================================
+     04. 기술 스택
+========================================================= -->
+<section class="slide" id="p03" data-label="기술 스택">
+  <div class="slide-inner">
+    <div class="slide-head">
+      <span class="eyebrow"><span class="idx">04</span> STACK</span>
+      <h2 class="slide-title">기술 스택</h2>
+    </div>
+    <div class="grid-2">
+      <div class="stack">
+        <div class="table-wrap">
+          <table class="data">
+            <tr><th>영역</th><th>기술</th></tr>
+            <tr><td>엔진 / 렌더링</td><td><strong>Unity</strong> + <code>URP</code></td></tr>
+            <tr><td>실시간 네트워크</td><td><strong>Photon</strong> — 호스트 권한형 동기화</td></tr>
+            <tr><td>백엔드 서버</td><td><strong>Apache + PHP + MySQL</strong> — <code>soulrush_api/</code> + 관리용 웹</td></tr>
+            <tr><td>크래시 / 모니터링</td><td><strong>Sentry</strong> + 자체 CrashReporter</td></tr>
+            <tr><td>데이터</td><td>ScriptableObject(로컬) + 서버 DB(밸런스) 하이브리드</td></tr>
+          </table>
+        </div>
+        <div class="panel">
+          <span class="tag">설계 원칙</span>
+          <ul class="list-dash">
+            <li><strong>권한 분리</strong> — 게임 상태는 서버/호스트가 확정, 클라이언트는 표시만</li>
+            <li><strong>데이터-표시 분리</strong> — UI는 읽기만, 직접 수정 금지</li>
+            <li><strong>모듈화</strong> — 보스·스킬을 SO 조립으로 양산/확장</li>
+          </ul>
+        </div>
+      </div>
+      <figure class="slot" data-default="assets/03-tech-stack" data-kind="image">
+        <div class="slot-frame">
+          <div class="slot-media-wrap"></div>
+          <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스크린샷 자리</span><button type="button" class="slot-add">추가하기</button></div>
+        </div>
+        <input type="file" class="slot-input" accept="image/*,video/mp4" hidden />
+      </figure>
+    </div>
+    <div class="extra-slots"></div>
+    <button type="button" class="add-slot-btn">+ 스크린샷 / 영상 추가</button>
+  </div>
+</section>
+
+<!-- =========================================================
+     05. Architecture — 전체 구조도
+========================================================= -->
+<section class="slide" id="p04a" data-label="구조 · 전체 구조도">
+  <div class="slide-inner">
+    <div class="slide-head">
+      <span class="eyebrow"><span class="idx">05</span> ARCHITECTURE</span>
+      <h2 class="slide-title">Software Architecture — 전체 구조도</h2>
+      <p class="measure editable" contenteditable="false" style="margin-top:0.6rem; color:var(--ink-dim); font-size:0.9rem;">
+        <strong>Photon</strong> = 전투 순간의 실시간 동기화 · <strong>Apache/DB</strong> = 계정·진행·기록의 영속 저장. 두 축의 역할이 명확히 분리된다.
+      </p>
+    </div>
+
+    <div class="arch-canvas">
+      <div class="arch-frame"><span class="arch-frame-label">게임 클라이언트 · Unity · 최대 3인</span></div>
+
+      <svg class="arch-svg" viewBox="0 0 1000 580" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <marker id="archArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" class="arch-arrowhead"></path>
+          </marker>
+        </defs>
+
+        <path id="linkPhoton" class="arch-link" marker-end="url(#archArrow)" d="M500,174 C500,228 300,232 282,286"></path>
+        <path id="linkPhotonBack" class="arch-link" d="M282,286 C300,232 500,228 500,174" stroke-dasharray="3 5" opacity="0.5"></path>
+        <path id="linkApache" class="arch-link" marker-end="url(#archArrow)" d="M500,174 C500,228 720,232 758,286"></path>
+        <path id="linkMysql" class="arch-link" marker-end="url(#archArrow)" d="M760,382 L760,428"></path>
+        <path id="linkWeb" class="arch-link" marker-end="url(#archArrow)" d="M552,473 L618,473"></path>
+
+        <circle r="5" class="arch-pulse"><animateMotion dur="2.6s" repeatCount="indefinite"><mpath href="#linkPhoton"></mpath></animateMotion></circle>
+        <circle r="4" class="arch-pulse-return"><animateMotion dur="2.6s" begin="1.3s" repeatCount="indefinite"><mpath href="#linkPhotonBack"></mpath></animateMotion></circle>
+        <circle r="5" class="arch-pulse"><animateMotion dur="2.8s" begin="0.6s" repeatCount="indefinite"><mpath href="#linkApache"></mpath></animateMotion></circle>
+        <circle r="5" class="arch-pulse"><animateMotion dur="1.1s" begin="2s" repeatCount="indefinite"><mpath href="#linkMysql"></mpath></animateMotion></circle>
+        <circle r="5" class="arch-pulse"><animateMotion dur="1.3s" begin="2.4s" repeatCount="indefinite"><mpath href="#linkWeb"></mpath></animateMotion></circle>
+      </svg>
+
+      <div class="arch-node host" style="left:7.6%; top:13.45%; width:26%; height:12.4%;">호스트 클라이언트<small>게임 권한 보유</small></div>
+      <div class="arch-node" style="left:37%; top:13.45%; width:26%; height:12.4%;">클라이언트 2</div>
+      <div class="arch-node" style="left:66.4%; top:13.45%; width:26%; height:12.4%;">클라이언트 3</div>
+
+      <div class="arch-node hub" style="left:14%; top:49.3%; width:28%; height:15.9%;">Photon Cloud<small>세션 릴레이 · 상태 동기화</small></div>
+      <div class="arch-node hub" style="left:62%; top:49.3%; width:28%; height:15.9%;">Apache + PHP<small>soulrush_api (REST)</small></div>
+      <div class="arch-node" style="left:62%; top:73.8%; width:28%; height:14.8%;">MySQL<small>계정 · 스킬 · 랭킹 · 크래시</small></div>
+      <div class="arch-node ghost" style="left:30%; top:73.8%; width:25%; height:14.8%;">관리용 웹<small>조회 · 관리</small></div>
+
+      <span class="arch-link-label" style="left:33%; top:39%;">실시간 동기화</span>
+      <span class="arch-link-label" style="left:67%; top:39%;">HTTP · REST</span>
+    </div>
+
+    <figure class="slot strip-slot" data-default="assets/04a-architecture" data-kind="image">
+      <div class="slot-frame">
+        <div class="slot-media-wrap"></div>
+        <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스크린샷 자리</span><button type="button" class="slot-add">추가하기</button></div>
+      </div>
+      <input type="file" class="slot-input" accept="image/*,video/mp4" hidden />
+    </figure>
+    <div class="extra-slots"></div>
+    <button type="button" class="add-slot-btn">+ 스크린샷 / 영상 추가</button>
+  </div>
+</section>
+
+<!-- =========================================================
+     06. Architecture — 클라이언트 계층 & 씬 흐름
+========================================================= -->
+<section class="slide" id="p04b" data-label="구조 · 클라이언트/씬흐름">
+  <div class="slide-inner">
+    <div class="slide-head">
+      <span class="eyebrow"><span class="idx">06</span> ARCHITECTURE</span>
+      <h2 class="slide-title">클라이언트 계층 &amp; 씬 흐름</h2>
+    </div>
+    <div class="stack">
+      <div class="panel">
+        <span class="tag">클라이언트 3계층 (Unity)</span>
+        <div class="table-wrap">
+          <table class="data">
+            <tr><th>계층</th><th>역할</th></tr>
+            <tr><td>표현(Presentation)</td><td>HUD/UI, 카메라·컷신, 이펙트/사운드 — 상태를 읽어서 표시만</td></tr>
+            <tr><td>게임플레이·네트워크</td><td>NetworkPlayerController, NetworkBossCore, CombatSystem — 호스트 권한으로 상태 확정</td></tr>
+            <tr><td>데이터</td><td>ScriptableObject(스킬·보스패턴·인카운터), 세션 저장소</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="panel">
+          <span class="tag">씬(진행) 흐름</span>
+          <div class="flow-strip">
+            <span class="flow-step">scIntro</span><span class="flow-arrow">→</span>
+            <span class="flow-step">scLogin</span><span class="flow-arrow">→</span>
+            <span class="flow-step">scLobbyMain</span><span class="flow-arrow">→</span>
+            <span class="flow-step">scLoading</span><span class="flow-arrow">→</span>
+            <span class="flow-step">보스 스테이지(반복)</span><span class="flow-arrow">→</span>
+            <span class="flow-step">scEnding</span>
+          </div>
+        </div>
+        <figure class="slot" data-default="assets/04b-architecture" data-kind="image">
+          <div class="slot-frame">
+            <div class="slot-media-wrap"></div>
+            <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스크린샷 자리</span><button type="button" class="slot-add">추가하기</button></div>
+          </div>
+          <input type="file" class="slot-input" accept="image/*,video/mp4" hidden />
+        </figure>
+      </div>
+    </div>
+    <div class="extra-slots"></div>
+    <button type="button" class="add-slot-btn">+ 스크린샷 / 영상 추가</button>
+  </div>
+</section>
+
+<!-- =========================================================
+     07. 진행도 — 플레이어 (조작/전투)
+========================================================= -->
+<section class="slide" id="p05a1" data-label="진행도 · 플레이어 조작">
+  <div class="slide-inner">
+    <div class="slide-head">
+      <span class="eyebrow"><span class="idx">07</span> PROGRESS — 임현빈</span>
+      <h2 class="slide-title">플레이어 — 조작 &amp; 전투</h2>
+    </div>
+    <div class="grid-2">
+      <div class="panel">
+        <span class="tag">기본 조작 &amp; 전투</span>
+        <ul class="list-dash">
+          <li>3인칭 카메라 + <strong>락온(Lock-On)</strong> — 대상/부위 우선순위 순회</li>
+          <li>이동/달리기/기기, <strong>구르기(회피)</strong>, 점프(제자리·전방), <strong>패링</strong></li>
+          <li>기본 공격 <strong>콤보 시스템</strong>(애니메이션 진행률 기반 입력 창)</li>
+          <li>루트모션 기반 스킬 이동(슬라이드/스핀/점프 어택 등)</li>
+        </ul>
+      </div>
+      <figure class="slot" data-default="assets/05-1-player" data-kind="image">
+        <div class="slot-frame">
+          <div class="slot-media-wrap"></div>
+          <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">플레이어 조작 스크린샷</span><button type="button" class="slot-add">추가하기</button></div>
+        </div>
+        <input type="file" class="slot-input" accept="image/*,video/mp4" hidden />
+      </figure>
+    </div>
+    <div class="extra-slots"></div>
+    <button type="button" class="add-slot-btn">+ 스크린샷 / 영상 추가</button>
+  </div>
+</section>
+
+<!-- =========================================================
+     08. 진행도 — 플레이어 (컷신/부활/구조)
+========================================================= -->
+<section class="slide" id="p05a2" data-label="진행도 · 플레이어 구조">
+  <div class="slide-inner">
+    <div class="slide-head">
+      <span class="eyebrow"><span class="idx">08</span> PROGRESS — 임현빈</span>
+      <h2 class="slide-title">플레이어 — 컷신 · 부활 · 구조</h2>
+    </div>
+    <div class="grid-2">
+      <div class="stack">
+        <div class="panel">
+          <span class="tag">컷신 &amp; 부활</span>
+          <ul class="list-dash">
+            <li><strong>컷신 3종</strong> — 보스 등장 · 골드 보상 상자 개봉 · 문 발차기(입장)</li>
+            <li><strong>사망 횟수 연동 부활 시스템</strong> — 동료를 때려 부활, 방치 시 게이지 회복</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <span class="tag">핵심 구조</span>
+          <ul class="list-dash">
+            <li><code>NetworkPlayerController</code> — 입력/이동/전투/루트모션/동기화/오디오 분리</li>
+            <li><code>PlayerStats</code>, <code>PlayerStatusController</code> — 체력·스태미나·부활, 버프/디버프</li>
+            <li><strong>조작 잠금 플래그</strong> — 컷신·UI가 컴포넌트를 직접 끄지 않고 잠금만 요청</li>
+          </ul>
+        </div>
+      </div>
+      <figure class="slot" data-default="assets/05-1b-player" data-kind="image">
+        <div class="slot-frame">
+          <div class="slot-media-wrap"></div>
+          <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스크린샷 자리</span><button type="button" class="slot-add">추가하기</button></div>
+        </div>
+        <input type="file" class="slot-input" accept="image/*,video/mp4" hidden />
+      </figure>
+    </div>
+    <div class="extra-slots"></div>
+    <button type="button" class="add-slot-btn">+ 스크린샷 / 영상 추가</button>
+  </div>
+</section>
+
+<!-- =========================================================
+     09. 스킬 — 타입 & 데이터 구조
+========================================================= -->
+<section class="slide" id="p05b1" data-label="스킬 · 타입/구조">
+  <div class="slide-inner">
+    <div class="slide-head">
+      <span class="eyebrow"><span class="idx">09</span> PROGRESS — 임현빈</span>
+      <h2 class="slide-title">스킬 시스템 — 타입 &amp; 데이터 구조</h2>
+    </div>
+    <div class="grid-2">
+      <div class="panel">
+        <span class="tag">3가지 타입 (ScriptableObject 모듈)</span>
+        <ul class="list-dash">
+          <li><strong>Active</strong> — 슬롯 장착·직접 사용. 쿨타임·스태미나·HitEvents·레벨별 데미지 배율</li>
+          <li><strong>Passive</strong> — 획득/레벨업 시 스탯 상승(체력·스태미나·방어·공격력 %)</li>
+          <li><strong>Utility</strong> — 회복·기본공격 해금 등 기능성</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <span class="tag">하이브리드 데이터</span>
+        <ul class="list-dash">
+          <li>연출값(애니메이션·VFX·사운드·히트박스) = <strong>Unity 로컬 에셋</strong></li>
+          <li>밸런스 수치(쿨타임·데미지·레벨값) = <strong>서버 DB</strong> — 로그인 시 최신화, Bake로 에셋 갱신</li>
+          <li><code>AbilityManager</code>가 전체 카탈로그 관리</li>
+        </ul>
+      </div>
+    </div>
+    <figure class="slot strip-slot" data-default="assets/05-2a-skill" data-kind="image">
+      <div class="slot-frame">
+        <div class="slot-media-wrap"></div>
+        <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스크린샷 자리</span><button type="button" class="slot-add">추가하기</button></div>
+      </div>
+      <input type="file" class="slot-input" accept="image/*,video/mp4" hidden />
+    </figure>
+    <div class="extra-slots"></div>
+    <button type="button" class="add-slot-btn">+ 스크린샷 / 영상 추가</button>
+  </div>
+</section>
+
+<!-- =========================================================
+     10. 스킬 — 계정 해금 & 획득/레벨업
+========================================================= -->
+<section class="slide" id="p05b2" data-label="스킬 · 해금/획득">
+  <div class="slide-inner">
+    <div class="slide-head">
+      <span class="eyebrow"><span class="idx">10</span> PROGRESS — 임현빈</span>
+      <h2 class="slide-title">스킬 시스템 — 계정 해금 &amp; 획득</h2>
+    </div>
+    <div class="grid-2">
+      <div class="stack">
+        <div class="panel">
+          <span class="tag">계정 해금 (비트마스크)</span>
+          <ul class="list-dash">
+            <li><strong>Active 1–19</strong> / <strong>Passive 20–39</strong> / <strong>Utility 40–60</strong></li>
+            <li>계정별 비트마스크로 영구 해금 관리</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <span class="tag">획득 &amp; 레벨업</span>
+          <ul class="list-dash">
+            <li>보스 처치 → <code>RewardManager</code> 카드 후보 생성 → 하나 선택</li>
+            <li>등록/레벨업 — Lv.1 → MaxLevel, 만렙 시 보상 후보 제외</li>
+          </ul>
+        </div>
+      </div>
+      <figure class="slot" data-default="assets/05-2-skill" data-kind="image">
+        <div class="slot-frame">
+          <div class="slot-media-wrap"></div>
+          <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스킬 UI / 보상 화면</span><button type="button" class="slot-add">추가하기</button></div>
+        </div>
+        <input type="file" class="slot-input" accept="image/*,video/mp4" hidden />
+      </figure>
+    </div>
+    <div class="extra-slots"></div>
+    <button type="button" class="add-slot-btn">+ 스크린샷 / 영상 추가</button>
+  </div>
+</section>
+
+<!-- =========================================================
+     11. 진행도 — 보스 시스템
+========================================================= -->
+<section class="slide" id="p05c1" data-label="진행도 · 보스 시스템">
+  <div class="slide-inner">
+    <div class="slide-head">
+      <span class="eyebrow"><span class="idx">11</span> PROGRESS — 양평화</span>
+      <h2 class="slide-title">보스 시스템</h2>
+    </div>
+    <div class="grid-2">
+      <div class="panel">
+        <span class="tag">보스 AI &amp; 패턴</span>
+        <ul class="list-dash">
+          <li>보스 움직임 + <strong>레이캐스트로 벽/바닥 판정</strong></li>
+          <li>행동 패턴을 조합하는 <strong>SO 패턴 모듈</strong> — 코드 없이 제작</li>
+          <li><strong>BossVisual(연출) ↔ Boss 스크립트(로직) 분리</strong> (<code>IBossVisual</code>)</li>
+          <li><code>NetworkBossCore</code> — 체력 50%↓ 자동 <strong>2페이즈(광폭화)</strong></li>
+        </ul>
+      </div>
+      <div class="panel">
+        <span class="tag">최근 개선</span>
+        <ul class="list-dash">
+          <li><strong>어그로 추적</strong> — 10초 누적 딜량 1위에게 어그로 변경</li>
+          <li><code>BossAoEAttack</code> — 파티클 동기화 장판, 다단 히트 &amp; 겹친 장판 중복 방지</li>
+          <li>보스 예시: Dragon(화염) · PolarDragon(빙결) · OrcAssassin</li>
+        </ul>
+      </div>
+    </div>
+    <figure class="slot strip-slot" data-default="assets/05-3-boss" data-kind="image">
+      <div class="slot-frame">
+        <div class="slot-media-wrap"></div>
+        <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스크린샷 자리</span><button type="button" class="slot-add">추가하기</button></div>
+      </div>
+      <input type="file" class="slot-input" accept="image/*,video/mp4" hidden />
+    </figure>
+    <div class="extra-slots"></div>
+    <button type="button" class="add-slot-btn">+ 스크린샷 / 영상 추가</button>
+  </div>
+</section>
+
+<!-- =========================================================
+     12. 진행도 — 로그라이크 진행 구조
+========================================================= -->
+<section class="slide" id="p05c2" data-label="진행도 · 로그라이크 구조">
+  <div class="slide-inner">
+    <div class="slide-head">
+      <span class="eyebrow"><span class="idx">12</span> PROGRESS — 양평화</span>
+      <h2 class="slide-title">로그라이크 진행 구조</h2>
+    </div>
+    <div class="grid-2">
+      <div class="panel">
+        <span class="tag">3단 매니저</span>
+        <div class="flow-strip">
+          <span class="flow-step"><code>BossEncounterData</code></span><span class="flow-arrow">→</span>
+          <span class="flow-step"><code>GameProgressionManager</code></span><span class="flow-arrow">→</span>
+          <span class="flow-step"><code>BossArenaManager</code></span>
+        </div>
+        <ul class="list-dash" style="margin-top:0.8rem;">
+          <li>층수 관리 · 다음 보스 랜덤 추첨 · 파티 이동 · 층수 비례 난이도 상승</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <span class="tag">부가 요소</span>
+        <ul class="list-dash">
+          <li><code>NextLevelPortal</code> — 다음 층 이동</li>
+          <li><code>HealingAltar</code> — 회복 제단 기믹</li>
+          <li>새 보스 추가 = SO 등록 + 맵 배치만 (코드 불필요)</li>
+        </ul>
+      </div>
+    </div>
+    <figure class="slot strip-slot" data-default="assets/05-3b-roguelike" data-kind="image">
+      <div class="slot-frame">
+        <div class="slot-media-wrap"></div>
+        <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스크린샷 자리</span><button type="button" class="slot-add">추가하기</button></div>
+      </div>
+      <input type="file" class="slot-input" accept="image/*,video/mp4" hidden />
+    </figure>
+    <div class="extra-slots"></div>
+    <button type="button" class="add-slot-btn">+ 스크린샷 / 영상 추가</button>
+  </div>
+</section>
+
+<!-- =========================================================
+     13. 진행도 — 서버 & 인게임 시스템
+========================================================= -->
+<section class="slide" id="p05d1" data-label="진행도 · 서버/인게임">
+  <div class="slide-inner">
+    <div class="slide-head">
+      <span class="eyebrow"><span class="idx">13</span> PROGRESS — 양평화</span>
+      <h2 class="slide-title">서버 &amp; 인게임 시스템</h2>
+    </div>
+    <div class="grid-2">
+      <div class="panel">
+        <span class="tag">서버 &amp; 맵</span>
+        <ul class="list-dash">
+          <li><strong>Photon 방 생성/참가</strong> — UI와 연동</li>
+          <li><strong>로그인 DB 연동</strong>, 로그·DB 테이블 확인용 웹 구현</li>
+          <li>웹에서 DB · 스킬수치 · 랭킹 · 크래시 리포트 관리</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <span class="tag">서버 담당 인게임 시스템</span>
+        <ul class="list-dash">
+          <li><strong>인게임 채팅</strong>(ChatManager) — 엔터로 토글</li>
+          <li><strong>전투 결과 / 임시 엔딩</strong>(scEnding) — 소요시간·팀 랭킹 연동</li>
+          <li><strong>사운드 매니저</strong>(SoundManager) — 카테고리별 볼륨/거리, 3D SFX·루프</li>
+        </ul>
+      </div>
+    </div>
+    <figure class="slot strip-slot" data-default="assets/05-4a-server" data-kind="image">
+      <div class="slot-frame">
+        <div class="slot-media-wrap"></div>
+        <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스크린샷 자리</span><button type="button" class="slot-add">추가하기</button></div>
+      </div>
+      <input type="file" class="slot-input" accept="image/*,video/mp4" hidden />
+    </figure>
+    <div class="extra-slots"></div>
+    <button type="button" class="add-slot-btn">+ 스크린샷 / 영상 추가</button>
+  </div>
+</section>
+
+<!-- =========================================================
+     14. 진행도 — 백엔드 엔드포인트
+========================================================= -->
+<section class="slide" id="p05d2" data-label="진행도 · 백엔드 API">
+  <div class="slide-inner">
+    <div class="slide-head">
+      <span class="eyebrow"><span class="idx">14</span> PROGRESS — 양평화</span>
+      <h2 class="slide-title">백엔드 엔드포인트</h2>
+    </div>
+    <div class="grid-2">
+      <div class="table-wrap">
+        <table class="data">
+          <tr><th>시스템</th><th>내용</th></tr>
+          <tr><td>로그인/세션</td><td><code>login.php</code>, <code>check_session.php</code>, <code>update_skills.php</code></td></tr>
+          <tr><td>스킬 DB</td><td><code>get_abilities.php</code>, <code>upload_ability.php</code> — 스킬모듈 ↔ 서버 연결 구조 (공통1+타입별6=7 테이블)</td></tr>
+          <tr><td>팀 랭킹</td><td><code>submit_ranking.php</code> — 소요시간 정렬 + 팀원 딜량</td></tr>
+          <tr><td>Admin 권한</td><td><code>is_admin</code> — 서버가 권위 판정</td></tr>
+          <tr><td>크래시 리포트</td><td>exception/unhandled/native_crash, 선저장 후 재전송</td></tr>
+        </table>
+      </div>
+      <figure class="slot" data-default="assets/05-4-server" data-kind="image">
+        <div class="slot-frame">
+          <div class="slot-media-wrap"></div>
+          <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">관리용 웹 / 서버 스크린샷</span><button type="button" class="slot-add">추가하기</button></div>
+        </div>
+        <input type="file" class="slot-input" accept="image/*,video/mp4" hidden />
+      </figure>
+    </div>
+    <div class="extra-slots"></div>
+    <button type="button" class="add-slot-btn">+ 스크린샷 / 영상 추가</button>
+  </div>
+</section>
+
+<!-- =========================================================
+     15. 진행도 — 인게임 UI
+========================================================= -->
+<section class="slide" id="p05e" data-label="진행도 · 인게임 UI">
+  <div class="slide-inner">
+    <div class="slide-head">
+      <span class="eyebrow"><span class="idx">15</span> PROGRESS — 이주영</span>
+      <h2 class="slide-title">인게임 &middot; UI</h2>
+    </div>
+    <div class="grid-2">
+      <div class="stack">
+        <div class="panel">
+          <span class="tag">인게임 UI</span>
+          <ul class="list-dash">
+            <li>플레이어 <strong>HUD</strong> — 체력/스태미나/스킬 슬롯/버프·디버프</li>
+            <li><strong>인벤토리</strong>(카드+툴팁), <strong>스킬 아이콘</strong>, <strong>락온 UI</strong></li>
+          </ul>
+        </div>
+        <div class="panel">
+          <span class="tag">로비 &amp; 결과 UI</span>
+          <ul class="list-dash">
+            <li>로비·타이틀 설계, 인게임 옵션(그래픽·사운드)</li>
+            <li><strong>항복 투표</strong> · <strong>게임오버 화면</strong></li>
+          </ul>
+        </div>
+      </div>
+      <figure class="slot" data-default="assets/05-5-ui" data-kind="image">
+        <div class="slot-frame">
+          <div class="slot-media-wrap"></div>
+          <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">HUD / 인벤토리 스크린샷</span><button type="button" class="slot-add">추가하기</button></div>
+        </div>
+        <input type="file" class="slot-input" accept="image/*,video/mp4" hidden />
+      </figure>
+    </div>
+    <div class="extra-slots"></div>
+    <button type="button" class="add-slot-btn">+ 스크린샷 / 영상 추가</button>
+  </div>
+</section>
+
+<!-- =========================================================
+     16. Game Demo
+========================================================= -->
+<section class="slide" id="p06" data-label="Game Demo">
+  <div class="slide-inner" style="text-align:center;">
+    <div class="slide-head">
+      <span class="eyebrow" style="justify-content:center;"><span class="idx">16</span> DEMO</span>
+      <h2 class="slide-title">Game Demo</h2>
+      <p class="measure editable" contenteditable="false" style="margin:0.6rem auto 0; color:var(--ink-dim); font-size:0.9rem;">
+        로비 매칭 → 보스전(락온·콤보·회피) → 처치·보상 선택 → 다음 층 → 클리어·랭킹
+      </p>
+    </div>
+    <figure class="slot video-slot" data-default="assets/06-demo" data-kind="video" style="max-width:800px; margin:0 auto;">
+      <div class="slot-frame">
+        <div class="slot-media-wrap"></div>
+        <div class="slot-empty"><span class="slot-icon">🎬</span><span class="slot-label">실제 플레이 시연 영상</span><button type="button" class="slot-add">추가하기</button></div>
+      </div>
+      <input type="file" class="slot-input" accept="video/mp4" hidden />
+    </figure>
+    <div class="extra-slots"></div>
+    <button type="button" class="add-slot-btn">+ 스크린샷 / 영상 추가</button>
+  </div>
+</section>
+
+<!-- =========================================================
+     17. 최적화 & 안정성
+========================================================= -->
+<section class="slide" id="p07" data-label="최적화 & 안정성">
+  <div class="slide-inner">
+    <div class="slide-head">
+      <span class="eyebrow"><span class="idx">17</span> OPTIMIZATION</span>
+      <h2 class="slide-title">최적화 &amp; 안정성</h2>
+    </div>
+    <div class="grid-2">
+      <div class="stack">
+        <div class="panel">
+          <span class="tag">런타임 성능</span>
+          <ul class="list-dash">
+            <li><strong>이펙트 풀 + 셰이더 예열</strong> — 첫 이펙트 렌더 끊김 제거</li>
+            <li><strong>라이트맵 베이크 전환</strong> — 실시간 라이팅 → 사전 베이크</li>
+            <li><strong>맵 콜라이더 최적화</strong> — 메시→박스 콜라이더, 인접 병합</li>
+            <li><strong>품질 등급 Low/Medium/High 분리 관리</strong></li>
+          </ul>
+        </div>
+        <div class="panel">
+          <span class="tag">빌드 &amp; 안정성</span>
+          <ul class="list-dash">
+            <li>셰이더 배리언트 정리 — <strong>빌드 3시간+ → 10분 미만</strong></li>
+            <li><strong>Sentry</strong> 크래시 자동 수집(네이티브 크래시 포함)</li>
+          </ul>
+        </div>
+      </div>
+      <figure class="slot" data-default="assets/07-optimization" data-kind="image">
+        <div class="slot-frame">
+          <div class="slot-media-wrap"></div>
+          <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">프로파일러 / 빌드 로그</span><button type="button" class="slot-add">추가하기</button></div>
+        </div>
+        <input type="file" class="slot-input" accept="image/*,video/mp4" hidden />
+      </figure>
+    </div>
+    <div class="extra-slots"></div>
+    <button type="button" class="add-slot-btn">+ 스크린샷 / 영상 추가</button>
+  </div>
+</section>
+
+<!-- =========================================================
+     18. Future Work
+========================================================= -->
+<section class="slide" id="p08" data-label="Future Work">
+  <div class="slide-inner">
+    <div class="slide-head">
+      <span class="eyebrow"><span class="idx">18</span> FUTURE</span>
+      <h2 class="slide-title">Future Work</h2>
+    </div>
+    <div class="grid-2">
+      <div class="panel">
+        <span class="tag">향후 계획</span>
+        <ul class="list-dash">
+          <li>플레이어 직업 추가(무기)</li>
+          <li>인간형 보스 패턴 추가</li>
+          <li>튜토리얼</li>
+          <li>보스 전투방 추가</li>
+        </ul>
+      </div>
+      <figure class="slot" data-default="assets/08-future" data-kind="image">
+        <div class="slot-frame">
+          <div class="slot-media-wrap"></div>
+          <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스크린샷 자리</span><button type="button" class="slot-add">추가하기</button></div>
+        </div>
+        <input type="file" class="slot-input" accept="image/*,video/mp4" hidden />
+      </figure>
+    </div>
+    <div class="extra-slots"></div>
+    <button type="button" class="add-slot-btn">+ 스크린샷 / 영상 추가</button>
+  </div>
+</section>
+
+<!-- =========================================================
+     19. Q&A
+========================================================= -->
+<section class="slide" id="p09" data-label="Q&A">
+  <div class="slide-inner" style="text-align:center;">
+    <div class="slide-head">
+      <span class="eyebrow" style="justify-content:center;"><span class="idx">19</span> CLOSING</span>
+      <h2 class="slide-title">Q&amp;A</h2>
+    </div>
+    <figure class="slot" data-default="assets/09-qna" data-kind="image" style="max-width:520px; margin:0 auto;">
+      <div class="slot-frame">
+        <div class="slot-media-wrap"></div>
+        <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">클로징 이미지</span><button type="button" class="slot-add">추가하기</button></div>
+      </div>
+      <input type="file" class="slot-input" accept="image/*,video/mp4" hidden />
+    </figure>
+    <p class="end-note">SOUL RUSH — 양평화 · 임현빈 · 이주영</p>
+    <div class="extra-slots"></div>
+    <button type="button" class="add-slot-btn">+ 스크린샷 / 영상 추가</button>
+  </div>
+</section>
+
+<script>
+(function () {
+  "use strict";
+
+  var slides = Array.prototype.slice.call(document.querySelectorAll(".slide"));
+  var railEl = document.querySelector(".rail");
+  var counterEl = document.getElementById("pagerCount");
+  var prevBtn = document.getElementById("prevBtn");
+  var nextBtn = document.getElementById("nextBtn");
+  var current = 0;
+
+  slides.forEach(function (slide, i) {
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.textContent = String(i).padStart(2, "0") + " " + (slide.dataset.label || slide.id);
+    btn.dataset.index = String(i);
+    btn.addEventListener("click", function () { goTo(i); });
+    railEl.appendChild(btn);
+  });
+  var railButtons = Array.prototype.slice.call(railEl.querySelectorAll("button"));
+
+  function render() {
+    slides.forEach(function (s, i) { s.classList.toggle("active", i === current); });
+    railButtons.forEach(function (b, i) { b.classList.toggle("current", i === current); });
+    counterEl.textContent = String(current + 1).padStart(2, "0") + " / " + String(slides.length).padStart(2, "0");
+    prevBtn.disabled = current === 0;
+    nextBtn.disabled = current === slides.length - 1;
+    var cur = railButtons[current];
+    if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: "nearest" });
+    if (history.replaceState) history.replaceState(null, "", "#" + slides[current].id);
+  }
+  function goTo(i) { current = Math.max(0, Math.min(slides.length - 1, i)); render(); }
+  function next() { goTo(current + 1); }
+  function prev() { goTo(current - 1); }
+
+  prevBtn.addEventListener("click", prev);
+  nextBtn.addEventListener("click", next);
+
+  /* ---------- presentation mode (hide our own toolbar) ---------- */
+  /* 이 상태는 실제 브라우저 Fullscreen API 성공 여부와 무관하게, 항상 즉시 토글된다.
+     (claude.ai 미리보기는 iframe 안이라 Fullscreen API가 거부될 수 있어서, UI 숨김은 별도로 보장한다.) */
+  var fsBtn = document.getElementById("fsBtn");
+  var fsHint = document.getElementById("fsHint");
+  var presenting = false;
+  var hintTimer = null;
+
+  function showHint(msg) {
+    fsHint.textContent = msg;
+    fsHint.classList.add("show");
+    clearTimeout(hintTimer);
+    hintTimer = setTimeout(function () { fsHint.classList.remove("show"); }, 4200);
+  }
+
+  function setPresenting(on) {
+    presenting = on;
+    document.body.classList.toggle("is-fullscreen", on);
+    fsBtn.textContent = on ? "⛶ 발표 모드 종료" : "⛶ 전체화면";
+  }
+
+  fsBtn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (!presenting) {
+      setPresenting(true);
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(function () {
+          showHint("브라우저가 전체화면 요청을 막았어요 — 이 창에서 F11을 눌러 브라우저 자체 전체화면으로 전환하세요.");
+        });
+      } else {
+        showHint("이 브라우저에서는 F11을 눌러 전체화면으로 전환하세요.");
+      }
+    } else {
+      setPresenting(false);
+      if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen();
+    }
+  });
+
+  document.addEventListener("fullscreenchange", function () {
+    if (!document.fullscreenElement && presenting) setPresenting(false);
+  });
+  document.addEventListener("fullscreenerror", function () {
+    showHint("브라우저가 전체화면 요청을 막았어요 — 이 창에서 F11을 눌러 브라우저 자체 전체화면으로 전환하세요.");
+  });
+
+  var startHash = location.hash.replace("#", "");
+  var startIndex = slides.findIndex(function (s) { return s.id === startHash; });
+  goTo(startIndex > -1 ? startIndex : 0);
+
+  document.addEventListener("keydown", function (e) {
+    if (document.body.classList.contains("edit-mode")) return;
+    var tag = (e.target.tagName || "").toLowerCase();
+    if (tag === "input" || tag === "textarea" || e.target.isContentEditable) return;
+    if (["ArrowRight", "ArrowDown", "PageDown", " "].indexOf(e.key) > -1) { e.preventDefault(); next(); }
+    else if (["ArrowLeft", "ArrowUp", "PageUp"].indexOf(e.key) > -1) { e.preventDefault(); prev(); }
+    else if (e.key === "Home") { goTo(0); }
+    else if (e.key === "End") { goTo(slides.length - 1); }
+  });
+
+  slides.forEach(function (slide) {
+    slide.addEventListener("click", function (e) {
+      if (document.body.classList.contains("edit-mode")) return;
+      var interactive = e.target.closest('button, input, a, video, .slot-frame, [contenteditable="true"]');
+      if (interactive) return;
+      next();
+    });
+  });
+
+  /* ---------- edit mode ---------- */
+  var editToggle = document.getElementById("editToggle");
+  function setEditMode(on) {
+    document.body.classList.toggle("edit-mode", on);
+    document.querySelectorAll(".editable").forEach(function (el) {
+      el.setAttribute("contenteditable", on ? "true" : "false");
+    });
+    editToggle.setAttribute("aria-pressed", String(on));
+    editToggle.textContent = on ? "✅ 편집 중 (완료하려면 클릭)" : "✏️ 편집 모드";
+  }
+  editToggle.addEventListener("click", function () {
+    setEditMode(!document.body.classList.contains("edit-mode"));
+  });
+  setEditMode(false);
+
+  /* ---------- respect reduced motion for SVG data-flow pulses ---------- */
+  if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    document.querySelectorAll(".arch-svg").forEach(function (svg) {
+      if (svg.pauseAnimations) svg.pauseAnimations();
+    });
+  }
+
+  /* ---------- media slots ---------- */
+  function setSlotMedia(slot, url, kind) {
+    var wrap = slot.querySelector(".slot-media-wrap");
+    wrap.innerHTML = "";
+    var el;
+    if (kind === "video") {
+      el = document.createElement("video");
+      el.src = url; el.controls = true; el.loop = true; el.muted = true; el.playsInline = true;
+    } else {
+      el = document.createElement("img");
+      el.src = url; el.alt = "";
+    }
+    el.className = "slot-media";
+    wrap.appendChild(el);
+    slot.classList.add("filled");
+  }
+
+  function probeDefault(slot) {
+    var base = slot.dataset.default;
+    var kind = slot.dataset.kind || "image";
+    if (!base) return;
+    var exts = kind === "video" ? ["mp4"] : ["png", "jpg", "jpeg", "gif", "webp"];
+    var i = 0;
+    function tryNext() {
+      if (i >= exts.length) return;
+      var src = base + "." + exts[i++];
+      if (kind === "video") {
+        var v = document.createElement("video");
+        v.muted = true;
+        v.addEventListener("loadeddata", function () { setSlotMedia(slot, src, "video"); }, { once: true });
+        v.addEventListener("error", tryNext, { once: true });
+        v.src = src;
+      } else {
+        var img = new Image();
+        img.onload = function () { setSlotMedia(slot, src, "image"); };
+        img.onerror = tryNext;
+        img.src = src;
+      }
+    }
+    tryNext();
+  }
+
+  function wireSlot(slot) {
+    probeDefault(slot);
+    var input = slot.querySelector(".slot-input");
+    var addBtn = slot.querySelector(".slot-add");
+    var frame = slot.querySelector(".slot-frame");
+    function openPicker(e) {
+      if (e) e.stopPropagation();
+      if (document.body.classList.contains("edit-mode")) input.click();
+    }
+    addBtn.addEventListener("click", openPicker);
+    frame.addEventListener("click", function (e) {
+      if (e.target === addBtn) return;
+      openPicker(e);
+    });
+    input.addEventListener("click", function (e) { e.stopPropagation(); });
+    input.addEventListener("change", function (e) {
+      var file = e.target.files[0];
+      if (!file) return;
+      var kind = file.type.indexOf("video") === 0 ? "video" : "image";
+      var reader = new FileReader();
+      reader.onload = function (ev) { setSlotMedia(slot, ev.target.result, kind); };
+      reader.readAsDataURL(file);
+    });
+  }
+  document.querySelectorAll(".slot").forEach(wireSlot);
+
+  /* ---------- add extra slots on demand (edit mode) ---------- */
+  function createSlotElement() {
+    var fig = document.createElement("figure");
+    fig.className = "slot";
+    fig.innerHTML =
+      '<div class="slot-frame">' +
+        '<div class="slot-media-wrap"></div>' +
+        '<div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스크린샷 / 영상</span>' +
+          '<button type="button" class="slot-add">추가하기</button></div>' +
+      "</div>" +
+      '<input type="file" class="slot-input" accept="image/*,video/mp4" hidden />';
+    return fig;
+  }
+  document.querySelectorAll(".add-slot-btn").forEach(function (btn) {
+    btn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      var container = btn.closest(".slide-inner").querySelector(".extra-slots");
+      if (!container) return;
+      var slot = createSlotElement();
+      container.appendChild(slot);
+      wireSlot(slot);
+      slot.querySelector(".slot-input").click();
+    });
+  });
+
+  /* ---------- download modified copy ---------- */
+  document.getElementById("downloadBtn").addEventListener("click", function (e) {
+    e.stopPropagation();
+    var html = "<!doctype html>\n" + document.documentElement.outerHTML;
+    var blob = new Blob([html], { type: "text/html" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = "soul-rush-deck.html";
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  });
+  document.getElementById("editToggle").addEventListener("click", function (e) { e.stopPropagation(); });
+})();
+</script>
