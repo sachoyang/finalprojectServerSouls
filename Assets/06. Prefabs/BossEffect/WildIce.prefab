@@ -9618,8 +9618,9 @@ MonoBehaviour:
     duration: 5
   syncParticle: {fileID: 198679442476388764}
   baseDamage: 1000
-  isMultiHit: 0
+  isMultiHit: 1
   hitInterval: 1
+  overlapDamageGroup: WildIce
   targetLayer:
     serializedVersion: 2
     m_Bits: 256

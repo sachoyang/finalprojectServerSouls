@@ -33,6 +33,12 @@ public class BossAoEAttack : MonoBehaviour
     public float hitInterval = 0.5f;
     public LayerMask targetLayer;
 
+    [Header("장판 중첩 처리")]
+    [Tooltip("같은 그룹 이름을 가진 AoE끼리는, 판정 구역이 겹쳐도 hitInterval 동안 플레이어당 한 번만 데미지가 들어간다.\n" +
+             "네이팜처럼 여러 장판이 동시에 깔려 겹치는 패턴에서 중첩 피해(2배)를 막는다.\n" +
+             "빈 값이면 이 AoE는 다른 인스턴스와 정산하지 않고 각자 독립 판정한다(기존 동작). isMultiHit의 인스턴스 내부 틱과는 별개 개념.")]
+    public string overlapDamageGroup = "";
+
     [Header("사운드")]
     [Tooltip("이펙트가 나타나는 순간 1회 재생. 이펙트 위치에서 울린다.\n" +
              "데미지 권한과 무관하게 모든 클라이언트에서 들린다.")]
@@ -72,6 +78,15 @@ public class BossAoEAttack : MonoBehaviour
     
     // 자식 콜라이더가 여러 개 있어도 PlayerStats 기준으로 다단 히트 간격을 관리한다.
     private Dictionary<PlayerStats, float> _hitTargets = new Dictionary<PlayerStats, float>();
+
+    // 같은 overlapDamageGroup을 공유하는(겹쳐 깔린) 장판들이 같은 플레이어에게 동시에 중복 데미지를 주지 않도록,
+    // 그룹별 '플레이어가 마지막으로 이 그룹에서 데미지를 받은 시각'을 인스턴스 간 전역 공유한다.
+    // (인스턴스 내부의 isMultiHit 틱 간격과는 별개로, 겹친 구역에서 한쪽에서만 데미지가 들어가게 한다.)
+    private static readonly Dictionary<string, Dictionary<PlayerStats, float>> s_groupHitTimes
+        = new Dictionary<string, Dictionary<PlayerStats, float>>();
+
+    // 씬 전환 등으로 파괴된 PlayerStats가 static 딕셔너리에 남아 GC를 막지 않도록 정리할 때 쓰는 스크래치.
+    private static readonly List<PlayerStats> s_pruneScratch = new List<PlayerStats>();
 
     // 판정 종료 표시. this.enabled를 끄면 풀 재사용 시 OnEnable이 안 와서 초기화가 누락되므로,
     // 컴포넌트는 켜둔 채 이 플래그로 멈춘다.
@@ -251,10 +266,12 @@ public class BossAoEAttack : MonoBehaviour
                     out Vector3 hitNormal);
 
                 // 데미지는 권한자만. 원격 클라이언트는 같은 지점에서 소리만 낸다.
-                if (_damageEnabled)
+                // 단, 같은 그룹의 다른 장판이 방금 이 플레이어를 때렸다면(겹친 구역) 데미지는 건너뛴다.
+                if (_damageEnabled && !IsOverlapDamageBlocked(playerStats))
                 {
                     float finalDamage = baseDamage * _bossDamageMultiplier;
                     playerStats.TakeDamage(finalDamage, hitPoint, hitNormal);
+                    MarkOverlapDamage(playerStats);
                     BossLog.Info($"[AoE Hit] 광역 이펙트 연쇄 적중! 파티클 동기화 딜: {finalDamage}");
                 }
 
@@ -264,6 +281,39 @@ public class BossAoEAttack : MonoBehaviour
                 PlayClip(hitSound, hitPoint, hitSoundVolume);
             }
         }
+    }
+
+    // 겹친 장판 중복 방지: 같은 그룹이 hitInterval 안에 이미 이 플레이어를 때렸으면 true(→ 데미지 스킵).
+    private bool IsOverlapDamageBlocked(PlayerStats player)
+    {
+        if (string.IsNullOrEmpty(overlapDamageGroup)) return false;
+        if (s_groupHitTimes.TryGetValue(overlapDamageGroup, out var map)
+            && map.TryGetValue(player, out float lastTime))
+        {
+            return Time.time - lastTime < hitInterval;
+        }
+        return false;
+    }
+
+    // 이 그룹에서 방금 이 플레이어에게 데미지를 줬음을 전역에 기록한다.
+    private void MarkOverlapDamage(PlayerStats player)
+    {
+        if (string.IsNullOrEmpty(overlapDamageGroup)) return;
+
+        if (!s_groupHitTimes.TryGetValue(overlapDamageGroup, out var map))
+        {
+            map = new Dictionary<PlayerStats, float>();
+            s_groupHitTimes[overlapDamageGroup] = map;
+        }
+        map[player] = Time.time;
+
+        // 파괴된(씬 전환 등) 플레이어 키를 정리해 static 딕셔너리가 무한정 커지지 않게 한다.
+        s_pruneScratch.Clear();
+        foreach (var key in map.Keys)
+        {
+            if (key == null) s_pruneScratch.Add(key);
+        }
+        for (int i = 0; i < s_pruneScratch.Count; i++) map.Remove(s_pruneScratch[i]);
     }
 
     private static void GetHitSurface(

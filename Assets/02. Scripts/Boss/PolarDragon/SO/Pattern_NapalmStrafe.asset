@@ -23,7 +23,7 @@ MonoBehaviour:
     animationHash: -2014032391
     duration: 1
     useRootMotion: 0
-    moveOffset: {x: 0, y: 6, z: 0}
+    moveOffset: {x: 0, y: 6, z: -4}
     moveCurve:
       serializedVersion: 2
       m_Curve:
@@ -70,7 +70,7 @@ MonoBehaviour:
     animationHash: -746261695
     duration: 0.8
     useRootMotion: 0
-    moveOffset: {x: 0, y: 0, z: 0}
+    moveOffset: {x: 0, y: 0, z: -1}
     moveCurve:
       serializedVersion: 2
       m_Curve: []
@@ -99,7 +99,7 @@ MonoBehaviour:
     animationHash: 642707492
     duration: 2.5
     useRootMotion: 0
-    moveOffset: {x: 0, y: 0, z: 22}
+    moveOffset: {x: 0, y: 0, z: 20}
     moveCurve:
       serializedVersion: 2
       m_Curve:

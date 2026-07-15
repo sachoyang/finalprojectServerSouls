@@ -345,7 +345,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: d5b3a7db690e0d94e8329f652cf59477, type: 2}
   - {fileID: 11400000, guid: 45d4f56ea4713474393e2b7f6056ba7e, type: 2}
   landingPatternIndex: 3
-  turnAngleThreshold: 60
+  turnAngleThreshold: 30
   turnLeftPatternIndex: 0
   turnRightPatternIndex: 1
   phase2FrostBuffId: 3
@@ -1538,9 +1538,11 @@ MonoBehaviour:
   targetLayer:
     serializedVersion: 2
     m_Bits: 256
-  hitRadius: 1.4
+  hitRadius: 1.2
   weaponNodes:
   - {fileID: 5113253605218116969}
+  - {fileID: 5110207298828893937}
+  - {fileID: 5113131107912528587}
 --- !u!1 &5107925264117227889 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1748576772103804, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}
@@ -1753,7 +1755,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 640
   napalmRayHeight: 50
-  napalmRayDownAngle: 45
+  napalmRayDownAngle: 60
   napalmSound: {fileID: 0}
   debugNapalmRay: 1
   wakeUpSound: {fileID: 8300000, guid: ff3ab9b48f6d1654d85b6a96c777a750, type: 3}
@@ -1761,8 +1763,6 @@ MonoBehaviour:
   dieSound: {fileID: 8300000, guid: d0fff63a4823ab1408d6f9b45cc9e8f4, type: 3}
   walkSound: {fileID: 8300000, guid: 5bf241f4a6c7ed64282fe23b3cb373fb, type: 3}
   wingSound: {fileID: 8300000, guid: 43e46f8695cd22c479d8aeaaf4772752, type: 3}
-  iceMagicSound: {fileID: 8300000, guid: 7acaee68165daaf4e94bda7774c91070, type: 3}
-  biteSound: {fileID: 8300000, guid: 891e89c994b64214c99bf28d6f536f72, type: 3}
   takeOffSound: {fileID: 8300000, guid: ac4b5e31be799dd4aa4bee96709bef8f, type: 3}
   flyingGetHitLength: 0.833
   rootMotionCapture: {fileID: 1268043131240937855}
@@ -1863,6 +1863,11 @@ MonoBehaviour:
   bodyPart: 3
   damageMultiplier: 1
   groggyMultiplier: 1
+--- !u!4 &5110207298828893937 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4453924788732412, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}
+  m_PrefabInstance: {fileID: 5108428487193952013}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &5110417372715785809 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4240964543308124, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}
@@ -1886,6 +1891,11 @@ Transform:
 --- !u!4 &5113095577805494711 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4949944609400506, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}
+  m_PrefabInstance: {fileID: 5108428487193952013}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &5113131107912528587 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4984096049483206, guid: 109f4cf05e0841548ba892d44d0071cb, type: 3}
   m_PrefabInstance: {fileID: 5108428487193952013}
   m_PrefabAsset: {fileID: 0}
 --- !u!4 &5113253605218116969 stripped
