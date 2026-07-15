@@ -1841,6 +1841,89 @@ SkinnedMeshRenderer:
     m_Center: {x: 0.002891209, y: 0.20170818, z: 0.0051592663}
     m_Extent: {x: 0.04618539, y: 0.055733487, z: 0.054085467}
   m_DirtyAABB: 0
+--- !u!1 &3788289338387054623
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8282057761005905799}
+  - component: {fileID: 5015037442556018896}
+  - component: {fileID: 6230261484854739594}
+  m_Layer: 0
+  m_Name: PlayerShadowDecal
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8282057761005905799
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3788289338387054623}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8311000890193021906}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5015037442556018896
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3788289338387054623}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9df3d3e5b1b06cc4d8739d7798619cdf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  target: {fileID: 8311000890193021906}
+  projector: {fileID: 6230261484854739594}
+  groundMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  raycastOffset: {x: 0, y: 0.45, z: 0}
+  maxRaycastDistance: 4
+  surfaceOffset: 0.08
+  decalSize: {x: 1.25, y: 1.6}
+  projectionDepth: 1.8
+  drawDistance: 45
+  useDistanceFade: 1
+  fadeOutHeight: 1.2
+  followTargetYaw: 1
+--- !u!114 &6230261484854739594
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3788289338387054623}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0777d029ed3dffa4692f417d4aba19ca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 2100000, guid: a6e38ba38f1047645833abd7dbb5e75d, type: 2}
+  m_DrawDistance: 45
+  m_FadeScale: 0.9
+  m_StartAngleFade: 180
+  m_EndAngleFade: 180
+  m_UVScale: {x: 1, y: 1}
+  m_UVBias: {x: 0, y: 0}
+  m_DecalLayerMask: 1
+  m_ScaleMode: 0
+  m_Offset: {x: 0, y: 0, z: 0}
+  m_Size: {x: 1.25, y: 1.6, z: 1.8}
+  m_FadeFactor: 0.8
 --- !u!1 &4056781413240923146
 GameObject:
   m_ObjectHideFlags: 0
@@ -3294,6 +3377,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1036688446501230673}
+  - {fileID: 8282057761005905799}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!143 &3832991948678707729
@@ -3398,6 +3482,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: de46e77ae6428ac49b91ec7706372651, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  minimumPlayerSoundInterval: 0.08
   animator: {fileID: 1933266387917589360}
   viewCamera: {fileID: 0}
   walkSpeed: 2.6
@@ -3412,15 +3497,21 @@ MonoBehaviour:
   moveStartSpeed: 1.2
   moveStopSpeed: 0.18
   minimumMoveAnimationBlend: 0.5
+  maximumStepUpHeight: 0.35
+  minimumStepUpHeight: 0.01
+  activeAnimatorStateEndThreshold: 0.98
   jumpHeight: 1.15
   jumpAirTime: 0.68
   forwardJumpHeight: 1.15
   forwardJumpAirTime: 0.68
   runJumpSpeedRatio: 0.75
   useForwardJumpRootMotion: 0
+  jumpGroundGraceSeconds: 0.12
+  jumpInputBufferSeconds: 0.12
   lockOnTargetSelector: {fileID: 0}
   lockOnSearchRadius: 80
   lockOnRotationSpeed: 900
+  playerHeadTransform: {fileID: 0}
 --- !u!114 &6138425169054327812
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3457,6 +3548,8 @@ MonoBehaviour:
   powerUpStaminaCost: 500
   slideSlashStaminaCost: 400
   _CurrentHealth: 0
+  _LastDamageHitPoint: {x: 0, y: 0, z: 0}
+  _LastDamageHitNormal: {x: 0, y: 0, z: 0}
   _CurrentStamina: 0
   _IsDead: 0
   _IsAnimationInvincible: 0
@@ -3464,6 +3557,7 @@ MonoBehaviour:
   _ReviveSegmentCount: 0
   _ReviveGaugePerSegment: 0
   _ReviveProgress: 0
+  _SoloSelfReviveUsed: 0
 --- !u!114 &2468013579246801357
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3489,9 +3583,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0db6e089df1f42349a52186dc4f01a1f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _Nickname:
+    _length: 0
+    _data:
+      Data: 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+  _UnlockedSkillsBitmask: 0
   _SavedAbilityCount: 0
   _LastSelectedRewardStage: 0
   _SavedAbilityIds: []
+  _SavedAbilityLevels: 
 --- !u!114 &-3789471070017338798
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3504,16 +3604,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aff94b2bb75240545a63bf1e6a86d2f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  abilityPool:
-  - {fileID: 11400000, guid: 1edcbb9f218fba243b34d170b1fa350e, type: 2}
-  - {fileID: 11400000, guid: ff8160d2e4e01444c85ab60c46007c9c, type: 2}
-  - {fileID: 11400000, guid: a547d62876c4a444b8ea15b22748a173, type: 2}
-  - {fileID: 11400000, guid: c002432ed530d33428e36c5130a47f39, type: 2}
-  - {fileID: 11400000, guid: b82f363d0149d6349bcaeb65bc0bce62, type: 2}
-  - {fileID: 11400000, guid: 7e62c57d3bea462aadf9a20835858ad7, type: 2}
-  preventDuplicateModules: 1
   defaultActiveKeys: 3100000032000000330000003400000035000000360000003700000038000000
   equippedModules: []
+  equippedLevels: 
   activeSlots: []
 --- !u!114 &-1636750999124312810
 MonoBehaviour:
@@ -3546,6 +3639,11 @@ MonoBehaviour:
   wireColor: {r: 1, g: 0.1, b: 0, a: 1}
   showWireframe: 1
   drawCenterLine: 1
+  showEquippedSkillRanges: 1
+  showSkillLabels: 1
+  fallbackRadius: 1.4
+  fallbackDistance: 1.8
+  fallbackHeight: 1.1
 --- !u!1 &7477488570312417499
 GameObject:
   m_ObjectHideFlags: 0
