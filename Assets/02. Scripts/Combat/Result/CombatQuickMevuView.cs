@@ -25,13 +25,19 @@ public class CombatQuickMenuView : MonoBehaviour
 
     [Header("Message")]
     [SerializeField] private float voteFailedMessageDuration = 2f;
+    [SerializeField] private Text surrenderConfirmMessageText;
+    [SerializeField] private string surrenderConfirmMessage = "전투를 포기하시겠습니까?\n\n(2인 이상일 경우 투표가 진행됩니다)";
+    [SerializeField] private string soloSelfReviveConfirmMessage = "부활하시겠습니까?";
 
     private SurrenderVoteManager surrenderVoteManager;
     private int activeVoteSessionId;
     private Coroutine voteFailedRoutine;
+    private PlayerStats pendingSoloSelfReviveTarget;
+    private bool soloSelfReviveConfirmActive;
 
     private void Awake()
     {
+        ResolveSurrenderConfirmMessageText();
         BindButtons();
         CloseMenu();
     }
@@ -55,6 +61,9 @@ public class CombatQuickMenuView : MonoBehaviour
 
     public void OpenMenu()
     {
+        ClearSoloSelfReviveConfirm();
+        SetSurrenderConfirmMessage(false);
+
         if (quickMenuRoot != null)
             quickMenuRoot.SetActive(true);
 
@@ -68,6 +77,15 @@ public class CombatQuickMenuView : MonoBehaviour
 
     public void CloseMenu()
     {
+        if (soloSelfReviveConfirmActive)
+        {
+            SubmitSoloSelfRevive(false);
+            return;
+        }
+
+        ClearSoloSelfReviveConfirm();
+        SetSurrenderConfirmMessage(false);
+
         SetPanelActive(surrenderConfirmPopup, false);
         SetPanelActive(surrenderVotePopup, false);
         SetPanelActive(voteFailedMessage, false);
@@ -80,6 +98,9 @@ public class CombatQuickMenuView : MonoBehaviour
 
     public void OnClickRetreat()
     {
+        ClearSoloSelfReviveConfirm();
+        SetSurrenderConfirmMessage(false);
+
         if (quickMenuRoot != null)
             quickMenuRoot.SetActive(true);
 
@@ -99,12 +120,24 @@ public class CombatQuickMenuView : MonoBehaviour
 
     public void OnClickCancelSurrender()
     {
+        if (soloSelfReviveConfirmActive)
+        {
+            SubmitSoloSelfRevive(false);
+            return;
+        }
+
         SetPanelActive(surrenderConfirmPopup, false);
         SetPanelActive(menuPanel, true);
     }
 
     public void OnClickConfirmSurrender()
     {
+        if (soloSelfReviveConfirmActive)
+        {
+            SubmitSoloSelfRevive(true);
+            return;
+        }
+
         SetPanelActive(surrenderConfirmPopup, false);
         SetPanelActive(menuPanel, false);
 
@@ -112,6 +145,26 @@ public class CombatQuickMenuView : MonoBehaviour
 
         if (surrenderVoteManager != null)
             surrenderVoteManager.RequestSurrenderFromLocalPlayer();
+    }
+
+    public void ShowSoloSelfRevivePopup(PlayerStats target)
+    {
+        if (target == null)
+            return;
+
+        pendingSoloSelfReviveTarget = target;
+        soloSelfReviveConfirmActive = true;
+        SetSurrenderConfirmMessage(true);
+
+        if (quickMenuRoot != null)
+            quickMenuRoot.SetActive(true);
+
+        SetPanelActive(menuPanel, false);
+        SetPanelActive(surrenderConfirmPopup, true);
+        SetPanelActive(surrenderVotePopup, false);
+        SetPanelActive(voteFailedMessage, false);
+
+        ThirdPersonCameraController.ForceCursorVisible = true;
     }
 
     public void ShowSurrenderWaiting()
@@ -186,6 +239,61 @@ public class CombatQuickMenuView : MonoBehaviour
 
         if (surrenderVoteManager != null)
             surrenderVoteManager.SubmitLocalVote(activeVoteSessionId, agreed);
+    }
+
+    private void SubmitSoloSelfRevive(bool accepted)
+    {
+        PlayerStats target = pendingSoloSelfReviveTarget;
+        ClearSoloSelfReviveConfirm();
+
+        SetPanelActive(surrenderConfirmPopup, false);
+        SetPanelActive(menuPanel, false);
+
+        if (target != null)
+        {
+            if (accepted)
+                target.ConsumeSoloSelfRevive();
+            else
+                target.DeclineSoloSelfRevive();
+        }
+
+        CloseMenu();
+    }
+
+    private void ClearSoloSelfReviveConfirm()
+    {
+        pendingSoloSelfReviveTarget = null;
+        soloSelfReviveConfirmActive = false;
+    }
+
+    private void SetSurrenderConfirmMessage(bool isSoloSelfRevive)
+    {
+        ResolveSurrenderConfirmMessageText();
+
+        if (surrenderConfirmMessageText != null)
+        {
+            surrenderConfirmMessageText.text = isSoloSelfRevive
+                ? soloSelfReviveConfirmMessage
+                : surrenderConfirmMessage;
+        }
+    }
+
+    private void ResolveSurrenderConfirmMessageText()
+    {
+        if (surrenderConfirmMessageText != null || surrenderConfirmPopup == null)
+            return;
+
+        Text[] texts = surrenderConfirmPopup.GetComponentsInChildren<Text>(true);
+        for (int i = 0; i < texts.Length; i++)
+        {
+            Text text = texts[i];
+            if (text != null && text.text.Contains("포기"))
+            {
+                surrenderConfirmMessageText = text;
+                surrenderConfirmMessage = text.text;
+                return;
+            }
+        }
     }
 
     private void ResolveSurrenderVoteManager()

@@ -117,6 +117,7 @@ public class PlayerStats : NetworkBehaviour
     [Networked] public float ReviveProgress { get; private set; }
     [Networked] private TickTimer ReviveDecayDelayTimer { get; set; }
     [Networked] public bool SoloSelfReviveUsed { get; private set; }
+    [Networked] public bool SoloSelfReviveDeclined { get; private set; }
 
     // 외부 스크립트가 수치를 읽을 때 인스펙터 값을 직접 수정하지 못하도록 읽기 전용으로 공개한다.
     public float MaxHealth => Mathf.Max(1f, maxHealth + BonusMaxHealth);
@@ -138,7 +139,7 @@ public class PlayerStats : NetworkBehaviour
     public float ReviveRequiredGauge => Mathf.Max(1f, ReviveSegmentCount * ReviveGaugePerSegment);
     public float ReviveNormalizedProgress => IsDead ? Mathf.Clamp01(1f - ReviveProgress / ReviveRequiredGauge) : 0f;
     public float ReviveRemainingNormalized => IsDead ? Mathf.Clamp01(ReviveProgress / ReviveRequiredGauge) : 0f;
-    public bool CanUseSoloSelfRevive => IsDead && !SoloSelfReviveUsed;
+    public bool CanUseSoloSelfRevive => IsDead && !SoloSelfReviveUsed && !SoloSelfReviveDeclined;
     public event Action<PlayerStats> ReviveStateChanged;
     public event Action<PlayerStats, float, float> StaminaUseFailed;
 
@@ -191,6 +192,7 @@ public class PlayerStats : NetworkBehaviour
         StaminaRegenHeld = false;
         HitInvincibleTimer = default;
         SoloSelfReviveUsed = false;
+        SoloSelfReviveDeclined = false;
         if (IsDead)
         {
             BeginReviveState(false);
@@ -227,6 +229,7 @@ public class PlayerStats : NetworkBehaviour
         IsAnimationInvincible = false;
         StaminaRegenHeld = false;
         SoloSelfReviveUsed = false;
+        SoloSelfReviveDeclined = false;
         ClearReviveProgress();
     }
 
@@ -517,6 +520,17 @@ public class PlayerStats : NetworkBehaviour
         RPC_ConsumeSoloSelfRevive();
     }
 
+    public void DeclineSoloSelfRevive()
+    {
+        if (HasStateAuthority)
+        {
+            ApplySoloSelfReviveDeclined();
+            return;
+        }
+
+        RPC_DeclineSoloSelfRevive();
+    }
+
     // 패시브 능력 모듈에 들어있는 스탯 보너스를 누적한다.
     // 실제 네트워크 스탯 값은 StateAuthority에서만 바꿔야 모든 클라이언트가 같은 결과를 받는다.
     public void ApplyPassiveStatBonus(PlayerAbilityModule module)
@@ -595,6 +609,12 @@ public class PlayerStats : NetworkBehaviour
     private void RPC_ConsumeSoloSelfRevive()
     {
         ApplySoloSelfRevive();
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    private void RPC_DeclineSoloSelfRevive()
+    {
+        ApplySoloSelfReviveDeclined();
     }
 
     private void ApplyDamage(float damage)
@@ -716,13 +736,24 @@ public class PlayerStats : NetworkBehaviour
 
     private void ApplySoloSelfRevive()
     {
-        if (!IsDead || SoloSelfReviveUsed)
+        if (!IsDead || SoloSelfReviveUsed || SoloSelfReviveDeclined)
         {
             return;
         }
 
         SoloSelfReviveUsed = true;
+        SoloSelfReviveDeclined = false;
         ReviveFully();
+    }
+
+    private void ApplySoloSelfReviveDeclined()
+    {
+        if (!IsDead || SoloSelfReviveUsed || SoloSelfReviveDeclined)
+        {
+            return;
+        }
+
+        SoloSelfReviveDeclined = true;
     }
 
     private void ReviveFully()

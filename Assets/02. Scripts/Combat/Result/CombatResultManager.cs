@@ -27,6 +27,7 @@ public class CombatResultManager : MonoBehaviour
     private CombatResultType currentResult = CombatResultType.None;
     private float allPlayersDeadTimer;
     private PlayerStats soloSelfReviveTarget;
+    private bool soloSelfRevivePromptShown;
     private bool _combatResultAbsorbed;
     private readonly Dictionary<int, float> _bossDamageByPlayer = new Dictionary<int, float>();
 
@@ -225,14 +226,16 @@ public class CombatResultManager : MonoBehaviour
 
     private void UpdateSoloSelfRevive(PlayerStats target)
     {
-        if (!target.HasStateAuthority)
+        if (target == null || !target.CanUseSoloSelfRevive)
         {
+            ResetSoloSelfRevive();
             return;
         }
 
         if (soloSelfReviveTarget != target)
         {
             soloSelfReviveTarget = target;
+            soloSelfRevivePromptShown = false;
         }
 
         NetworkPlayerController controller = target.GetComponent<NetworkPlayerController>();
@@ -241,13 +244,28 @@ public class CombatResultManager : MonoBehaviour
             return;
         }
 
-        target.ConsumeSoloSelfRevive();
-        ResetSoloSelfRevive();
+        if (!IsLocalInputOwner(target) || soloSelfRevivePromptShown)
+        {
+            return;
+        }
+
+        CombatQuickMenuView quickMenuView = FindObjectOfType<CombatQuickMenuView>(true);
+        if (quickMenuView == null)
+        {
+            Debug.LogWarning("[CombatResultManager] Solo self revive UI not found. Declining revive to avoid a stuck defeat state.");
+            target.DeclineSoloSelfRevive();
+            ResetSoloSelfRevive();
+            return;
+        }
+
+        soloSelfRevivePromptShown = true;
+        quickMenuView.ShowSoloSelfRevivePopup(target);
     }
 
     private void ResetSoloSelfRevive()
     {
         soloSelfReviveTarget = null;
+        soloSelfRevivePromptShown = false;
     }
 
     private void CompleteCombat(CombatResultType result)
@@ -372,5 +390,14 @@ public class CombatResultManager : MonoBehaviour
             return boss.Runner;
 
         return NetworkManager.HasInstance ? NetworkManager.Instance.Runner : null;
+    }
+
+    private bool IsLocalInputOwner(PlayerStats target)
+    {
+        if (target == null || target.Object == null)
+            return false;
+
+        NetworkRunner runner = target.Object.Runner != null ? target.Object.Runner : GetRunner();
+        return runner != null && target.Object.InputAuthority == runner.LocalPlayer;
     }
 }

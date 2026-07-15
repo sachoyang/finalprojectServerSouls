@@ -20,10 +20,6 @@ public class GameOverView : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float startAlpha = 0f;
     [SerializeField, Range(0f, 1f)] private float targetAlpha = 1f;
 
-    [Header("Input Lock")]
-    [SerializeField] private float inputLockDuration = 5f;
-    [SerializeField] private bool allowAnyKeyAfterUnlock = true;
-
     [Header("Message")]
     [SerializeField] private string defeatMessage = "DEFEATED";
     [SerializeField] private string retreatMessage = "RETREAT";
@@ -34,7 +30,6 @@ public class GameOverView : MonoBehaviour
     [SerializeField] private string lobbySceneName = "scLobbyMain";
 
     private bool isPlaying;
-    private bool canLeave;
     private bool isLoadingScene;
 
     private void Awake()
@@ -44,12 +39,6 @@ public class GameOverView : MonoBehaviour
 
         if (canvasGroup == null)
             canvasGroup = gameObject.AddComponent<CanvasGroup>();
-
-        if (continueButton != null)
-        {
-            continueButton.onClick.RemoveListener(OnClickContinue);
-            continueButton.onClick.AddListener(OnClickContinue);
-        }
 
         if (continueButtonText != null)
             continueButtonText.text = continueText;
@@ -62,15 +51,6 @@ public class GameOverView : MonoBehaviour
         //    바로 뒤 StartCoroutine이 "game object is inactive"로 실패했다.
         //    이제 자기 자신을 끄지 않고 CanvasGroup(alpha 0 · 입력 차단)으로만 숨긴다.
         HidePanel();
-    }
-
-    private void Update()
-    {
-        if (!canLeave || isLoadingScene)
-            return;
-
-        if (allowAnyKeyAfterUnlock && Input.anyKeyDown)
-            LoadLobbyScene();
     }
 
     public void PlayDefeat()
@@ -106,18 +86,9 @@ public class GameOverView : MonoBehaviour
         StartCoroutine(PlayRoutine());
     }
 
-    public void OnClickContinue()
-    {
-        if (!canLeave || isLoadingScene)
-            return;
-
-        LoadLobbyScene();
-    }
-
     private IEnumerator PlayRoutine()
     {
         isPlaying = true;
-        canLeave = false;
 
         SetInputEnabled(false);
         SetAlpha(startAlpha);
@@ -133,12 +104,8 @@ public class GameOverView : MonoBehaviour
         }
 
         SetAlpha(targetAlpha);
-
-        if (inputLockDuration > 0f)
-            yield return new WaitForSeconds(inputLockDuration);
-
-        canLeave = true;
-        SetInputEnabled(true);
+        yield return new WaitForEndOfFrame();
+        LoadLobbyScene();
     }
 
     private void SetAlpha(float alpha)

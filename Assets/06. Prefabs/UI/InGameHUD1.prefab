@@ -951,11 +951,9 @@ MonoBehaviour:
   canvasGroup: {fileID: 1799639397934139954}
   continueButton: {fileID: 0}
   continueButtonText: {fileID: 0}
-  fadeDuration: 2
+  fadeDuration: 3
   startAlpha: 0
   targetAlpha: 1
-  inputLockDuration: 5
-  allowAnyKeyAfterUnlock: 1
   defeatMessage: DEFEATED
   retreatMessage: RETREAT
   continueText: Continue

@@ -24814,6 +24814,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5679934295819518997, guid: 90005bf5c67b43f4886eb0a24d0d1351, type: 3}
+      propertyPath: allPlayersDeadDelay
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8981910642265040124, guid: 90005bf5c67b43f4886eb0a24d0d1351, type: 3}
       propertyPath: m_Name
       value: CombatResultSystem
