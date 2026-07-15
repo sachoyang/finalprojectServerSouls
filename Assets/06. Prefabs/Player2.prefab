@@ -209,6 +209,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2477520628776976969}
+  - {fileID: 2200504301732285152}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!143 &8675974344584725035
@@ -313,6 +314,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: de46e77ae6428ac49b91ec7706372651, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  minimumPlayerSoundInterval: 0.08
   animator: {fileID: 5353971605813606537}
   viewCamera: {fileID: 0}
   walkSpeed: 2.6
@@ -387,6 +389,7 @@ MonoBehaviour:
   _ReviveSegmentCount: 0
   _ReviveGaugePerSegment: 0
   _ReviveProgress: 0
+  _SoloSelfReviveUsed: 0
 --- !u!114 &8342556580354120391
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -412,10 +415,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0db6e089df1f42349a52186dc4f01a1f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _Nickname:
+    _length: 0
+    _data:
+      Data: 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
   _UnlockedSkillsBitmask: 0
   _SavedAbilityCount: 0
   _LastSelectedRewardStage: 0
   _SavedAbilityIds: []
+  _SavedAbilityLevels: 
 --- !u!114 &6066741626657161726
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -428,9 +436,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aff94b2bb75240545a63bf1e6a86d2f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  preventDuplicateModules: 1
   defaultActiveKeys: 3100000032000000330000003400000035000000360000003700000038000000
   equippedModules: []
+  equippedLevels: 
   activeSlots: []
 --- !u!114 &1745647009342870012
 MonoBehaviour:
@@ -545,6 +553,89 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetable: 1
+--- !u!1 &6300978031025486090
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2200504301732285152}
+  - component: {fileID: 8864726392668106725}
+  - component: {fileID: 185563899544260072}
+  m_Layer: 0
+  m_Name: PlayerShadowDecal
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2200504301732285152
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6300978031025486090}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2037310846467380227}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8864726392668106725
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6300978031025486090}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9df3d3e5b1b06cc4d8739d7798619cdf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  target: {fileID: 2037310846467380227}
+  projector: {fileID: 185563899544260072}
+  groundMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  raycastOffset: {x: 0, y: 0.45, z: 0}
+  maxRaycastDistance: 4
+  surfaceOffset: 0.08
+  decalSize: {x: 1.25, y: 1.6}
+  projectionDepth: 1.8
+  drawDistance: 45
+  useDistanceFade: 1
+  fadeOutHeight: 1.2
+  followTargetYaw: 0
+--- !u!114 &185563899544260072
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6300978031025486090}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0777d029ed3dffa4692f417d4aba19ca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 2100000, guid: a6e38ba38f1047645833abd7dbb5e75d, type: 2}
+  m_DrawDistance: 45
+  m_FadeScale: 0.9
+  m_StartAngleFade: 180
+  m_EndAngleFade: 180
+  m_UVScale: {x: 1, y: 1}
+  m_UVBias: {x: 0, y: 0}
+  m_DecalLayerMask: 1
+  m_ScaleMode: 0
+  m_Offset: {x: 0, y: 0, z: 0}
+  m_Size: {x: 1.25, y: 1.6, z: 1.8}
+  m_FadeFactor: 1
 --- !u!1001 &2732368445395510690
 PrefabInstance:
   m_ObjectHideFlags: 0
