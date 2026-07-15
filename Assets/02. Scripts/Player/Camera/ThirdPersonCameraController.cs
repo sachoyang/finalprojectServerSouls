@@ -50,7 +50,11 @@ public class ThirdPersonCameraController : MonoBehaviour
     [SerializeField] private float lockOnHeight = 1.2f;
     [SerializeField] private float lockOnTargetClearance = 2.5f;
     [SerializeField] private float lockOnMinLookPitch = -35f;
-    [SerializeField] private float lockOnMaxLookPitch = 55f;
+    [SerializeField] private float lockOnMaxLookPitch = 42f;
+    [SerializeField, Range(0f, 1f)] private float lockOnFramingWeight = 0.58f;
+    [SerializeField, Range(0f, 1f)] private float lockOnVerticalFramingWeight = 0.28f;
+    [SerializeField] private float lockOnFramingDistanceScale = 0.28f;
+    [SerializeField] private float lockOnMaxFramingDistance = 12f;
 
     private float _yaw;
     private float _pitch = 15f;
@@ -73,6 +77,10 @@ public class ThirdPersonCameraController : MonoBehaviour
     public Transform LockOnTarget => _lockOnTarget;
     public Vector3 LockOnTargetOffset => lockOnTargetOffset;
     public float LockOnHeight => lockOnHeight;
+    public float LockOnFramingWeight => lockOnFramingWeight;
+    public float LockOnVerticalFramingWeight => lockOnVerticalFramingWeight;
+    public float LockOnFramingDistanceScale => lockOnFramingDistanceScale;
+    public float LockOnMaxFramingDistance => lockOnMaxFramingDistance;
 
     private void Start()
     {
@@ -262,7 +270,9 @@ public class ThirdPersonCameraController : MonoBehaviour
         }
 
         flatToLock.Normalize();
-        Vector3 desiredPosition = focusPoint - flatToLock * distance + Vector3.up * lockOnHeight;
+        Vector3 framedLookPoint = GetLockOnFramedLookPoint(focusPoint, lockPoint);
+        float framedDistance = GetLockOnFramedDistance(focusPoint, lockPoint);
+        Vector3 desiredPosition = focusPoint - flatToLock * framedDistance + Vector3.up * lockOnHeight;
         desiredPosition = KeepClearOfLockOnTarget(desiredPosition, lockPoint, flatToLock);
         desiredPosition = ResolveCameraCollision(focusPoint, desiredPosition);
 
@@ -274,7 +284,7 @@ public class ThirdPersonCameraController : MonoBehaviour
 
         transform.position = PreventCameraGroundClip(resolvedPosition, focusPoint);
 
-        Vector3 lookDirection = lockPoint - transform.position;
+        Vector3 lookDirection = framedLookPoint - transform.position;
         if (lookDirection.sqrMagnitude > 0.0001f)
         {
             Quaternion targetRotation = GetClampedLockOnRotation(lookDirection);
@@ -287,6 +297,20 @@ public class ThirdPersonCameraController : MonoBehaviour
             _targetYaw = _yaw;
             _targetPitch = _pitch;
         }
+    }
+
+    public Vector3 GetLockOnFramedLookPoint(Vector3 focusPoint, Vector3 lockPoint)
+    {
+        Vector3 framedPoint = Vector3.Lerp(focusPoint, lockPoint, lockOnFramingWeight);
+        framedPoint.y = Mathf.Lerp(focusPoint.y, lockPoint.y, lockOnVerticalFramingWeight);
+        return framedPoint;
+    }
+
+    public float GetLockOnFramedDistance(Vector3 focusPoint, Vector3 lockPoint)
+    {
+        float targetSeparation = Vector3.Distance(focusPoint, lockPoint);
+        float expandedDistance = distance + targetSeparation * Mathf.Max(0f, lockOnFramingDistanceScale);
+        return Mathf.Clamp(expandedDistance, distance, Mathf.Max(distance, lockOnMaxFramingDistance));
     }
 
     private Vector3 KeepClearOfLockOnTarget(Vector3 desiredPosition, Vector3 lockPoint, Vector3 flatToLock)

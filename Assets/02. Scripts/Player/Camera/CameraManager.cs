@@ -380,8 +380,10 @@ public class CameraManager : MonoBehaviour
             }
 
             flatToLock.Normalize();
-            position = focusPoint - flatToLock * _gameplayCameraController.Distance + Vector3.up * _gameplayCameraController.LockOnHeight;
-            Vector3 lookDirection = lockPoint - position;
+            Vector3 framedLookPoint = _gameplayCameraController.GetLockOnFramedLookPoint(focusPoint, lockPoint);
+            float framedDistance = _gameplayCameraController.GetLockOnFramedDistance(focusPoint, lockPoint);
+            position = focusPoint - flatToLock * framedDistance + Vector3.up * _gameplayCameraController.LockOnHeight;
+            Vector3 lookDirection = framedLookPoint - position;
             rotation = lookDirection.sqrMagnitude > 0.0001f
                 ? Quaternion.LookRotation(lookDirection.normalized, Vector3.up)
                 : managedCamera.transform.rotation;
