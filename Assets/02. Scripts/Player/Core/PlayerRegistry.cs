@@ -36,7 +36,11 @@ public static class PlayerRegistry
     /// NetworkObject가 살아있는 플레이어인지 확인합니다.
     public static bool IsAlivePlayer(NetworkObject networkObject)
     {
-        return TryGetStats(networkObject, out PlayerStats stats) && !stats.IsDead;
+        return TryGetStats(networkObject, out PlayerStats stats) &&
+               stats.IsSpawnedReady &&
+               stats.Object != null &&
+               stats.Object.IsValid &&
+               !stats.IsDead;
     }
 
     /// 플레이어 NetworkObject에서 PlayerStats를 안전하게 가져옵니다.

@@ -7,6 +7,7 @@ public partial class NetworkPlayerController
 {
     public override void Spawned()
     {
+        _isNetworkSpawned = true;
         _changeDetector = GetChangeDetector(ChangeDetector.Source.SimulationState);
         ResetLocalActionState();
         UpdatePlayerTag();
@@ -36,6 +37,10 @@ public partial class NetworkPlayerController
 
     public override void Despawned(NetworkRunner runner, bool hasState)
     {
+        _isNetworkSpawned = false;
+        _lockOnTarget = null;
+        lockOnTargetSelector?.Clear();
+        _cameraManager?.ClearLockOnTarget();
         PlayerRegistry.Unregister(this);
     }
 
@@ -85,7 +90,12 @@ public partial class NetworkPlayerController
 
     public bool HasControlLock(PlayerControlLockFlags flags)
     {
-        int mask = ControlLockMask | _localControlLockMask;
+        int mask = _localControlLockMask;
+        if (IsNetworkStateReady)
+        {
+            mask |= ControlLockMask;
+        }
+
         return ((PlayerControlLockFlags)mask & flags) != PlayerControlLockFlags.None;
     }
 
@@ -96,7 +106,7 @@ public partial class NetworkPlayerController
             ? _localControlLockMask | flagMask
             : _localControlLockMask & ~flagMask;
 
-        if (Object == null)
+        if (!IsNetworkStateReady)
         {
             return;
         }
@@ -128,6 +138,11 @@ public partial class NetworkPlayerController
 
     public override void Render()
     {
+        if (!IsNetworkStateReady)
+        {
+            return;
+        }
+
         UpdatePlayerTag();
 
         // 네트워크 상태 변화는 Render에서 Animator 트리거로 변환한다.

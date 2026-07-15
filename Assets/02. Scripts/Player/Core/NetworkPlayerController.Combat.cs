@@ -39,7 +39,7 @@ public partial class NetworkPlayerController
     {
         _localBasicAttackComboUnlocked = true;
 
-        if (Object == null)
+        if (!IsNetworkStateReady)
         {
             return;
         }
@@ -237,14 +237,24 @@ public partial class NetworkPlayerController
 
     private bool IsComboInputWindowOpen()
     {
-        return ComboInputWindowOpen || _localComboInputWindowOpen;
+        return _localComboInputWindowOpen || (IsNetworkStateReady && ComboInputWindowOpen);
     }
 
     private StateActionLockType GetCurrentActionLockType()
     {
         // StateMachineBehaviour가 현재 재생 중인 State에 맞춰 로컬 락을 갱신한다.
         // 전환 중에는 네트워크 값보다 로컬 Animator 상태가 더 최신일 수 있어 로컬 락을 우선 본다.
-        byte lockType = _localActionAnimationLocked ? _localActionLockType : ActionLockType;
+        if (_localActionAnimationLocked)
+        {
+            return (StateActionLockType)_localActionLockType;
+        }
+
+        if (!IsNetworkStateReady)
+        {
+            return StateActionLockType.None;
+        }
+
+        byte lockType = ActionLockType;
         return (StateActionLockType)lockType;
     }
 
@@ -257,7 +267,7 @@ public partial class NetworkPlayerController
         _localActionLockType = isLocked ? (byte)lockType : (byte)StateActionLockType.None;
         UpdateAnimatorRootMotionMode();
 
-        if (Object != null && HasStateAuthority)
+        if (IsNetworkStateReady && HasStateAuthority)
         {
             ActionAnimationLocked = isLocked;
             ActionLockType = _localActionLockType;
@@ -269,7 +279,7 @@ public partial class NetworkPlayerController
     {
         _localComboInputWindowOpen = isOpen;
 
-        if (Object != null && HasStateAuthority)
+        if (IsNetworkStateReady && HasStateAuthority)
         {
             ComboInputWindowOpen = isOpen;
         }

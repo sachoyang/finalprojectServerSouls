@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using Fusion;
 using Fusion.Sockets;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 // [역할] 네트워크 씬 전환(로비→보스, 보스→보스 등)을 가리는 '지속 로딩 커버'.
@@ -29,6 +30,9 @@ public class TransitionLoadingScreen : MonoBehaviour, INetworkRunnerCallbacks
 
     [Tooltip("페이드 시간(초).")]
     [Min(0f)] public float fadeDuration = 0.3f;
+
+    [Tooltip("이 씬들은 로드 완료 시 전환 커버를 페이드 없이 즉시 내린다.")]
+    [SerializeField] private string[] instantHideSceneNames = { "scLobbyMain" };
 
     private CanvasGroup _cg;
     private GameObject _coverRoot;
@@ -65,10 +69,12 @@ public class TransitionLoadingScreen : MonoBehaviour, INetworkRunnerCallbacks
         else { _coverRoot = _cg.gameObject; _text = GetComponentInChildren<Text>(true); }
 
         HideImmediate();
+        SceneManager.sceneLoaded += OnUnitySceneLoaded;
     }
 
     private void OnDestroy()
     {
+        SceneManager.sceneLoaded -= OnUnitySceneLoaded;
         if (Instance == this) Instance = null;
     }
 
@@ -108,6 +114,13 @@ public class TransitionLoadingScreen : MonoBehaviour, INetworkRunnerCallbacks
         _hideRoutine = StartCoroutine(HideRoutine());
     }
 
+    public void HideNow()
+    {
+        if (_hideRoutine != null) { StopCoroutine(_hideRoutine); _hideRoutine = null; }
+        if (_safetyRoutine != null) { StopCoroutine(_safetyRoutine); _safetyRoutine = null; }
+        HideImmediate();
+    }
+
     private IEnumerator HideRoutine()
     {
         float remain = minDisplayTime - (Time.realtimeSinceStartup - _shownAt);
@@ -139,6 +152,28 @@ public class TransitionLoadingScreen : MonoBehaviour, INetworkRunnerCallbacks
         if (_cg != null) { _cg.alpha = 0f; _cg.blocksRaycasts = false; }
         if (_coverRoot != null) _coverRoot.SetActive(false);
         _visible = false;
+    }
+
+    private void OnUnitySceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (ShouldHideImmediately(scene.name))
+        {
+            HideNow();
+        }
+    }
+
+    private bool ShouldHideImmediately(string sceneName)
+    {
+        if (instantHideSceneNames == null)
+            return false;
+
+        for (int i = 0; i < instantHideSceneNames.Length; i++)
+        {
+            if (instantHideSceneNames[i] == sceneName)
+                return true;
+        }
+
+        return false;
     }
 
     private void BuildProgrammaticCover()

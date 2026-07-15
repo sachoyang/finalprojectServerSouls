@@ -201,18 +201,20 @@ public partial class NetworkPlayerController :
     private byte _predictedJumpActionType;
     private bool _deathAnimationEnteredForRevive;
     private bool _showPlayerDebug;
+    private bool _isNetworkSpawned;
 
-    public bool IsLockOnActive => IsLockOnNetworked;
+    public bool IsLockOnActive => IsNetworkStateReady && IsLockOnNetworked;
     public Transform CurrentLockOnTarget => _lockOnTarget;
     public float AttackHitRadius => _combatSystem != null ? _combatSystem.BasicAttackHitRadius : 0f;
     public Vector3 AttackHitLocalCenter => _combatSystem != null ? _combatSystem.BasicAttackHitLocalCenter : Vector3.zero;
-    public bool IsBasicAttackComboUnlocked => BasicAttackComboUnlocked || _localBasicAttackComboUnlocked;
-    public bool IsActionAnimationLocked => ActionAnimationLocked || _localActionAnimationLocked;
+    public bool IsBasicAttackComboUnlocked => _localBasicAttackComboUnlocked || (IsNetworkStateReady && BasicAttackComboUnlocked);
+    public bool IsActionAnimationLocked => _localActionAnimationLocked || (IsNetworkStateReady && ActionAnimationLocked);
     public bool IsDamageOrDeathActionActive =>
         (_playerStats != null && _playerStats.IsDead) ||
-        (IsActionAnimationLocked && IsDamageOrDeathAction(LastAction));
+        (IsNetworkStateReady && IsActionAnimationLocked && IsDamageOrDeathAction(LastAction));
     public bool IsDeathMotionLocked => GetCurrentActionLockType() == StateActionLockType.Death;
     public bool IsDeathAnimationCompleteForRevive => IsDeathAnimationComplete();
+    private bool IsNetworkStateReady => _isNetworkSpawned && Object != null && Object.IsValid;
 
     private void Awake()
     {

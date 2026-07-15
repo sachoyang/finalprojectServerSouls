@@ -419,7 +419,12 @@ public class CutsceneManager : MonoBehaviour
             yield break;
         }
 
+        gateAnimation.enabled = true;
+        gateAnimation.Stop();
+
         gateOpenState.time = 0f;
+        gateOpenState.enabled = true;
+        gateOpenState.weight = 1f;
         gateOpenState.wrapMode = WrapMode.ClampForever;
 
         if (gateOpenSound != null && SoundManager.Instance != null)
@@ -441,14 +446,14 @@ public class CutsceneManager : MonoBehaviour
         float elapsed = 0f;
         while (elapsed < duration)
         {
-            gateOpenState.clip.SampleAnimation(
-                gateAnimation.gameObject,
-                Mathf.Min(elapsed * speed, gateOpenState.length));
-            elapsed += Time.deltaTime;
+            gateOpenState.time = Mathf.Min(elapsed * speed, gateOpenState.length);
+            gateAnimation.Sample();
+            elapsed += Time.unscaledDeltaTime;
             yield return null;
         }
 
-        gateOpenState.clip.SampleAnimation(gateAnimation.gameObject, gateOpenState.length);
+        gateOpenState.time = gateOpenState.length;
+        gateAnimation.Sample();
     }
 
     private static void PlayAnimatorCommand(Animator animator, AnimatorCommandMode mode, string animationName)
