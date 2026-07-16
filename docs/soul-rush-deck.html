@@ -1383,6 +1383,13 @@
     });
     editToggle.setAttribute("aria-pressed", String(on));
     editToggle.textContent = on ? "✅ 편집 중 (완료하려면 클릭)" : "✏️ 편집 모드";
+    if (on) {
+      // 편집 중엔 scale 변형을 풀어 커서 위치가 어긋나지 않게 하고, 넘치면 스크롤로 본다
+      document.querySelectorAll(".deck-content").forEach(function (c) { c.style.transform = ""; });
+      document.querySelectorAll(".deck-block").forEach(function (b) { b.classList.add("deck-scroll"); });
+    } else {
+      fitActiveSlide();  // 편집 종료 후 다시 영역에 맞춰 축소
+    }
   }
   editToggle.addEventListener("click", function () {
     setEditMode(!document.body.classList.contains("edit-mode"));
