@@ -459,8 +459,10 @@
     position: relative; flex: 1 1 auto; min-height: 0;
     display: grid; gap: 0.7rem; align-content: stretch;
   }
-  .deck-block { position: relative; min-width: 0; min-height: 0; display: flex; flex-direction: column; overflow: auto; }
-  .deck-block > .deck-content { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+  .deck-block { position: relative; min-width: 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+  /* 조금 넘치면 JS가 축소해 영역에 맞추고, 많이 넘치면 이 클래스로 스크롤을 허용한다 */
+  .deck-block.deck-scroll { overflow: auto; }
+  .deck-block > .deck-content { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; transform-origin: top center; }
   .deck-block > .deck-content > * { flex: 1 1 auto; min-height: 0; }
   /* 이미지 슬롯은 섹션 크기를 꽉 채우도록(작게 나오던 문제 해결) */
   .deck-block .slot { height: 100%; gap: 0; margin: 0; }
@@ -517,12 +519,12 @@
   </div>
 </div>
 
-<nav class="rail" aria-label="슬라이드 이동"><button type="button" data-index="0" class="">00 표지</button><button type="button" data-index="1" class="">01 팀원 소개</button><button type="button" data-index="2" class="">02 게임 소개 · 컨셉</button><button type="button" data-index="3" class="">03 게임 소개 · 로그라이크</button><button type="button" data-index="4" class="">04 기술 스택</button><button type="button" data-index="5" class="">05 구조 · 전체 구조도</button><button type="button" data-index="6" class="">06 구조 · 실제 API/흐름</button><button type="button" data-index="7" class="">07 진행도 · 플레이어 조작</button><button type="button" data-index="8" class="">08 진행도 · 플레이어 구조</button><button type="button" data-index="9" class="">09 스킬 · 타입/구조</button><button type="button" data-index="10" class="">10 스킬 · 해금/획득</button><button type="button" data-index="11" class="">11 진행도 · 보스 시스템</button><button type="button" data-index="12" class="">12 진행도 · 로그라이크 구조</button><button type="button" data-index="13" class="">13 진행도 · 서버/인게임</button><button type="button" data-index="14" class="current">14 진행도 · 백엔드 API</button><button type="button" data-index="15" class="">15 진행도 · 인게임 UI</button><button type="button" data-index="16" class="">16 Game Demo</button><button type="button" data-index="17" class="">17 최적화 &amp; 안정성</button><button type="button" data-index="18" class="">18 Future Work</button><button type="button" data-index="19">19 Q&amp;A</button></nav>
+<nav class="rail" aria-label="슬라이드 이동"><button type="button" data-index="0" class="">00 표지</button><button type="button" data-index="1" class="">01 팀원 소개</button><button type="button" data-index="2" class="">02 게임 소개 · 컨셉</button><button type="button" data-index="3" class="">03 게임 소개 · 로그라이크</button><button type="button" data-index="4" class="">04 기술 스택</button><button type="button" data-index="5" class="">05 구조 · 전체 구조도</button><button type="button" data-index="6" class="">06 구조 · 실제 API/흐름</button><button type="button" data-index="7" class="">07 진행도 · 플레이어 조작</button><button type="button" data-index="8" class="">08 진행도 · 플레이어 구조</button><button type="button" data-index="9" class="">09 스킬 · 타입/구조</button><button type="button" data-index="10" class="">10 스킬 · 해금/획득</button><button type="button" data-index="11" class="current">11 진행도 · 보스 시스템</button><button type="button" data-index="12" class="">12 진행도 · 로그라이크 구조</button><button type="button" data-index="13" class="">13 진행도 · 서버/인게임</button><button type="button" data-index="14" class="">14 진행도 · 백엔드 API</button><button type="button" data-index="15" class="">15 진행도 · 인게임 UI</button><button type="button" data-index="16" class="">16 Game Demo</button><button type="button" data-index="17">17 최적화 &amp; 안정성</button><button type="button" data-index="18">18 Future Work</button><button type="button" data-index="19">19 Q&amp;A</button></nav>
 
 <div class="pager">
   <button type="button" class="btn" id="fsBtn">⛶ 전체화면</button>
   <button type="button" class="pager-btn" id="prevBtn" aria-label="이전 슬라이드">‹</button>
-  <span class="pager-count" id="pagerCount">15 / 20</span>
+  <span class="pager-count" id="pagerCount">12 / 20</span>
   <button type="button" class="pager-btn" id="nextBtn" aria-label="다음 슬라이드">›</button>
 </div>
 
@@ -776,7 +778,7 @@
     
 
     
-    <div class="deck-board" style="grid-template-columns: repeat(1, 1fr); grid-template-rows: repeat(3, minmax(0px, 1fr));"><div class="deck-block" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="api-groups">
+    <div class="deck-board" style="grid-template-columns: repeat(1, 1fr); grid-template-rows: repeat(3, minmax(0px, 1fr));"><div class="deck-block" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content" style="transform: scale(0.958904);"><div class="api-groups">
       <div class="api-group">
         <span class="gt">인증 · 세션</span>
         <ul class="list-dash">
@@ -950,7 +952,7 @@
 <!-- =========================================================
      11. 진행도 — 보스 시스템
 ========================================================= -->
-<section class="slide" id="p05c1" data-label="진행도 · 보스 시스템">
+<section class="slide active" id="p05c1" data-label="진행도 · 보스 시스템">
   <div class="slide-inner boarded">
     <div class="slide-head">
       <span class="eyebrow"><span class="idx">11</span> PROGRESS — 양평화</span>
@@ -966,20 +968,20 @@
           <li><strong>BossVisual(연출) ↔ Boss 스크립트(로직) 분리</strong> (<code>IBossVisual</code>)</li>
           <li><code>NetworkBossCore</code> — 체력 50%↓ 자동 <strong>2페이즈(광폭화)</strong></li>
         </ul>
-      </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block" style="grid-area: 1 / 2 / span 1 / span 1;"><div class="deck-content"><div class="panel">
+      </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block" style="grid-area: 2 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
         <span class="tag">최근 개선</span>
         <ul class="list-dash">
           <li><strong>어그로 추적</strong> — 10초 누적 딜량 1위에게 어그로 변경</li>
           <li><code>BossAoEAttack</code> — 파티클 동기화 장판, 다단 히트 &amp; 겹친 장판 중복 방지</li>
           <li>보스 예시: Dragon(화염) · PolarDragon(빙결) · OrcAssassin</li>
         </ul>
-      </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block" style="grid-area: 2 / 1 / span 1 / span 2;"><div class="deck-content"><figure class="slot strip-slot filled" data-default="assets/05-3-boss" data-kind="image">
+      </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block" style="grid-area: 1 / 2 / span 2 / span 1;"><div class="deck-content"><figure class="slot strip-slot filled" data-default="assets/05-3-boss" data-kind="image">
       <div class="slot-frame" style="aspect-ratio: 893 / 888;">
         <div class="slot-media-wrap"><img src="assets/05-3-boss.png" alt="" class="slot-media"></div>
         <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스크린샷 자리</span><button type="button" class="slot-add">추가하기</button></div>
       </div>
       <input type="file" class="slot-input" accept="image/*,video/mp4" hidden="">
-    </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">2×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div>
+    </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×2</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div>
     
   <button type="button" class="deck-add-btn deck-ui">＋ 섹션 추가 (스크린샷/영상)</button></div>
 </section>
@@ -1062,7 +1064,7 @@
 <!-- =========================================================
      14. 진행도 — 백엔드 엔드포인트
 ========================================================= -->
-<section class="slide active" id="p05d2" data-label="진행도 · 백엔드 API">
+<section class="slide" id="p05d2" data-label="진행도 · 백엔드 API">
   <div class="slide-inner boarded">
     <div class="slide-head">
       <span class="eyebrow"><span class="idx">14</span> PROGRESS — 양평화</span>
@@ -1243,6 +1245,7 @@
   var nextBtn = document.getElementById("nextBtn");
   var current = 0;
 
+  railEl.innerHTML = "";
   slides.forEach(function (slide, i) {
     var btn = document.createElement("button");
     btn.type = "button";
@@ -1262,7 +1265,40 @@
     var cur = railButtons[current];
     if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: "nearest" });
     if (history.replaceState) history.replaceState(null, "", "#" + slides[current].id);
+    fitActiveSlide();
   }
+
+  /* ---------- 블록 자동 맞춤 -----------------------------------------
+     콘텐츠가 블록보다 살짝 넘치면 transform:scale로 영역에 맞게 줄인다.
+     너무 많이 넘쳐(MIN_SCALE 이하) 줄이면 글씨가 안 보일 정도면
+     축소를 포기하고 스크롤(.deck-scroll)을 허용한다. */
+  var MIN_SCALE = 0.75;
+  function fitBlock(block) {
+    var content = block.querySelector(":scope > .deck-content");
+    if (!content) return;
+    // 초기화 후 자연 크기로 측정
+    content.style.transform = "";
+    block.classList.remove("deck-scroll");
+    var avail = block.clientHeight;
+    var need = content.scrollHeight;
+    if (!avail || need <= avail + 1) return;            // 넘치지 않음
+    var k = avail / need;
+    if (k >= MIN_SCALE) {
+      content.style.transform = "scale(" + k + ")";     // 살짝 넘침 → 축소
+    } else {
+      block.classList.add("deck-scroll");               // 많이 넘침 → 스크롤 허용
+    }
+  }
+  function fitActiveSlide() {
+    var slide = slides[current];
+    if (!slide) return;
+    requestAnimationFrame(function () {
+      slide.querySelectorAll(".deck-block").forEach(fitBlock);
+    });
+  }
+  window.addEventListener("resize", fitActiveSlide);
+  window.addEventListener("load", fitActiveSlide);
+
   function goTo(i) { current = Math.max(0, Math.min(slides.length - 1, i)); render(); }
   function next() { goTo(current + 1); }
   function prev() { goTo(current - 1); }
