@@ -31,6 +31,7 @@ public class BossHUDView : MonoBehaviour
 
     private bool wasGroggy;
     private float glassBreakTimer;
+    private float groggyActiveStartDuration;
 
     private void Awake()
     {
@@ -84,20 +85,23 @@ public class BossHUDView : MonoBehaviour
     {
         if (isGroggy)
         {
-            SetGroggyActiveMode(remainingTime, duration);
-
             if (!wasGroggy)
+            {
+                groggyActiveStartDuration = Mathf.Max(remainingTime, 0.01f);
                 PlayGlassBreakEffect();
+            }
+
+            SetGroggyActiveMode(remainingTime);
         }
         else
         {
+            groggyActiveStartDuration = 0f;
             SetGroggyNormalMode();
 
             float ratio = maxGroggy > 0f
                 ? Mathf.Clamp01(currentGroggy / maxGroggy)
                 : 0f;
 
-            // 노란 바 = '그로기 저항' 게이지. 그로기가 쌓일수록 줄어들고, 0이 되면 그로기 발동.
             if (groggyFillYellow != null)
                 groggyFillYellow.fillAmount = 1f - ratio;
         }
@@ -146,7 +150,7 @@ public class BossHUDView : MonoBehaviour
             groggyTimeText.gameObject.SetActive(false);
     }
 
-    private void SetGroggyActiveMode(float remainingTime, float duration)
+    private void SetGroggyActiveMode(float remainingTime)
     {
         if (groggyFillYellow != null)
             groggyFillYellow.gameObject.SetActive(false);
@@ -155,8 +159,8 @@ public class BossHUDView : MonoBehaviour
         {
             groggyFillPurple.gameObject.SetActive(true);
 
-            float ratio = duration > 0f
-                ? Mathf.Clamp01(remainingTime / duration)
+            float ratio = groggyActiveStartDuration > 0f
+                ? Mathf.Clamp01(remainingTime / groggyActiveStartDuration)
                 : 0f;
 
             groggyFillPurple.fillAmount = ratio;

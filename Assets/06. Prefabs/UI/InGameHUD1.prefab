@@ -1469,6 +1469,10 @@ MonoBehaviour:
   voteRejectButton: {fileID: 4304462136821958047}
   optionPanel: {fileID: 6714026205079951144}
   voteFailedMessageDuration: 2
+  surrenderConfirmMessageText: {fileID: 0}
+  surrenderConfirmMessage: "\uC804\uD22C\uB97C \uD3EC\uAE30\uD558\uC2DC\uACA0\uC2B5\uB2C8\uAE4C?\n\n(2\uC778
+    \uC774\uC0C1\uC77C \uACBD\uC6B0 \uD22C\uD45C\uAC00 \uC9C4\uD589\uB429\uB2C8\uB2E4)"
+  soloSelfReviveConfirmMessage: "\uBD80\uD65C\uD558\uC2DC\uACA0\uC2B5\uB2C8\uAE4C?"
 --- !u!114 &2613142526258789563
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6853,10 +6857,10 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_Sprite: {fileID: 21300000, guid: f8c790acfc5d06b4da1d7820dbc4a7aa, type: 3}
-  m_Type: 0
+  m_Type: 3
   m_PreserveAspect: 0
   m_FillCenter: 1
-  m_FillMethod: 4
+  m_FillMethod: 0
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
