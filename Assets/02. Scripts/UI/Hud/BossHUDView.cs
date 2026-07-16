@@ -97,8 +97,12 @@ public class BossHUDView : MonoBehaviour
                 ? Mathf.Clamp01(currentGroggy / maxGroggy)
                 : 0f;
 
+            // 누적된 그로기 수치를 '그대로' 채워서 보여준다.
+            // (예전엔 1-ratio로 그려서 그로기가 꽉 찰수록 게이지가 비어 '0처럼' 보였다.
+            //  폴라드래곤이 2페이즈/비행 진입 시 그로기가 max 근처로 유지되는데 게이지가 텅 비어
+            //  마치 리셋된 것처럼 오해되던 표시 버그를 바로잡는다.)
             if (groggyFillYellow != null)
-                groggyFillYellow.fillAmount = 1f - ratio;
+                groggyFillYellow.fillAmount = ratio;
         }
 
         wasGroggy = isGroggy;
