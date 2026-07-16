@@ -806,7 +806,7 @@
     "m_SourceType": 1,
     "m_FunctionName": "CreateInnerStructure",
     "m_FunctionSource": "",
-    "m_FunctionBody": "InnerStructure = float3(0, 0, 0);\nfloat2 uv_mod = uv;\nfloat offset = 1;\nfor (float d = 0.0; d < marchDistance; d += marchDistance / numSteps)\r\n{\n\tuv_mod -= (viewDir * d) / numSteps * tex2D(mainTex, uv).g;\n         \tfloat4 Ldensity = tex2D(mainTex, uv_mod).r;\n\tInnerStructure += saturate(Ldensity[0]) * tex2D(innerRamp, float2(1 / numSteps * offset, 0.5));\n\toffset++;\n}"
+    "m_FunctionBody": "InnerStructure = float3(0, 0, 0);\nfloat2 uv_mod = uv;\nfloat offset = 1;\nfor (float d = 0.0; d < marchDistance; d += marchDistance / numSteps)\r\n{\n\tuv_mod -= (viewDir * d) / numSteps * tex2D(mainTex, uv).g;\n         \tfloat Ldensity = tex2D(mainTex, uv_mod).r;\n\tInnerStructure += saturate(Ldensity) * tex2D(innerRamp, float2(1 / numSteps * offset, 0.5)).rgb;\n\toffset++;\n}"
 }
 
 {
@@ -1024,7 +1024,7 @@
     "m_SourceType": 1,
     "m_FunctionName": "CreateAlpha",
     "m_FunctionSource": "",
-    "m_FunctionBody": "half rim = saturate(dot (normalize(viewDir), normal));\nhalf rim2 = 1 - rim;\nfresnel = pow(rim2, fresnel);\nalpha = clamp(color.a + fresnel + innerStructure, 0, 1) + 0.2;"
+    "m_FunctionBody": "half rim = saturate(dot (normalize(viewDir), normal));\nhalf rim2 = 1 - rim;\nfresnel = pow(rim2, fresnel);\nfloat innerAlpha = dot(innerStructure, float3(0.333333, 0.333333, 0.333333));\nalpha = clamp(color.a + fresnel + innerAlpha, 0, 1) + 0.2;"
 }
 
 {
