@@ -36,6 +36,7 @@ public partial class NetworkPlayerController
 
     public override void Despawned(NetworkRunner runner, bool hasState)
     {
+        SetWeaponTrailActive(false, true);
         PlayerRegistry.Unregister(this);
     }
 
@@ -48,6 +49,7 @@ public partial class NetworkPlayerController
         _parryGuardStateDepth = 0;
         _invincibilityStateDepth = 0;
         _animatorStateRootMotionActive = false;
+        SetWeaponTrailActive(false, true);
         ClearComboRequests();
         _lastLocalConsumedActionId = 0;
         if (animator != null)

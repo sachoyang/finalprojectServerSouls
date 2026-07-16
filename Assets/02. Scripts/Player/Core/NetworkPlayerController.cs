@@ -129,6 +129,11 @@ public partial class NetworkPlayerController :
     [Tooltip("캐릭터 프리팹 내부의 Head 혹은 눈높이 조인트를 여기에 드래그 앤 드롭 하세요.")]
     [SerializeField] private Transform playerHeadTransform;
 
+    [Header("Weapon Trail")]
+    [SerializeField] private TrailRenderer[] weaponTrails;
+    [SerializeField] private bool weaponTrailControlledByAnimationEvents = false;
+    [SerializeField] private bool clearWeaponTrailOnStop = true;
+
     // 외부 CombatSystem에서 읽어갈 읽기 전용 프로퍼티
     public Transform PlayerHeadTransform => playerHeadTransform;
 
@@ -234,6 +239,8 @@ public partial class NetworkPlayerController :
 
         animator.applyRootMotion = false;
         _lastMoveDirection = transform.forward;
+        InitializeWeaponTrails();
+        SetWeaponTrailActive(false, true);
     }
 
 

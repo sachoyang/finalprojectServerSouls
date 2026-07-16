@@ -188,6 +188,11 @@ public partial class NetworkPlayerController
 
         SetActionAnimationLocked(true, lockType);
         SetComboInputWindowOpen(false);
+
+        if (lockType == StateActionLockType.Attack && !weaponTrailControlledByAnimationEvents)
+        {
+            SetWeaponTrailActive(true, true);
+        }
     }
 
     public void OpenComboInputWindow()
@@ -212,6 +217,11 @@ public partial class NetworkPlayerController
         SetActionAnimationLocked(false);
         SetComboInputWindowOpen(false);
 
+        if (lockType == StateActionLockType.Attack)
+        {
+            SetWeaponTrailActive(false, clearWeaponTrailOnStop);
+        }
+
         if (lockType == StateActionLockType.Roll)
         {
             RollDirection = Vector3.zero;
@@ -233,6 +243,64 @@ public partial class NetworkPlayerController
     public void DelayStaminaRecoveryAfterAnimation()
     {
         _playerStats?.DelayStaminaRegen();
+    }
+
+    public void AnimationEvent_EnableWeaponTrail()
+    {
+        SetWeaponTrailActive(true, true);
+    }
+
+    public void AnimationEvent_DisableWeaponTrail()
+    {
+        SetWeaponTrailActive(false, clearWeaponTrailOnStop);
+    }
+
+    public void EnableWeaponTrail()
+    {
+        AnimationEvent_EnableWeaponTrail();
+    }
+
+    public void DisableWeaponTrail()
+    {
+        AnimationEvent_DisableWeaponTrail();
+    }
+
+    private void InitializeWeaponTrails()
+    {
+        if (weaponTrails == null || weaponTrails.Length == 0)
+        {
+            weaponTrails = GetComponentsInChildren<TrailRenderer>(true);
+        }
+    }
+
+    private void SetWeaponTrailActive(bool active, bool clear)
+    {
+        InitializeWeaponTrails();
+        if (weaponTrails == null)
+        {
+            return;
+        }
+
+        foreach (TrailRenderer trail in weaponTrails)
+        {
+            if (trail == null)
+            {
+                continue;
+            }
+
+            trail.enabled = true;
+            if (active && clear)
+            {
+                trail.Clear();
+            }
+
+            trail.emitting = active;
+
+            if (!active && clear)
+            {
+                trail.Clear();
+            }
+        }
     }
 
     private bool IsComboInputWindowOpen()
@@ -317,6 +385,7 @@ public partial class NetworkPlayerController
             // 공격이 아닌 액션은 기본공격 선입력을 이어받지 않는다.
             // 예를 들어 점프/패링/피격 직후에 이전 클릭이 남아서 공격으로 이어지는 것을 막는다.
             ClearComboRequests();
+            SetWeaponTrailActive(false, clearWeaponTrailOnStop);
         }
 
         if (actionType == ActionAttack)
@@ -341,6 +410,7 @@ public partial class NetworkPlayerController
         LastAction = becameDead ? ActionDeath : ActionImpact;
         LastActionId = 0;
         ActionSequence++;
+        SetWeaponTrailActive(false, true);
         SetActionAnimationLocked(true, GetActionLockType(LastAction));
         SetComboInputWindowOpen(false);
         ClearComboRequests();
@@ -357,6 +427,7 @@ public partial class NetworkPlayerController
         LastAction = ActionParryImpact;
         LastActionId = 0;
         ActionSequence++;
+        SetWeaponTrailActive(false, true);
         SetActionAnimationLocked(true, StateActionLockType.Impact);
         SetComboInputWindowOpen(false);
         ClearComboRequests();
@@ -371,6 +442,7 @@ public partial class NetworkPlayerController
         _parryGuardStateDepth = 0;
         _invincibilityStateDepth = 0;
         _animatorStateRootMotionActive = false;
+        SetWeaponTrailActive(false, true);
         ClearComboRequests();
         _lastLocalConsumedActionId = 0;
 
@@ -543,6 +615,7 @@ public partial class NetworkPlayerController
         switch (actionType)
         {
             case ActionNone:
+                SetWeaponTrailActive(false, true);
                 animator.SetBool(IsCrawling, false);
                 animator.CrossFade("idle1", 0.1f);
                 break;
