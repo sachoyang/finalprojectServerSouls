@@ -1,5 +1,5 @@
 <!doctype html>
-<html><head><title>Soul Rush — Project Dossier</title>
+<html data-theme="light"><head><title>Soul Rush — Project Dossier</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   /* ============ Tokens ============ */
@@ -47,6 +47,7 @@
   --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, "Noto Sans Mono CJK KR", monospace;
 
   * { box-sizing: border-box; }
+  html { font-size: 18px; }  /* 발표(전체화면) 가독성: 모든 rem 기반 글씨/다이어그램을 균일하게 +12.5% 키움 */
   html, body { height: 100%; margin: 0; overflow: hidden; }
   body {
     background: var(--void);
@@ -516,23 +517,182 @@
   /* 상단바의 '새 슬라이드 추가' 버튼 — 편집 모드에서만 노출 */
   #addSlideBtn { display: none; }
   body.edit-mode #addSlideBtn { display: inline-block; }
+
+  /* ============================================================
+     Diagram kit (양평화 담당 — 보스/서버 구조 다이어그램)
+     순수 CSS grid/flex 기반. 절대좌표 SVG 겹침 없이 크기가 변해도 안 깨지도록 설계.
+     클래스 다이어그램 / 시퀀스 / 상태머신(FSM) / ER / 매니저 파이프라인.
+  ============================================================ */
+  .dgm { margin-top: 0.3rem; font-size: clamp(0.62rem, 1.15vw, 0.8rem); }
+  .dgm-cap { font-family: var(--font-mono); font-size: 0.58rem; letter-spacing: 0.05em;
+    text-transform: uppercase; color: var(--ink-dim); margin: 0.55rem 0 0.35rem; display: block; }
+
+  /* --- UML 클래스 박스 --- */
+  .uml { border: 1px solid var(--line); border-radius: 6px; background: var(--char-2);
+    box-shadow: 0 1px 5px var(--shadow); overflow: hidden; min-width: 0; }
+  .uml.iface { border-style: dashed; }
+  .uml.hub { border-top: 3px solid var(--gold); }
+  .uml.net { border-top: 3px solid var(--ch-live); }
+  .uml-h { padding: 0.32rem 0.55rem; font-weight: 700; background: color-mix(in srgb, var(--gold) 10%, var(--char));
+    border-bottom: 1px solid var(--line); line-height: 1.25; }
+  .uml-h small { display: block; font-family: var(--font-mono); font-weight: 400; font-size: 0.62rem;
+    color: var(--gold); letter-spacing: 0.04em; }
+  .uml.net .uml-h { background: color-mix(in srgb, var(--ch-live) 12%, var(--char)); }
+  .uml.net .uml-h small { color: var(--ch-live); }
+  .uml.web .uml-h { background: color-mix(in srgb, var(--ch-web) 12%, var(--char)); }
+  .uml.web .uml-h small { color: color-mix(in srgb, var(--ch-web) 80%, var(--ink)); }
+  .uml ul { padding: 0.35rem 0.55rem; display: flex; flex-direction: column; gap: 0.16rem; }
+  .uml li { font-family: var(--font-mono); font-size: 0.66rem; color: var(--ink-dim); line-height: 1.35; }
+  .uml li b { color: var(--ink); font-weight: 600; }
+
+  /* --- 상속/구현 관계 연결 라인 --- */
+  .uml-rel { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; padding: 0.15rem 0; }
+  .uml-rel .tri { color: var(--gold); font-size: 0.85rem; line-height: 1; }
+  .uml-rel .lbl { font-family: var(--font-mono); font-size: 0.55rem; letter-spacing: 0.04em;
+    color: var(--ink-dim); text-transform: uppercase; }
+  .uml-children { display: grid; gap: 0.5rem; }
+  .uml-tree { display: flex; flex-direction: column; align-items: stretch; gap: 0; }
+
+  /* --- 상태머신(FSM) --- */
+  .fsm { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.3rem; }
+  .fsm-state { border: 1px solid var(--line); border-radius: 999px; padding: 0.34rem 0.7rem;
+    background: var(--char); font-weight: 600; white-space: nowrap; box-shadow: 0 1px 4px var(--shadow); }
+  .fsm-state small { font-family: var(--font-mono); font-weight: 400; color: var(--ink-dim); font-size: 0.62rem; }
+  .fsm-state.start { border-color: var(--ink-dim); color: var(--ink-dim); }
+  .fsm-state.combat { border-color: var(--gold); color: var(--gold-bright); background: color-mix(in srgb, var(--gold) 12%, var(--char)); }
+  .fsm-state.phase { border-color: var(--ember); color: var(--ember); background: color-mix(in srgb, var(--ember) 10%, var(--char)); }
+  .fsm-state.die { border-color: var(--ink); background: color-mix(in srgb, var(--ink) 8%, var(--char)); }
+  .fsm-arrow { color: var(--gold); opacity: 0.75; font-family: var(--font-mono); font-size: 0.8rem; }
+  .fsm-arrow .t { font-size: 0.52rem; display: block; text-align: center; color: var(--ink-dim); }
+  .fsm-note { margin-top: 0.55rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; }
+  @media (max-width: 720px) { .fsm-note { grid-template-columns: 1fr; } }
+  .fsm-note .n { border: 1px solid var(--line); border-left: 3px solid var(--gold); border-radius: 4px;
+    padding: 0.35rem 0.6rem; background: var(--char); font-size: 0.72rem; color: var(--ink-dim); }
+  .fsm-note .n b { color: var(--ink); }
+  .fsm-note .n.hot { border-left-color: var(--ember); }
+
+  /* --- 시퀀스 다이어그램 --- */
+  .seq { display: grid; gap: 0.28rem 0.5rem; align-items: center; }
+  .seq-actors { display: contents; }
+  .seq-actor { font-weight: 700; text-align: center; padding: 0.3rem 0.4rem; border: 1px solid var(--line);
+    border-radius: 5px; background: var(--char-2); box-shadow: 0 1px 4px var(--shadow); }
+  .seq-actor small { display: block; font-family: var(--font-mono); font-weight: 400; font-size: 0.6rem; color: var(--ink-dim); }
+  .seq-actor.net { border-top: 3px solid var(--ch-live); }
+  .seq-actor.web { border-top: 3px solid var(--ch-web); }
+  .seq-actor.db { border-top: 3px solid var(--ch-web); border-radius: 5px 5px 12px 12px; }
+  .seq-msg { display: flex; align-items: center; gap: 0.4rem; grid-column: 1 / -1;
+    border-top: 1px dashed var(--line); padding-top: 0.28rem; }
+  .seq-msg .num { flex: none; font-family: var(--font-mono); font-size: 0.62rem; color: var(--void);
+    background: var(--gold); width: 1rem; height: 1rem; border-radius: 50%; display: flex;
+    align-items: center; justify-content: center; font-weight: 700; }
+  .seq-msg .arrow { flex: none; font-family: var(--font-mono); color: var(--gold); font-size: 0.72rem; letter-spacing: -0.05em; }
+  .seq-msg .arrow.ret { color: var(--ch-web); opacity: 0.8; }
+  .seq-msg .txt { color: var(--ink-dim); }
+  .seq-msg .txt b { color: var(--ink); }
+  .seq-msg .txt code { font-size: 0.82em; }
+
+  /* --- ER 다이어그램 --- */
+  .er { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.6rem; align-items: start; }
+  .er-tbl { border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--char-2);
+    box-shadow: 0 1px 5px var(--shadow); }
+  .er-tbl.multi { border-top: 3px solid var(--ch-web); }
+  .er-h { padding: 0.3rem 0.55rem; font-weight: 700; font-family: var(--font-mono); font-size: 0.72rem;
+    background: color-mix(in srgb, var(--ch-web) 12%, var(--char)); border-bottom: 1px solid var(--line);
+    display: flex; justify-content: space-between; align-items: center; }
+  .er-h .badge { font-size: 0.55rem; color: color-mix(in srgb, var(--ch-web) 80%, var(--ink)); font-weight: 600; }
+  .er-tbl ul { padding: 0.3rem 0.55rem; display: flex; flex-direction: column; gap: 0.12rem; }
+  .er-tbl li { font-family: var(--font-mono); font-size: 0.64rem; color: var(--ink-dim); line-height: 1.3;
+    display: flex; gap: 0.35rem; }
+  .er-tbl li .key { color: var(--gold); font-weight: 700; width: 1.6rem; flex: none; }
+  .er-tbl li b { color: var(--ink); }
+
+  /* --- 매니저 파이프라인(가로 3단 등) --- */
+  .mgrflow { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 0.4rem; align-items: stretch; }
+  @media (max-width: 760px) { .mgrflow { grid-template-columns: 1fr; } .mgrflow .mgr-arrow { transform: rotate(90deg); justify-self: center; } }
+  .mgr-node { border: 1px solid var(--line); border-radius: 6px; padding: 0.5rem 0.6rem; background: var(--char-2);
+    box-shadow: 0 1px 5px var(--shadow); display: flex; flex-direction: column; gap: 0.15rem; }
+  .mgr-node .nm { font-family: var(--font-mono); font-weight: 700; font-size: 0.72rem; color: var(--gold-bright); }
+  .mgr-node .ds { font-size: 0.68rem; color: var(--ink-dim); line-height: 1.35; }
+  .mgr-node.net { border-top: 3px solid var(--ch-live); }
+  .mgr-arrow { display: flex; align-items: center; color: var(--gold); font-size: 1rem; opacity: 0.75; }
+
+  /* ============================================================
+     Diagram flow animation — 전체 구조도처럼 다이어그램/시퀀스에 흐르는 움직임
+     (mgrflow 파이프의 이동 점, fsm/seq 화살표 맥동, 클래스 상속 삼각형 bob)
+     prefers-reduced-motion 시 전부 정지하고 정적 화살표로 복귀.
+  ============================================================ */
+  .mgr-arrow { position: relative; min-width: 2.2rem; justify-content: center; color: transparent; overflow: visible; }
+  .mgr-arrow::before { content: ""; position: absolute; left: 8%; right: 8%; top: 50%; height: 2px;
+    transform: translateY(-50%); background: color-mix(in srgb, var(--gold) 45%, var(--line)); border-radius: 2px; }
+  .mgr-arrow::after { content: ""; position: absolute; top: 50%; left: 8%; width: 7px; height: 7px; border-radius: 50%;
+    transform: translate(-50%, -50%); background: var(--gold-bright); box-shadow: 0 0 6px var(--ch-live);
+    animation: dgmFlowX 1.7s linear infinite; }
+  @keyframes dgmFlowX { 0% { left: 8%; opacity: 0; } 12% { opacity: 1; } 88% { opacity: 1; } 100% { left: 92%; opacity: 0; } }
+
+  .fsm-arrow { animation: dgmPulse 1.7s ease-in-out infinite; }
+  @keyframes dgmPulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+
+  .seq-msg .arrow { animation: dgmPulse 1.8s ease-in-out infinite; }
+  .seq-msg .num { animation: dgmGlow 2.2s ease-in-out infinite; }
+  @keyframes dgmGlow { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--gold) 0%, transparent); }
+    50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--gold) 24%, transparent); } }
+  .seq-msg:nth-child(2) .num { animation-delay: 0s; }
+  .seq-msg:nth-child(3) .num { animation-delay: 0.16s; }
+  .seq-msg:nth-child(4) .num { animation-delay: 0.32s; }
+  .seq-msg:nth-child(5) .num { animation-delay: 0.48s; }
+  .seq-msg:nth-child(6) .num { animation-delay: 0.64s; }
+  .seq-msg:nth-child(7) .num { animation-delay: 0.80s; }
+  .seq-msg:nth-child(8) .num { animation-delay: 0.96s; }
+  .seq-msg:nth-child(9) .num { animation-delay: 1.12s; }
+
+  .uml-rel .tri { animation: dgmBob 1.9s ease-in-out infinite; }
+  @keyframes dgmBob { 0%, 100% { transform: translateY(-1px); opacity: 0.65; } 50% { transform: translateY(2px); opacity: 1; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .mgr-arrow { color: var(--gold); }
+    .mgr-arrow::before, .mgr-arrow::after { display: none; }
+    .fsm-arrow, .seq-msg .arrow, .seq-msg .num, .uml-rel .tri { animation: none; }
+  }
 </style>
 
 </head><body class=""><div class="topbar">
   <span class="brand"><strong>SOUL RUSH</strong> · project dossier</span>
   <div class="controls">
+    <button type="button" class="btn" id="themeToggle" aria-label="라이트/다크 테마 전환">🌙 다크</button>
     <button type="button" class="btn" id="addSlideBtn">＋ 새 슬라이드</button>
     <button type="button" class="btn" id="editToggle" aria-pressed="false">✏️ 편집 모드</button>
     <button type="button" class="btn" id="downloadBtn">⬇ 수정본 다운로드</button>
   </div>
 </div>
+<script>
+/* 라이트/다크 테마 토글 — 저장(localStorage)되며, 첫 방문 시 브라우저 설정을 기본값으로 사용 */
+(function () {
+  var root = document.documentElement, KEY = "soulrush-theme";
+  function apply(t) { if (t === "dark" || t === "light") root.setAttribute("data-theme", t); else root.removeAttribute("data-theme"); }
+  var saved = null; try { saved = localStorage.getItem(KEY); } catch (e) {}
+  var sysDark = window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches;
+  var cur = (saved === "dark" || saved === "light") ? saved : (sysDark ? "dark" : "light");
+  apply(cur);                                   // 깜빡임 최소화를 위해 즉시 적용
+  function label() { return cur === "dark" ? "☀️ 라이트" : "🌙 다크"; }
+  function wire() {
+    var btn = document.getElementById("themeToggle"); if (!btn) return;
+    btn.textContent = label();
+    btn.addEventListener("click", function () {
+      cur = (cur === "dark") ? "light" : "dark";
+      apply(cur); try { localStorage.setItem(KEY, cur); } catch (e) {}
+      btn.textContent = label();
+    });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", wire); else wire();
+})();
+</script>
 
-<nav class="rail" aria-label="슬라이드 이동"><button type="button" data-index="0" class="">00 표지</button><button type="button" data-index="1" class="">01 팀원 소개</button><button type="button" data-index="2" class="">02 게임 소개 · 컨셉</button><button type="button" data-index="3" class="">03 게임 소개 · 로그라이크</button><button type="button" data-index="4" class="">04 기술 스택</button><button type="button" data-index="5" class="">05 구조 · 전체 구조도</button><button type="button" data-index="6" class="">06 구조 · 실제 API/흐름</button><button type="button" data-index="7" class="">07 진행도 · 플레이어 조작</button><button type="button" data-index="8" class="">08 진행도 · 플레이어 구조</button><button type="button" data-index="9" class="">09 스킬 · 타입/구조</button><button type="button" data-index="10" class="">10 스킬 · 해금/획득</button><button type="button" data-index="11" class="current">11 진행도 · 보스 시스템</button><button type="button" data-index="12" class="">12 진행도 · 로그라이크 구조</button><button type="button" data-index="13" class="">13 진행도 · 서버/인게임</button><button type="button" data-index="14" class="">14 진행도 · 백엔드 API</button><button type="button" data-index="15" class="">15 진행도 · 인게임 UI</button><button type="button" data-index="16" class="">16 Game Demo</button><button type="button" data-index="17">17 최적화 &amp; 안정성</button><button type="button" data-index="18">18 Future Work</button><button type="button" data-index="19">19 Q&amp;A</button></nav>
+<nav class="rail" aria-label="슬라이드 이동"><button type="button" data-index="0" class="">00 표지</button><button type="button" data-index="1" class="">01 팀원 소개</button><button type="button" data-index="2" class="">02 게임 소개 · 컨셉</button><button type="button" data-index="3" class="">03 게임 소개 · 로그라이크</button><button type="button" data-index="4" class="">04 기술 스택</button><button type="button" data-index="5" class="">05 구조 · 전체 구조도</button><button type="button" data-index="6" class="">06 구조 · API/통신 흐름</button><button type="button" data-index="7" class="">07 플레이어 · 조작</button><button type="button" data-index="8" class="">08 전투 · Down &amp; Revive</button><button type="button" data-index="9" class="">09 카메라 · 컷신</button><button type="button" data-index="10" class="">10 스킬 · 타입/구조</button><button type="button" data-index="11" class="">11 스킬 · HitEvent/Preview</button><button type="button" data-index="12" class="">12 스킬 · 해금/획득</button><button type="button" data-index="13" class="">13 전투 · 예측입력/이펙트</button><button type="button" data-index="14" class="current">14 보스 · 상태머신</button><button type="button" data-index="15" class="">15 보스 · 클래스 구조</button><button type="button" data-index="16">16 보스 · AoE/어그로</button><button type="button" data-index="17">17 로그라이크 구조</button><button type="button" data-index="18">18 서버 · 인게임 시스템</button><button type="button" data-index="19">19 백엔드 · 엔드포인트/DB</button><button type="button" data-index="20">20 타이틀 · 로비</button><button type="button" data-index="21">21 인게임 UI · HUD</button><button type="button" data-index="22">22 인게임 UI · 인벤토리</button><button type="button" data-index="23">23 Game Demo</button><button type="button" data-index="24">24 최적화 &amp; 안정성</button><button type="button" data-index="25">25 Future Work</button><button type="button" data-index="26">26 Q&amp;A</button></nav>
 
 <div class="pager">
   <button type="button" class="btn" id="fsBtn">⛶ 전체화면</button>
   <button type="button" class="pager-btn" id="prevBtn" aria-label="이전 슬라이드">‹</button>
-  <span class="pager-count" id="pagerCount">12 / 20</span>
+  <span class="pager-count" id="pagerCount">15 / 27</span>
   <button type="button" class="pager-btn" id="nextBtn" aria-label="다음 슬라이드">›</button>
 </div>
 
@@ -544,23 +704,21 @@
 <section class="slide cover-slide" id="p00" data-label="표지">
   <div class="slide-inner boarded">
     <span class="eyebrow"><span class="idx">00</span> PROJECT DOSSIER</span>
-    <h1 class="slide-title editable" contenteditable="false">SOUL RUSH</h1>
-    <p class="cover-kicker editable" contenteditable="false">멀티플레이(3인) 로그라이크 보스러시</p>
-    <div class="cover-credit editable" contenteditable="false">
-      <span><b>양평화</b> · 팀장 / 서버·보스·맵</span>
-      <span><b>임현빈</b> · 플레이어·스킬 시스템·카메라</span>
-      <span><b>이주영</b> · UI/UX·사운드</span>
-    </div>
+    <h2 class="slide-title">SOUL RUSH</h2>
+    <p class="cover-kicker">멀티플레이(3인) 로그라이크 보스러시</p>
+    <p class="cover-credit">
+      <b>양평화</b> · 팀장 / 서버·보스·맵 &nbsp; · &nbsp;
+      <b>임현빈</b> · 플레이어·전투·스킬·카메라 &nbsp; · &nbsp;
+      <b>이주영</b> · UI/UX·사운드
+    </p>
     
-    <div class="deck-board" style="grid-template-columns: repeat(1, 1fr); grid-template-rows: repeat(1, minmax(0px, 1fr));"><div class="deck-block" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><figure class="slot filled" data-default="assets/00-cover" data-kind="image" style="margin-top:1.8rem; max-width:520px;">
+  <div class="deck-board" style="grid-template-columns: repeat(1, 1fr); grid-template-rows: repeat(1, minmax(0px, 1fr));"><div class="deck-block deck-scroll" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><figure class="slot filled" data-default="assets/00-cover" data-kind="image" style="margin-top:1.8rem; max-width:520px;">
       <div class="slot-frame" style="aspect-ratio: 1577 / 876;">
         <div class="slot-media-wrap"><img src="assets/00-cover.png" alt="" class="slot-media"></div>
         <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">타이틀 / 키비주얼</span><button type="button" class="slot-add">추가하기</button></div>
       </div>
       <input type="file" class="slot-input" accept="image/*,video/mp4" hidden="">
-    </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div>
-    
-  <button type="button" class="deck-add-btn deck-ui">＋ 섹션 추가 (스크린샷/영상)</button></div>
+    </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div><div class="deck-add-row deck-ui"><button type="button" class="deck-add-btn">＋ 글 섹션</button><button type="button" class="deck-add-btn">＋ 그림 섹션 (스크린샷/영상)</button></div></div>
 </section>
 
 <!-- =========================================================
@@ -573,47 +731,38 @@
       <h2 class="slide-title">팀원 소개</h2>
     </div>
     
-    <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(1, minmax(0px, 1fr));"><div class="deck-block" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="grid-3">
-        <div class="person-card">
-          <div class="name editable" contenteditable="false">양평화</div>
-          <div class="role editable" contenteditable="false">팀장 · 서버 / 보스 / 맵</div>
-          <ul class="list-dash" style="margin-top:0.7rem;">
+  <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(3, minmax(0px, 1fr));"><div class="deck-block deck-scroll" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
+          <span class="tag">양평화 · 팀장 <small style="color:var(--ink-dim)">git: peace</small></span>
+          <ul class="list-dash">
+            <li><strong>서버 / 보스 / 맵</strong></li>
             <li>Photon 방 생성·참가, 백엔드(Apache·PHP·MySQL) 연동</li>
             <li>보스 AI·패턴 모듈, 채팅·전투 결과·사운드 매니저</li>
           </ul>
-          <span class="git-id">git: peace</span>
-        </div>
-        <div class="person-card">
-          <div class="name editable" contenteditable="false">임현빈</div>
-          <div class="role editable" contenteditable="false">플레이어 / 스킬 시스템 / 카메라</div>
-          <ul class="list-dash" style="margin-top:0.7rem;">
-            <li>조작·전투·락온·카메라, 컷신 3종 연출</li>
-            <li>스킬 모듈 시스템(Active/Passive/Utility)</li>
+        </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 2 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
+          <span class="tag">임현빈 <small style="color:var(--ink-dim)">git: hyunbin802</small></span>
+          <ul class="list-dash">
+            <li><strong>플레이어 / 전투 / 스킬 / 카메라·컷신</strong></li>
+            <li>조작·락온·카메라 상태, 전투 판정·피격 연출·부활 흐름</li>
+            <li>스킬 모듈 시스템(Active/Passive/Utility)과 에디터 툴</li>
           </ul>
-          <span class="git-id">git: hyunbin802</span>
-        </div>
-        <div class="person-card">
-          <div class="name editable" contenteditable="false">이주영</div>
-          <div class="role editable" contenteditable="false">UI/UX · 사운드</div>
-          <ul class="list-dash" style="margin-top:0.7rem;">
+        </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 3 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
+          <span class="tag">이주영 <small style="color:var(--ink-dim)">git: desktop</small></span>
+          <ul class="list-dash">
+            <li><strong>UI / UX</strong></li>
             <li>HUD·인벤토리·락온 UI, 로비/타이틀 설계</li>
             <li>항복 투표·게임오버 화면</li>
           </ul>
-          <span class="git-id">git: desktop</span>
-        </div>
-      </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" disabled="" aria-pressed="true" style="cursor: default;">그래프</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block" style="grid-area: 1 / 2 / span 1 / span 1;"><div class="deck-content"><figure class="slot filled" data-default="assets/01-team" data-kind="image">
+        </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 1 / 2 / span 3 / span 1;"><div class="deck-content"><figure class="slot filled" data-default="assets/team" data-kind="image">
         <div class="slot-frame" style="aspect-ratio: 806 / 453;">
-          <div class="slot-media-wrap"><img src="assets/01-team.webp" alt="" class="slot-media"></div>
-          <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">팀 사진 / 스크린샷</span><button type="button" class="slot-add">추가하기</button></div>
+          <div class="slot-media-wrap"><img src="assets/team.png" alt="" class="slot-media"></div>
+          <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">팀 이미지</span><button type="button" class="slot-add">추가하기</button></div>
         </div>
         <input type="file" class="slot-input" accept="image/*,video/mp4" hidden="">
-      </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div>
-    
-  <button type="button" class="deck-add-btn deck-ui">＋ 섹션 추가 (스크린샷/영상)</button></div>
+      </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×3</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div><div class="deck-add-row deck-ui"><button type="button" class="deck-add-btn">＋ 글 섹션</button><button type="button" class="deck-add-btn">＋ 그림 섹션 (스크린샷/영상)</button></div></div>
 </section>
 
 <!-- =========================================================
-     02a. 게임 소개 — 핵심 컨셉
+     02. 게임 소개 — 핵심 컨셉
 ========================================================= -->
 <section class="slide" id="p02a" data-label="게임 소개 · 컨셉">
   <div class="slide-inner boarded">
@@ -622,27 +771,37 @@
       <h2 class="slide-title">게임 소개 — 핵심 컨셉</h2>
     </div>
     
-    <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, minmax(0px, 1fr));"><div class="deck-block" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
+  <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(3, minmax(0px, 1fr));"><div class="deck-block deck-scroll" style="grid-area: 1 / 1 / span 3 / span 1;"><div class="deck-content"><div class="panel">
         <span class="tag">핵심 컨셉</span>
         <ul class="list-dash">
-          <li>솔로 플레이 &amp; 멀티 플레이(최대 <strong>3인 협동</strong>)</li>
+          <li>솔로 플레이 &amp; 멀티 플레이(최대 3인 협동)</li>
           <li>전투는 기본적인 <strong>소울라이크</strong> — 구르기 회피 · 패링 · 스태미나 기반</li>
-          <li>보스 클리어 시 <strong>능력(스킬)을 골라</strong> 강해지는 뱀파이어 서바이벌류의 성장 재미</li>
+          <li>보스 클리어 시 <strong>능력(스킬)을 골라</strong> 강해지는 <strong>뱀파이어 서바이벌류</strong>의 성장 재미</li>
           <li><strong>보스러시</strong> 구조 — 던전/전투방을 옮겨가며 연속으로 보스와 싸운다</li>
         </ul>
-      </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block" style="grid-area: 1 / 2 / span 1 / span 1;"><div class="deck-content"><figure class="slot filled" data-default="assets/02-game-intro" data-kind="image">
-        <div class="slot-frame" style="aspect-ratio: 563 / 317;">
-          <div class="slot-media-wrap"><img src="assets/elden.png" alt="" class="slot-media"></div>
-          <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">게임 소개 스크린샷</span><button type="button" class="slot-add">추가하기</button></div>
-        </div>
-        <input type="file" class="slot-input" accept="image/*,video/mp4" hidden="">
-      </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block" style="grid-area: 2 / 1 / span 1 / span 1;"><div class="deck-content"><figure class="slot filled"><div class="slot-frame"><div class="slot-media-wrap"><img class="slot-media" src="assets/뱀서.png"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스크린샷 / 영상</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block" style="grid-area: 2 / 2 / span 1 / span 1;"><div class="deck-content"><figure class="slot filled"><div class="slot-frame"><div class="slot-media-wrap"><img class="slot-media" src="assets/로비.png"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스크린샷 / 영상</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div>
-    
-  <button type="button" class="deck-add-btn deck-ui">＋ 섹션 추가 (스크린샷/영상)</button></div>
+      </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×3</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 1 / 2 / span 1 / span 1;"><div class="deck-content"><figure class="slot filled" data-default="assets/concept-soulslike" data-kind="image">
+          <div class="slot-frame" style="aspect-ratio: 563 / 317;">
+            <div class="slot-media-wrap"><img src="assets/concept-soulslike.png" alt="" class="slot-media"></div>
+            <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">소울라이크 레퍼런스</span><button type="button" class="slot-add">추가하기</button></div>
+          </div>
+          <input type="file" class="slot-input" accept="image/*,video/mp4" hidden="">
+        </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 2 / 2 / span 1 / span 1;"><div class="deck-content"><figure class="slot filled" data-default="assets/concept-vampire" data-kind="image">
+          <div class="slot-frame" style="aspect-ratio: 457 / 247;">
+            <div class="slot-media-wrap"><img src="assets/concept-vampire.png" alt="" class="slot-media"></div>
+            <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">뱀서류 레퍼런스</span><button type="button" class="slot-add">추가하기</button></div>
+          </div>
+          <input type="file" class="slot-input" accept="image/*,video/mp4" hidden="">
+        </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 3 / 2 / span 1 / span 1;"><div class="deck-content"><figure class="slot filled" data-default="assets/concept-bossrush" data-kind="image">
+          <div class="slot-frame" style="aspect-ratio: 496 / 250;">
+            <div class="slot-media-wrap"><img src="assets/concept-bossrush.png" alt="" class="slot-media"></div>
+            <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">보스러시 레퍼런스</span><button type="button" class="slot-add">추가하기</button></div>
+          </div>
+          <input type="file" class="slot-input" accept="image/*,video/mp4" hidden="">
+        </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div><div class="deck-add-row deck-ui"><button type="button" class="deck-add-btn">＋ 글 섹션</button><button type="button" class="deck-add-btn">＋ 그림 섹션 (스크린샷/영상)</button></div></div>
 </section>
 
 <!-- =========================================================
-     02b. 게임 소개 — 로그라이크 규칙 & 루프
+     03. 게임 소개 — 로그라이크 규칙 & 루프
 ========================================================= -->
 <section class="slide" id="p02b" data-label="게임 소개 · 로그라이크">
   <div class="slide-inner boarded">
@@ -651,32 +810,29 @@
       <h2 class="slide-title">로그라이크 규칙 &amp; 핵심 루프</h2>
     </div>
     
-    <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, minmax(0px, 1fr));"><div class="deck-block" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
-          <span class="tag">로그라이크 규칙</span>
-          <ul class="list-dash">
-            <li>다음 보스로 이동, <strong>보스 레이드 최대 8판</strong>(추후 변경 가능)</li>
-            <li>특수 능력은 해금 조건 달성 / 다회차 플레이로 <strong>영구 해금</strong></li>
-            <li>한 판(런) 종료 시 <strong>런 중 획득 능력은 초기화</strong>, 계정 해금 상태는 유지</li>
-            <li><strong>랭킹(클리어 시간)</strong> 존재 — 팀 단위 기록 경쟁</li>
-          </ul>
-        </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block" style="grid-area: 2 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
-          <span class="tag">핵심 게임 루프</span>
-          <div class="flow-strip">
-            <span class="flow-step">보스 처치</span><span class="flow-arrow">→</span>
-            <span class="flow-step">스킬 보상 선택/강화</span><span class="flow-arrow">→</span>
-            <span class="flow-step">다음 층 이동</span><span class="flow-arrow">→</span>
-            <span class="flow-step">난이도 상승</span><span class="flow-arrow">→</span>
-            <span class="flow-step">클리어 · 팀 랭킹</span>
-          </div>
-        </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" disabled="" aria-pressed="true" style="cursor: default;">그래프</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block" style="grid-area: 1 / 2 / span 2 / span 1;"><div class="deck-content"><figure class="slot filled" data-default="assets/02b-loop" data-kind="image">
+    
+  <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, minmax(0px, 1fr));"><div class="deck-block deck-scroll" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
+        <span class="tag">로그라이크 규칙</span>
+        <ul class="list-dash">
+          <li>다음 보스로 이동, <strong>보스 레이드 최대 8판</strong> (추후 변경 가능)</li>
+          <li>특수 능력은 <strong>해금 조건 달성 / 다회차 플레이</strong>로 영구 해금</li>
+          <li>한 판(런) 종료 시 <strong>런 중 획득 능력은 초기화</strong>, 계정 해금 상태는 유지</li>
+          <li><strong>랭킹(클리어 시간)</strong> 존재 — 팀 단위 기록 경쟁</li>
+        </ul>
+      </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 1 / 2 / span 1 / span 1;"><div class="deck-content"><figure class="slot filled" data-default="assets/02b-loop" data-kind="image">
         <div class="slot-frame" style="aspect-ratio: 1152 / 880;">
           <div class="slot-media-wrap"><img src="assets/02b-loop.png" alt="" class="slot-media"></div>
-          <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스크린샷 자리</span><button type="button" class="slot-add">추가하기</button></div>
+          <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">핵심 게임 루프</span><button type="button" class="slot-add">추가하기</button></div>
         </div>
         <input type="file" class="slot-input" accept="image/*,video/mp4" hidden="">
-      </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×2</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div>
-    
-  <button type="button" class="deck-add-btn deck-ui">＋ 섹션 추가 (스크린샷/영상)</button></div>
+      </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 2 / 1 / span 1 / span 2;"><div class="deck-content"><div class="flow-strip" style="margin-top:1rem;">
+      <span class="flow-step">보스 처치</span><span class="flow-arrow">→</span>
+      <span class="flow-step">스킬 보상 선택/강화</span><span class="flow-arrow">→</span>
+      <span class="flow-step">다음 층 이동</span><span class="flow-arrow">→</span>
+      <span class="flow-step">난이도 상승</span><span class="flow-arrow">→</span>
+      <span class="flow-step">…</span><span class="flow-arrow">→</span>
+      <span class="flow-step">클리어 · 팀 랭킹 등록</span>
+    </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" disabled="" aria-pressed="true" style="cursor: default;">그래프</button><span class="sz">2×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div><div class="deck-add-row deck-ui"><button type="button" class="deck-add-btn">＋ 글 섹션</button><button type="button" class="deck-add-btn">＋ 그림 섹션 (스크린샷/영상)</button></div></div>
 </section>
 
 <!-- =========================================================
@@ -689,47 +845,45 @@
       <h2 class="slide-title">기술 스택</h2>
     </div>
     
-    <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, minmax(0px, 1fr));"><div class="deck-block" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="table-wrap">
-          <table class="data">
-            <tbody><tr><th>영역</th><th>기술</th></tr>
-            <tr><td>엔진 / 렌더링</td><td><strong>Unity</strong> + <code>URP</code></td></tr>
+    
+  <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, minmax(0px, 1fr));"><div class="deck-block deck-scroll" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="table-wrap">
+        <table class="data">
+          <tbody>
+            <tr><th>영역</th><th>기술</th></tr>
+            <tr><td>엔진 / 렌더링</td><td>Unity + <strong>URP</strong></td></tr>
             <tr><td>실시간 네트워크</td><td><strong>Photon</strong> — 호스트 권한형 동기화</td></tr>
             <tr><td>백엔드 서버</td><td><strong>Apache + PHP + MySQL</strong> — <code>soulrush_api/</code> + 관리용 웹</td></tr>
             <tr><td>크래시 / 모니터링</td><td><strong>Sentry</strong> + 자체 CrashReporter</td></tr>
-            <tr><td>데이터</td><td>ScriptableObject(로컬) + 서버 DB(밸런스) 하이브리드</td></tr>
-          </tbody></table>
-        </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" disabled="" aria-pressed="true" style="cursor: default;">그래프</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block" style="grid-area: 2 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
-          <span class="tag">설계 원칙</span>
-          <ul class="list-dash">
-            <li><strong>권한 분리</strong> — 게임 상태는 서버/호스트가 확정, 클라이언트는 표시만</li>
-            <li><strong>데이터-표시 분리</strong> — UI는 읽기만, 직접 수정 금지</li>
-            <li><strong>모듈화</strong> — 보스·스킬을 SO 조립으로 양산/확장</li>
-          </ul>
-        </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block" style="grid-area: 1 / 2 / span 2 / span 1;"><div class="deck-content"><figure class="slot filled" data-default="assets/03-tech-stack" data-kind="image">
+            <tr><td>데이터</td><td>ScriptableObject(로컬) + 서버 DB(밸런스) <strong>하이브리드</strong></td></tr>
+          </tbody>
+        </table>
+      </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" disabled="" aria-pressed="true" style="cursor: default;">그래프</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 1 / 2 / span 1 / span 1;"><div class="deck-content"><figure class="slot filled" data-default="assets/03-tech-stack" data-kind="image">
         <div class="slot-frame" style="aspect-ratio: 738 / 337;">
           <div class="slot-media-wrap"><img src="assets/03-tech-stack.png" alt="" class="slot-media"></div>
-          <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스크린샷 자리</span><button type="button" class="slot-add">추가하기</button></div>
+          <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">기술 스택 로고</span><button type="button" class="slot-add">추가하기</button></div>
         </div>
         <input type="file" class="slot-input" accept="image/*,video/mp4" hidden="">
-      </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×2</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div>
-    
-  <button type="button" class="deck-add-btn deck-ui">＋ 섹션 추가 (스크린샷/영상)</button></div>
+      </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 2 / 1 / span 1 / span 2;"><div class="deck-content"><div class="panel" style="margin-top:1rem;">
+      <span class="tag">설계 원칙 (전 시스템 공통)</span>
+      <ul class="list-dash">
+        <li><strong>권한 분리</strong> — 게임 결과·권위 상태는 StateAuthority(호스트/서버)가 확정, 클라이언트는 입력 요청·로컬 표현만</li>
+        <li><strong>데이터-표시 분리</strong> — UI는 읽기만, 직접 수정 금지</li>
+        <li><strong>모듈화</strong> — 보스·스킬을 SO 조립으로 양산/확장</li>
+      </ul>
+    </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">2×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div><div class="deck-add-row deck-ui"><button type="button" class="deck-add-btn">＋ 글 섹션</button><button type="button" class="deck-add-btn">＋ 그림 섹션 (스크린샷/영상)</button></div></div>
 </section>
 
 <!-- =========================================================
-     05. Architecture — 전체 구조도
+     05. 【MY】 구조 — 전체 구조도
 ========================================================= -->
 <section class="slide" id="p04a" data-label="구조 · 전체 구조도">
   <div class="slide-inner boarded">
     <div class="slide-head">
-      <span class="eyebrow"><span class="idx">05</span> ARCHITECTURE</span>
+      <span class="eyebrow"><span class="idx">05</span> ARCHITECTURE — 양평화</span>
       <h2 class="slide-title">전체 구조 — 게임은 두 종류의 서버와 대화한다</h2>
     </div>
-
     
-
-    
-    <div class="deck-board" style="grid-template-columns: repeat(1, 1fr); grid-template-rows: repeat(2, minmax(0px, 1fr));"><div class="deck-block" style="grid-area: 1 / 1 / span 2 / span 1;"><div class="deck-content"><div class="arch2">
+  <div class="deck-board" style="grid-template-columns: repeat(1, 1fr); grid-template-rows: repeat(1, minmax(0px, 1fr));"><div class="deck-block deck-scroll" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="arch2">
       <div class="arch2-clients">
         <span class="arch2-band-label">게임 클라이언트 · Unity · 최대 3인</span>
         <div class="arch2-crow">
@@ -738,7 +892,6 @@
           <div class="arch2-node">🎮 클라이언트 3</div>
         </div>
       </div>
-
       <div class="arch2-conn">
         <div class="arch2-arrow">
           <span class="lbl live">↕ 실시간 · 양방향</span>
@@ -749,7 +902,6 @@
           <div class="arch2-pipe web"><span class="arch2-dot d1"></span></div>
         </div>
       </div>
-
       <div class="arch2-split">
         <div class="arch2-col live">
           <span class="col-h">① 실시간 채널</span>
@@ -766,480 +918,773 @@
           <div class="arch2-role">계정·스킬·랭킹을 <strong>필요할 때 요청→응답</strong>. DB에 영구 저장돼 다음 접속에도 유지.</div>
         </div>
       </div>
-    </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" disabled="" aria-pressed="true" style="cursor: default;">그래프</button><span class="sz">1×2</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div>
-    
-  <button type="button" class="deck-add-btn deck-ui">＋ 섹션 추가 (스크린샷/영상)</button></div>
+    </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" disabled="" aria-pressed="true" style="cursor: default;">그래프</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div><div class="deck-add-row deck-ui"><button type="button" class="deck-add-btn">＋ 글 섹션</button><button type="button" class="deck-add-btn">＋ 그림 섹션 (스크린샷/영상)</button></div></div>
 </section>
 
 <!-- =========================================================
-     06. Architecture — 실제 서버 API & 통신 흐름
+     06. 【MY】 구조 — 실제 API & 통신 흐름 (시퀀스 다이어그램)
 ========================================================= -->
-<section class="slide" id="p04c" data-label="구조 · 실제 API/흐름">
+<section class="slide" id="p04c" data-label="구조 · API/통신 흐름">
   <div class="slide-inner boarded">
     <div class="slide-head">
-      <span class="eyebrow"><span class="idx">06</span> ARCHITECTURE</span>
+      <span class="eyebrow"><span class="idx">06</span> ARCHITECTURE — 양평화</span>
       <h2 class="slide-title">실제 서버 API &amp; 통신 흐름 <small style="font-family:var(--font-mono); font-size:0.6rem; color:var(--ink-dim); letter-spacing:0.05em;">soulrush_api (PHP)</small></h2>
     </div>
-
     
-
-    
-
-    
-    <div class="deck-board" style="grid-template-columns: repeat(1, 1fr); grid-template-rows: repeat(3, minmax(0px, 1fr));"><div class="deck-block" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content" style="transform: scale(0.958904);"><div class="api-groups">
-      <div class="api-group">
-        <span class="gt">인증 · 세션</span>
-        <ul class="list-dash">
-          <li><code>register.php</code> · <code>login.php</code> — 가입 / 로그인</li>
-          <li><code>check_session.php</code> — 15초 하트비트, 중복 로그인 차단</li>
-          <li><code>check_admin.php</code> — 디버그 권한 검증</li>
-        </ul>
-      </div>
-      <div class="api-group">
-        <span class="gt">스킬 (밸런스 DB)</span>
-        <ul class="list-dash">
-          <li><code>get_abilities.php</code> — 스킬 수치 카탈로그 조회</li>
-          <li><code>update_skills.php</code> — 해금 비트마스크 저장</li>
-          <li><code>upload_ability.php</code> — (에디터) 스킬 업로드</li>
-        </ul>
-      </div>
-      <div class="api-group">
-        <span class="gt">랭킹 · 크래시</span>
-        <ul class="list-dash">
-          <li><code>submit_ranking.php</code> / <code>get_rankings.php</code> — 팀 기록</li>
-          <li><code>crash_report.php</code> — 크래시 자동 수집</li>
-        </ul>
-      </div>
-      <div class="api-group">
-        <span class="gt">관리용 웹 &amp; DB</span>
-        <ul class="list-dash">
-          <li>웹 뷰어: <code>admin_hub</code> · <code>crash_viewer</code> · <code>ranking_viewer</code> · <code>log_viewer</code></li>
-          <li>테이블: <code>users</code> · <code>abilities</code>(7) · <code>team_rankings</code> · <code>crash_reports</code></li>
-        </ul>
-      </div>
-    </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" disabled="" aria-pressed="true" style="cursor: default;">그래프</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block" style="grid-area: 2 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel" style="margin-top:1rem;">
-      <span class="tag">접속부터 클리어까지 — 서버 통신 흐름</span>
-      <div class="flow-num">
-        <div class="step"><span class="n">1</span><b>서버 자동 탐지</b>같은 랜이면 LAN IP, 아니면 공인 IP (포트 8080)</div>
-        <div class="step"><span class="n">2</span><b>로그인</b><code>login.php</code> → 세션 토큰 + 해금 비트마스크 수신</div>
-        <div class="step"><span class="n">3</span><b>세션 유지</b>15초마다 <code>check_session</code>, 중복 접속 차단</div>
-        <div class="step"><span class="n">4</span><b>스킬 최신화</b><code>get_abilities</code>로 서버 밸런스 반영</div>
-        <div class="step"><span class="n">5</span><b>클리어</b><code>submit_ranking</code>으로 팀 기록 등록</div>
-      </div>
-    </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" disabled="" aria-pressed="true" style="cursor: default;">그래프</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div>
-    
-  <button type="button" class="deck-add-btn deck-ui">＋ 섹션 추가 (스크린샷/영상)</button></div>
+  <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(1, minmax(0px, 1fr));"><div class="deck-block deck-scroll" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="api-groups" style="grid-template-columns:1fr;">
+        <div class="api-group">
+          <span class="gt">인증 · 세션</span>
+          <ul class="list-dash">
+            <li><code>register.php</code> · <code>login.php</code> — 가입 / 로그인</li>
+            <li><code>check_session.php</code> — 15초 하트비트, 중복 로그인 차단</li>
+            <li><code>check_admin.php</code> — 디버그 권한 검증</li>
+          </ul>
+        </div>
+        <div class="api-group">
+          <span class="gt">스킬 (밸런스 DB)</span>
+          <ul class="list-dash">
+            <li><code>get_abilities.php</code> — 스킬 수치 카탈로그 조회</li>
+            <li><code>update_skills.php</code> — 해금 비트마스크 저장</li>
+            <li><code>upload_ability.php</code> — (에디터) 스킬 업로드</li>
+          </ul>
+        </div>
+        <div class="api-group">
+          <span class="gt">랭킹 · 크래시 · 관리</span>
+          <ul class="list-dash">
+            <li><code>submit_ranking.php</code> / <code>get_rankings.php</code> — 팀 기록</li>
+            <li><code>crash_report.php</code> — 크래시 자동 수집</li>
+            <li>웹 뷰어: <code>admin_hub</code> · <code>crash_viewer</code> · <code>ranking_viewer</code> · <code>log_viewer</code></li>
+          </ul>
+        </div>
+      </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" disabled="" aria-pressed="true" style="cursor: default;">그래프</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 1 / 2 / span 1 / span 1;"><div class="deck-content"><div class="dgm">
+        <span class="dgm-cap">접속 → 클리어 통신 시퀀스 (시퀀스 다이어그램)</span>
+        <div class="seq" style="grid-template-columns: repeat(3, 1fr);">
+          <div class="seq-actors">
+            <div class="seq-actor net">🎮 게임 클라이언트<small>BackendManager</small></div>
+            <div class="seq-actor web">🖥 Apache · PHP<small>soulrush_api</small></div>
+            <div class="seq-actor db">🗄 MySQL</div>
+          </div>
+          <div class="seq-msg"><span class="num">1</span><span class="arrow">▶</span><span class="txt"><b>서버 자동 탐지</b> — LAN IP <code>:8080</code> 핑, 실패 시 공인 IP</span></div>
+          <div class="seq-msg"><span class="num">2</span><span class="arrow">▶</span><span class="txt"><code>login.php</code> — 아이디/비번 인증</span></div>
+          <div class="seq-msg"><span class="num">3</span><span class="arrow ret">◀</span><span class="txt">세션 토큰 + <b>해금 비트마스크</b> 반환</span></div>
+          <div class="seq-msg"><span class="num">4</span><span class="arrow">▶</span><span class="txt"><code>check_session.php</code> — <b>15초 하트비트</b>, 중복 접속 차단</span></div>
+          <div class="seq-msg"><span class="num">5</span><span class="arrow">▶</span><span class="txt"><code>get_abilities.php</code> — 서버 밸런스 수치 최신화</span></div>
+          <div class="seq-msg"><span class="num">6</span><span class="arrow">▶</span><span class="txt"><code>update_skills.php</code> — 해금 시 비트마스크 저장</span></div>
+          <div class="seq-msg"><span class="num">7</span><span class="arrow">▶</span><span class="txt"><b>클리어</b> — <code>submit_ranking.php</code> 팀 기록 등록</span></div>
+        </div>
+        <div class="analogy tight">💡 <strong>하이브리드 데이터</strong> — 연출값(애니메이션·VFX·사운드·히트박스)은 Unity 로컬 에셋, 밸런스 수치(쿨타임·데미지·레벨값)는 DB. 로그인 시 최신화.</div>
+      </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" disabled="" aria-pressed="true" style="cursor: default;">그래프</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div><div class="deck-add-row deck-ui"><button type="button" class="deck-add-btn">＋ 글 섹션</button><button type="button" class="deck-add-btn">＋ 그림 섹션 (스크린샷/영상)</button></div></div>
 </section>
 
 <!-- =========================================================
-     07. 진행도 — 플레이어 (조작/전투)
+     07. 플레이어 — 조작 (임현빈)
 ========================================================= -->
-<section class="slide" id="p05a1" data-label="진행도 · 플레이어 조작">
+<section class="slide" id="p05a1" data-label="플레이어 · 조작">
   <div class="slide-inner boarded">
     <div class="slide-head">
       <span class="eyebrow"><span class="idx">07</span> PROGRESS — 임현빈</span>
-      <h2 class="slide-title">플레이어 — 조작 &amp; 전투</h2>
+      <h2 class="slide-title">플레이어 — 조작</h2>
     </div>
     
-    <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, minmax(0px, 1fr));"><div class="deck-block" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
-        <span class="tag">기본 조작 &amp; 전투</span>
+  <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(1, minmax(0px, 1fr));"><div class="deck-block deck-scroll" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
+        <span class="tag">플레이어 컨트롤러</span>
         <ul class="list-dash">
-          <li>3인칭 카메라 + <strong>락온(Lock-On)</strong> — 대상/부위 우선순위 순회</li>
-          <li>이동/달리기/기기, <strong>구르기(회피)</strong>, 점프(제자리·전방), <strong>패링</strong></li>
-          <li>기본 공격 <strong>콤보 시스템</strong>(애니메이션 진행률 기반 입력 창)</li>
-          <li>루트모션 기반 스킬 이동(슬라이드/스핀/점프 어택 등)</li>
+          <li>일반 이동과 <strong>락온 이동을 분리</strong>한 애니메이션 블렌딩</li>
+          <li>3인칭: 이동/달리기/기기, <strong>구르기(회피)</strong>, 점프(제자리·전방), 기본공격, <strong>패링</strong></li>
+          <li>락온: 좌우 이동 / 달리기 후진 / 후진 달리기</li>
+          <li>Lock-On 대상 탐색 및 우선순위 기반 <strong>타겟·부위 순환</strong></li>
+          <li>스태미나와 <strong>액션 잠금 상태</strong>에 따라 입력 가능 여부 제어</li>
         </ul>
-      </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block" style="grid-area: 1 / 2 / span 1 / span 1;"><div class="deck-content"><figure class="slot filled"><div class="slot-frame"><div class="slot-media-wrap"><img class="slot-media" src="assets/락온.png"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스크린샷 / 영상</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div>
-    
-  <button type="button" class="deck-add-btn deck-ui">＋ 섹션 추가 (스크린샷/영상)</button></div>
+      </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 1 / 2 / span 1 / span 1;"><div class="deck-content"><figure class="slot filled" data-default="assets/player-move" data-kind="image">
+        <div class="slot-frame" style="aspect-ratio: 400 / 225;">
+          <div class="slot-media-wrap"><img src="assets/player-move.gif" alt="" class="slot-media"></div>
+          <div class="slot-empty"><span class="slot-icon">🎬</span><span class="slot-label">조작 시연 GIF</span><button type="button" class="slot-add">추가하기</button></div>
+        </div>
+        <input type="file" class="slot-input" accept="image/*,video/mp4" hidden="">
+      </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div><div class="deck-add-row deck-ui"><button type="button" class="deck-add-btn">＋ 글 섹션</button><button type="button" class="deck-add-btn">＋ 그림 섹션 (스크린샷/영상)</button></div></div>
 </section>
 
 <!-- =========================================================
-     08. 진행도 — 플레이어 (컷신/부활/구조)
+     08. 전투 시스템 — Down & Revive (임현빈)
 ========================================================= -->
-<section class="slide" id="p05a2" data-label="진행도 · 플레이어 구조">
+<section class="slide" id="p05a2" data-label="전투 · Down &amp; Revive">
   <div class="slide-inner boarded">
     <div class="slide-head">
       <span class="eyebrow"><span class="idx">08</span> PROGRESS — 임현빈</span>
-      <h2 class="slide-title">플레이어 — 컷신 · 부활 · 구조</h2>
+      <h2 class="slide-title">전투 시스템 — Down &amp; Revive</h2>
     </div>
     
-    <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, minmax(0px, 1fr));"><div class="deck-block" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
-          <span class="tag">컷신 &amp; 부활</span>
+  <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, minmax(0px, 1fr));"><div class="deck-block deck-scroll" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
+          <span class="tag">Down 상태 전환</span>
           <ul class="list-dash">
-            <li><strong>컷신 3종</strong> — 보스 등장 · 골드 보상 상자 개봉 · 문 발차기(입장)</li>
-            <li><strong>사망 횟수 연동 부활 시스템</strong> — 동료를 때려 부활, 방치 시 게이지 회복</li>
+            <li>HP가 0이 되면 즉시 게임오버가 아니라 <strong>Down 상태</strong>로 전환</li>
+            <li>Down 상태에서는 느린 크롤링 이동만 허용, 전투 입력 제한</li>
+            <li>사망 플레이어도 전투 흐름 안에서 <strong>구조 대상</strong>이 되도록 관리</li>
           </ul>
-        </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block" style="grid-area: 2 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
-          <span class="tag">핵심 구조</span>
+        </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 2 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
+          <span class="tag">Revive 구조</span>
           <ul class="list-dash">
-            <li><code>NetworkPlayerController</code> — 입력/이동/전투/루트모션/동기화/오디오 분리</li>
-            <li><code>PlayerStats</code>, <code>PlayerStatusController</code> — 체력·스태미나·부활, 버프/디버프</li>
-            <li><strong>조작 잠금 플래그</strong> — 컷신·UI가 컴포넌트를 직접 끄지 않고 잠금만 요청</li>
+            <li>동료가 Down 플레이어를 타격하면 <strong>부활 게이지 감소</strong></li>
+            <li>부활 성공 시 체력 회복 후 전투 복귀</li>
+            <li>1인 플레이는 사망 시 <strong>1회 부활 선택</strong> 기회 제공</li>
+            <li>부활 횟수가 늘수록 부활 게이지 증가(난이도 조절), 다인 전원 사망 시 패배</li>
           </ul>
-        </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block" style="grid-area: 1 / 2 / span 2 / span 1;"><div class="deck-content"><figure class="slot filled" data-default="assets/05-1b-player" data-kind="image">
-        <div class="slot-frame" style="aspect-ratio: 1038 / 567;">
-          <div class="slot-media-wrap"><img src="assets/부활.png" alt="" class="slot-media"></div>
-          <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스크린샷 자리</span><button type="button" class="slot-add">추가하기</button></div>
+        </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 1 / 2 / span 2 / span 1;"><div class="deck-content"><figure class="slot filled" data-default="assets/down-revive" data-kind="image">
+        <div class="slot-frame" style="aspect-ratio: 676 / 369;">
+          <div class="slot-media-wrap"><img src="assets/down-revive.png" alt="" class="slot-media"></div>
+          <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">부활 스크린샷</span><button type="button" class="slot-add">추가하기</button></div>
         </div>
         <input type="file" class="slot-input" accept="image/*,video/mp4" hidden="">
-      </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×2</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div>
-    
-  <button type="button" class="deck-add-btn deck-ui">＋ 섹션 추가 (스크린샷/영상)</button></div>
+      </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×2</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div><div class="deck-add-row deck-ui"><button type="button" class="deck-add-btn">＋ 글 섹션</button><button type="button" class="deck-add-btn">＋ 그림 섹션 (스크린샷/영상)</button></div></div>
 </section>
 
 <!-- =========================================================
-     09. 스킬 — 타입 & 데이터 구조
+     09. 카메라·컷신 (임현빈, 신규)
+========================================================= -->
+<section class="slide" id="p05a3" data-label="카메라 · 컷신">
+  <div class="slide-inner boarded">
+    <div class="slide-head">
+      <span class="eyebrow"><span class="idx">09</span> PROGRESS — 임현빈</span>
+      <h2 class="slide-title">카메라 · 컷신 — 3인칭 전투 카메라 안정화</h2>
+    </div>
+    
+  <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, minmax(0px, 1fr));"><div class="deck-block deck-scroll" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
+          <span class="tag">3인칭 카메라 안정화</span>
+          <ul class="list-dash">
+            <li><strong>LateUpdate</strong> 기반 추적으로 캐릭터 이동 이후 카메라 갱신</li>
+            <li><strong>SmoothDamp</strong>로 플레이어 추적·충돌 거리 복귀 보간</li>
+            <li><strong>RaycastAll</strong>로 벽/기둥 감지, 카메라 거리 자동 조정</li>
+            <li>지면 높이 보정으로 계단·바닥 관통·화면 튐 완화, 마우스 스크롤 거리 조절</li>
+          </ul>
+        </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 2 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
+          <span class="tag">컷신 전환 흐름</span>
+          <ul class="list-dash">
+            <li><code>CameraManager</code>가 PlayerFollow / LockOn / Cutscene 상태 관리</li>
+            <li><code>CameraPointManager</code> 지정 포인트로 보스 등장·보상·게이트 연출 이동</li>
+            <li>SmoothStep + Lerp/Slerp로 위치·회전·FOV 부드럽게 전환</li>
+            <li>컷신 중 조작 잠금 후, 종료 시 기존 Gameplay 카메라로 복귀</li>
+          </ul>
+        </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 1 / 2 / span 2 / span 1;"><div class="deck-content"><figure class="slot filled" data-default="assets/camera-cutscene" data-kind="image">
+        <div class="slot-frame" style="aspect-ratio: 400 / 300;">
+          <div class="slot-media-wrap"><img src="assets/camera-cutscene.gif" alt="" class="slot-media"></div>
+          <div class="slot-empty"><span class="slot-icon">🎬</span><span class="slot-label">컷신 GIF</span><button type="button" class="slot-add">추가하기</button></div>
+        </div>
+        <input type="file" class="slot-input" accept="image/*,video/mp4" hidden="">
+      </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×2</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div><div class="deck-add-row deck-ui"><button type="button" class="deck-add-btn">＋ 글 섹션</button><button type="button" class="deck-add-btn">＋ 그림 섹션 (스크린샷/영상)</button></div></div>
+</section>
+
+<!-- =========================================================
+     10. 스킬 — 타입 & 데이터 구조 (임현빈)
 ========================================================= -->
 <section class="slide" id="p05b1" data-label="스킬 · 타입/구조">
   <div class="slide-inner boarded">
     <div class="slide-head">
-      <span class="eyebrow"><span class="idx">09</span> PROGRESS — 임현빈</span>
+      <span class="eyebrow"><span class="idx">10</span> PROGRESS — 임현빈</span>
       <h2 class="slide-title">스킬 시스템 — 타입 &amp; 데이터 구조</h2>
     </div>
     
-    
-    <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, minmax(0px, 1fr));"><div class="deck-block" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
-        <span class="tag">3가지 타입 (ScriptableObject 모듈)</span>
-        <ul class="list-dash">
-          <li><strong>Active</strong> — 슬롯 장착·직접 사용. 쿨타임·스태미나·HitEvents·레벨별 데미지 배율</li>
-          <li><strong>Passive</strong> — 획득/레벨업 시 스탯 상승(체력·스태미나·방어·공격력 %)</li>
-          <li><strong>Utility</strong> — 회복·기본공격 해금 등 기능성</li>
-        </ul>
-      </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block" style="grid-area: 2 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
-        <span class="tag">하이브리드 데이터</span>
-        <ul class="list-dash">
-          <li>연출값(애니메이션·VFX·사운드·히트박스) = <strong>Unity 로컬 에셋</strong></li>
-          <li>밸런스 수치(쿨타임·데미지·레벨값) = <strong>서버 DB</strong> — 로그인 시 최신화, Bake로 에셋 갱신</li>
-          <li><code>AbilityManager</code>가 전체 카탈로그 관리</li>
-        </ul>
-      </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block" style="grid-area: 1 / 2 / span 2 / span 1;"><div class="deck-content"><figure class="slot strip-slot filled" data-default="assets/05-2a-skill" data-kind="image">
-      <div class="slot-frame" style="aspect-ratio: 952 / 867;">
-        <div class="slot-media-wrap"><img src="assets/05-2a-skill.png" alt="" class="slot-media"></div>
-        <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스크린샷 자리</span><button type="button" class="slot-add">추가하기</button></div>
-      </div>
-      <input type="file" class="slot-input" accept="image/*,video/mp4" hidden="">
-    </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×2</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div>
-    
-  <button type="button" class="deck-add-btn deck-ui">＋ 섹션 추가 (스크린샷/영상)</button></div>
+  <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, minmax(0px, 1fr));"><div class="deck-block deck-scroll" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
+          <span class="tag">3가지 타입 (ScriptableObject 모듈)</span>
+          <ul class="list-dash">
+            <li><strong>Active</strong> — 슬롯 장착·직접 사용. 쿨타임·스태미나·HitEvents·레벨별 데미지 배율</li>
+            <li><strong>Passive</strong> — 획득/레벨업 시 스탯 상승(체력·스태미나·방어·공격력 %)</li>
+            <li><strong>Utility</strong> — 회복·기본공격 해금 등 기능성</li>
+          </ul>
+        </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 2 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
+          <span class="tag">로컬 에셋과 서버 밸런스 데이터 분리</span>
+          <ul class="list-dash">
+            <li>애니메이션·VFX·사운드·히트박스 = <strong>Unity 로컬 에셋</strong></li>
+            <li>쿨타임·스태미나·데미지 배율·레벨별 수치 = <strong>서버 DB</strong> (Upload/Bake)</li>
+            <li>업로드 폼은 서버 API와 호환되는 공통 규격, 레벨 데이터는 타입별 필요값만 구성</li>
+            <li>로그인 시 서버 데이터를 받아 <code>AbilityManager</code>가 로컬 카탈로그에 반영</li>
+          </ul>
+        </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 1 / 2 / span 2 / span 1;"><div class="deck-content"><figure class="slot filled" data-default="assets/05-2a-skill" data-kind="image">
+        <div class="slot-frame" style="aspect-ratio: 952 / 867;">
+          <div class="slot-media-wrap"><img src="assets/05-2a-skill.png" alt="" class="slot-media"></div>
+          <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스킬 에디터</span><button type="button" class="slot-add">추가하기</button></div>
+        </div>
+        <input type="file" class="slot-input" accept="image/*,video/mp4" hidden="">
+      </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×2</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div><div class="deck-add-row deck-ui"><button type="button" class="deck-add-btn">＋ 글 섹션</button><button type="button" class="deck-add-btn">＋ 그림 섹션 (스크린샷/영상)</button></div></div>
 </section>
 
 <!-- =========================================================
-     10. 스킬 — 계정 해금 & 획득/레벨업
+     11. 스킬 — HitEvent & Preview (임현빈, 신규)
+========================================================= -->
+<section class="slide" id="p05b3" data-label="스킬 · HitEvent/Preview">
+  <div class="slide-inner boarded">
+    <div class="slide-head">
+      <span class="eyebrow"><span class="idx">11</span> PROGRESS — 임현빈</span>
+      <h2 class="slide-title">스킬 시스템 — HitEvent &amp; Preview</h2>
+    </div>
+    
+  <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(3, minmax(0px, 1fr));"><div class="deck-block deck-scroll" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
+          <span class="tag">레벨별 스킬 배율 그래프</span>
+          <ul class="list-dash">
+            <li>최대 레벨 설정 + 레벨마다 값 설정으로 세부 조정</li>
+            <li>그래프로 배율을 <strong>시각적으로 확인</strong> 가능하도록 설계</li>
+          </ul>
+        </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 2 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
+          <span class="tag">히트 이벤트 설정</span>
+          <ul class="list-dash">
+            <li>다단 히트 스킬은 <strong>+버튼으로 타격마다 히트 이벤트 추가</strong></li>
+            <li>타격별 판정 범위·시간·데미지 배율·그로기 데미지·부활 기여량 조절</li>
+            <li>프리뷰에서 <strong>색상 라벨</strong>로 각 타격 확인</li>
+          </ul>
+        </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 3 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
+          <span class="tag">스킬 프리뷰</span>
+          <ul class="list-dash">
+            <li>애니메이션·VFX·히트박스·모델을 불러와 <strong>실제 동작을 확인하며 조정</strong></li>
+          </ul>
+        </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 1 / 2 / span 1 / span 1;"><div class="deck-content"><figure class="slot filled" data-default="assets/skill-hitevent" data-kind="image">
+          <div class="slot-frame" style="aspect-ratio: 388 / 296;">
+            <div class="slot-media-wrap"><img src="assets/skill-hitevent.png" alt="" class="slot-media"></div>
+            <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">히트이벤트/그래프</span><button type="button" class="slot-add">추가하기</button></div>
+          </div>
+          <input type="file" class="slot-input" accept="image/*,video/mp4" hidden="">
+        </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block is-tall deck-scroll" style="grid-area: 2 / 2 / span 2 / span 1;"><div class="deck-content"><figure class="slot filled" data-default="assets/skill-preview" data-kind="image">
+          <div class="slot-frame" style="aspect-ratio: 387 / 838;">
+            <div class="slot-media-wrap"><img src="assets/skill-preview.png" alt="" class="slot-media"></div>
+            <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스킬 프리뷰</span><button type="button" class="slot-add">추가하기</button></div>
+          </div>
+          <input type="file" class="slot-input" accept="image/*,video/mp4" hidden="">
+        </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×2</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div><div class="deck-add-row deck-ui"><button type="button" class="deck-add-btn">＋ 글 섹션</button><button type="button" class="deck-add-btn">＋ 그림 섹션 (스크린샷/영상)</button></div></div>
+</section>
+
+<!-- =========================================================
+     12. 스킬 — 해금 & 획득 (임현빈)
 ========================================================= -->
 <section class="slide" id="p05b2" data-label="스킬 · 해금/획득">
   <div class="slide-inner boarded">
     <div class="slide-head">
-      <span class="eyebrow"><span class="idx">10</span> PROGRESS — 임현빈</span>
-      <h2 class="slide-title">스킬 시스템 — 계정 해금 &amp; 획득</h2>
+      <span class="eyebrow"><span class="idx">12</span> PROGRESS — 임현빈</span>
+      <h2 class="slide-title">스킬 시스템 — 스킬 해금 &amp; 획득</h2>
     </div>
     
-    <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, minmax(0px, 1fr));"><div class="deck-block" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
-          <span class="tag">계정 해금 (비트마스크)</span>
+  <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, minmax(0px, 1fr));"><div class="deck-block deck-scroll" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
+          <span class="tag">계정 스킬 해금 (비트마스크)</span>
           <ul class="list-dash">
             <li><strong>Active 1–19</strong> / <strong>Passive 20–39</strong> / <strong>Utility 40–60</strong></li>
+            <li>업적 달성 등으로 해금 시 DB에 <strong>비트마스크</strong>로 전송</li>
             <li>계정별 비트마스크로 영구 해금 관리</li>
           </ul>
-        </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block" style="grid-area: 2 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
+        </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 2 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
           <span class="tag">획득 &amp; 레벨업</span>
           <ul class="list-dash">
-            <li>보스 처치 → <code>RewardManager</code> 카드 후보 생성 → 하나 선택</li>
+            <li>보스 처치 → <code>RewardManager</code> 카드 후보 랜덤 생성 → 하나 선택</li>
             <li>등록/레벨업 — Lv.1 → MaxLevel, 만렙 시 보상 후보 제외</li>
           </ul>
-        </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block" style="grid-area: 1 / 2 / span 2 / span 1;"><div class="deck-content"><figure class="slot filled" data-default="assets/05-2-skill" data-kind="image">
+        </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 1 / 2 / span 2 / span 1;"><div class="deck-content"><figure class="slot filled" data-default="assets/05-2-skill" data-kind="image">
         <div class="slot-frame" style="aspect-ratio: 1918 / 1078;">
           <div class="slot-media-wrap"><img src="assets/05-2-skill.png" alt="" class="slot-media"></div>
-          <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스킬 UI / 보상 화면</span><button type="button" class="slot-add">추가하기</button></div>
+          <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">보상 선택 화면</span><button type="button" class="slot-add">추가하기</button></div>
         </div>
         <input type="file" class="slot-input" accept="image/*,video/mp4" hidden="">
-      </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×2</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div>
-    
-  <button type="button" class="deck-add-btn deck-ui">＋ 섹션 추가 (스크린샷/영상)</button></div>
+      </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×2</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div><div class="deck-add-row deck-ui"><button type="button" class="deck-add-btn">＋ 글 섹션</button><button type="button" class="deck-add-btn">＋ 그림 섹션 (스크린샷/영상)</button></div></div>
 </section>
 
 <!-- =========================================================
-     11. 진행도 — 보스 시스템
+     13. 전투 시스템 — 예측입력 & 피이펙트 (임현빈, 신규)
 ========================================================= -->
-<section class="slide active" id="p05c1" data-label="진행도 · 보스 시스템">
+<section class="slide" id="p05a4" data-label="전투 · 예측입력/이펙트">
   <div class="slide-inner boarded">
     <div class="slide-head">
-      <span class="eyebrow"><span class="idx">11</span> PROGRESS — 양평화</span>
-      <h2 class="slide-title">보스 시스템</h2>
+      <span class="eyebrow"><span class="idx">13</span> PROGRESS — 임현빈</span>
+      <h2 class="slide-title">전투 시스템 — 예측 입력 &amp; 피 이펙트</h2>
     </div>
     
-    
-    <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, minmax(0px, 1fr));"><div class="deck-block" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
-        <span class="tag">보스 AI &amp; 패턴</span>
-        <ul class="list-dash">
-          <li>보스 움직임 + <strong>레이캐스트로 벽/바닥 판정</strong></li>
-          <li>행동 패턴을 조합하는 <strong>SO 패턴 모듈</strong> — 코드 없이 제작</li>
-          <li><strong>BossVisual(연출) ↔ Boss 스크립트(로직) 분리</strong> (<code>IBossVisual</code>)</li>
-          <li><code>NetworkBossCore</code> — 체력 50%↓ 자동 <strong>2페이즈(광폭화)</strong></li>
-        </ul>
-      </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block" style="grid-area: 2 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
-        <span class="tag">최근 개선</span>
-        <ul class="list-dash">
-          <li><strong>어그로 추적</strong> — 10초 누적 딜량 1위에게 어그로 변경</li>
-          <li><code>BossAoEAttack</code> — 파티클 동기화 장판, 다단 히트 &amp; 겹친 장판 중복 방지</li>
-          <li>보스 예시: Dragon(화염) · PolarDragon(빙결) · OrcAssassin</li>
-        </ul>
-      </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block" style="grid-area: 1 / 2 / span 2 / span 1;"><div class="deck-content"><figure class="slot strip-slot filled" data-default="assets/05-3-boss" data-kind="image">
-      <div class="slot-frame" style="aspect-ratio: 893 / 888;">
-        <div class="slot-media-wrap"><img src="assets/05-3-boss.png" alt="" class="slot-media"></div>
-        <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스크린샷 자리</span><button type="button" class="slot-add">추가하기</button></div>
-      </div>
-      <input type="file" class="slot-input" accept="image/*,video/mp4" hidden="">
-    </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×2</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div>
-    
-  <button type="button" class="deck-add-btn deck-ui">＋ 섹션 추가 (스크린샷/영상)</button></div>
-</section>
-
-<!-- =========================================================
-     12. 진행도 — 로그라이크 진행 구조
-========================================================= -->
-<section class="slide" id="p05c2" data-label="진행도 · 로그라이크 구조">
-  <div class="slide-inner boarded">
-    <div class="slide-head">
-      <span class="eyebrow"><span class="idx">12</span> PROGRESS — 양평화</span>
-      <h2 class="slide-title">로그라이크 진행 구조</h2>
-    </div>
-    
-    
-    <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, minmax(0px, 1fr));"><div class="deck-block" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
-        <span class="tag">3단 매니저</span>
-        <div class="flow-strip">
-          <span class="flow-step"><code>BossEncounterData</code></span><span class="flow-arrow">→</span>
-          <span class="flow-step"><code>GameProgressionManager</code></span><span class="flow-arrow">→</span>
-          <span class="flow-step"><code>BossArenaManager</code></span>
+  <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, minmax(0px, 1fr));"><div class="deck-block deck-scroll" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
+          <span class="tag">예측 입력 허용 — 반응성 ↔ 동기화 안정성</span>
+          <ul class="list-dash">
+            <li>입력은 <strong>로컬에서 즉시 수집</strong></li>
+            <li>행동 확정은 <strong>호스트/서버(StateAuthority)</strong>에서 처리</li>
+            <li>애니메이션 재생 신호는 <code>ActionSequence</code>로 처리</li>
+            <li>액션 잠금은 Animator <strong>StateBehaviour</strong>로 보조, 콤보는 <strong>입력 큐</strong></li>
+          </ul>
+        </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 2 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
+          <span class="tag">AbilityId 별 피 이펙트 생성</span>
+          <ul class="list-dash">
+            <li>기본 공격 1~3타·액티브 스킬의 <code>AbilityId</code>별로 <strong>피 이펙트 프리팹·사운드·크기·색상</strong> 분리</li>
+            <li><strong>RPC</strong>로 동일 위치 재생, <code>EffectPoolManager</code>로 반복 생성 비용 관리</li>
+          </ul>
+        </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block is-tall deck-scroll" style="grid-area: 1 / 2 / span 2 / span 1;"><div class="deck-content"><figure class="slot filled" data-default="assets/combat-predict" data-kind="image">
+        <div class="slot-frame" style="aspect-ratio: 385 / 597;">
+          <div class="slot-media-wrap"><img src="assets/combat-predict.png" alt="" class="slot-media"></div>
+          <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">전투 구조도</span><button type="button" class="slot-add">추가하기</button></div>
         </div>
-        <ul class="list-dash" style="margin-top:0.8rem;">
-          <li>층수 관리 · 다음 보스 랜덤 추첨 · 파티 이동 · 층수 비례 난이도 상승</li>
-        </ul>
-      </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" disabled="" aria-pressed="true" style="cursor: default;">그래프</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block" style="grid-area: 2 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
-        <span class="tag">부가 요소</span>
-        <ul class="list-dash">
-          <li><code>NextLevelPortal</code> — 다음 층 이동</li>
-          <li><code>HealingAltar</code> — 회복 제단 기믹</li>
-          <li>새 보스 추가 = SO 등록 + 맵 배치만 (코드 불필요)</li>
-        </ul>
-      </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block" style="grid-area: 1 / 2 / span 2 / span 1;"><div class="deck-content"><figure class="slot strip-slot filled" data-default="assets/05-3b-roguelike" data-kind="image">
-      <div class="slot-frame" style="aspect-ratio: 887 / 496;">
-        <div class="slot-media-wrap"><img src="assets/05-3b-roguelike.png" alt="" class="slot-media"></div>
-        <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스크린샷 자리</span><button type="button" class="slot-add">추가하기</button></div>
-      </div>
-      <input type="file" class="slot-input" accept="image/*,video/mp4" hidden="">
-    </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×2</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div>
-    
-  <button type="button" class="deck-add-btn deck-ui">＋ 섹션 추가 (스크린샷/영상)</button></div>
+        <input type="file" class="slot-input" accept="image/*,video/mp4" hidden="">
+      </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×2</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div><div class="deck-add-row deck-ui"><button type="button" class="deck-add-btn">＋ 글 섹션</button><button type="button" class="deck-add-btn">＋ 그림 섹션 (스크린샷/영상)</button></div></div>
 </section>
 
 <!-- =========================================================
-     13. 진행도 — 서버 & 인게임 시스템
+     14. 【MY】 보스 시스템 — 상태머신 (FSM 다이어그램)
 ========================================================= -->
-<section class="slide" id="p05d1" data-label="진행도 · 서버/인게임">
-  <div class="slide-inner boarded">
-    <div class="slide-head">
-      <span class="eyebrow"><span class="idx">13</span> PROGRESS — 양평화</span>
-      <h2 class="slide-title">서버 &amp; 인게임 시스템</h2>
-    </div>
-    
-    
-    <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, minmax(0px, 1fr));"><div class="deck-block" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
-        <span class="tag">서버 &amp; 맵</span>
-        <ul class="list-dash">
-          <li><strong>Photon 방 생성/참가</strong> — UI와 연동</li>
-          <li><strong>로그인 DB 연동</strong>, 로그·DB 테이블 확인용 웹 구현</li>
-          <li>웹에서 DB · 스킬수치 · 랭킹 · 크래시 리포트 관리</li>
-        </ul>
-      </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block" style="grid-area: 2 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
-        <span class="tag">서버 담당 인게임 시스템</span>
-        <ul class="list-dash">
-          <li><strong>인게임 채팅</strong>(ChatManager) — 엔터로 토글</li>
-          <li><strong>전투 결과 / 임시 엔딩</strong>(scEnding) — 소요시간·팀 랭킹 연동</li>
-          <li><strong>사운드 매니저</strong>(SoundManager) — 카테고리별 볼륨/거리, 3D SFX·루프</li>
-        </ul>
-      </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block is-tall" style="grid-area: 1 / 2 / span 2 / span 1;"><div class="deck-content"><figure class="slot strip-slot filled" data-default="assets/05-4a-server" data-kind="image">
-      <div class="slot-frame" style="aspect-ratio: 477 / 851;">
-        <div class="slot-media-wrap"><img src="assets/05-4a-server.png" alt="" class="slot-media"></div>
-        <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스크린샷 자리</span><button type="button" class="slot-add">추가하기</button></div>
-      </div>
-      <input type="file" class="slot-input" accept="image/*,video/mp4" hidden="">
-    </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×2</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div>
-    
-  <button type="button" class="deck-add-btn deck-ui">＋ 섹션 추가 (스크린샷/영상)</button></div>
-</section>
-
-<!-- =========================================================
-     14. 진행도 — 백엔드 엔드포인트
-========================================================= -->
-<section class="slide" id="p05d2" data-label="진행도 · 백엔드 API">
+<section class="slide active" id="p05c1" data-label="보스 · 상태머신">
   <div class="slide-inner boarded">
     <div class="slide-head">
       <span class="eyebrow"><span class="idx">14</span> PROGRESS — 양평화</span>
-      <h2 class="slide-title">백엔드 엔드포인트</h2>
+      <h2 class="slide-title">보스 시스템 — 상태머신 (NetworkBossCore)</h2>
     </div>
     
-    <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, minmax(0px, 1fr));"><div class="deck-block" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="table-wrap">
-        <table class="data">
-          <tbody><tr><th>시스템</th><th>내용</th></tr>
-          <tr><td>로그인/세션</td><td><code>login.php</code>, <code>check_session.php</code>, <code>update_skills.php</code></td></tr>
-          <tr><td>스킬 DB</td><td><code>get_abilities.php</code>, <code>upload_ability.php</code> — 스킬모듈 ↔ 서버 연결 구조 (공통1+타입별6=7 테이블)</td></tr>
-          <tr><td>팀 랭킹</td><td><code>submit_ranking.php</code> — 소요시간 정렬 + 팀원 딜량</td></tr>
-          <tr><td>Admin 권한</td><td><code>is_admin</code> — 서버가 권위 판정</td></tr>
-          <tr><td>크래시 리포트</td><td>exception/unhandled/native_crash, 선저장 후 재전송</td></tr>
-        </tbody></table>
-      </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" disabled="" aria-pressed="true" style="cursor: default;">그래프</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block" style="grid-area: 1 / 2 / span 1 / span 1;"><div class="deck-content"><figure class="slot filled" data-default="assets/05-4-server" data-kind="image">
-        <div class="slot-frame" style="aspect-ratio: 1513 / 600;">
-          <div class="slot-media-wrap"><img src="assets/05-4-server.png" alt="" class="slot-media"></div>
-          <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">관리용 웹 / 서버 스크린샷</span><button type="button" class="slot-add">추가하기</button></div>
+  <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(1, minmax(0px, 1fr));"><div class="deck-block" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="dgm">
+        <span class="dgm-cap">보스 상태 흐름 — State Machine</span>
+        <div class="fsm">
+          <span class="fsm-state start">Sleep<small> 대기</small></span>
+          <span class="fsm-arrow">→<span class="t">근접 감지</span></span>
+          <span class="fsm-state">WakeUp<small> 포효</small></span>
+          <span class="fsm-arrow">→</span>
+          <span class="fsm-state combat">Idle ↔ Walk<small> 추적</small></span>
+          <span class="fsm-arrow">⇄<span class="t">쿨타임</span></span>
+          <span class="fsm-state combat">ExecutingPattern<small> SO 패턴</small></span>
         </div>
-        <input type="file" class="slot-input" accept="image/*,video/mp4" hidden="">
-      </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block" style="grid-area: 2 / 1 / span 1 / span 1;"><div class="deck-content"><figure class="slot filled"><div class="slot-frame"><div class="slot-media-wrap"><img class="slot-media" src="assets/서버스샷1.png"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스크린샷 / 영상</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block" style="grid-area: 2 / 2 / span 1 / span 1;"><div class="deck-content"><figure class="slot filled"><div class="slot-frame"><div class="slot-media-wrap"><img class="slot-media" src="assets/서버스샷2.png"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스크린샷 / 영상</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div>
-    
-  <button type="button" class="deck-add-btn deck-ui">＋ 섹션 추가 (스크린샷/영상)</button></div>
+        <div class="fsm" style="margin-top:0.5rem;">
+          <span class="fsm-state phase">PhaseTransition<small> HP 50%↓ 광폭화</small></span>
+          <span class="fsm-arrow">→</span>
+          <span class="fsm-state combat">2페이즈 패턴</span>
+          <span class="fsm-arrow" style="margin-left:0.8rem;">•</span>
+          <span class="fsm-state">Groggy<small> 그로기 딜타임</small></span>
+          <span class="fsm-arrow" style="margin-left:0.8rem;">•</span>
+          <span class="fsm-state die">Die<small> HP 0</small></span>
+        </div>
+        <div class="fsm-note">
+          <div class="n"><b>WakeUp</b> — 플레이어가 <code>wakeUpRange</code> 진입 시 포효 후 전투 개시</div>
+          <div class="n hot"><b>PhaseTransition</b> — HP 50% 이하 자동 진입, <code>CurrentPhase=2</code> → phase2 패턴으로 교체(광폭화)</div>
+          <div class="n"><b>Groggy</b> — 누적 그로기 ≥ <code>maxGroggy</code> 시 정지, 받는 데미지 <strong>×1.5 딜타임</strong></div>
+          <div class="n"><b>ExecutingPattern</b> — <code>BossPatternSelector</code>가 사거리 필터 + 가중치로 패턴 추첨</div>
+        </div>
+      </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" disabled="" aria-pressed="true" style="cursor: default;">그래프</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block is-tall" style="grid-area: 1 / 2 / span 1 / span 1;"><div class="deck-content"><figure class="slot filled"><div class="slot-frame" style="aspect-ratio: 533 / 806;"><div class="slot-media-wrap"><img src="assets/보스코어.png" alt="" class="slot-media"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스크린샷 / 영상</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div><div class="deck-add-row deck-ui"><button type="button" class="deck-add-btn">＋ 글 섹션</button><button type="button" class="deck-add-btn">＋ 그림 섹션 (스크린샷/영상)</button></div></div>
 </section>
 
 <!-- =========================================================
-     15. 진행도 — 인게임 UI
+     15. 【MY】 보스 시스템 — 연출/로직 분리 클래스 구조 (클래스 다이어그램)
 ========================================================= -->
-<section class="slide" id="p05e" data-label="진행도 · 인게임 UI">
+<section class="slide" id="p05c1b" data-label="보스 · 클래스 구조">
   <div class="slide-inner boarded">
     <div class="slide-head">
-      <span class="eyebrow"><span class="idx">15</span> PROGRESS — 이주영</span>
-      <h2 class="slide-title">인게임 · UI</h2>
+      <span class="eyebrow"><span class="idx">15</span> PROGRESS — 양평화</span>
+      <h2 class="slide-title">보스 시스템 — 연출/로직 분리 클래스 구조</h2>
     </div>
-    
-    <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(3, minmax(0px, 1fr));"><div class="deck-block" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
-          <span class="tag">인게임 UI</span>
-          <ul class="list-dash">
-            <li>플레이어 <strong>HUD</strong> — 체력/스태미나/스킬 슬롯/버프·디버프</li>
-            <li><strong>인벤토리</strong>(카드+툴팁), <strong>스킬 아이콘</strong>, <strong>락온 UI</strong></li>
-          </ul>
-        </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block" style="grid-area: 2 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
-          <span class="tag">로비 &amp; 결과 UI</span>
-          <ul class="list-dash">
-            <li>로비·타이틀 설계, 인게임 옵션(그래픽·사운드)</li>
-            <li><strong>항복 투표</strong> · <strong>게임오버 화면</strong></li>
-          </ul>
-        </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block" style="grid-area: 1 / 2 / span 1 / span 1;"><div class="deck-content"><figure class="slot filled" data-default="assets/05-5-ui" data-kind="image">
-        <div class="slot-frame" style="aspect-ratio: 1336 / 753;">
-          <div class="slot-media-wrap"><img src="assets/05-5-ui.png" alt="" class="slot-media"></div>
-          <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">HUD / 인벤토리 스크린샷</span><button type="button" class="slot-add">추가하기</button></div>
+
+  <div class="deck-board" style="grid-template-columns: 1.5fr 0.5fr; grid-template-rows: repeat(1, minmax(0px, 1fr));"><div class="deck-block deck-scroll" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="dgm">
+      <span class="dgm-cap">클래스 다이어그램 — 로직(서버 권한) ↔ 연출(로컬) 분리</span>
+      <div class="grid-2" style="align-items:start; gap:0.7rem;">
+        <!-- 로직 축: NetworkBossCore 상속 -->
+        <div class="uml-tree">
+          <div class="uml net hub">
+            <div class="uml-h">NetworkBossCore<small>: NetworkBehaviour (호스트 권한)</small></div>
+            <ul>
+              <li><b>BossState</b> 상태머신</li>
+              <li><b>CurrentHP / CurrentPhase</b></li>
+              <li><b>AggroTarget</b> [Networked]</li>
+              <li>phase1 / phase2 Patterns</li>
+            </ul>
+          </div>
+          <div class="uml-rel"><span class="tri">△</span><span class="lbl">extends</span></div>
+          <div class="uml-children" style="grid-template-columns:1fr;">
+            <div class="uml"><div class="uml-h">DragonBoss<small>화염</small></div></div>
+            <div class="uml"><div class="uml-h">PolarDragonBoss<small>빙결</small></div></div>
+            <div class="uml"><div class="uml-h">OrcAssassinBoss<small>암살자</small></div></div>
+          </div>
         </div>
-        <input type="file" class="slot-input" accept="image/*,video/mp4" hidden="">
-      </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block" style="grid-area: 2 / 2 / span 1 / span 1;"><div class="deck-content"><figure class="slot filled"><div class="slot-frame"><div class="slot-media-wrap"><img class="slot-media" src="assets/옵션.png"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스크린샷 / 영상</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div>
-    
-  <button type="button" class="deck-add-btn deck-ui">＋ 섹션 추가 (스크린샷/영상)</button></div>
+
+        <!-- 연출 축: IBossVisual 구현 -->
+        <div class="uml-tree">
+          <div class="uml iface">
+            <div class="uml-h">«interface» IBossVisual<small>연출 계약 (로컬)</small></div>
+            <ul>
+              <li><b>PlayAction</b>(stateHash)</li>
+              <li>PlayWakeUp / PlayPhaseTransition</li>
+              <li>PlayGroggy / PlayDie</li>
+              <li>ConsumeRootMotionDelta()</li>
+            </ul>
+          </div>
+          <div class="uml-rel"><span class="tri">△</span><span class="lbl">implements</span></div>
+          <div class="uml-children" style="grid-template-columns:1fr;">
+            <div class="uml"><div class="uml-h">DragonVisual<small>: MonoBehaviour</small></div></div>
+            <div class="uml"><div class="uml-h">PolarDragonVisual</div></div>
+            <div class="uml"><div class="uml-h">OrcAssassinVisual</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 협력 모듈 (가로 한 줄) -->
+      <span class="dgm-cap">협력 모듈</span>
+      <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:0.5rem;">
+        <div class="uml">
+          <div class="uml-h">BossPatternModule<small>: ScriptableObject</small></div>
+          <ul><li>액션 조합·히트박스·이동</li><li><b>코드 없이 제작</b></li></ul>
+        </div>
+        <div class="uml">
+          <div class="uml-h">BossPatternSelector</div>
+          <ul><li>사거리 필터 + 가중치 추첨</li></ul>
+        </div>
+        <div class="uml">
+          <div class="uml-h">BossAggroTracker</div>
+          <ul><li>누적 딜량 장부 → 최다 딜러</li></ul>
+        </div>
+        <div class="uml">
+          <div class="uml-h">BossAoEAttack</div>
+          <ul><li>장판 판정 · 다단/중복 방지</li></ul>
+        </div>
+      </div>
+      <div class="analogy tight">🧩 <strong>Boss 스크립트(로직)</strong>는 서버가 상태를 확정하고, <code>IBossVisual</code>을 통해 <strong>연출(애니메이션·루트모션)</strong>만 각 클라이언트가 로컬로 재생 → 인원수만큼 중복되지 않는 깔끔한 권한 분리.</div>
+    </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" disabled="" aria-pressed="true" style="cursor: default;">그래프</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 1 / 2 / span 1 / span 1;"><div class="deck-content"><figure class="slot filled" data-default="assets/boss-class-photo" data-kind="image">
+      <div class="slot-frame" style="aspect-ratio: 893 / 888;">
+        <div class="slot-media-wrap"><img src="assets/05-3-boss.png" alt="" class="slot-media"></div>
+        <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">보스 관련 사진 (세로)</span><button type="button" class="slot-add">추가하기</button></div>
+      </div>
+      <input type="file" class="slot-input" accept="image/*,video/mp4" hidden="">
+    </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div><div class="deck-add-row deck-ui"><button type="button" class="deck-add-btn">＋ 글 섹션</button><button type="button" class="deck-add-btn">＋ 그림 섹션 (스크린샷/영상)</button></div></div>
 </section>
 
 <!-- =========================================================
-     16. Game Demo
+     16. 【MY】 보스 시스템 — AoE & 어그로 개선
+========================================================= -->
+<section class="slide" id="p05c1c" data-label="보스 · AoE/어그로">
+  <div class="slide-inner boarded">
+    <div class="slide-head">
+      <span class="eyebrow"><span class="idx">16</span> PROGRESS — 양평화</span>
+      <h2 class="slide-title">보스 시스템 — AoE 장판 &amp; 어그로 추적</h2>
+    </div>
+    
+  <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, minmax(0px, 1fr));"><div class="deck-block deck-scroll" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
+          <span class="tag">어그로 추적 (BossAggroTracker)</span>
+          <ul class="list-dash">
+            <li>공격자별 <strong>누적 데미지 장부</strong>를 기록</li>
+            <li><code>aggroRefreshTime</code> 주기로 <strong>최다 딜러에게 어그로 변경</strong></li>
+            <li>살아있는 플레이어만 후보(<code>PlayerRegistry</code> 판정)</li>
+          </ul>
+        </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 2 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
+          <span class="tag">BossAoEAttack — 장판 판정</span>
+          <ul class="list-dash">
+            <li>파티클과 <strong>동기화된 장판/폭발</strong> 판정 (AoEHitZone)</li>
+            <li><strong>다단 히트</strong> 지원 + 겹친 장판 <strong>중복 피해 방지</strong></li>
+            <li>데미지 적용은 <strong>호스트만</strong> 수행 (권한 분리)</li>
+          </ul>
+        </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 1 / 2 / span 2 / span 1;"><div class="deck-content"><div class="dgm">
+        <span class="dgm-cap">어그로 재산정 루프</span>
+        <div class="mgrflow" style="grid-template-columns:1fr;">
+          <div class="mgr-node net"><span class="nm">1 · Record(attacker, dmg)</span><span class="ds">피격마다 공격자별 누적 딜 기록</span></div>
+          <div class="mgr-arrow" style="justify-self:center; transform:rotate(90deg);">→</div>
+          <div class="mgr-node"><span class="nm">2 · GetTopAttacker()</span><span class="ds">정산 구간 최다 딜러 산출(살아있는 플레이어)</span></div>
+          <div class="mgr-arrow" style="justify-self:center; transform:rotate(90deg);">→</div>
+          <div class="mgr-node net"><span class="nm">3 · AggroTarget 갱신</span><span class="ds">[Networked] 대상 변경 → 전 클라 동기화</span></div>
+          <div class="mgr-arrow" style="justify-self:center; transform:rotate(90deg);">→</div>
+          <div class="mgr-node"><span class="nm">4 · Clear()</span><span class="ds">장부 초기화 후 다음 구간 반복</span></div>
+        </div>
+        <div class="fsm-note" style="grid-template-columns:1fr;">
+          <div class="n"><b>보스 예시</b> — Dragon(화염) · PolarDragon(빙결) · OrcAssassin(오크 암살자), 각 보스는 2페이즈 패턴 세트를 별도로 보유</div>
+        </div>
+      </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" disabled="" aria-pressed="true" style="cursor: default;">그래프</button><span class="sz">1×2</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div><div class="deck-add-row deck-ui"><button type="button" class="deck-add-btn">＋ 글 섹션</button><button type="button" class="deck-add-btn">＋ 그림 섹션 (스크린샷/영상)</button></div></div>
+</section>
+
+<!-- =========================================================
+     17. 【MY】 로그라이크 진행 구조 (매니저 파이프라인)
+========================================================= -->
+<section class="slide" id="p05c2" data-label="로그라이크 구조">
+  <div class="slide-inner boarded">
+    <div class="slide-head">
+      <span class="eyebrow"><span class="idx">17</span> PROGRESS — 양평화</span>
+      <h2 class="slide-title">로그라이크 진행 구조 — 3단 매니저</h2>
+    </div>
+    
+    
+  <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, minmax(0px, 1fr));"><div class="deck-block deck-scroll" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
+        <span class="tag">부가 요소 (맵 기믹)</span>
+        <ul class="list-dash">
+          <li><code>NextLevelPortal</code> — 파티가 모이면(<code>ReadyCount</code>) 다음 층 이동</li>
+          <li><code>HealingAltar</code> — 회복 제단 기믹(초당 회복)</li>
+          <li>새 보스 추가 = <strong>SO 등록 + 맵 배치만</strong> (코드 불필요)</li>
+        </ul>
+      </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 1 / 2 / span 1 / span 1;"><div class="deck-content"><figure class="slot filled" data-default="assets/05-3b-roguelike" data-kind="image">
+        <div class="slot-frame" style="aspect-ratio: 887 / 496;">
+          <div class="slot-media-wrap"><img src="assets/05-3b-roguelike.png" alt="" class="slot-media"></div>
+          <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">진행 구조 스크린샷</span><button type="button" class="slot-add">추가하기</button></div>
+        </div>
+        <input type="file" class="slot-input" accept="image/*,video/mp4" hidden="">
+      </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 2 / 1 / span 1 / span 2;"><div class="deck-content"><div class="dgm">
+      <span class="dgm-cap">데이터(SO) → 진행 관리 → 아레나 스폰</span>
+      <div class="mgrflow">
+        <div class="mgr-node">
+          <span class="nm">BossEncounterData</span>
+          <span class="ds">ScriptableObject — 보스 프리팹 · 맵 씬 · BGM 데이터</span>
+        </div>
+        <div class="mgr-arrow">→</div>
+        <div class="mgr-node">
+          <span class="nm">GameProgressionManager</span>
+          <span class="ds">런 동안 유지 — 층수 관리 · 다음 보스 랜덤 추첨 · 파티 이동 (<code>maxLevel</code>)</span>
+        </div>
+        <div class="mgr-arrow">→</div>
+        <div class="mgr-node net">
+          <span class="nm">BossArenaManager</span>
+          <span class="ds">: NetworkBehaviour — 보스 소환 · 층수 비례 체력/데미지 상승 · 런 타이머</span>
+        </div>
+      </div>
+    </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" disabled="" aria-pressed="true" style="cursor: default;">그래프</button><span class="sz">2×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div><div class="deck-add-row deck-ui"><button type="button" class="deck-add-btn">＋ 글 섹션</button><button type="button" class="deck-add-btn">＋ 그림 섹션 (스크린샷/영상)</button></div></div>
+</section>
+
+<!-- =========================================================
+     18. 【MY】 서버 & 인게임 시스템
+========================================================= -->
+<section class="slide" id="p05d1" data-label="서버 · 인게임 시스템">
+  <div class="slide-inner boarded">
+    <div class="slide-head">
+      <span class="eyebrow"><span class="idx">18</span> PROGRESS — 양평화</span>
+      <h2 class="slide-title">서버 &amp; 인게임 시스템</h2>
+    </div>
+    
+  <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, minmax(0px, 1fr));"><div class="deck-block deck-scroll" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
+          <span class="tag">서버 &amp; 맵</span>
+          <ul class="list-dash">
+            <li><strong>Photon 방 생성/참가</strong> — UI와 연동 (NetworkManager)</li>
+            <li><strong>로그인 DB 연동</strong>, 로그·DB 테이블 확인용 웹 구현</li>
+            <li>웹에서 DB · 스킬수치 · 랭킹 · 크래시 리포트 관리</li>
+          </ul>
+        </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 2 / 1 / span 1 / span 1;"><div class="deck-content"><div class="dgm">
+          <span class="dgm-cap">서버 담당 인게임 매니저</span>
+          <div class="mgrflow" style="grid-template-columns:1fr 1fr 1fr;">
+            <div class="mgr-node net"><span class="nm">ChatManager</span><span class="ds">인게임 채팅 — 엔터로 토글, 전역 표시</span></div>
+            <div class="mgr-node"><span class="nm">scEnding</span><span class="ds">전투 결과/임시 엔딩 — 소요시간·팀 랭킹</span></div>
+            <div class="mgr-node"><span class="nm">SoundManager</span><span class="ds">카테고리별 볼륨/거리, 3D SFX·루프</span></div>
+          </div>
+          <div class="fsm-note" style="grid-template-columns:1fr;">
+            <div class="n"><b>SoundManager 8개 카테고리</b> — BGM · UI · Footstep · CombatHit · CombatHurt · SkillEffect · BossGimmick · PlayerSound (거리 기반 3D 감쇠)</div>
+          </div>
+        </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" disabled="" aria-pressed="true" style="cursor: default;">그래프</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block is-tall deck-scroll" style="grid-area: 1 / 2 / span 2 / span 1;"><div class="deck-content"><figure class="slot filled" data-default="assets/05-4a-server" data-kind="image">
+        <div class="slot-frame" style="aspect-ratio: 477 / 851;">
+          <div class="slot-media-wrap"><img src="assets/05-4a-server.png" alt="" class="slot-media"></div>
+          <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">서버/채팅 스크린샷</span><button type="button" class="slot-add">추가하기</button></div>
+        </div>
+        <input type="file" class="slot-input" accept="image/*,video/mp4" hidden="">
+      </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×2</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div><div class="deck-add-row deck-ui"><button type="button" class="deck-add-btn">＋ 글 섹션</button><button type="button" class="deck-add-btn">＋ 그림 섹션 (스크린샷/영상)</button></div></div>
+</section>
+
+<!-- =========================================================
+     19. 【MY】 백엔드 — 엔드포인트 & DB (ER 다이어그램)
+========================================================= -->
+<section class="slide" id="p05d2" data-label="백엔드 · 엔드포인트/DB">
+  <div class="slide-inner boarded">
+    <div class="slide-head">
+      <span class="eyebrow"><span class="idx">19</span> PROGRESS — 양평화</span>
+      <h2 class="slide-title">백엔드 — 엔드포인트 &amp; DB 스키마</h2>
+    </div>
+    
+    <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(1, minmax(0px, 1fr));"><div class="deck-block deck-scroll" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="table-wrap">
+        <table class="data">
+          <tbody>
+            <tr><th>시스템</th><th>엔드포인트</th></tr>
+            <tr><td>로그인/세션</td><td><code>login.php</code>, <code>check_session.php</code>, <code>update_skills.php</code></td></tr>
+            <tr><td>스킬 DB</td><td><code>get_abilities.php</code>, <code>upload_ability.php</code> — 스킬모듈↔서버 연결</td></tr>
+            <tr><td>팀 랭킹</td><td><code>submit_ranking.php</code> — 소요시간 정렬 + 팀원 딜량</td></tr>
+            <tr><td>Admin 권한</td><td><code>is_admin</code> — 서버가 권위 판정</td></tr>
+            <tr><td>크래시 리포트</td><td>exception / unhandled / native_crash, 선저장 후 재전송</td></tr>
+          </tbody>
+        </table>
+      </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" disabled="" aria-pressed="true" style="cursor: default;">그래프</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 1 / 2 / span 1 / span 1;"><div class="deck-content"><div class="dgm">
+        <span class="dgm-cap">MySQL 스키마 — ER 다이어그램</span>
+        <div class="er">
+          <div class="er-tbl">
+            <div class="er-h">users</div>
+            <ul>
+              <li><span class="key">PK</span><b>user_id</b></li>
+              <li><span class="key"></span>pw · nickname</li>
+              <li><span class="key"></span>unlock_bitmask</li>
+              <li><span class="key"></span>session_token</li>
+              <li><span class="key"></span>is_admin</li>
+            </ul>
+          </div>
+          <div class="er-tbl multi">
+            <div class="er-h">abilities <span class="badge">×7</span></div>
+            <ul>
+              <li><span class="key">PK</span><b>ability_id</b></li>
+              <li><span class="key"></span>공통 1 + 타입별 6</li>
+              <li><span class="key"></span>Active/Passive/Utility</li>
+              <li><span class="key"></span>레벨별 수치·배율</li>
+            </ul>
+          </div>
+          <div class="er-tbl">
+            <div class="er-h">team_rankings</div>
+            <ul>
+              <li><span class="key">PK</span><b>run_id</b></li>
+              <li><span class="key"></span>clear_seconds</li>
+              <li><span class="key"></span>member×3 · 딜량</li>
+            </ul>
+          </div>
+          <div class="er-tbl">
+            <div class="er-h">crash_reports</div>
+            <ul>
+              <li><span class="key">PK</span><b>report_id</b></li>
+              <li><span class="key"></span>type · stacktrace</li>
+              <li><span class="key"></span>created_at</li>
+            </ul>
+          </div>
+        </div>
+        <div class="analogy tight">🔗 <code>users.unlock_bitmask</code> ↔ <code>update_skills.php</code>, <code>abilities</code>(7테이블) ↔ <code>get_abilities.php</code> — <strong>스킬모듈과 서버 DB를 잇는 핵심 구조</strong>.</div>
+      </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" disabled="" aria-pressed="true" style="cursor: default;">그래프</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div>
+  <div class="deck-add-row deck-ui"><button type="button" class="deck-add-btn">＋ 글 섹션</button><button type="button" class="deck-add-btn">＋ 그림 섹션 (스크린샷/영상)</button></div></div>
+</section>
+
+<!-- =========================================================
+     20. 타이틀 · 로비 (이주영, 신규)
+========================================================= -->
+<section class="slide" id="p05e1" data-label="타이틀 · 로비">
+  <div class="slide-inner boarded">
+    <div class="slide-head">
+      <span class="eyebrow"><span class="idx">20</span> PROGRESS — 이주영</span>
+      <h2 class="slide-title">타이틀 · 로비</h2>
+    </div>
+    
+  <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(3, minmax(0px, 1fr));"><div class="deck-block deck-scroll" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
+          <span class="tag">타이틀 &amp; 로그인</span>
+          <ul class="list-dash">
+            <li>타이틀 씬 이후 <strong>로그인·회원가입 UI</strong> 구성</li>
+            <li>비회원·빠른 진입을 위한 <strong>게스트 로그인</strong> 제공</li>
+          </ul>
+        </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 1 / 2 / span 1 / span 1;"><div class="deck-content"><div class="panel">
+          <span class="tag">로비</span>
+          <ul class="list-dash">
+            <li>게임 기본 메뉴 구성 및 <strong>전투 진입 전 로비</strong> 구성</li>
+          </ul>
+        </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 2 / 1 / span 2 / span 2;"><div class="deck-content" style=""><div class="grid-3" style="gap:0.5rem;">
+        <figure class="slot filled"><div class="slot-frame"><div class="slot-media-wrap"><img class="slot-media" src="assets/title-lobby-1.png"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">화면</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure>
+        <figure class="slot filled"><div class="slot-frame"><div class="slot-media-wrap"><img class="slot-media" src="assets/title-lobby-4.png"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">화면</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure>
+        <figure class="slot filled"><div class="slot-frame"><div class="slot-media-wrap"><img class="slot-media" src="assets/title-lobby-2.png"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">화면</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure>
+        <figure class="slot filled"><div class="slot-frame"><div class="slot-media-wrap"><img class="slot-media" src="assets/title-lobby-5.png"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">화면</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure>
+        <figure class="slot filled"><div class="slot-frame"><div class="slot-media-wrap"><img class="slot-media" src="assets/title-lobby-3.png"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">화면</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure>
+        <figure class="slot filled"><div class="slot-frame"><div class="slot-media-wrap"><img class="slot-media" src="assets/title-lobby-6.png"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">화면</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure>
+      </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" disabled="" aria-pressed="true" style="cursor: default;">그래프</button><span class="sz">2×2</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div><div class="deck-add-row deck-ui"><button type="button" class="deck-add-btn">＋ 글 섹션</button><button type="button" class="deck-add-btn">＋ 그림 섹션 (스크린샷/영상)</button></div></div>
+</section>
+
+<!-- =========================================================
+     21. 인게임 UI — HUD (이주영)
+========================================================= -->
+<section class="slide" id="p05e2" data-label="인게임 UI · HUD">
+  <div class="slide-inner boarded">
+    <div class="slide-head">
+      <span class="eyebrow"><span class="idx">21</span> PROGRESS — 이주영</span>
+      <h2 class="slide-title">인게임 · UI — HUD</h2>
+    </div>
+    
+  <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, minmax(0px, 1fr));"><div class="deck-block deck-scroll" style="grid-area: 1 / 1 / span 2 / span 1;"><div class="deck-content"><div class="panel">
+        <span class="tag">HUD</span>
+        <ul class="list-dash">
+          <li>플레이어·파티원·보스 상태 표시 — 체력/스태미나/스킬 슬롯/버프·디버프/그로기 게이지</li>
+          <li>플레이어·보스는 체력·디버프가 <strong>실시간</strong> 갱신</li>
+          <li>파티원은 <strong>1초마다</strong> 갱신</li>
+          <li>액티브 스킬 사용 시 <strong>쿨타임 체크</strong> 표시</li>
+        </ul>
+      </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×2</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 1 / 2 / span 1 / span 1;"><div class="deck-content"><figure class="slot filled" data-default="assets/hud-1" data-kind="image">
+          <div class="slot-frame" style="aspect-ratio: 936 / 425;">
+            <div class="slot-media-wrap"><img src="assets/hud-1.png" alt="" class="slot-media"></div>
+            <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">HUD 스크린샷</span><button type="button" class="slot-add">추가하기</button></div>
+          </div>
+          <input type="file" class="slot-input" accept="image/*,video/mp4" hidden="">
+        </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 2 / 2 / span 1 / span 1;"><div class="deck-content"><figure class="slot filled" data-default="assets/hud-2" data-kind="image">
+          <div class="slot-frame" style="aspect-ratio: 936 / 262;">
+            <div class="slot-media-wrap"><img src="assets/hud-2.png" alt="" class="slot-media"></div>
+            <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">HUD 상세</span><button type="button" class="slot-add">추가하기</button></div>
+          </div>
+          <input type="file" class="slot-input" accept="image/*,video/mp4" hidden="">
+        </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div><div class="deck-add-row deck-ui"><button type="button" class="deck-add-btn">＋ 글 섹션</button><button type="button" class="deck-add-btn">＋ 그림 섹션 (스크린샷/영상)</button></div></div>
+</section>
+
+<!-- =========================================================
+     22. 인게임 UI — 인벤토리 (이주영, 신규)
+========================================================= -->
+<section class="slide" id="p05e3" data-label="인게임 UI · 인벤토리">
+  <div class="slide-inner boarded">
+    <div class="slide-head">
+      <span class="eyebrow"><span class="idx">22</span> PROGRESS — 이주영</span>
+      <h2 class="slide-title">인게임 · UI — 인벤토리</h2>
+    </div>
+    
+  <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(3, minmax(0px, 1fr));"><div class="deck-block deck-scroll" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
+        <span class="tag">인벤토리</span>
+        <ul class="list-dash">
+          <li><strong>ALT 홀드</strong> 시 마우스와 보유 스킬 노출</li>
+          <li>스킬 아이콘에 마우스를 올리면 <strong>스킬 정보 · 효과 툴팁</strong> 노출</li>
+        </ul>
+      </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 2 / 1 / span 1 / span 1;"><div class="deck-content"><figure class="slot filled"><div class="slot-frame" style="aspect-ratio: 943 / 518;"><div class="slot-media-wrap"><img src="assets/옵션.png" alt="" class="slot-media"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스크린샷 / 영상</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 3 / 2 / span 1 / span 1;"><div class="deck-content"><figure class="slot filled"><div class="slot-frame" style="aspect-ratio: 522 / 303;"><div class="slot-media-wrap"><img src="assets/inventory-3.png" alt="" class="slot-media"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스크린샷 / 영상</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 1 / 2 / span 2 / span 1;"><div class="deck-content"><figure class="slot filled"><div class="slot-frame" style="aspect-ratio: 309 / 393;"><div class="slot-media-wrap"><img src="assets/inventory-2.png" alt="" class="slot-media"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스크린샷 / 영상</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×2</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 3 / 1 / span 1 / span 1;"><div class="deck-content"><figure class="slot filled"><div class="slot-frame" style="aspect-ratio: 647 / 358;"><div class="slot-media-wrap"><img src="assets/inventory-4.png" alt="" class="slot-media"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스크린샷 / 영상</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div><div class="deck-add-row deck-ui"><button type="button" class="deck-add-btn">＋ 글 섹션</button><button type="button" class="deck-add-btn">＋ 그림 섹션 (스크린샷/영상)</button></div></div>
+</section>
+
+<!-- =========================================================
+     23. Game Demo
 ========================================================= -->
 <section class="slide" id="p06" data-label="Game Demo">
   <div class="slide-inner boarded" style="text-align:center;">
     <div class="slide-head">
-      <span class="eyebrow" style="justify-content:center;"><span class="idx">16</span> DEMO</span>
+      <span class="eyebrow" style="justify-content:center;"><span class="idx">23</span> DEMO</span>
       <h2 class="slide-title">Game Demo</h2>
-      <p class="measure editable" contenteditable="false" style="margin:0.6rem auto 0; color:var(--ink-dim); font-size:0.9rem;">
-        로비 매칭 → 보스전(락온·콤보·회피) → 처치·보상 선택 → 다음 층 → 클리어·랭킹
-      </p>
     </div>
+    <p class="cover-kicker" style="margin-bottom:1rem;">🎬 데모 영상 — 발표 시 원본 덱 / 영상 파일로 재생</p>
     
-    <div class="deck-board" style="grid-template-columns: repeat(1, 1fr); grid-template-rows: repeat(1, minmax(0px, 1fr));"><div class="deck-block empty-slot" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><figure class="slot video-slot" data-default="assets/06-demo" data-kind="video" style="max-width:800px; margin:0 auto;">
+  <div class="deck-board" style="grid-template-columns: repeat(1, 1fr); grid-template-rows: repeat(1, minmax(0px, 1fr));"><div class="deck-block empty-slot deck-scroll" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><figure class="slot video-slot" data-default="assets/06-demo" data-kind="video" style="max-width:800px; margin:0 auto;">
       <div class="slot-frame">
         <div class="slot-media-wrap"></div>
-        <div class="slot-empty"><span class="slot-icon">🎬</span><span class="slot-label">실제 플레이 시연 영상</span><button type="button" class="slot-add">추가하기</button></div>
+        <div class="slot-empty"><span class="slot-icon">🎬</span><span class="slot-label">데모 영상 (mp4)</span><button type="button" class="slot-add">추가하기</button></div>
       </div>
-      <input type="file" class="slot-input" accept="video/mp4" hidden="">
-    </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div>
-    
-  <button type="button" class="deck-add-btn deck-ui">＋ 섹션 추가 (스크린샷/영상)</button></div>
+      <input type="file" class="slot-input" accept="image/*,video/mp4" hidden="">
+    </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div><div class="deck-add-row deck-ui"><button type="button" class="deck-add-btn">＋ 글 섹션</button><button type="button" class="deck-add-btn">＋ 그림 섹션 (스크린샷/영상)</button></div></div>
 </section>
 
 <!-- =========================================================
-     17. 최적화 & 안정성
+     24. 최적화 & 안정성
 ========================================================= -->
 <section class="slide" id="p07" data-label="최적화 &amp; 안정성">
   <div class="slide-inner boarded">
     <div class="slide-head">
-      <span class="eyebrow"><span class="idx">17</span> OPTIMIZATION</span>
+      <span class="eyebrow"><span class="idx">24</span> OPTIMIZATION</span>
       <h2 class="slide-title">최적화 &amp; 안정성</h2>
     </div>
     
-    <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(3, minmax(0px, 1fr));"><div class="deck-block" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
+  <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, minmax(0px, 1fr));"><div class="deck-block deck-scroll" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
           <span class="tag">런타임 성능</span>
           <ul class="list-dash">
             <li><strong>이펙트 풀 + 셰이더 예열</strong> — 첫 이펙트 렌더 끊김 제거</li>
             <li><strong>라이트맵 베이크 전환</strong> — 실시간 라이팅 → 사전 베이크</li>
             <li><strong>맵 콜라이더 최적화</strong> — 메시→박스 콜라이더, 인접 병합</li>
-            <li><strong>품질 등급 Low/Medium/High 분리 관리</strong></li>
+            <li><strong>품질 등급</strong> Low/Medium/High 분리 관리</li>
           </ul>
-        </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block" style="grid-area: 2 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
+        </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 2 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
           <span class="tag">빌드 &amp; 안정성</span>
           <ul class="list-dash">
-            <li>셰이더 배리언트 정리 — <strong>빌드 3시간+ → 10분 미만</strong></li>
-            <li><strong>Sentry</strong> 크래시 자동 수집(네이티브 크래시 포함)</li>
+            <li><strong>셰이더 배리언트 정리</strong> — 빌드 3시간+ → <strong>10분 미만</strong></li>
+            <li><strong>Sentry 크래시 자동 수집</strong> (네이티브 크래시 포함)</li>
           </ul>
-        </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block" style="grid-area: 1 / 2 / span 2 / span 1;"><div class="deck-content"><figure class="slot filled" data-default="assets/07-optimization" data-kind="image">
-        <div class="slot-frame" style="aspect-ratio: 1918 / 1078;">
-          <div class="slot-media-wrap"><img src="assets/서버스샷3.png" alt="" class="slot-media"></div>
-          <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">프로파일러 / 빌드 로그</span><button type="button" class="slot-add">추가하기</button></div>
-        </div>
-        <input type="file" class="slot-input" accept="image/*,video/mp4" hidden="">
-      </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×2</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div>
-    
-  <button type="button" class="deck-add-btn deck-ui">＋ 섹션 추가 (스크린샷/영상)</button></div>
+        </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 1 / 2 / span 2 / span 1;"><div class="deck-content"><figure class="slot filled"><div class="slot-frame" style="aspect-ratio: 1918 / 1078;"><div class="slot-media-wrap"><img src="assets/서버스샷3.png" alt="" class="slot-media"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스크린샷 / 영상</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×2</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div><div class="deck-add-row deck-ui"><button type="button" class="deck-add-btn">＋ 글 섹션</button><button type="button" class="deck-add-btn">＋ 그림 섹션 (스크린샷/영상)</button></div></div>
 </section>
 
 <!-- =========================================================
-     18. Future Work
+     25. Future Work
 ========================================================= -->
 <section class="slide" id="p08" data-label="Future Work">
   <div class="slide-inner boarded">
     <div class="slide-head">
-      <span class="eyebrow"><span class="idx">18</span> FUTURE</span>
+      <span class="eyebrow"><span class="idx">25</span> FUTURE</span>
       <h2 class="slide-title">Future Work</h2>
     </div>
     
-    <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(1, minmax(0px, 1fr));"><div class="deck-block" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
-        <span class="tag">향후 계획</span>
-        <ul class="list-dash">
-          <li>플레이어 직업 추가(무기)</li>
-          <li>인간형 보스 패턴 추가</li>
-          <li>튜토리얼</li>
-          <li>보스 전투방 추가</li>
-        </ul>
-      </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block empty-slot" style="grid-area: 1 / 2 / span 1 / span 1;"><div class="deck-content"><figure class="slot" data-default="assets/08-future" data-kind="image">
-        <div class="slot-frame">
-          <div class="slot-media-wrap"></div>
-          <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스크린샷 자리</span><button type="button" class="slot-add">추가하기</button></div>
-        </div>
-        <input type="file" class="slot-input" accept="image/*,video/mp4" hidden="">
-      </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div>
-    
-  <button type="button" class="deck-add-btn deck-ui">＋ 섹션 추가 (스크린샷/영상)</button></div>
+  <div class="deck-board" style="grid-template-columns: repeat(1, 1fr); grid-template-rows: repeat(1, minmax(0px, 1fr));"><div class="deck-block deck-scroll" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
+      <span class="tag">향후 계획</span>
+      <ul class="list-dash">
+        <li>플레이어 <strong>직업 추가</strong>(무기)</li>
+        <li><strong>인간형 보스</strong> 패턴 추가</li>
+        <li><strong>튜토리얼</strong></li>
+        <li><strong>보스 전투방</strong> 추가</li>
+      </ul>
+    </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div><div class="deck-add-row deck-ui"><button type="button" class="deck-add-btn">＋ 글 섹션</button><button type="button" class="deck-add-btn">＋ 그림 섹션 (스크린샷/영상)</button></div></div>
 </section>
 
 <!-- =========================================================
-     19. Q&A
+     26. Q&A
 ========================================================= -->
 <section class="slide" id="p09" data-label="Q&amp;A">
   <div class="slide-inner boarded" style="text-align:center;">
     <div class="slide-head">
-      <span class="eyebrow" style="justify-content:center;"><span class="idx">19</span> CLOSING</span>
+      <span class="eyebrow" style="justify-content:center;"><span class="idx">26</span> CLOSING</span>
       <h2 class="slide-title">Q&amp;A</h2>
     </div>
-    
     <p class="end-note">SOUL RUSH — 양평화 · 임현빈 · 이주영</p>
-    <div class="deck-board" style="grid-template-columns: repeat(1, 1fr); grid-template-rows: repeat(1, minmax(0px, 1fr));"><div class="deck-block empty-slot" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><figure class="slot" data-default="assets/09-qna" data-kind="image" style="max-width:520px; margin:0 auto;">
-      <div class="slot-frame">
-        <div class="slot-media-wrap"></div>
-        <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">클로징 이미지</span><button type="button" class="slot-add">추가하기</button></div>
-      </div>
-      <input type="file" class="slot-input" accept="image/*,video/mp4" hidden="">
-    </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div>
-    
-  <button type="button" class="deck-add-btn deck-ui">＋ 섹션 추가 (스크린샷/영상)</button></div>
+  <div class="deck-board" style="grid-template-columns: repeat(1, 1fr); grid-template-rows: repeat(1, minmax(0px, 1fr));"></div><div class="deck-add-row deck-ui"><button type="button" class="deck-add-btn">＋ 글 섹션</button><button type="button" class="deck-add-btn">＋ 그림 섹션 (스크린샷/영상)</button></div></div>
 </section>
 
 <script>
@@ -1667,7 +2112,7 @@
   function isEdit() { return document.body.classList.contains("edit-mode"); }
 
   var HEADER_SKIP = ".slide-head,.eyebrow,.slide-title,.cover-kicker,.cover-credit,.measure,.end-note,.extra-slots,.add-slot-btn,script,style";
-  var CUSTOM_SEL = ".arch2,.arch-canvas,.arch-svg,.api-groups,.chan-grid,.chan-mini,.flow-strip,.flow-num,.table-wrap,table,.grid-3";
+  var CUSTOM_SEL = ".arch2,.arch-canvas,.arch-svg,.api-groups,.chan-grid,.chan-mini,.flow-strip,.flow-num,.table-wrap,table,.grid-3,.dgm,.uml-tree,.fsm,.seq,.er,.mgrflow";
 
   function classify(el) {
     if (el.classList.contains("slot")) return "image";
