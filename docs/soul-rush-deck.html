@@ -87,6 +87,33 @@
   /* 발표 모드에서는 사진이 안 들어간 빈 자리(placeholder)를 감춘다 */
   body.is-fullscreen .slot:not(.filled) { display: none; }
   body.is-fullscreen .add-slot-btn { display: none; }
+
+  /* ============ 발표(전체화면) 모드: 목차 축소 + 본문 확대 ============ */
+  /* 좌측 목차(rail)는 라벨을 숨겨 얇은 눈금만 남기고(폭 최소화), 마우스를 올리면 다시 펼친다.
+     → 확보된 좌우 공간만큼 본문 폭·글자 크기를 키워 발표 시 가독성을 높인다. */
+  body.is-fullscreen .rail { left: 0.35rem; gap: 0.3rem; max-height: 88vh; }
+  body.is-fullscreen .rail button { font-size: 0; gap: 0; }
+  body.is-fullscreen .rail button::before { width: 0.7rem; }
+  body.is-fullscreen .rail button.current::before { width: 1.15rem; }
+  body.is-fullscreen .rail button:hover,
+  body.is-fullscreen .rail button:focus-visible { font-size: 0.7rem; gap: 0.5rem; }
+
+  body.is-fullscreen .slide {
+    padding: clamp(2.2rem, 5vh, 3.2rem) clamp(1.4rem, 3.5vw, 3rem) clamp(1.8rem, 4vh, 2.6rem);
+  }
+  body.is-fullscreen .slide-inner { max-width: 1620px; }
+  body.is-fullscreen .slide-head { margin-bottom: 1.1rem; }
+  body.is-fullscreen .eyebrow { font-size: 0.92rem; }
+  body.is-fullscreen .slide-title { font-size: clamp(2.1rem, 3.6vw, 3.25rem); }
+  body.is-fullscreen .panel { padding: 1.25rem 1.5rem; }
+  body.is-fullscreen .panel .tag { font-size: 0.82rem; }
+  body.is-fullscreen .panel h3 { font-size: 1.3rem; }
+  body.is-fullscreen .list-dash li { font-size: clamp(1.05rem, 1.35vw, 1.34rem); margin-top: 0.6rem; }
+  body.is-fullscreen .analogy { font-size: 1.02rem; }
+  body.is-fullscreen .cover-kicker { font-size: 1.25rem; }
+  body.is-fullscreen .flow-step,
+  body.is-fullscreen .flow-num { font-size: 0.95rem; }
+  body.is-fullscreen table.data { font-size: 1.02rem; }
   .btn {
     font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.02em;
     border: 1px solid var(--line); background: var(--char); color: var(--ink);
@@ -465,10 +492,25 @@
   .deck-block.deck-scroll { overflow: auto; }
   .deck-block > .deck-content { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; transform-origin: top center; }
   .deck-block > .deck-content > * { flex: 1 1 auto; min-height: 0; }
+  /* 글 셀·그래프(상태머신 등) 셀은 내용을 위아래(세로) 가운데로 정렬한다.
+     좌우 정렬은 기존 그대로 두고, 이미지 셀(.slot 포함)은 지금처럼 꽉 채운다.
+     넘칠 때는 safe로 위쪽부터 보이게 해 스크롤(.deck-scroll)이 정상 동작. */
+  .deck-block:not(:has(.slot)) > .deck-content { justify-content: safe center; }
+  .deck-block:not(:has(.slot)) > .deck-content > * { flex: 0 0 auto; }
+  /* 타이틀·로비: 발표(전체화면) 때 스크롤 없이 그림 6장이 한 화면에 다 보이도록.
+     그림 행을 넉넉히 잡고, .grid-3 에 '확정 높이 2행'을 줘서(auto 행 → 넘침 방지)
+     각 그림이 칸 안에 통째로(contain) 딱 맞게 들어간다. */
+  #p05e1 .deck-board { grid-template-rows: minmax(0, 0.72fr) minmax(0, 1.9fr) !important; }
+  #p05e1 .deck-block:has(.grid-3) { overflow: hidden; }
+  #p05e1 .grid-3 { height: 100%; grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 0.45rem; }
+
   /* 이미지 슬롯은 섹션 크기를 꽉 채우도록(작게 나오던 문제 해결) */
   .deck-block .slot { height: 100%; gap: 0; margin: 0; }
   .deck-block .slot .slot-frame { height: 100% !important; width: 100%; max-height: none !important; aspect-ratio: auto !important; }
-  .deck-block .slot .slot-media { max-width: 100%; max-height: 100%; }
+  /* 칸이 커지면(전체화면 등) 그림도 그에 맞춰 확대되도록 — 기본값 width/height:auto 는
+     자연 크기보다 커지지 않아 빈 공간이 생겼다. 100%로 채우되 object-fit:contain 으로
+     비율 유지(잘림 없음). */
+  .deck-block .slot .slot-media { width: 100%; height: 100%; max-width: 100%; max-height: 100%; object-fit: contain; }
 
   /* --- 편집 모드에서만 보이는 섹션 도구 --- */
   .deck-ui { display: none; }
@@ -1524,86 +1566,116 @@
 </section>
 
 <!-- =========================================================
-     20. 타이틀 · 로비 (이주영, 신규)
+     20. 타이틀 · 로비 (이주영)
 ========================================================= -->
 <section class="slide" id="p05e1" data-label="타이틀 · 로비">
-  <div class="slide-inner boarded">
+  <div class="slide-inner">
     <div class="slide-head">
       <span class="eyebrow"><span class="idx">20</span> PROGRESS — 이주영</span>
       <h2 class="slide-title">타이틀 · 로비</h2>
     </div>
-    
-  <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(3, minmax(0px, 1fr));"><div class="deck-block deck-scroll" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
-          <span class="tag">타이틀 &amp; 로그인</span>
-          <ul class="list-dash">
-            <li>타이틀 씬 이후 <strong>로그인·회원가입 UI</strong> 구성</li>
-            <li>비회원·빠른 진입을 위한 <strong>게스트 로그인</strong> 제공</li>
-          </ul>
-        </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 1 / 2 / span 1 / span 1;"><div class="deck-content"><div class="panel">
-          <span class="tag">로비</span>
-          <ul class="list-dash">
-            <li>게임 기본 메뉴 구성 및 <strong>전투 진입 전 로비</strong> 구성</li>
-          </ul>
-        </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 2 / 1 / span 2 / span 2;"><div class="deck-content" style=""><div class="grid-3" style="gap:0.5rem;">
-        <figure class="slot filled"><div class="slot-frame"><div class="slot-media-wrap"><img class="slot-media" src="assets/title-lobby-1.png"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">화면</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure>
-        <figure class="slot filled"><div class="slot-frame"><div class="slot-media-wrap"><img class="slot-media" src="assets/title-lobby-4.png"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">화면</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure>
-        <figure class="slot filled"><div class="slot-frame"><div class="slot-media-wrap"><img class="slot-media" src="assets/title-lobby-2.png"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">화면</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure>
-        <figure class="slot filled"><div class="slot-frame"><div class="slot-media-wrap"><img class="slot-media" src="assets/title-lobby-5.png"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">화면</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure>
-        <figure class="slot filled"><div class="slot-frame"><div class="slot-media-wrap"><img class="slot-media" src="assets/title-lobby-3.png"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">화면</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure>
-        <figure class="slot filled"><div class="slot-frame"><div class="slot-media-wrap"><img class="slot-media" src="assets/title-lobby-6.png"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">화면</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure>
-      </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" disabled="" aria-pressed="true" style="cursor: default;">그래프</button><span class="sz">2×2</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div><div class="deck-add-row deck-ui"><button type="button" class="deck-add-btn">＋ 글 섹션</button><button type="button" class="deck-add-btn">＋ 그림 섹션 (스크린샷/영상)</button></div></div>
+    <div class="grid-2">
+      <div class="panel">
+        <span class="tag">타이틀 &amp; 로그인</span>
+        <ul class="list-dash">
+          <li>타이틀 씬 이후 <strong>로그인 · 회원가입 UI</strong> 구성</li>
+          <li>비회원 · 빠른 진입을 위한 <strong>게스트 로그인</strong> 제공</li>
+          <li><strong>UIManager</strong>를 활용해 화면 전환 구조 설계</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <span class="tag">로비</span>
+        <ul class="list-dash">
+          <li>게임 기본 메뉴 구성 및 <strong>전투 진입 전 로비</strong> 구성</li>
+        </ul>
+      </div>
+    </div>
+    <div class="grid-3" style="gap:0.5rem;">
+      <figure class="slot filled" data-default="assets/title-lobby-1" data-kind="image"><div class="slot-frame" style="aspect-ratio: 546 / 306;"><div class="slot-media-wrap"><img src="assets/title-lobby-1.png" alt="" class="slot-media"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">타이틀</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure>
+      <figure class="slot filled" data-default="assets/title-lobby-2" data-kind="image"><div class="slot-frame" style="aspect-ratio: 546 / 306;"><div class="slot-media-wrap"><img src="assets/title-lobby-2.png" alt="" class="slot-media"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">로그인</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure>
+      <figure class="slot filled" data-default="assets/title-lobby-3" data-kind="image"><div class="slot-frame" style="aspect-ratio: 546 / 306;"><div class="slot-media-wrap"><img src="assets/title-lobby-3.png" alt="" class="slot-media"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">회원가입</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure>
+      <figure class="slot filled" data-default="assets/title-lobby-4" data-kind="image"><div class="slot-frame" style="aspect-ratio: 546 / 306;"><div class="slot-media-wrap"><img src="assets/title-lobby-4.png" alt="" class="slot-media"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">메인 메뉴</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure>
+      <figure class="slot filled" data-default="assets/title-lobby-5" data-kind="image"><div class="slot-frame" style="aspect-ratio: 546 / 306;"><div class="slot-media-wrap"><img src="assets/title-lobby-5.png" alt="" class="slot-media"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">모드 선택</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure>
+      <figure class="slot filled" data-default="assets/title-lobby-6" data-kind="image"><div class="slot-frame" style="aspect-ratio: 546 / 306;"><div class="slot-media-wrap"><img src="assets/title-lobby-6.png" alt="" class="slot-media"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">로비</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure>
+    </div>
+  </div>
 </section>
 
 <!-- =========================================================
      21. 인게임 UI — HUD (이주영)
 ========================================================= -->
 <section class="slide" id="p05e2" data-label="인게임 UI · HUD">
-  <div class="slide-inner boarded">
+  <div class="slide-inner">
     <div class="slide-head">
       <span class="eyebrow"><span class="idx">21</span> PROGRESS — 이주영</span>
       <h2 class="slide-title">인게임 · UI — HUD</h2>
     </div>
-    
-  <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, minmax(0px, 1fr));"><div class="deck-block deck-scroll" style="grid-area: 1 / 1 / span 2 / span 1;"><div class="deck-content"><div class="panel">
+    <div class="grid-2">
+      <div class="panel">
         <span class="tag">HUD</span>
         <ul class="list-dash">
-          <li>플레이어·파티원·보스 상태 표시 — 체력/스태미나/스킬 슬롯/버프·디버프/그로기 게이지</li>
-          <li>플레이어·보스는 체력·디버프가 <strong>실시간</strong> 갱신</li>
-          <li>파티원은 <strong>1초마다</strong> 갱신</li>
-          <li>액티브 스킬 사용 시 <strong>쿨타임 체크</strong> 표시</li>
+          <li>익숙한 <strong>액션 게임 HUD 문법</strong>을 적용해 초반 학습 부담 최소화</li>
+          <li><strong>HP · 스태미나</strong>를 상·하로 구분해 전투 정보를 직관적으로 인지</li>
+          <li>즉각성이 필요한 <strong>플레이어 · 보스</strong> 정보는 <strong>실시간</strong> 갱신</li>
+          <li>갱신 빈도가 낮아도 되는 <strong>파티원</strong> 정보는 <strong>1초 주기</strong>로 처리해 불필요한 연산 감소</li>
+          <li>스탯과 HUD를 직접 연결하지 않고 <strong>EventManager</strong>로 체력 변경 이벤트를 수신해 UI를 자동 갱신</li>
         </ul>
-      </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×2</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 1 / 2 / span 1 / span 1;"><div class="deck-content"><figure class="slot filled" data-default="assets/hud-1" data-kind="image">
-          <div class="slot-frame" style="aspect-ratio: 936 / 425;">
-            <div class="slot-media-wrap"><img src="assets/hud-1.png" alt="" class="slot-media"></div>
-            <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">HUD 스크린샷</span><button type="button" class="slot-add">추가하기</button></div>
-          </div>
-          <input type="file" class="slot-input" accept="image/*,video/mp4" hidden="">
-        </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 2 / 2 / span 1 / span 1;"><div class="deck-content"><figure class="slot filled" data-default="assets/hud-2" data-kind="image">
-          <div class="slot-frame" style="aspect-ratio: 936 / 262;">
-            <div class="slot-media-wrap"><img src="assets/hud-2.png" alt="" class="slot-media"></div>
-            <div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">HUD 상세</span><button type="button" class="slot-add">추가하기</button></div>
-          </div>
-          <input type="file" class="slot-input" accept="image/*,video/mp4" hidden="">
-        </figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div><div class="deck-add-row deck-ui"><button type="button" class="deck-add-btn">＋ 글 섹션</button><button type="button" class="deck-add-btn">＋ 그림 섹션 (스크린샷/영상)</button></div></div>
+      </div>
+      <div class="stack">
+        <figure class="slot filled" data-default="assets/hud-1" data-kind="image"><div class="slot-frame" style="aspect-ratio: 936 / 425;"><div class="slot-media-wrap"><img src="assets/hud-1.png" alt="" class="slot-media"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">HUD 스크린샷</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure>
+        <figure class="slot filled" data-default="assets/hud-2" data-kind="image"><div class="slot-frame" style="aspect-ratio: 936 / 262;"><div class="slot-media-wrap"><img src="assets/hud-2.png" alt="" class="slot-media"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스킬 슬롯</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure>
+      </div>
+    </div>
+  </div>
 </section>
 
 <!-- =========================================================
-     22. 인게임 UI — 인벤토리 (이주영, 신규)
+     22. 인게임 UI — 인벤토리 (이주영)
 ========================================================= -->
 <section class="slide" id="p05e3" data-label="인게임 UI · 인벤토리">
-  <div class="slide-inner boarded">
+  <div class="slide-inner">
     <div class="slide-head">
       <span class="eyebrow"><span class="idx">22</span> PROGRESS — 이주영</span>
       <h2 class="slide-title">인게임 · UI — 인벤토리</h2>
     </div>
-    
-  <div class="deck-board" style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(3, minmax(0px, 1fr));"><div class="deck-block deck-scroll" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><div class="panel">
+    <div class="grid-2">
+      <div class="panel">
         <span class="tag">인벤토리</span>
         <ul class="list-dash">
           <li><strong>ALT 홀드</strong> 시 마우스와 보유 스킬 노출</li>
           <li>스킬 아이콘에 마우스를 올리면 <strong>스킬 정보 · 효과 툴팁</strong> 노출</li>
         </ul>
-      </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 2 / 1 / span 1 / span 1;"><div class="deck-content"><figure class="slot filled"><div class="slot-frame" style="aspect-ratio: 943 / 518;"><div class="slot-media-wrap"><img src="assets/옵션.png" alt="" class="slot-media"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스크린샷 / 영상</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 3 / 2 / span 1 / span 1;"><div class="deck-content"><figure class="slot filled"><div class="slot-frame" style="aspect-ratio: 522 / 303;"><div class="slot-media-wrap"><img src="assets/inventory-3.png" alt="" class="slot-media"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스크린샷 / 영상</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 1 / 2 / span 2 / span 1;"><div class="deck-content"><figure class="slot filled"><div class="slot-frame" style="aspect-ratio: 309 / 393;"><div class="slot-media-wrap"><img src="assets/inventory-2.png" alt="" class="slot-media"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스크린샷 / 영상</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×2</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 3 / 1 / span 1 / span 1;"><div class="deck-content"><figure class="slot filled"><div class="slot-frame" style="aspect-ratio: 647 / 358;"><div class="slot-media-wrap"><img src="assets/inventory-4.png" alt="" class="slot-media"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스크린샷 / 영상</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div><div class="deck-add-row deck-ui"><button type="button" class="deck-add-btn">＋ 글 섹션</button><button type="button" class="deck-add-btn">＋ 그림 섹션 (스크린샷/영상)</button></div></div>
+      </div>
+      <figure class="slot filled" data-default="assets/inventory-1" data-kind="image"><div class="slot-frame" style="aspect-ratio: 309 / 393;"><div class="slot-media-wrap"><img src="assets/inventory-1.png" alt="" class="slot-media"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스킬 툴팁</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+     23. 옵션 (이주영, 신규)
+========================================================= -->
+<section class="slide" id="p05e4" data-label="옵션">
+  <div class="slide-inner">
+    <div class="slide-head">
+      <span class="eyebrow"><span class="idx">23</span> PROGRESS — 이주영</span>
+      <h2 class="slide-title">옵션</h2>
+    </div>
+    <div class="grid-2">
+      <div class="panel">
+        <span class="tag">옵션</span>
+        <ul class="list-dash">
+          <li>일반적인 <strong>PC 게임 옵션창 문법</strong>을 적용해 별도 학습 없이 사용</li>
+          <li><strong>비디오 · 사운드</strong>를 탭으로 분리해 설정 항목 탐색 부담 감소</li>
+          <li>세밀한 조정이 필요한 음량은 <strong>슬라이더</strong> 방식으로 조작</li>
+          <li>그래픽은 <strong>단계형 선택</strong>으로 구성해 설정 결과를 명확히 인지</li>
+        </ul>
+      </div>
+      <div class="stack">
+        <figure class="slot filled" data-default="assets/option-1" data-kind="image"><div class="slot-frame" style="aspect-ratio: 943 / 518;"><div class="slot-media-wrap"><img src="assets/option-1.png" alt="" class="slot-media"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">사운드 탭</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure>
+        <figure class="slot filled" data-default="assets/option-2" data-kind="image"><div class="slot-frame" style="aspect-ratio: 647 / 358;"><div class="slot-media-wrap"><img src="assets/option-2.png" alt="" class="slot-media"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">비디오 탭</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure>
+      </div>
+    </div>
+  </div>
 </section>
 
 <!-- =========================================================
