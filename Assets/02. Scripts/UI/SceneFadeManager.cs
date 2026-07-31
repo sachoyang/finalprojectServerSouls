@@ -13,6 +13,19 @@ public class SceneFadeManager : MonoBehaviour
 
     public bool IsFading { get; private set; }
 
+    // 페이드 이미지 위에 그려지는 UI(타이틀 로고 등)가 같은 속도로 같이 사라지도록 현재 가림 정도를 알려준다.
+    // 0이면 화면이 완전히 보이는 상태, 1이면 완전히 검은 상태다.
+    public float FadeAlpha
+    {
+        get
+        {
+            if (fadeImage == null || !fadeImage.gameObject.activeInHierarchy)
+                return 0f;
+
+            return fadeImage.color.a;
+        }
+    }
+
     private void Start()
     {
         StartCoroutine(FadeIn());
