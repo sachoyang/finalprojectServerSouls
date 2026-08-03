@@ -969,6 +969,13 @@ public class NetworkBossCore : NetworkBehaviour
         if (CurrentPhase == 1 && AllowedMaxPhase >= 2 && CurrentHP <= (maxHP * 0.5f))
         {
             CurrentPhase = 2; // 즉시 2페이즈 패턴 리스트로 교체!
+
+            // 🔥 그로기(피버타임) 도중에 50% 컷이 나면 Groggy 상태가 PhaseTransition으로 덮어써져서
+            //    그로기 종료 처리(FixedUpdateNetwork의 CurrentGroggy = 0)가 영영 실행되지 않는다.
+            //    게이지가 가득 찬 채로 2페이즈에 진입해 한 대만 맞아도 즉시 재그로기가 걸리므로,
+            //    페이즈 전환 시점에 그로기 게이지를 초기 상태(=UI 풀 게이지)로 되돌린다.
+            CurrentGroggy = 0f;
+
             ChangeState(BossState.PhaseTransition);
 
             // 3초 동안 무적 & 포효 연출 진행
