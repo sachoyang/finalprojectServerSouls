@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>Soul Rush 덱 — 해상도별 미리보기</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; height: 100vh; display: flex; flex-direction: column;
+    background: #14110d; color: #e8dfcd;
+    font: 14px/1.5 "Malgun Gothic", "Pretendard", sans-serif;
+  }
+  header {
+    flex: none; display: flex; align-items: center; gap: .8rem; flex-wrap: wrap;
+    padding: .6rem .9rem; border-bottom: 1px solid #3a2f22; background: #1c1712;
+  }
+  header b { color: #e8bd72; letter-spacing: .04em; }
+  .group { display: flex; gap: .3rem; align-items: center; }
+  button, select {
+    font: inherit; padding: .35rem .7rem; border-radius: 3px;
+    border: 1px solid #4a3c2b; background: #241d15; color: #e8dfcd; cursor: pointer;
+  }
+  button:hover { border-color: #c99a4c; color: #e8bd72; }
+  button[aria-pressed="true"] { background: #c99a4c; border-color: #c99a4c; color: #14110d; font-weight: 700; }
+  .readout { margin-left: auto; font-family: Consolas, monospace; font-size: 12px; color: #a99c86; }
+  .readout strong { color: #e8bd72; }
+  .stage { flex: 1 1 auto; min-height: 0; position: relative; overflow: hidden; display: grid; place-items: center; }
+  .holder { position: relative; transform-origin: center center; box-shadow: 0 0 0 1px #4a3c2b, 0 18px 60px rgba(0,0,0,.6); }
+  iframe { display: block; border: 0; background: #120e0b; }
+  .hint { flex: none; padding: .5rem .9rem; border-top: 1px solid #3a2f22; color: #a99c86; font-size: 12px; }
+  .hint code { color: #e8bd72; font-family: Consolas, monospace; }
+</style>
+</head>
+<body>
+
+<header>
+  <b>해상도별 미리보기</b>
+  <div class="group" id="resBtns"></div>
+  <div class="group">
+    <label for="slideSel">슬라이드</label>
+    <select id="slideSel"></select>
+  </div>
+  <button id="reload">↻ 새로고침</button>
+  <div class="readout" id="readout"></div>
+</header>
+
+<div class="stage"><div class="holder" id="holder"><iframe id="frame" title="deck"></iframe></div></div>
+
+<p class="hint">
+  각 화면은 <b>실제 논리 해상도 그대로</b> 렌더링한 뒤 창에 맞게 축소해서 보여준다(내용 비율은 실물과 동일).
+  덱은 <code>?present=1</code> 로 열려 있어 <b>발표(전체화면) 레이아웃</b> 상태다.
+  좌우 여백이 화면 폭의 10% 안쪽이면 정상. — 확인이 끝나면 이 파일은 지워도 된다.
+</p>
+
+<script>
+(function () {
+  var RES = [
+    { label: "1366×768 (노트북)",   w: 1366, h: 768  },
+    { label: "1920×1080 (기본)",    w: 1920, h: 1080 },
+    { label: "2560×1440 (큰 모니터)", w: 2560, h: 1440 },
+    { label: "3440×1440 (울트라와이드)", w: 3440, h: 1440 },
+    { label: "3840×2160 (4K)",      w: 3840, h: 2160 }
+  ];
+  var SLIDES = [
+    ["p00","00 표지"], ["p01","01 팀원"], ["p02a","02 컨셉"], ["p02b","03 로그라이크"],
+    ["p03","04 기술스택"], ["p04a","05 전체구조"], ["p04c","06 API 흐름"], ["p05a1","07 조작"],
+    ["p05a2","08 Down/Revive"], ["p05a3","09 카메라"], ["p05b1","10 스킬구조"], ["p05b3","11 HitEvent"],
+    ["p05b2","12 해금"], ["p05a4","13 예측입력"], ["p05c1","14 보스 FSM"], ["p05c1b","15 클래스구조"],
+    ["p05c1c","16 AoE/어그로"], ["p05c2","17 로그라이크구조"], ["p05d1","18 서버"], ["p05d2","19 백엔드"],
+    ["p05e1","20 로비"], ["p05e2","21 HUD"], ["p05e3","22 인벤토리"], ["p05e4","23 옵션"],
+    ["p07","24 최적화"], ["p06","25 데모"], ["p08","26 Future"], ["p09","27 Q&A"]
+  ];
+
+  var cur = 2; // 기본: 2560×1440
+  var frame = document.getElementById("frame");
+  var holder = document.getElementById("holder");
+  var readout = document.getElementById("readout");
+  var resBtns = document.getElementById("resBtns");
+  var slideSel = document.getElementById("slideSel");
+
+  SLIDES.forEach(function (s, i) {
+    var o = document.createElement("option");
+    o.value = s[0]; o.textContent = s[1];
+    if (i === 15) o.selected = true;   // 정보 밀도가 높은 '15 클래스구조'로 시작
+    slideSel.appendChild(o);
+  });
+
+  RES.forEach(function (r, i) {
+    var b = document.createElement("button");
+    b.type = "button"; b.textContent = r.label;
+    b.addEventListener("click", function () { cur = i; apply(); });
+    resBtns.appendChild(b);
+  });
+
+  // 덱의 html{font-size} 와 동일한 식: clamp(22px, 0.35vw + 1.6vh, 36px)
+  function rootPx(w, h) {
+    return Math.min(36, Math.max(22, 0.35 * w / 100 + 1.6 * h / 100));
+  }
+  // 발표 모드 slide-inner 폭: clamp(67.5rem, 78vw, 100rem)
+  function innerPx(w, h) {
+    var rem = rootPx(w, h);
+    return Math.min(100 * rem, Math.max(67.5 * rem, 0.78 * w));
+  }
+  // 좌우 패딩: clamp(1.4rem, 3.5vw, 3rem) — 한쪽
+  function padPx(w, h) {
+    var rem = rootPx(w, h);
+    return Math.min(3 * rem, Math.max(1.4 * rem, 0.035 * w));
+  }
+
+  function apply() {
+    var r = RES[cur];
+    frame.width = r.w; frame.height = r.h;
+    frame.style.width = r.w + "px"; frame.style.height = r.h + "px";
+    holder.style.width = r.w + "px"; holder.style.height = r.h + "px";
+    frame.src = "soul-rush-deck.html?present=1#" + slideSel.value;
+
+    Array.prototype.forEach.call(resBtns.children, function (b, i) {
+      b.setAttribute("aria-pressed", String(i === cur));
+    });
+
+    var rem = rootPx(r.w, r.h);
+    var inner = innerPx(r.w, r.h);
+    var pad = padPx(r.w, r.h);
+    var slackEach = Math.max(0, (r.w - pad * 2 - inner) / 2);
+    var slackPct = (slackEach * 2 / r.w) * 100;
+    readout.innerHTML =
+      "루트 글씨 <strong>" + rem.toFixed(1) + "px</strong> · " +
+      "본문 폭 <strong>" + Math.round(inner) + "px</strong> · " +
+      "좌우 남는 여백 <strong>" + Math.round(slackEach) + "px</strong> 씩 (" + slackPct.toFixed(1) + "%)";
+
+    fit();
+  }
+
+  function fit() {
+    var r = RES[cur];
+    var stage = document.querySelector(".stage");
+    var k = Math.min(stage.clientWidth / r.w, stage.clientHeight / r.h, 1) * 0.97;
+    holder.style.transform = "scale(" + k + ")";
+  }
+
+  slideSel.addEventListener("change", apply);
+  document.getElementById("reload").addEventListener("click", apply);
+  window.addEventListener("resize", fit);
+  apply();
+})();
+</script>
+</body>
+</html>

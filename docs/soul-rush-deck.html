@@ -47,7 +47,12 @@
   --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, "Noto Sans Mono CJK KR", monospace;
 
   * { box-sizing: border-box; }
-  html { font-size: 22px; }  /* 발표(전체화면) 가독성: 모든 rem 기반 글씨/다이어그램을 균일하게 +12.5% 키움 */
+  /* 발표(전체화면) 가독성: 모든 rem 기반 글씨/다이어그램의 기준 크기.
+     고정 px이면 큰 모니터에서 글씨만 작고 여백이 남으므로 화면 크기에 비례시킨다.
+       · 세로(vh) 비중을 크게 둔 이유 — 덱은 스크롤 없이 한 화면에 담기므로 높이가 병목이다.
+       · 1920×1080 → 24px  /  2560×1440 → 32px  /  3840×2160 → 36px(상한)
+       · 1366×768 등 작은 화면은 하한 22px 로 기존과 동일하게 유지 */
+  html { font-size: clamp(22px, calc(0.35vw + 1.6vh), 36px); }
   html, body { height: 100%; margin: 0; overflow: hidden; }
   body {
     background: var(--void);
@@ -101,14 +106,19 @@
   body.is-fullscreen .slide {
     padding: clamp(2.2rem, 5vh, 3.2rem) clamp(1.4rem, 3.5vw, 3rem) clamp(1.8rem, 4vh, 2.6rem);
   }
-  body.is-fullscreen .slide-inner { max-width: 1620px; }
+  /* 고정 1620px 이면 2560px 이상 모니터에서 좌우가 크게 비므로 화면 폭도 같이 따라가게 한다.
+     1920 → 1620px(기존과 동일) / 2560 → 약 2160px / 3840 → 약 2995px */
+  body.is-fullscreen .slide-inner { max-width: clamp(67.5rem, 78vw, 100rem); }
   body.is-fullscreen .slide-head { margin-bottom: 1.1rem; }
   body.is-fullscreen .eyebrow { font-size: 0.92rem; }
-  body.is-fullscreen .slide-title { font-size: clamp(2.1rem, 3.6vw, 3.25rem); }
+  body.is-fullscreen .slide-title { font-size: clamp(2.1rem, 3.75vw, 3.4rem); }
   body.is-fullscreen .panel { padding: 1.25rem 1.5rem; }
   body.is-fullscreen .panel .tag { font-size: 0.82rem; }
   body.is-fullscreen .panel h3 { font-size: 1.3rem; }
-  body.is-fullscreen .list-dash li { font-size: clamp(1.05rem, 1.35vw, 1.34rem); margin-top: 0.6rem; }
+  /* 본문 글머리표 — 예전엔 vw 항이 지배해서 루트 폰트를 키워도 안 커졌고,
+     울트라와이드에서는 폭만 보고 과하게 커졌다. 루트 폰트가 화면에 비례하므로 rem 단독으로 둔다.
+     1920 → 27.8px(기존 25.9px, 약 +2px) / 2560×1440 → 37.1px */
+  body.is-fullscreen .list-dash li { font-size: 1.16rem; margin-top: 0.6rem; }
   body.is-fullscreen .analogy { font-size: 1.02rem; }
   body.is-fullscreen .cover-kicker { font-size: 1.25rem; }
   body.is-fullscreen .flow-step,
@@ -187,7 +197,7 @@
   .slide.active { opacity: 1; visibility: visible; pointer-events: auto; }
   @media (prefers-reduced-motion: reduce) { .slide { transition: none; } }
 
-  .slide-inner { width: 100%; max-width: 1180px; max-height: 100%; overflow-y: auto; margin: 0 auto; }
+  .slide-inner { width: 100%; max-width: clamp(49rem, 62vw, 72rem); max-height: 100%; overflow-y: auto; margin: 0 auto; }
   .slide-head { margin-bottom: 1.5rem; }
   .slide-title { font-size: clamp(1.5rem, 3vw, 2.35rem); margin-top: 0.45rem; }
 
@@ -482,7 +492,13 @@
      편집 모드에서 드래그로 옮기고 손잡이로 크기를 바꿀 수 있는 그리드로 감싼다.
      발표(비편집) 모드에서는 섹션 테두리·도구가 전부 사라져 자연스럽게 보인다.
   ============================================================ */
-  .slide-inner.boarded { display: flex; flex-direction: column; gap: 1rem; }
+  /* height:100% 가 없으면 slide-inner 높이가 '내용 높이'로 결정돼서, 아래 .deck-board 의
+     flex:1 이 나눌 여유 공간이 아예 생기지 않는다. → 세로로 긴 모니터일수록 위아래가 비었다.
+     높이를 화면에 고정해 보드가 남는 세로 공간을 실제로 채우게 한다(글 셀은 가운데 정렬 유지,
+     이미지 셀은 그만큼 크게 보인다). 넘치면 기존대로 max-height/overflow 가 받아 준다. */
+  .slide-inner.boarded { display: flex; flex-direction: column; gap: 1rem; height: 100%; }
+  /* 표지만 예외 — 제목 바로 아래 키비주얼이 붙는 원래 구성을 유지한다(늘리면 그림이 아래로 뜬다). */
+  .cover-slide .slide-inner.boarded { height: auto; }
   .deck-board {
     position: relative; flex: 1 1 auto; min-height: 0;
     display: grid; gap: 0.7rem; align-content: stretch;
@@ -1714,7 +1730,7 @@
       <span class="eyebrow" style="justify-content:center;"><span class="idx">25</span> DEMO</span>
       <h2 class="slide-title">Game Demo</h2>
     </div>
-    <p class="cover-kicker" style="margin-bottom:1rem;">🎬 데모 영상 — 발표 시 원본 덱 / 영상 파일로 재생</p>
+    <p class="cover-kicker" style="margin-bottom:1rem;">🎬 데모 영상</p>
     
   <div class="deck-board" style="grid-template-columns: repeat(1, 1fr); grid-template-rows: repeat(1, minmax(0px, 1fr));"><div class="deck-block empty-slot deck-scroll" style="grid-area: 1 / 1 / span 1 / span 1;"><div class="deck-content"><figure class="slot video-slot" data-default="assets/06-demo" data-kind="video" style="max-width:800px; margin:0 auto;">
       <div class="slot-frame">
@@ -1876,6 +1892,14 @@
   document.addEventListener("fullscreenchange", function () {
     if (!document.fullscreenElement && presenting) setPresenting(false);
   });
+
+  /* ?present=1 로 열면 버튼을 누르지 않아도 발표(전체화면) 레이아웃으로 시작한다.
+     — F11(브라우저 자체 전체화면)만 눌렀을 때도 발표 레이아웃을 쓰고 싶을 때
+     — 해상도별 미리보기(_preview-resolutions.html)에서 발표 화면 그대로 확인할 때 */
+  if (/[?&]present=1\b/.test(location.search)) {
+    setPresenting(true);
+    fitActiveSlide();
+  }
   document.addEventListener("fullscreenerror", function () {
     showHint("브라우저가 전체화면 요청을 막았어요 — 이 창에서 F11을 눌러 브라우저 자체 전체화면으로 전환하세요.");
   });
