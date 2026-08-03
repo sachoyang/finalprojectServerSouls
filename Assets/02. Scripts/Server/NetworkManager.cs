@@ -5,6 +5,10 @@ using UnityEngine.SceneManagement; // LoadSceneMode 사용을 위해 필수
 // ISessionGuard 구현: 백엔드를 직접 모른 채 '세션 만료 시 네트워크 종료'만 책임
 public class NetworkManager : MonoSingleton<NetworkManager>, ISessionGuard // 제네릭 모노싱글톤 상속
 {
+    // 기획상 한 방의 최대 인원. 로비 슬롯(LobbyServerManager의 Slot0~2)이 3개뿐이므로
+    // 4번째 이상이 들어오면 슬롯을 못 받아 유령 인원이 된다. 세션 정원 자체를 여기서 잠근다.
+    public const int MaxPlayers = 3;
+
     private NetworkRunner _runner;
     public NetworkRunner Runner => _runner;
 
@@ -151,17 +155,31 @@ public class NetworkManager : MonoSingleton<NetworkManager>, ISessionGuard // �
         {
             GameMode = mode,
             SessionName = sessionName,
+            // 🔒 정원 3명. 이 값을 넘기지 않으면 NetworkProjectConfig의 기본값(10명)이 적용되어
+            //    4명째부터도 그냥 입장돼 버린다. 정원이 차면 포톤이 접속 자체를 거절한다.
+            PlayerCount = MaxPlayers,
             SceneManager = gameObject.AddComponent<NetworkSceneManagerDefault>()
         });
 
-        if (result.Ok)
+        if (!result.Ok)
         {
-            Debug.Log("[NetworkManager] 세션 진입 성공!");
-            if (_runner.IsServer)
+            // 방이 꽉 찼거나(정원 초과) 코드가 틀린 경우. 죽은 러너를 그대로 두면 다음 시도 때
+            // 재사용되어 계속 실패하므로 반드시 정리하고 참조를 비운다.
+            Debug.LogWarning($"[NetworkManager] 세션 진입 실패: {result.ShutdownReason}");
+
+            if (_runner != null && !_runner.IsShutdown)
             {
-                // [오류 해결] 씬 이름을 문자열로 직접 던지면 깔끔하게 넘어갑니다!
-                await _runner.LoadScene(lobbySceneName, LoadSceneMode.Single);
+                await _runner.Shutdown();
             }
+            _runner = null;
+            return;
+        }
+
+        Debug.Log("[NetworkManager] 세션 진입 성공!");
+        if (_runner.IsServer)
+        {
+            // [오류 해결] 씬 이름을 문자열로 직접 던지면 깔끔하게 넘어갑니다!
+            await _runner.LoadScene(lobbySceneName, LoadSceneMode.Single);
         }
     }
 }

@@ -72,6 +72,7 @@ public class MatchManager : MonoBehaviour
         {
             GameMode = mode,
             SessionName = sessionName,
+            PlayerCount = NetworkManager.MaxPlayers, // 🔒 정원 3명 (미지정 시 config 기본값 10명)
             Scene = sceneInfo,
             SceneManager = gameObject.AddComponent<NetworkSceneManagerDefault>()
         });

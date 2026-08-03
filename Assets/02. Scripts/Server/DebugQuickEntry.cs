@@ -193,6 +193,7 @@ public class DebugQuickEntry : MonoBehaviour
         {
             GameMode = mode,
             SessionName = code, // 빈 문자열이면 자동
+            PlayerCount = NetworkManager.MaxPlayers, // 🔒 본 게임과 동일한 정원 3명
             SceneManager = runnerGO.AddComponent<NetworkSceneManagerDefault>()
         };
 

@@ -206,6 +206,15 @@ public class LobbyServerManager : NetworkBehaviour
                 Slot2_Owner = player;
                 Slot2_Ready = false;
             }
+            else
+            {
+                // 🔒 안전망: 슬롯 3개가 전부 찼는데 들어온 인원.
+                // 정상적으로는 StartGameArgs.PlayerCount(=3) 때문에 포톤이 미리 막지만,
+                // 슬롯 해제와 입장이 같은 틱에 겹치는 등의 경합으로 새어 들어오면
+                // UI에도 안 뜨고 전투 씬에서는 캐릭터만 스폰되는 유령 인원이 된다.
+                Debug.LogWarning($"[네트워크] 정원({NetworkManager.MaxPlayers}명) 초과 입장 감지. Player {player}를 내보냅니다.");
+                Runner.Disconnect(player);
+            }
         }
     }
 
