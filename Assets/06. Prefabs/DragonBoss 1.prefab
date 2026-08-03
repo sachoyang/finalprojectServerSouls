@@ -2944,7 +2944,7 @@ MonoBehaviour:
   groggyDuration: 3
   groggyAnimLength: 1.4
   groggyDamageTakenMultiplier: 1.5
-  groggyDecayPerSecond: 3
+  groggyDecayPerSecond: 0
   groggyDurationAfterHitAnim: 1
   groggyHitAnimSpeed: 0.6
   _CurrentGroggy: 0
@@ -2953,7 +2953,6 @@ MonoBehaviour:
   _maxHP: 0
   _CurrentHP: 0
   maxSingleHitPercent: 0.05
-  debugKillAdminIds: []
   wallLayerMask:
     serializedVersion: 2
     m_Bits: 128
