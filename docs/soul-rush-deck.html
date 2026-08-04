@@ -247,6 +247,16 @@
     color: var(--ink-dim); border: 1px solid var(--line); border-radius: 3px; padding: 0.12rem 0.45rem;
   }
 
+  .link-chip {
+    display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 0.8rem;
+    font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.02em;
+    color: var(--gold-bright); text-decoration: none;
+    border: 1px solid var(--line); border-radius: 3px; padding: 0.32rem 0.6rem;
+    background: var(--char-2); transition: border-color 0.15s, color 0.15s;
+  }
+  .link-chip:hover { border-color: var(--gold); color: var(--ink); }
+  .link-chip .link-label { color: var(--ink-dim); }
+
   table.data { font-size: 0.86rem; }
   table.data th {
     text-align: left; font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.05em;
@@ -1718,6 +1728,10 @@
             <li><strong>셰이더 배리언트 정리</strong> — 빌드 3시간+ → <strong>10분 미만</strong></li>
             <li><strong>Sentry 크래시 자동 수집</strong> (네이티브 크래시 포함)</li>
           </ul>
+          <a class="link-chip" href="http://192.168.0.5:8080/soulrush_api/admin_hub.php" target="_blank" rel="noopener">
+            <span class="link-label">웹 관리 사이트</span>
+            <span>192.168.0.5:8080/soulrush_api/admin_hub.php</span>
+          </a>
         </div></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="true">글</button><button type="button" aria-pressed="false">그림</button><span class="sz">1×1</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div><div class="deck-block deck-scroll" style="grid-area: 1 / 2 / span 2 / span 1;"><div class="deck-content"><figure class="slot filled"><div class="slot-frame" style="aspect-ratio: 1918 / 1078;"><div class="slot-media-wrap"><img src="assets/서버스샷3.png" alt="" class="slot-media"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">스크린샷 / 영상</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""></figure></div><div class="deck-tools deck-ui"><span class="grip" title="드래그로 위치 이동">⠿</span><button type="button" aria-pressed="false">글</button><button type="button" aria-pressed="true">그림</button><span class="sz">1×2</span><button type="button" class="deck-del" title="이 섹션 삭제">✕</button></div><span class="deck-tall-badge">세로 긴 사진 ↕</span><div class="deck-resize deck-ui"></div></div></div><div class="deck-add-row deck-ui"><button type="button" class="deck-add-btn">＋ 글 섹션</button><button type="button" class="deck-add-btn">＋ 그림 섹션 (스크린샷/영상)</button></div></div>
 </section>
 
