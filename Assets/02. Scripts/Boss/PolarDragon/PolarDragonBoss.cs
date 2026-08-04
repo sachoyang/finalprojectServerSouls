@@ -40,6 +40,9 @@ public class PolarDragonBoss : NetworkBossCore
     [Header("폴라 드래곤 전용 기믹")]
     public int phase2FrostBuffId = 2;
 
+    // 폴라 드래곤만 2페이즈에서 아레나 기믹(조명 OFF + 제단 ON) 연출을 사용합니다.
+    protected override bool UsesArenaGimmick => true;
+
     [Tooltip("지상 '원거리 전용' 패턴(스핏볼/브레스 등)의 인덱스 목록 (phase1/2 지상 리스트 기준).\n" +
              "여기 등록된 패턴은 근거리 룰렛에선 제외되고, 플레이어가 멀 때만 발동 후보가 됩니다.\n" +
              "사거리(어디서부터/어디까지 쏠지)는 각 패턴 SO의 min/maxRange로만 정합니다. (보스 인스펙터엔 별도 사거리 없음)\n" +

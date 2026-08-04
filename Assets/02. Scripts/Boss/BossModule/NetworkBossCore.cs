@@ -239,6 +239,10 @@ public class NetworkBossCore : NetworkBehaviour
     public float gimmickDamageReduction = 0.3f;
     private bool _localGimmickActive = false;
 
+    // 2페이즈 진입 시 아레나 기믹(성 조명 OFF + 제단 ON) 연출을 쓰는 보스인지.
+    // 기본은 false이고, PolarDragonBoss만 true로 오버라이드합니다.
+    protected virtual bool UsesArenaGimmick => false;
+
 
     public override void Spawned()
     {
@@ -864,21 +868,25 @@ public class NetworkBossCore : NetworkBehaviour
 
 
         // ==========================================
-        // 기믹 시각 효과(불 끄기/켜기) 클라이언트 동기화!
+        // 기믹 시각 효과(불 끄기/켜기 + 제단) 클라이언트 동기화!
+        // 아레나 기믹을 쓰는 보스(UsesArenaGimmick == true)만 연출을 돌립니다.
         // ==========================================
-        // 서버에서 IsGimmickActive를 true로 바꿨는데 내 화면은 아직 안 켜졌다면?
-        if (IsGimmickActive && !_localGimmickActive)
+        if (UsesArenaGimmick)
         {
-            _localGimmickActive = true;
-            if (DragonArenaGimmick.Instance != null)
-                DragonArenaGimmick.Instance.PlayGimmickVisuals();
-        }
-        // 서버에서 IsGimmickActive를 false로 바꿨는데 내 화면은 아직 켜져있다면?
-        else if (!IsGimmickActive && _localGimmickActive)
-        {
-            _localGimmickActive = false;
-            if (DragonArenaGimmick.Instance != null)
-                DragonArenaGimmick.Instance.StopGimmickVisuals();
+            // 서버에서 IsGimmickActive를 true로 바꿨는데 내 화면은 아직 안 켜졌다면?
+            if (IsGimmickActive && !_localGimmickActive)
+            {
+                _localGimmickActive = true;
+                if (DragonArenaGimmick.Instance != null)
+                    DragonArenaGimmick.Instance.PlayGimmickVisuals();
+            }
+            // 서버에서 IsGimmickActive를 false로 바꿨는데 내 화면은 아직 켜져있다면?
+            else if (!IsGimmickActive && _localGimmickActive)
+            {
+                _localGimmickActive = false;
+                if (DragonArenaGimmick.Instance != null)
+                    DragonArenaGimmick.Instance.StopGimmickVisuals();
+            }
         }
     }
 

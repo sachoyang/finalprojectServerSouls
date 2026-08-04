@@ -14,6 +14,11 @@ public class DragonBoss : NetworkBossCore
     // 2페이즈 진입 판정 헬퍼 (순수 로직 분리)
     private readonly DragonPhaseTransition _phaseTransition = new DragonPhaseTransition();
 
+    // 2페이즈 기믹을 이미 발동했는지 기억하는 1회성 래치 (호스트 전용).
+    // 드래곤은 아레나 기믹(조명/제단)을 쓰지 않으므로 IsGimmickActive를 래치로 쓰면 안 됩니다.
+    // (제단이 없으면 그 값을 다시 false로 되돌려줄 주체가 없어 데미지 감소가 영구 적용됨)
+    private bool _phase2Activated = false;
+
     // 부모의 스폰(Awake 같은 역할)을 그대로 가져다 씁니다.
     public override void Spawned()
     {
@@ -66,24 +71,19 @@ public class DragonBoss : NetworkBossCore
 
         if (!HasStateAuthority) return;
 
-        // 진입 판정은 헬퍼에 위임, 실제 네트워크 상태 변경은 보스가 수행
-        if (_phaseTransition.ShouldActivate(CurrentState, IsGimmickActive))
+        // 진입 판정은 헬퍼에 위임, 실제 상태 변경은 보스가 수행
+        if (_phaseTransition.ShouldActivate(CurrentState, _phase2Activated))
         {
             ActivatePhase2Gimmick();
         }
     }
 
-    // 드래곤 전용 2페이즈 기믹 발동 (네트워크 상태 변경 + 싱글톤 연동)
+    // 드래곤 전용 2페이즈 기믹 발동 (아레나 조명/제단 연출 없이 버프만 부여)
     private void ActivatePhase2Gimmick()
     {
-        IsGimmickActive = true;
+        _phase2Activated = true;
 
         // 드래곤 전용 버프 부여! (부모 클래스의 ApplyStatus 호출)
         ApplyStatus(phase2BuffId);
-
-        if (DragonArenaGimmick.Instance != null)
-        {
-            DragonArenaGimmick.Instance.SetGimmickLogic(this);
-        }
     }
 }
