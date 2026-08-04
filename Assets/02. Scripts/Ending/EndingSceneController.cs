@@ -59,6 +59,15 @@ public class EndingSceneController : MonoBehaviour
     private static readonly float[] ColumnWidths = { 90f, 320f, 220f, 180f };
     private static readonly string[] ColumnHeaders = { "순위", "팀", "소요 시간", "총 딜량" };
 
+    private void Awake()
+    {
+        // 전투 씬의 카메라가 남긴 잠금 상태를 엔딩 UI보다 먼저 해제한다.
+        // ForceCursorVisible을 함께 켜야 영속 카메라가 다음 프레임에 다시 잠그지 않는다.
+        ThirdPersonCameraController.ForceCursorVisible = true;
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+
     private void Start()
     {
         _font = ResolveFont();
