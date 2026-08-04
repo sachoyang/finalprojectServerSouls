@@ -141,11 +141,23 @@ public class EffectPoolManager : MonoBehaviour
         // 카테고리 최대치 초과 → 가장 오래된 활성 인스턴스 회수해 슬롯 확보
         if (cat.maxActive > 0 && cat.active.Count >= cat.maxActive)
         {
-            var oldest = cat.active.First != null ? cat.active.First.Value : null;
-            if (oldest != null) Return(oldest.gameObject);
+            while (cat.active.First != null)
+            {
+                var oldest = cat.active.First.Value;
+                cat.active.RemoveFirst();
+
+                if (oldest == null) continue; // 이미 파괴된 잔여 노드는 걷어내고 다음 후보로
+
+                oldest.activeNode = null;
+                Return(oldest.gameObject);
+                break;
+            }
         }
 
-        GameObject inst = q.Count > 0 ? q.Dequeue() : CreateNew(prefab);
+        // 풀에 들어 있던 인스턴스가 외부에서 파괴됐을 수도 있으니 살아 있는 것만 꺼낸다.
+        GameObject inst = null;
+        while (q.Count > 0 && inst == null) inst = q.Dequeue();
+        if (inst == null) inst = CreateNew(prefab);
 
         var t = inst.transform;
         t.SetParent(parent, false);
@@ -212,9 +224,18 @@ public class EffectPoolManager : MonoBehaviour
     {
         foreach (var cat in _categories.Values)
         {
-            // Return()이 리스트에서 노드를 제거하므로 First를 계속 뽑는 방식으로 순회
+            // 노드를 먼저 떼어내고 회수한다 → 어떤 경우에도 진행이 보장돼 무한루프가 없다.
             while (cat.active.First != null)
-                Return(cat.active.First.Value.gameObject);
+            {
+                var pi = cat.active.First.Value;
+                cat.active.RemoveFirst();
+
+                // 씬 언로드 등으로 이미 파괴된 인스턴스면 노드만 버린다(MissingReferenceException 방지).
+                if (pi == null) continue;
+
+                pi.activeNode = null;
+                Return(pi.gameObject);
+            }
         }
     }
 

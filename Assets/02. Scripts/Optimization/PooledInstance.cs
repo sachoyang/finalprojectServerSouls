@@ -16,4 +16,16 @@ public class PooledInstance : MonoBehaviour
         if (manager != null) manager.Return(gameObject);
         else gameObject.SetActive(false);
     }
+
+    // 씬 오브젝트를 parent로 꺼낸 인스턴스는 씬 언로드 때 풀 몰래 파괴된다.
+    // 그때 카테고리 활성목록에 노드가 남아 있으면 다음 회수(ReturnAllActive 등)에서
+    // 파괴된 객체에 접근해 MissingReferenceException이 난다 → 파괴 시점에 스스로 빠진다.
+    private void OnDestroy()
+    {
+        if (activeNode != null)
+        {
+            if (activeNode.List != null) activeNode.List.Remove(activeNode);
+            activeNode = null;
+        }
+    }
 }
