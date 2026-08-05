@@ -479,6 +479,12 @@
   .video-slot .slot-frame { aspect-ratio: 16/9; }
   .strip-slot { margin-top: 1rem; }
   .strip-slot .slot-frame { aspect-ratio: 21/5; }
+  /* 이미지 아래에 붙는 짧은 설명(협업 과정 슬라이드 등) */
+  .slot-cap {
+    font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.02em;
+    color: var(--ink-dim); text-align: center;
+  }
+  .slot-cap b { color: var(--gold); font-weight: 600; }
 
   /* ============ Extra slots (edit-mode "add more" affordance) ============ */
   .extra-slots { display: flex; flex-wrap: wrap; gap: 0.8rem; }
@@ -1777,12 +1783,46 @@
 </section>
 
 <!-- =========================================================
-     27. Q&A
+     27. 협업 과정
+========================================================= -->
+<section class="slide" id="p10" data-label="협업 과정">
+  <div class="slide-inner">
+    <div class="slide-head">
+      <span class="eyebrow"><span class="idx">27</span> TEAMWORK</span>
+      <h2 class="slide-title">협업 과정</h2>
+    </div>
+    <div class="grid-2" style="grid-template-columns: repeat(2, 1fr); gap: 0.9rem;">
+      <div class="panel">
+        <span class="tag">기획 · 공유</span>
+        <ul class="list-dash">
+          <li><strong>Notion</strong> — 초기 기획 단계에서 기능별 명세를 문서로 정리·공유</li>
+          <li><strong>Discord</strong> — 일정 공유 및 참고 자료 · 산출물(문서/다이어그램) 업로드</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <span class="tag">코드 공유</span>
+        <ul class="list-dash">
+          <li><strong>Git commit</strong> — 고친 부분을 커밋 메시지에 서술해 변경 이력 추적</li>
+          <li><strong>카카오톡</strong> — 커밋 시 <strong>팀원에게 영향 가는 부분</strong>을 즉시 공지</li>
+        </ul>
+      </div>
+    </div>
+    <div class="grid-2" style="grid-template-columns: repeat(2, 1fr); gap: 0.5rem; margin-top: 0.9rem;">
+      <figure class="slot filled" data-default="assets/collab-notion" data-kind="image"><div class="slot-frame" style="aspect-ratio: 757 / 875; max-height: 26vh;"><div class="slot-media-wrap"><img src="assets/collab-notion.png" alt="" class="slot-media"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">Notion</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""><figcaption class="slot-cap"><b>Notion</b> — 초기 기획 단계</figcaption></figure>
+      <figure class="slot filled" data-default="assets/collab-discord" data-kind="image"><div class="slot-frame" style="aspect-ratio: 1104 / 910; max-height: 26vh;"><div class="slot-media-wrap"><img src="assets/collab-discord.png" alt="" class="slot-media"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">Discord</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""><figcaption class="slot-cap"><b>Discord</b> — 일정 · 공유 자원</figcaption></figure>
+      <figure class="slot filled" data-default="assets/collab-commit" data-kind="image"><div class="slot-frame" style="aspect-ratio: 1312 / 841; max-height: 26vh;"><div class="slot-media-wrap"><img src="assets/collab-commit.png" alt="" class="slot-media"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">Git commit</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""><figcaption class="slot-cap"><b>Git commit</b> — 고친 부분 서술</figcaption></figure>
+      <figure class="slot filled" data-default="assets/collab-kakao" data-kind="image"><div class="slot-frame" style="aspect-ratio: 460 / 542; max-height: 26vh;"><div class="slot-media-wrap"><img src="assets/collab-kakao.png" alt="" class="slot-media"></div><div class="slot-empty"><span class="slot-icon">🖼️</span><span class="slot-label">카카오톡</span><button type="button" class="slot-add">추가하기</button></div></div><input type="file" class="slot-input" accept="image/*,video/mp4" hidden=""><figcaption class="slot-cap"><b>카카오톡</b> — 커밋 시 영향 범위 공지</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+     28. Q&A
 ========================================================= -->
 <section class="slide" id="p09" data-label="Q&amp;A">
   <div class="slide-inner boarded" style="text-align:center;">
     <div class="slide-head">
-      <span class="eyebrow" style="justify-content:center;"><span class="idx">27</span> CLOSING</span>
+      <span class="eyebrow" style="justify-content:center;"><span class="idx">28</span> CLOSING</span>
       <h2 class="slide-title">Q&amp;A</h2>
     </div>
     <p class="end-note">SOUL RUSH — 양평화 · 임현빈 · 이주영</p>
